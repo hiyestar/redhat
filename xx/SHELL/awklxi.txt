@@ -1,0 +1,357 @@
+M.Tansley	05/99	48311	Green	8	40	44
+J.Lulu		06/99	48317	green	9	24	26
+P.Bunny		02/99	48	Yellow  12	35	28
+J.Troll		07/99	4842	Brown-3	12	26	26
+L.Tansley	05/99	4712	Brown-2	12	30	28
+================================
+假设我们有这样一个待处理的文件 grade.txt,
+题目 1:打印整个文件
+[root@svr7 shel6]# awk '{print $0}' ge.txt | column -t
+M.Tansley  05/99  48311  Green    8   40  44
+J.Lulu     06/99  48317  green    9   24  26
+P.Bunny    02/99  48     Yellow   12  35  28
+J.Troll    07/99  4842   Brown-3  12  26  26
+L.Tansley  05/99  4712   Brown-2  12  30  28
+
+题目 2:打印第一和第四个列
+[root@svr7 shel6]# awk '{print $1,$4}' ge.txt | column -t
+M.Tansley  Green
+J.Lulu     green
+P.Bunny    Yellow
+J.Troll    Brown-3
+L.Tansley  Brown-2
+
+题目 3:打印表头 Name Belt,然后显示文档第一列和第四列
+[root@svr7 shel6]# \
+> awk 'BEGIN {print "Name Belt\n"}{print $1"\t"$4}' ge.txt | column -t
+Name       Belt
+M.Tansley  Green
+J.Lulu     green
+P.Bunny    Yellow
+J.Troll    Brown-3
+L.Tansley  Brown-2
+
+题目 4:打印第四列包含 Brown 的行
+[root@svr7 shel6]# awk '$4~/\<Brown\>/{print $0}' ge.txt | column -t
+J.Troll    07/99  4842  Brown-3  12  26  26
+L.Tansley  05/99  4712  Brown-2  12  30  28
+
+
+题目 5:打印第三列包含 48 的行
+[root@svr7 shel6]# awk '$3~/48/{print $0}' ge.txt | column -t
+M.Tansley  05/99  48311  Green    8   40  44
+J.Lulu     06/99  48317  green    9   24  26
+P.Bunny    02/99  48     Yellow   12  35  28
+J.Troll    07/99  4842   Brown-3  12  26  26
+
+题目 6:显示第三列是 48 的行
+[root@svr7 shel6]# awk '$3=="48"{print $0}' ge.txt
+P.Bunny		02/99	48	Yellow  12	35	28
+
+题目 7:显示不包含 Brown 的行
+[root@svr7 shel6]# awk '$0 !~/\<Brown\>/' ge.txt | column -t
+M.Tansley  05/99  48311  Green   8   40  44
+J.Lulu     06/99  48317  green   9   24  26
+P.Bunny    02/99  48     Yellow  12  35  28
+
+题目 8:打印第四列不是 Brown-2 的行
+[root@svr7 shel6]# awk '$4 != "Brown-2" {print $0}' ge.txt | column -t
+M.Tansley  05/99  48311  Green    8   40  44
+J.Lulu     06/99  48317  green    9   24  26
+P.Bunny    02/99  48     Yellow   12  35  28
+J.Troll    07/99  4842   Brown-3  12  26  26
+
+题目 9:当第六列大于第七列是,显示:$6 大于 $7
+[root@svr7 shel6]# awk '$6>$7{print $6,"greater than",$7}' ge.txt
+35 greater than 28
+30 greater than 28
+
+题目 10:当第一列的第三个字符是 a 时,显示该行
+[root@svr7 shel6]# awk '$1~/^(...a)/{print $0}' ge.txt 
+M.Tansley	05/99	48311	Green	8	40	44
+L.Tansley	05/99	4712	Brown-2	12	30	28
+
+[root@svr7 shel6]# awk '$1~/...a/{print $0}' ge.txt
+M.Tansley	05/99	48311	Green	8	40	44
+L.Tansley	05/99	4712	Brown-2	12	30	28
+
+[root@svr7 shel6]# awk '$1~/^...a/{print $0}' ge.txt 
+M.Tansley	05/99	48311	Green	8	40	44
+L.Tansley	05/99	4712	Brown-2	12	30	28
+
+题目 11:显示包含 Yellow 或 Brown 的行
+[root@svr7 shel6]# awk '$0~/(Yellow|Brown)/{print $0}' ge.txt |column -t
+P.Bunny    02/99  48    Yellow   12  35  28
+J.Troll    07/99  4842  Brown-3  12  26  26
+L.Tansley  05/99  4712  Brown-2  12  30  28
+
+题目 12:显示文档第一列、第六列、第七列,如果第一列是 M.Tansley,则
+先将其第六列的值减 1 后再输出。
+[root@svr7 shel6]# awk '{if($1=="M.Tansley") $6=$6-1; print $1,$6,$7}' grade.txt
+M.Tansley 39 44
+J.Lulu 24 26
+P.Bunny 35 28
+J.Troll 26 26
+L.Tansley 30 28
+[root@svr7 shel6]# awk '{if($1=="M.Tansley"){$6=$6-1;print $1,$6,$7}else{print $1,$6,$7}}' ge.txt 
+M.Tansley 39 44
+J.Lulu 24 26
+P.Bunny 35 28
+J.Troll 26 26
+L.Tansley 30 28
+========================fu xi==========================
+[root@desktop0 shel]# . /shel/first.sh  # . [空格】 /脚本绝对路径
+hello
+[root@desktop0 shel]# . first.sh  # . [空格】 脚本相对路径
+hello
+[root@desktop0 shel]# sh /shel/first.sh
+hello
+[root@desktop0 shel]# bash /shel/first.sh
+hello
+[root@desktop0 shel]# cat /shel/first.sh
+#!/bin/bash
+echo hello
+[root@desktop0 shel]# ./shel/first.sh
+-bash: ./shel/first.sh: 没有那个文件或目录
+[root@desktop0 shel]# /shel/first.sh
+-bash: /shel/first.sh: 权限不够
+[root@desktop0 shel]# sh  -x  first.sh
++ echo hello
+hello
+[root@desktop0 shel]#  echo -e  $PWD"\t"$PATH;
+/shel	  /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@desktop0 shel]# echo -e $USER"\t"$UID;
+root	 0
+[root@desktop0 shel]# echo -e $LOGNAME "\t"$HOME;
+root 	 /root
+[root@desktop0 shel]# echo -e $SHELL"\t"$PS1"\t"$PS2;
+/bin/bash	[\u@\h \W]\$ 	>
+
+[root@desktop0 shel]# vim first.sh 
+[root@desktop0 shel]# . first.sh diyi  2  3  si
+hello                  进程或脚本名:  -bash              当前运行的PID号:  1856
+第一个位置变量的值:  diyi  已经加载的位置变量个数:  4   所有位置变量的值:  diyi  2  3  si
+[root@desktop0 shel]# cat first.sh 
+#!/bin/bash
+echo -e hello "\t进程或脚本名: $0 \t当前运行的PID号: $$" | column -t;
+echo -e "第一个位置变量的值: $1\t已经加载的位置变量个数: $#\t所有位置变量的值: $*" | column -t; 
+
+[root@server0 ~]# inp="";[ -z $inp ] && echo "null";
+null
+[root@server0 ~]# inp="aa";[ -n $inp ] && echo "full";
+full
+[root@server0 ~]# inp="aa";[ -z $inp ] && echo "null" 
+[root@server0 ~]# inp="aa";[ -z $inp ] && echo "null" || echo $inp;
+aa
+
+[root@desktop0 shel]# . readpt.sh
+提示信息限定时间2秒:超时2秒
+[root@desktop0 shel]# . readpt.sh
+提示信息限定时间2秒:qwweer
+qwweer
+[root@desktop0 shel]# cat readpt.sh
+#!/bin/bash
+read  -t2  -p "提示信息限定时间2秒": inp 
+if [ -z $inp ];then  #-z字符串值为空
+  echo "超时2秒";
+elif [ -n $inp ];then  #-n字符串不为空（ !【必须有空格】 -z ）
+  echo $inp;
+fi
+[root@server0 ~]# inp="aa";[ ! -z $inp ] && echo "full";
+full
+[root@server0 ~]# inp="aa";[ !-z $inp ] && echo "full";
+-bash: !-z: event not found
+
+.(){    # .()定义一个名为 . 的函数  # { 函数块 开始
+.|.&    # 在后台 递归 调用函数 
+};      # ；分隔执行语句
+.      # . 再次调用函数
+A(){
+A|A&
+};
+A
+[root@server0 ~]# x[0]=10;x[1]=11;x[2]=22;x[3]=333;echo ${#x[@]}; #获取所有数组元素 总个数
+4
+[root@server0 ~]# echo ${x[@]}; #获取所有数组元素的值
+10 11 22 333
+[root@server0 ~]# echo ${x[@]:1:2}; #获取 指定数组 起始下标 1 的连续多个 数组元素 的值
+11 22
+[root@server0 ~]# echo ${x[@]:0:1};
+10
+[root@server0 ~]# echo ${x[@]:0:1};echo ${x[3]};echo ${x[2]};
+10
+333
+22
+[root@a7 ~]# cd /shel
+[root@a7 shel]# echo "IPADDR=192.168.4.7
+> PREFIX=24
+> GATEWAY=192.168.4.254" > nam.txt;
+[root@a7 shel]# sed -r '/^IPADDR/s/192.168.4.(.*)/172.16.0.\1/' /shel/nam.txt;#()第一个（.*）\1替换
+IPADDR=172.16.0.7
+PREFIX=24
+GATEWAY=192.168.4.254
+                   ---使用 \1标签可调用 本组表达式中第一个用（）保存的匹配结果
+[root@a7 shel]# sed -rn '/^IPADDR/s/192.168.4.(.*)/172.16.0.\1/p' /shel/nam.txt;
+IPADDR=172.16.0.7
+[root@a7 shel]# cat /shel/nam.txt 
+IPADDR=192.168.4.7
+PREFIX=24
+GATEWAY=192.168.4.254
+[root@a7 shel]# echo "/etc/dhcp/dhclient.d/chrony.sh" >> nam.txt 
+[root@a7 shel]# cat nam.txt
+IPADDR=192.168.4.7
+PREFIX=24
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# sed -n 's#/etc/dhcp/dhclient.d#/opt/wwwroot#p' \
+> /shel/nam.txt ;
+/opt/wwwroot/chrony.sh
+[root@a7 shel]# sed  's#/etc/dhcp/dhclient.d#/opt/wwwroot#' /shel/nam.txt ;
+IPADDR=192.168.4.7
+PREFIX=24
+GATEWAY=192.168.4.254
+/opt/wwwroot/chrony.sh
+[root@a7 shel]# sed -n 's/\/etc\/dhcp\/dhclient.d/\/opt\/wwwroot/p' /shel/nam.txt 
+/opt/wwwroot/chrony.sh
+
+[root@a7 shel]# sed '/^PREFIX/s/$/***/' nam.txt 
+IPADDR=192.168.4.7
+PREFIX=24***
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# sed '/^PREFIX/a***' nam.txt
+IPADDR=192.168.4.7
+PREFIX=24
+***
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# sed '/^PREFIX/i***' nam.txt
+IPADDR=192.168.4.7
+***
+PREFIX=24
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# sed '/^PREFIX/c***' nam.txt
+IPADDR=192.168.4.7
+***
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# cat nam.txt
+IPADDR=192.168.4.7
+PREFIX=24
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# sed -ni '/^PREFIX/i***/p' nam.txt #i 与 n 不可以连用，会出意外；
+[root@a7 shel]# cat nam.txt    #i 与 n 不可以连用，会出意外；
+***/p
+[root@a7 shel]# echo "IPADDR=192.168.4.7
+> PREFIX=24
+> GATEWAY=192.168.4.254
+> /etc/dhcp/dhclient.d/chrony.sh" > nam.txt;
+[root@a7 shel]# sed -n '/^PREFIX/i***/p' nam.txt;
+***/p
+[root@a7 shel]# sed -n '/^PREFIX/i***' nam.txt;
+***
+[root@a7 shel]# sed -i '/^PREFIX/i***' nam.txt;
+[root@a7 shel]# cat nam.txt 
+IPADDR=192.168.4.7
+***
+PREFIX=24
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]#
+[root@a7 shel]# echo "wo sho wenjian rr" > rr.txt;
+[root@a7 shel]# cat nam.txt
+IPADDR=192.168.4.7
+***
+PREFIX=24
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# cat rr.txt 
+wo sho wenjian rr
+[root@a7 shel]# sed '2r rr.txt' nam.txt  #在第2行后插入文件rr.txt
+IPADDR=192.168.4.7
+***
+wo sho wenjian rr
+PREFIX=24
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# sed '/^PRE/r rr.txt' nam.txt #在第以 ^PRE 开头的行后插入文件rr.txt
+IPADDR=192.168.4.7
+***
+PREFIX=24
+wo sho wenjian rr
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# sed '2,4r rr.txt' nam.txt  #在第2到第4行后插入文件rr.txt
+IPADDR=192.168.4.7
+***
+wo sho wenjian rr
+PREFIX=24
+wo sho wenjian rr
+GATEWAY=192.168.4.254
+wo sho wenjian rr
+/etc/dhcp/dhclient.d/chrony.sh
+
+[root@a7 shel]# sed '1,3w c.txt' nam.txt #缺点：只能覆盖，不能追加；
+IPADDR=192.168.4.7
+***
+PREFIX=24
+GATEWAY=192.168.4.254
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# cat c.txt
+IPADDR=192.168.4.7
+***
+PREFIX=24
+[root@a7 shel]# sed -n '1,2w c.txt' nam.txt ; #缺点：只能覆盖，不能追加；
+[root@a7 shel]# cat c.txt
+IPADDR=192.168.4.7
+***
+[root@a7 shel]# sed -n '/[[:digit:]]$/!p' nam.txt  #列出不以数字结尾的行
+***
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# sed -n '/[[:digit:]]$/p' nam.txt #列出以数字结尾的行
+IPADDR=192.168.4.7
+PREFIX=24
+GATEWAY=192.168.4.254
+[root@a7 shel]# sed -n '/[[:lower:]]/p' nam.txt  #列出包含小写字母的行
+/etc/dhcp/dhclient.d/chrony.sh
+[root@a7 shel]# \
+> awk -F: '{print "行数:"NR "\t列数："NF  "\t最后一列的值："$NF}' /etc/passwd |head -3;
+行数:1	列数：7	最后一列的值：/bin/bash
+行数:2	列数：7	最后一列的值：/sbin/nologin
+行数:3	列数：7	最后一列的值：/sbin/nologin
+[root@a7 shel]# 
+[root@a7 shel]# head -3 /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+[root@a7 shel]# awk -F: '$7!~/bash$/{print $1,$6,$7}' /etc/passwd | head -2;
+bin /bin /sbin/nologin
+daemon /sbin /sbin/nologin
+[root@a7 shel]# awk -F: '$7!~/bash$/{print $1,$6,$7}' /etc/passwd | head -2 |column -t;
+bin     /bin   /sbin/nologin
+daemon  /sbin  /sbin/nologin
+[root@a7 shel]# seq 3,7;
+seq: 无效的浮点参数：3,7
+Try 'seq --help' for more information.
+[root@a7 shel]# seq 3 7;
+3
+4
+5
+6
+7
+[root@a7 shel]# seq 5;
+1
+2
+3
+4
+5
+[root@a7 shel]# 
+
+
+
+
+
+

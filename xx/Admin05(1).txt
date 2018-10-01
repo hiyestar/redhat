@@ -1,0 +1,428 @@
+﻿教学环境介绍
+[root@room9pc01 ~]# rht-vmctl reset classroom
+classroom [OK]
+域 classroom 已开始
+
+[root@room9pc01 ~]# rht-vmctl reset server
+server [OK]
+域 server 已开始
+
+[root@room9pc01 ~]# gos
+Last login: Fri Jan 12 18:54:14 2018 from 172.25.0.250
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@server0 ~]# 
+[root@server0 ~]# yum clean all  #清空Yum缓存
+######################################################
+重定向输出操作
+
+  >:覆盖重定向
+  >>:追加重定向
+
+[root@server0 ~]# ls --help  > /opt/ls.txt
+[root@server0 ~]# ls /opt/
+
+[root@server0 ~]# less /opt/ls.txt 
+[root@server0 ~]# hostname
+[root@server0 ~]# hostname > /opt/ls.txt 
+[root@server0 ~]# cat /opt/ls.txt
+
+[root@server0 ~]# cat /etc/redhat-release 
+[root@server0 ~]# cat /etc/redhat-release > /opt/ls.txt 
+[root@server0 ~]# cat /opt/ls.txt
+
+[root@server0 ~]# hostname >> /opt/ls.txt
+[root@server0 ~]# cat /opt/ls.txt
+[root@server0 ~]# hostname >> /opt/ls.txt
+[root@server0 ~]# cat /opt/ls.txt
+
+
+[root@server0 ~]# echo 123456789
+123456789
+[root@server0 ~]# echo 123456789  >>  /opt/ls.txt 
+[root@server0 ~]# cat  /opt/ls.txt
+
+[root@server0 ~]# echo A.tedu.cn > /etc/hostname
+[root@server0 ~]# cat  /etc/hostname
+
+# echo nameserver 172.25.254.254   >  /etc/resolv.conf 
+# cat  /etc/resolv.conf
+
+######################################################
+   |  管道操作:  将前面命令的输出结果,作为参数交由后面命令处理
+ 
+     显示/etc/passwd内容8到12行?
+
+[root@server0 ~]# head -12 /etc/passwd 
+[root@server0 ~]# head -12 /etc/passwd | tail -5
+[root@server0 ~]# cat -n /etc/passwd | head -12  | tail-5
+
+
+[root@server0 ~]#  ifconfig | head -2
+
+[root@server0 ~]#  ls --help | less
+
+[root@server0 ~]#  ls --help | cat -n | less
+
+#####################################################
+管理用户和组
+
+    用户帐号:  1.可以登陆操作系统  2.访问控制(不同用户具备不同权限)
+    组帐号 :  方便管理用户
+
+    唯一标识:    UID  GID
+    管理员的UID永远为: UID 0  
+    普通用户的UID默认从: UID 1000 起始
+
+  
+    组: 基本组(私有组)    附加组(从属组)
+     Linux用户至少属于一个组
+  
+######################################################
+
+添加用户
+用户基本信息存放在 /etc/passwd 文件
+[root@A ~]# head -1 /etc/passwd
+ root:x:0:0:root:/root:/bin/bash
+
+  用户名:密码占位符:UID:基本组的GID:用户描述信息:家目录:解释器程序
+
+
+• 使用 useradd 命令
+– useradd [选项]... 用户名
+• 常用命令选项
+– -u 用户id、-d 家目录路径、-s 解释器程序、-G 附加组
+
+
+[root@A ~]# useradd nsd01
+[root@A ~]# grep nsd01 /etc/passwd
+[root@A ~]# id nsd01                 #查看用户基本信息
+
+[root@A ~]# useradd -u 1600  nsd06      #指定UID创建用户
+[root@A ~]# grep nsd06 /etc/passwd
+
+[root@A ~]# useradd -d /opt/nsd07 nsd07  #指定家目录创建用户
+[root@A ~]# grep nsd07 /etc/passwd
+[root@A ~]# ls /opt/
+
+
+[root@A ~]# groupadd  tarena           #创建组
+[root@A ~]# useradd -G tarena nsd08    #指定附加组创建用户
+[root@A ~]# id nsd08
+[root@A ~]# useradd -G tarena nsd09
+[root@A ~]# id nsd09
+
+  /sbin/nologin :  禁止用户登陆操作系统
+
+[root@A ~]# useradd -s /sbin/nologin  nsd10
+[root@A ~]# grep nsd10 /etc/passwd
+
+[root@A ~]# useradd -s /sbin/nologin  nsd11
+[root@A ~]# grep nsd11 /etc/passwd
+
+######################################################
+设置登录密码
+
+用户密码信息存放在 /etc/shadow 文件
+[root@A ~]# head -1 /etc/shadow
+  用户名:密码加密之后的字符串:上一次修改密码的时间 ........
+
+• 使用 passwd 命令
+– passwd [用户名]
+
+
+非交互式设置密码
+– echo '密码' | passwd --stdin 用户名
+
+
+
+[root@A ~]# passwd nsd01
+
+[root@A ~]# echo 123  |   passwd --stdin nsd01
+[root@A ~]# echo redhat  |  passwd --stdin nsd01
+[root@A ~]# echo 123456 |  passwd --stdin nsd01
+
+ 命令行临时切换身份: su - 用户名
+
+successfully.(成功)
+
+[root@A ~]# echo 123 | passwd --stdin nsd01
+
+[root@A ~]# su - nsd01     #临时切换用户身份为nsd01
+
+[nsd01@A ~]$ passwd 
+Changing password for user nsd01.
+Changing password for nsd01.
+(current) UNIX password:        #输入旧密码 
+New password:                   #输入新密码 
+Retype new password:            #输入新密码 
+passwd: all authentication tokens updated successfully.
+[nsd01@A ~]$ exit
+logout
+[root@A ~]# 
+
+修改用户属性
+• 使用 usermod 命令
+– usermod [选项]... 用户名
+
+• 常用命令选项
+– -u 用户id、-d 家目录路径、-s 登录Shell、-G 附加组
+[root@A ~]# useradd harry
+[root@A ~]# grep harry /etc/passwd
+[root@A ~]# id harry
+
+# usermod -u 1700 -d /opt/harry -s /sbin/nologin -G tarena   harry
+
+
+[root@A ~]# id harry
+[root@A ~]# grep harry /etc/passwd
+
+#####################################################
+
+删除用户
+
+• 使用 userdel     命令
+– userdel  [-r]  用户名        #连同家目录一并删除
+
+[root@A ~]# userdel nsd01
+[root@A ~]# id nsd01
+id: nsd01: no such user
+
+[root@A ~]# userdel  -r nsd02    #连同家目录一并删除
+[root@A ~]# ls /home/
+
+###################################################
+
+管理组账号
+
+添加组
+组基本信息存放在 /etc/group 文件
+[root@A ~]# grep stugrp /etc/group
+stugrp:x:1605:
+
+  组名:组的密码占位符:GID:组成员列表
+
+• 使用 groupadd 命令
+– groupadd [-g 组ID] 组名
+
+
+[root@A ~]# groupadd stugrp
+[root@A ~]# grep stugrp /etc/group
+stugrp:x:1605:
+[root@A ~]# useradd natasha
+[root@A ~]# useradd kenji
+[root@A ~]# useradd jack
+[root@A ~]# useradd kaka
+ 
+• 使用 gpasswd 命令
+ – gpasswd -a 用户名  组名
+ – gpasswd -d 用户名  组名
+
+[root@A ~]# gpasswd -a natasha stugrp    #添加用户到组中
+[root@A ~]# grep stugrp /etc/group
+
+[root@A ~]# gpasswd -a kenji stugrp  
+[root@A ~]# grep stugrp /etc/group
+
+[root@A ~]# gpasswd -a jack stugrp
+[root@A ~]# grep stugrp /etc/group
+
+[root@A ~]# gpasswd -d kenji stugrp     #将用户从组中删除
+[root@A ~]# grep stugrp /etc/group
+
+[root@A ~]# gpasswd -a kaka stugrp   
+[root@A ~]# grep stugrp /etc/group
+
+######################################################
+删除组
+• 使用 groupdel 命令
+– groupdel   组名
+
+#######################################################
+tar备份与恢复,打包及压缩
+
+ 1.方便对零散文档的管理      2.减小空间的占用
+
+ Linux独有的压缩的格式
+
+    gzip------->.gz
+    bzip2------>.bz2
+    xz--------->.xz
+
+打包:
+   tar  [选项]   /路径/压缩包的名字     /被归档压缩的源文件  ......
+
+解包:
+   tar  [选项]   /路径/压缩包的名字   -C(大写)  释放位置
+     
+• tar 集成备份工具
+– -c:创建归档
+– -x:释放归档
+– -f:指定归档文件名称
+– -z、-j、-J:调用 .gz、.bz2、.xz 格式的工具进行处理
+– -t:显示归档中的文件清单
+– -C(大写):  释放位置
+
+
+# tar -zcf  /opt/test01.tar.gz  /home/  /etc/passwd
+# tar -jcf  /opt/file.tar.bz2   /home/  /etc/passwd
+# tar -Jcf  /opt/nsd.tar.xz     /home/  /etc/passwd
+# ls /opt/
+
+# mkdir  /file
+# tar -xf  /opt/test01.tar.gz -C /file/
+# ls /file/
+# ls /file/home/
+# ls /file/etc/
+
+# tar -zcf  /opt/back.tar.gz  /etc/passwd /etc/shadow /boot
+# ls /opt/
+
+# mkdir /user
+# tar -xf  /opt/back.tar.gz  -C /user
+# ls /user
+
+使用 tar 工具完成以下备份任务:
+– 创建一个名为 /root/backup.tar.bz2 的归档文件
+– 其中包含 /usr/local 目录中的内容
+– tar 归档必须使用 bzip2 进行压缩
+
+[root@A ~]# tar -jcf /root/backup.tar.bz2 /usr/local/
+[root@A ~]# ls /root/
+
+[root@A ~]# tar -tf /root/backup.tar.bz2  #查看包里面的内容
+
+########################################################
+NTP时间同步
+
+服务: NTP服务器为客户机提供标准时间
+
+– NTP客户机需要与NTP服务器保持沟通
+
+
+服务端: classroom.example.com
+
+
+客户端:虚拟机Server0
+1.安装软件chrony,与服务端沟通时间的软件
+[root@A ~]# yum -y install chrony
+已加载插件：langpacks
+rhel7                         | 4.1 kB     00:00     
+软件包 chrony-1.29.1-1.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@A ~]# rpm -q chrony
+
+2.修改主配置文件 /etc/chrony.conf
+
+[root@A ~]# vim /etc/chrony.conf
+
+  以#开头的行,为注释行
+ 
+ #server 0.rhel.pool.ntp.org iburst     #前面加'#'变成注释
+ #server 1.rhel.pool.ntp.org iburst     #前面加'#'变成注释
+ #server 2.rhel.pool.ntp.org iburst     #前面加'#'变成注释
+ server classroom.example.com iburst
+
+3.重起chronyd服务
+[root@A ~]# systemctl restart chronyd   #重起服务
+[root@A ~]# systemctl enable chronyd    #设置服务随机自起动
+#######################################################
+验证:
+1.查看系统时间
+[root@A ~]# date
+[root@A ~]# date -s "年-月-日   时:分:秒"
+[root@A ~]# date -s "2000-10-1 12:50"
+[root@A ~]# date
+[root@A ~]# systemctl restart chronyd
+[root@A ~]# date
+[root@A ~]# date
+
+ 配置文件 /etc/chrony.conf
+
+#######################################################
+cron计划任务
+
+• 用途:按照设置的时间间隔为用户反复执行某一项固定的系统任务
+
+• 软件包:cronie、crontabs
+• 系统服务:crond
+
+• 日志文件:/var/log/crond
+
+
+如何编写crontab任务记录
+
+  分   时   日   月   周           任务命令行
+
+  *     *    *   *    *
+
+
+	*:匹配范围内任意时间
+	,:分隔多个不连续的时间点
+	-:指定连续时间范围
+	/n:指定时间频率,每n ..
+
+
+
+• 使用 crontab 命令
+– 编辑:crontab -e [-u 用户名]
+– 查看:crontab -l [-u 用户名]
+– 清除:crontab -r [-u 用户名]
+
+    每分钟记录系统时间,将系统时间写入到/opt/time.txt
+
+[root@A ~]# date >> /opt/time.txt
+[root@A ~]# cat /opt/time.txt
+
+[root@A ~]# crontab -e -u root       #书写计划任务
+*  *  *  *  *  date  >> /opt/time.txt 
+
+[root@A ~]# crontab -l -u root     #查看root计划任务
+
+
+[root@A ~]# cat /opt/time.txt 
+
+
+######################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

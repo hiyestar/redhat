@@ -1,0 +1,815 @@
+[root@svr7 ~]# echo 'scale=2;x=100;x++' | bc
+100
+[root@svr7 ~]# echo 'scale=2;x=100;++x' | bc
+101
+[root@svr7 ~]# echo 'scale=2;x=100.8;x+=0.8;++x' | bc
+102.6
+
+[root@svr7 ~]# echo 'scale=2;x=100.8;x+=0.8;x' | bc
+101.6
+[root@svr7 ~]# echo 'scale=2;x=64.88;x*=10;' | bc
+[root@svr7 ~]# echo 'scale=2;x=64.88;x*=10;x' | bc
+648.80
+[root@svr7 ~]# unset x
+[root@svr7 ~]# echo $x
+
+[root@svr7 ~]# x=1200;expr $[x+=10]
+1210
+[root@svr7 ~]# echo $x
+1210
+[root@svr7 ~]# expr $((x*=10));expr $[x/=10]
+12100
+1210
+[root@svr7 ~]# let $((x*=10));echo $x
+12100
+bc非交互式运算
+将需要运算的表达式通过管道操作交给bc运算。注意，小数位的长度可采用scale=N限制，
+除此以外也受参与运算的数值的小数位影响。
+）使用let命令
+expr或$[]、$(())方式只进行运算，并不会改变变量的值；而let命令可以直接对变量值做运算再保存新的值。因此变量X=1234，在执行let运算后的值会变更；另外，let运算操作并不显示结果，但是可以结合echo命令来查看：
+
+整数运算工具
+1）使用expr命令
+乘法操作应采用 \* 转义，避免被作为Shell通配符；参与运算的整数值与运算操作符之间需要以空格分开，引用变量时必须加$符号。
+2）使用$[]或$(())表达式
+乘法操作*无需转义，运算符两侧可以无空格；引用变量可省略 $ 符号；计算结果替换表达式本身，可结合echo命令输出。
+
+操作符    含义
+-eq    equal 等于
+-ne    not equal 不等于
+-ge    greater or equal 大于等于
+-le    lesser or equal  小于等于
+-gt    greater than    大于
+-lt    lesser than    小于
+
+[root@svr7 shell]# cat shel.sh 
+#!/bin/bash
+ 
+for i in 1 2 3 4 5
+do 
+  echo 'hello world' $i
+done
+[root@svr7 shell]# cat shel.sh 
+#!/bin/bash
+ 
+for i in {1 .. 5};
+do 
+  echo 'hello world' $i
+done
+[root@svr7 shell]# cat /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/bin/tcsh
+/bin/csh
+[root@svr7 shell]# i=10;echo {1..4}
+1 2 3 4
+[root@svr7 shell]# echo {1..$i}
+{1..10}
+[root@svr7 shell]# seq 5
+1
+2
+3
+4
+5
+[root@svr7 shell]# seq 3 8
+3
+4
+5
+6
+7
+8
+[root@svr7 shell]# vim shel.sh 
+[root@svr7 shell]# bash shel.sh
+hello world {1
+hello world ..
+hello world 4}
+hello nb 1
+hello nb 2
+hello nb 3
+hello nb 4
+[root@svr7 shell]# cat shel.sh
+#!/bin/bash
+ 
+for i in {1 .. 4};
+do 
+  echo 'hello world' $i ;
+done
+for i in  `seq 4`;
+do
+  echo 'hello nb' $i ;
+done
+
+[root@svr7 shell]# vim shel.sh 
+[root@svr7 shell]# cat shel.sh
+#!/bin/bash
+ 
+for i in { 1 .. 4 };
+do 
+  echo 'hello world' $i ;
+done
+for i in  `seq 4`;
+do
+  echo 'hello nb' $i ;
+done
+
+[root@svr7 shell]# bash shel.sh
+hello world {
+hello world 1
+hello world ..
+hello world 4
+hello world }
+hello nb 1
+hello nb 2
+hello nb 3
+hello nb 4
+
+[root@svr7 shell]# vim shel.sh 
+[root@svr7 shell]# cat shel.sh
+#!/bin/bash
+ 
+for i in {1..4};
+do 
+  echo 'hello world' $i ;
+done
+for i in  `seq 4`;
+do
+  echo 'hello nb' $i ;
+done
+
+[root@svr7 shell]# bash shel.sh
+hello world 1
+hello world 2
+hello world 3
+hello world 4
+hello nb 1
+hello nb 2
+hello nb 3
+hello nb 4
+
+[root@svr7 shell]# vim shel.sh
+[root@svr7 shell]# cat shel.sh
+#!/bin/bash
+for i in `seq 1 6`;
+do 
+  ping -c 2 -i0.2 -w0.8 172.25.0.$i &>/dev/null;echo $i;
+done
+[root@svr7 shell]# sh shel.sh
+1
+2
+3
+4
+5
+6
+[root@svr7 shell]# bash shel.sh
+1
+2
+3
+4
+5
+6
+[root@svr7 shell]# /usr/bin/bash shel.sh
+[root@svr7 shell]# /usr/bin/sh shel.sh
+[root@svr7 shell]# /bin/bash shel.sh
+[root@svr7 shell]# /bin/sh shel.sh
+
+[root@svr7 shell]# ps -aux | grep shel.sh
+root      2703  0.0  0.0 112676   988 pts/0    R+   10:06   0:00 grep --color=auto shel.sh
+[root@svr7 shell]# kill 2703
+-bash: kill: (2703) - 没有那个进程
+[root@svr7 shell]# pstree -p | grep shel.sh
+[root@svr7 shell]# echo $?
+1
+[root@svr7 shell]# vim shel.sh
+[root@svr7 shell]# sh  shel.sh
+1 is down
+2 is down
+3 is down
+4 is down
+[root@svr7 shell]# cat shel.sh
+#!/bin/bash
+ip=172.25.0.
+for i in `seq 1 4`;
+do 
+  ping -c 2 -i0.2 -w0.8 $ip$i &>/dev/null;
+  if [ $? -eq 0 ];then
+    echo $i is up;
+  else
+    echo $i is down;
+  fi
+done
+
+[root@svr7 shell]# vim  user.txt
+[root@svr7 shell]# cat user.txt
+haha
+xii
+hay
+peri
+[root@svr7 shell]# vim useradd.sh
+[root@svr7 shell]# cat useradd.sh
+#!/bin/bash
+for i in $(cat /shell/user.txt)
+do
+  useradd $i 2>> /shell/err.txt;
+  echo 123 | passwd --stdin $i >>/shell/right.txt;
+  echo $i 123 >>/shell/right.txt
+  if [ $i == xii ];then
+   echo this is xii;
+  elif [ $i == peri ];then
+    usermod -s /sbin/nologin $i 2>>/shell/err.txt;
+  else
+    echo this is normal guest;
+  fi
+done
+[root@svr7 shell]# bash useradd.sh
+this is normal guest
+this is xii
+this is normal guest
+[root@svr7 shell]# cat /shell/right.txt 
+更改用户 haha 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+haha 123
+更改用户 xii 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+xii 123
+更改用户 hay 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+hay 123
+更改用户 peri 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+peri 123
+[root@svr7 shell]# cat /shell/err.txt 
+[root@svr7 shell]# cat /shell/err.txt 
+useradd：用户“haha”已存在
+useradd：用户“xii”已存在
+useradd：用户“hay”已存在
+useradd：用户“peri”已存在
+usermod：无改变
+
+[root@svr7 shell]# bash -x /shell/useradd.sh 
+++ cat /shell/user.txt
++ for i in '$(cat /shell/user.txt)'
++ useradd haha
++ echo 123
++ passwd --stdin haha
++ echo haha 123
++ '[' haha == xii ']'
++ '[' haha == peri ']'
++ echo this is normal guest
+this is normal guest
++ for i in '$(cat /shell/user.txt)'
++ useradd xii
++ echo 123
++ passwd --stdin xii
++ echo xii 123
++ '[' xii == xii ']'
++ echo this is xii
+this is xii
++ for i in '$(cat /shell/user.txt)'
++ useradd hay
++ echo 123
++ passwd --stdin hay
++ echo hay 123
++ '[' hay == xii ']'
++ '[' hay == peri ']'
++ echo this is normal guest
+this is normal guest
++ for i in '$(cat /shell/user.txt)'
++ useradd peri
++ echo 123
++ passwd --stdin peri
++ echo peri 123
++ '[' peri == xii ']'
++ '[' peri == peri ']'
++ usermod -s /sbin/nologin peri
+[root@svr7 shell]# cat /shell/err.txt 
+useradd：用户“haha”已存在
+useradd：用户“xii”已存在
+useradd：用户“hay”已存在
+useradd：用户“peri”已存在
+usermod：无改变
+[root@svr7 shell]# ls /home
+barbarla  haha  hay  lili  lisi  peri  qq  xii  yonghu
+[root@svr7 shell]# grep peri /etc/passwd
+peri:x:1008:1008::/home/peri:/sbin/nologin
+[root@svr7 shell]# grep xii /etc/passwd
+xii:x:1006:1006::/home/xii:/bin/bash
+
+[root@svr7 shell]# cat jiu.sh
+#!/bin/bash
+for i in {1..9};
+do 
+  for j in {1..9};
+  do
+   if [ $j -le $i ];then
+     echo -n "$i*$j=$[$i*$j]      " ;
+   fi
+  done    
+  echo
+done
+[root@svr7 shell]# cat jiu.sh
+#!/bin/bash
+for i in `seq 0 9`;
+do 
+  for j in  `seq 0 9`;
+  do
+   if [ $j -le $i ];then
+     echo -n "$i*$j=$[$i*$j]  " ;
+   fi
+  done    
+  echo
+done
+[root@svr7 shell]# cat jiu.sh
+#!/bin/bash
+for i in `seq 9`;
+do 
+  for j in  `seq 9`;
+  do
+   if [ $j -le $i ];then
+     echo -n "$i*$j=$[$i*$j]  " ;
+   fi
+  done    
+  echo
+done
+[root@svr7 shell]# cat jiu.sh
+#!/bin/bash
+for i in `seq 9`;
+do 
+  for j in  `seq $i`;
+  do
+     echo -n "$i*$j=$[$i*$j]  " ;
+  done    
+  echo
+done
+[root@svr7 shell]# cat jiu.sh
+#!/bin/bash
+for i in `seq 9`;
+do 
+  for j in  `seq $i`;
+  do
+     echo  "$i*$j=$[$i*$j]\n\t" ;
+  done    
+  echo
+done
+
+[root@svr7 shell]# man echo
+       echo[OPTION]... [STRING]...
+       -n 不输出行尾的换行符.
+       -e 允许对下面列出的加反斜线转义的字符进行解释.
+        \n    换行符
+        \r    回车符
+        \t    水平制表符
+        \v    纵向制表符
+
+[root@svr7 shell]# cat jiu.sh 
+#!/bin/bash
+for i in `seq 9`;
+do 
+  for j in  `seq $i`;
+  do
+     echo -e "$i*$j=$[$i*$j]\n\t" ;
+  done    
+  echo
+done
+[root@svr7 shell]# cat jiu.sh
+#!/bin/bash
+for i in `seq 9`;
+do 
+  for j in  `seq $i`;
+  do
+     echo -en "$i*$j=$[$i*$j]\t" ;
+  done    
+  echo 
+done
+[root@svr7 shell]# cat jiu.sh
+#!/bin/bash
+for i in {1..9};
+do 
+  for j in  `seq $i`;
+  do
+     echo -en "$i*$j=$[$i*$j]\t" ;
+  done    
+  echo 
+done
+[root@svr7 shell]# i=3;j=5;echo "$i*$j=$[$i*$j]"
+3*5=15
+[root@svr7 shell]# i=3;j=5;echo '$i*$j=$[$i*$j]'
+$i*$j=$[$i*$j]
+
+[root@svr7 shell]# cat jiu.sh
+#!/bin/bash
+num=8;
+for i in  $(seq $num);
+do 
+  for j in  `seq $i`;
+  do
+     echo -en "$i*$j=$[$i*$j]\t" ;
+  done    
+  echo 
+done
+[root@svr7 shell]# vim ii.sh
+[root@svr7 shell]# sh ii.sh
+0
+1
+2
+3
+4
+5
+[root@svr7 shell]# cat ii.sh
+for((i=1;i<=5;i++))
+do
+ echo $i;
+done
+[root@svr7 shell]# env | head -3
+XDG_SESSION_ID=2
+HOSTNAME=svr7.tedu.cn
+SELINUX_ROLE_REQUESTED=
+[root@svr7 shell]# set | head -3
+ABRT_DEBUG_LOG=/dev/null
+BASH=/bin/bash
+BASHOPTS=checkwinsize:cmdhist:expand_aliases:extglob:extquote:force_fignore:histappend:interactive_comments:login_shell:progcomp:promptvars:sourcepath
+[root@svr7 shell]# echo $PS2
+>
+[root@svr7 shell]# PS2=hah
+[root@svr7 shell]# echo $PS2
+hah
+[root@svr7 shell]# unset PS2
+[root@svr7 shell]# echo $PS2
+[root@svr7 shell]# PS2=\>
+[root@svr7 shell]# echo $PS2
+>
+[root@svr7 shell]# echo $PS1
+[\u@\h \W]\$
+[root@svr7 shell]# echo $PS1
+[\u@\h \W]\$
+[root@svr7 shell]# \u@\h
+bash: u@h: 未找到命令...
+[root@svr7 shell]# \w
+ 13:34:44 up  5:04,  2 users,  load average: 0.00, 0.01, 0.05
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+root     pts/0    192.168.4.254    08:30   10:04   0.35s  0.04s vim ii.sh
+root     pts/1    192.168.4.254    08:33    4.00s  0.14s  0.02s w
+[root@svr7 shell]# echo $\u\@\h
+$u@h
+
+[root@svr7 shell]# ce=12;echo $ce rm1;echo $ce-rm2;echo $ce,rm3;echo $ce:rm4
+12 rm1
+12-rm2
+12,rm3
+12:rm4
+[root@svr7 shell]# echo -en ${ce}rm5\t;echo -e "\t$ce"rm6;
+12rm5t	12rm6
+[root@svr7 shell]# echo -ne ${ce}rm5\t;echo -e "\t$ce"rm6;
+12rm5t	12rm6
+
+[root@svr7 shell]# i=3;j=5;echo "$i*$j=$[$i*$j]"
+3*5=15
+[root@svr7 shell]# i=30;j=5;echo ${i}*${j}=$[$i*$j]
+30*5=150
+[root@svr7 shell]# i=30;j=5;echo -e ${i}*${j}=$[$i*$j]"\thaha"
+30*5=150	haha
+[root@svr7 shell]# i=30;j=5;echo -e ${i}*${j}=$[$i*$j]'\thaha'
+30*5=150	haha
+[root@svr7 shell]# i=30;j=5;echo -e ${i}*${j}=$[$i*$j]\thaha
+30*5=150thaha
+
+[root@svr7 shell]# cat ii.sh
+for((i=1;i<=5;i++))
+do
+ echo $i;
+done
+
+[root@svr7 shell]# PS2=\>
+[root@svr7 shell]# echo $PS2
+>
+[root@svr7 shell]# \
+>pwd
+/shell
+[root@svr7 shell]# echo $PS1
+[\u@\h \W]\$
+[root@svr7 shell]# \w
+ 14:11:02 up  5:41,  2 users,  load average: 0.00, 0.01, 0.05
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+root     pts/0    192.168.4.254    08:30   29:26   0.36s  0.05s vim ii.sh
+root     pts/1    192.168.4.254    08:33    6.00s  0.27s  0.02s w
+
+[root@svr7 shell]# vim whi.sh
+[root@svr7 shell]# bash whi.sh
+1
+2
+3
+4
+5
+[root@svr7 shell]# echo $?
+0
+[root@svr7 shell]# vim whi.sh
+[root@svr7 shell]# bash whi.sh
+2
+3
+4
+5
+6
+[root@svr7 shell]# cat whi.sh
+#!/bin/bash
+i=1;
+while [ $i -le 5 ];
+do
+  let i++;
+  echo $i;
+done
+
+[root@svr7 shell]# cat ii.sh
+for((i=1;i<=5;i++))
+do
+ echo $i;
+done
+
+[root@svr7 shell]# sar -P ALL 1  2  #sar cpu选项  所有参数 每隔一秒  运行2次
+Linux 3.10.0-693.el7.x86_64 (svr7.tedu.cn) 	2018年08月13日 	_x86_64_	(1 CPU)
+
+14时27分13秒     CPU     %user     %nice   %system   %iowait    %steal     %idle
+14时27分14秒     all      0.00      0.00      0.99      0.00      0.00     99.01
+14时27分14秒       0      0.00      0.00      0.99      0.00      0.00     99.01
+
+14时27分14秒     CPU     %user     %nice   %system   %iowait    %steal     %idle
+14时27分15秒     all      0.00      0.00      0.00      0.00      0.00    100.00
+14时27分15秒       0      0.00      0.00      0.00      0.00      0.00    100.00
+
+平均时间:     CPU     %user     %nice   %system   %iowait    %steal     %idle
+平均时间:     all      0.00      0.00      0.50      0.00      0.00     99.50
+平均时间:       0      0.00      0.00      0.50      0.00      0.00     99.50
+
+[root@svr7 shell]# cat whi.sh
+#!/bin/bash
+i=1;
+while [ $i -le 3 ];
+do
+  let i++;
+  echo $i;
+done
+while :
+do 
+  echo while;
+  sleep 10;
+done
+[root@svr7 shell]# vim ii.sh 
+[root@svr7 shell]# bash ii.sh
+3
+4
+5
+6
+[root@svr7 shell]# cat ii.sh
+#!/bin/bash
+export num=6;
+for((i=3;i<=$num;i++))
+do
+ echo $i;
+done
+
+[root@svr7 shell]# vim random.sh
+[root@svr7 shell]# bash random.sh
+Please input number:1
+less 1,go on
+Please input number:2
+pass 2
+[root@svr7 shell]# echo $?
+2
+[root@svr7 shell]# cat random.sh
+#!/bin/bash
+num=$[RANDOM%3];i=0;
+export cai;
+while :
+do
+  read -p 'Please input number:' cai
+  let i++;
+  if [ $cai -lt $num ];then
+    echo less $i,go on;
+  elif [ $cai -gt $num ];then
+    echo greater $i,go on;
+  else
+    echo pass $i;
+    exit $i;
+  fi
+done
+
+[root@svr7 shell]# i=7;ping -c 2  -i0.2 -w0.8 "192.168.4."$i
+PING 192.168.4.7 (192.168.4.7) 56(84) bytes of data.
+64 bytes from 192.168.4.7: icmp_seq=1 ttl=64 time=0.048 ms
+64 bytes from 192.168.4.7: icmp_seq=2 ttl=64 time=0.054 ms
+
+[root@svr7 shell]# i=7;ping -c 2  -i0.2 -w0.8 192.168.4.$i
+PING 192.168.4.7 (192.168.4.7) 56(84) bytes of data.
+64 bytes from 192.168.4.7: icmp_seq=1 ttl=64 time=0.049 ms
+64 bytes from 192.168.4.7: icmp_seq=2 ttl=64 time=0.055 ms
+
+[root@svr7 shell]# bash ip.sh
+ip1 is dead
+ip2 is dead
+ip3 is dead
+ip4 is dead
+ip5 is dead
+[root@svr7 shell]# echo $?
+0
+[root@svr7 shell]# cat ip.sh 
+#!/bin/bash
+for i in {1..5};
+do
+ping -c2  -i0.2 -w0.8 "192.168.4."${i} &>/dev/null;
+if [ $? -eq 0 ];then
+  echo ip$i is active;
+else
+  echo ip${i} is dead;
+fi
+done
+[root@svr7 shell]# i=7;ping -c2  -i0.2 -w0.8 "192.168.4."${i}
+
+PING 192.168.4.7 (192.168.4.7) 56(84) bytes of data.
+64 bytes from 192.168.4.7: icmp_seq=1 ttl=64 time=0.050 ms
+64 bytes from 192.168.4.7: icmp_seq=2 ttl=64 time=0.055 ms
+
+--- 192.168.4.7 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.050/0.052/0.055/0.007 ms
+[root@svr7 shell]# i=7;ping -c2  -i0.2 -w0.8 '192.168.4.'$i
+[root@svr7 shell]# i=7;ping -c2  -i0.2 -w0.8 '192.168.4.'${i}
+
+[root@svr7 shell]# bash case.sh a
+bb
+[root@svr7 shell]# bash case.sh b
+cc
+[root@svr7 shell]# bash case.sh c
+aa
+[root@svr7 shell]# cat case.sh 
+#!/bin/bash
+case $1 in
+a)
+ echo bb;;
+b)
+ echo cc;;
+c)
+ echo aa
+esac
+
+[root@svr7 shell]# vim ii.sh 
+[root@svr7 shell]# bash ii.sh
+1*1=1	
+2*1=2	2*2=4	
+3*1=3	3*2=6	3*3=9	
+4*1=4	4*2=8	4*3=12	4*4=16	
+5*1=5	5*2=10	5*3=15	5*4=20	5*5=25	
+6*1=6	6*2=12	6*3=18	6*4=24	6*5=30	6*6=36	
+[root@svr7 shell]# cat ii.sh
+#!/bin/bash
+export num=6;
+for((i=1;i<=$num;i++))
+do
+  for((j=1;j<=i;j++));
+  do
+     echo -en "$i*$j=$[$i*$j]\t" ;
+  done    
+  echo 
+done
+[root@svr7 shell]# mycd
+[root@svr7 testx]# mycd2(){
+> mkdir /textx2
+> cd /textx2
+> }
+[root@svr7 testx]# ls
+[root@svr7 testx]# mycd2
+[root@svr7 textx2]# pwd
+/textx2
+
+
+[root@svr7 textx2]# unset mycd
+[root@svr7 textx2]# mycd() {
+> mkdir $1
+> cd $1
+> }
+[root@svr7 textx2]# mycd a1
+[root@svr7 a1]# ls ../
+a1
+
+
+[root@svr7 a1]# echo -e '\033[32mOK\033[0m'
+OK
+[root@svr7 a1]# echo -e '\033[33mOK\033[0m'
+OK
+[root@svr7 a1]# echo -e '\033[34mOK\033[0m'
+OK
+[root@svr7 a1]# echo -e '\033[35mOK\033[0m'
+OK
+[root@svr7 a1]# echo -e '\033[36mOK\033[0m'
+OK
+[root@svr7 a1]# echo -e '\033[37mOK\033[0m'
+OK
+
+[root@svr7 a1]# echo -e '\033[31mOK\033[0m'
+OK
+[root@svr7 a1]# echo -e '\033[30mOK\033[0m' #30 黑色字体
+OK
+[root@svr7 a1]# echo -e '\033[32;43mOK\033[0m' 绿色字体32;43黄色背景
+OK
+[root@svr7 a1]# echo -e '\033[32;40mOK\033[0m'  32;40黑色背景
+OK
+[root@svr7 a1]# echo -e '\033[32;47mOK\033[0m'     ;47灰色背景
+OK
+
+[root@svr7 a1]# vim test.sh 
+[root@svr7 a1]# bash test.sh 32 43 OK
+OK
+[root@svr7 a1]# cat test.sh 
+#!/bin/bash
+cecho() {
+  echo -e "\033[$1;$2m$3\033[0m"
+}
+cecho $1 $2 $3;
+
+
+[root@svr7 a1]# vim die.sh  #一按回车执行.立即死机.
+[root@svr7 a1]# cat die.sh #慎用禁用此命令
+#!/bin/bash
+A(){
+A|A&
+}
+A
+
+[root@svr7 ~]# halt
+
+
+
+
+      halt, reboot, poweroff - 中止系统运行
+描述
+       Halt           将系统正在关机的信息写入           /var/log/wtmp
+       文件，然后通知内核停止重启或关机系统。  如果  halt  或   reboot
+       是在系统  没有  运行在运行级别 0 或 6 ， 系统将调用 shutdown(8)
+       命令（使用参数 -h 或 -r ）。
+
+
+
+
+#!/bin/bash
+for i in `seq 1  9`;
+do
+ipping(){
+  ip=192.168.4.
+  ping -c 2 -i0.2 -w0.8 $ip$i &>/dev/null;
+  if [ $? -eq 0 ];then
+    echo $i is up;
+  else
+    echo $i is down;
+  fi
+}
+ipping & 
+done
+
+[root@svr7 ~]# pgrep -l sh
+360 kdmflush
+371 kdmflush
+972 sshd
+
+[root@svr7 ~]# pgrep -l shel
+1291 gnome-shell
+[root@svr7 ~]# pgrep -l shel.sh
+[root@svr7 ~]# kill -9 1291
+[root@svr7 ~]# pgrep -l shel.sh
+[root@svr7 ~]# pgrep sh
+360
+
+[root@svr7 ~]# ps -aux | grep shel.sh
+root      3876  0.0  0.1 113132  1472 pts/0    T    20:49   0:00 bash shel.sh
+root      4308  0.0  0.0 112676   992 pts/1    R+   21:14   0:00 grep --color=auto shel.sh
+[root@svr7 ~]# kill -9 3876
+
+[root@svr7 ~]# jobs -l
+[root@svr7 ~]# kill -9 4342
+[root@svr7 ~]# jobs
+[root@svr7 ~]# pstree -p | grep shel.sh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

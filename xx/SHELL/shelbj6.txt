@@ -1,0 +1,623 @@
+
+[root@pc207 shel6]# echo "################" >> data.txt
+[root@pc207 shel6]# sed -n $= data.txt
+31
+
+[root@svr7 shel6]# cat -A data.txt | head -3
+====================================================$
+Steve Blenheim:238-923-7366:95 Latham Lane, Easton, PA 83755:11/12/56:20300$
+Betty Boop:245-836-8357:635 Cutesy Lane, Hollywood, CA ,91464:6/23/23:14500$
+
+[root@svr7 shel6]# sed -n '/^Fred/s/$/***/p' data.txt
+Fred Fardbarkle:674-843-1385:20 Parak Lane, DeLuth, MN 23850:4/12/23:780900***
+Fred Fardbarkle:674-843-1385:20 Parak Lane, DeLuth, MN 23850:4/12/23:780900***
+[root@svr7 shel6]# sed -n '/^Fred/a/***/p' data.txt
+/***/p
+/***/p
+[root@svr7 shel6]# sed -n '/^Fred/a***' data.txt
+***
+***
+
+[root@svr7 shel6]# sed -i  '/^Fred/a***' data.txt
+[root@svr7 shel6]# vim data.txt    #查看
+Fred Fardbarkle:674-843-1385:20 Parak Lane, DeLuth, MN 23850:4/12/23:780900
+***
+Fred Fardbarkle:674-843-1385:20 Parak Lane, DeLuth, MN 23850:4/12/23:780900
+***
+[root@pc207 shel6]# vim a.txt
+[root@pc207 shel6]# sed '2H;5G' a.txt #大G不覆盖原有行5
+1
+2
+3
+4
+5
+
+2
+6
+7
+[root@pc207 shel6]# sed '2H;5g' a.txt #小g覆盖原有行5
+1
+2
+3
+4
+
+2
+6
+7
+[root@pc207 shel6]# sed '2H;$g' a.txt  #小g覆盖原有行7
+1
+2
+3
+4
+5
+6
+
+2
+[root@pc207 shel6]# sed '2H;$G' a.txt #大G不覆盖原有行7
+1
+2
+3
+4
+5
+6
+7
+
+2
+[root@pc207 shel6]# cat a.txt
+1
+2
+3
+4
+5
+6
+7
+[root@pc207 shel6]# sed '2h;5g' a.txt #小g覆盖原有行5;小 h 没有换行空行
+1
+2
+3
+4
+2
+6
+7
+[root@pc207 shel6]# sed '1h;5g' a.txt #小g覆盖原有行5;小 h 没有换行空行
+1
+2
+3
+4
+1
+6
+7
+ ------------------------------------------------------------------- # 小g覆盖原有行5;小 h 没有换行空行,
+[root@pc207 shel6]# sed '7h;5g'a.txt   # 但是第七行是末尾，7>5,把末尾的换行符覆盖在第五行
+1
+2
+3
+4
+
+6
+7
+[root@pc207 shel6]# sed '6h;5g' a.txt  # 但是第6行>5 ,把末尾的换行符覆盖在第五行
+1
+2
+3
+4
+
+6
+7
+[root@pc207 shel6]# sed '5h;5g' a.txt
+1
+2
+3
+4
+5
+6
+7
+[root@pc207 shel6]# sed '4h;5g' a.txt
+1
+2
+3
+4
+4
+6
+7
+-----------------------------------------------------#大G不覆盖原有行； 大H 有换行空行
+[root@pc207 shel6]# sed '3H;7G' a.txt
+1
+2
+3
+4
+5
+6
+7
+
+3
+8
+9
+[root@pc207 shel6]# sed '3h;7g' a.txt
+1
+2
+3
+4
+5
+6
+3
+8
+9
+[root@pc207 shel6]# 
+[root@pc207 shel6]# sed '1,3H;$G' a.txt
+1
+2
+3
+4
+5
+6
+7
+8
+9
+
+1
+2
+3
+[root@pc207 shel6]# sed '1,3h;$g' a.txt
+1
+2
+3
+4
+5
+6
+7
+8
+3
+=======================================
+[root@svr7 shel6]# vim a.txt
+[root@svr7 shel6]# cat a.txt
+lie1	lie2	lie3 	lie4   lie5
+lie1	lie2	lie3 	lie4   lie5
+lie1	lie2	lie3 	lie4   lie5
+lie1	lie2	lie3 	lie4   lie5
+lie1	lie2	lie3 	lie4   lie5
+[root@svr7 shel6]# awk '{print $2,$5}' a.txt
+lie2 lie5
+lie2 lie5
+lie2 lie5
+lie2 lie5
+lie2 lie5
+[root@svr7 shel6]# 
+==========================================================
+/dev/mapper/rhel-root       /            xfs     defaults            0  0
+UUID=5d6c8afe-b75a-4e6b-9de1-1a3eeeaf23d9  /boot     xfs   default  0  0
+/dev/mapper/rhel-swap     swap           swap    defaults            0  0
+/dev/cdrom     /var/www/html/rhel7     iso9660   defaults            0  0
+=========================================================
+[root@svr7 shel6]# awk -F: '{print $1,$3}' /etc/passwd | head -5
+root 0
+bin 1
+daemon 2
+adm 3
+lp 4
+[root@svr7 shel6]# head -5 /etc/passwd
+root : x : 0 : 0 :  root :      /  root :      /  bin /   bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+
+[root@svr7 shel6]# awk -F"[:/]" '{print $1,$3,$5,$7,$9,$10}' /etc/passwd | head -5
+root  0  root  root  bin  bash
+bin   1  bin   bin  sbin nologin
+daemon 2 daemon sbin sbin nologin
+adm   3  adm   var     sbin
+lp    4  lp   var    lpd 
+
+[root@svr7 shel6]# awk '{print $0}'  a.txt
+lie1	lie2	lie3 	lie4   lie5
+lie1	lie2	lie3 	lie4   lie5
+lie1	lie2	lie3 	lie4   lie5
+lie1	lie2	lie3 	lie4   lie5
+lie1	lie2	lie3 	lie4   lie5
+[root@svr7 shel6]# awk '{print $1}'  a.txt
+lie1
+lie1
+lie1
+lie1
+lie1
+[root@svr7 shel6]# awk '{print NR,NF}' a.txt #R行；F列
+1 5
+2 5
+3 5
+4 5
+5 5
+[root@svr7 shel6]# awk '{print NF,NR}' a.txt #R行；F列
+5 1
+5 2
+5 3
+5 4
+5 5
+         #【R行】；【F列】 ; 【$NF】表示最后一列
+[root@svr7 shel6]# awk '{print $NF}' a.txt #【R行】；【F列】 ; 【$NF】表示最后一列
+lie5
+lie5
+lie5
+lie5
+lie5
+[root@svr7 shel6]# awk -F: '{print $1,"的解释器是",$7}' /etc/passwd | head -3
+root 的解释器是 /bin/bash
+bin 的解释器是 /sbin/nologin
+daemon 的解释器是 /sbin/nologin
+[root@svr7 shel6]# awk -F: '{print $1,"de jieshiqi shi",$7}' /etc/passwd | head -3
+root de jieshiqi shi /bin/bash
+bin de jieshiqi shi /sbin/nologin
+daemon de jieshiqi shi /sbin/nologin
+[root@svr7 shel6]# ifconfig eth0 | tail -5
+        RX packets 10658  bytes 738543 (721.2 KiB)  #RX packets 入栈
+        RX errors 0  dropped 56  overruns 0  frame 0
+        TX packets 2955  bytes 443079 (432.6 KiB)    #TX packets  出栈
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@svr7 shel6]# ifconfig eth0 | awk '/RX p/{print $5}' #RX packets 入栈
+729937
+
+[root@svr7 shel6]# df -h | awk '/\/$/{print $4}'
+14G
+[root@svr7 shel6]# df -h | head -3
+文件系统               容量  已用  可用 已用% 挂载点
+/dev/mapper/rhel-root   17G  3.5G   14G   21% /
+devtmpfs               481M     0  481M    0% /dev
+
+[root@svr7 ~]# tailf /var/log/secure
+Aug 17 08:17:38 svr7 polkitd[689]: Finished loading, compiling and executing 8 rules
+
+[root@svr7 shel6]# ssh -X root@192.168.4.207
+Last login: Fri Aug 17 08:27:43 2018 from 192.168.4.254
+
+[root@pc207 ~]# awk '{print $10,$11,$12}' /var/log/secure | tail -3
+user root 
+from 192.168.4.7 port
+user root by
+
+[root@pc207 ~]# exit
+[root@svr7 shel6]# ssh -X root@192.168.4.207
+
+[root@svr7 ~]# tailf /var/log/secure
+Aug 17 08:17:38 svr7 polkitd[689]: Finished loading, compiling and executing 8 rules
+.....
+Aug 17 11:41:37 svr7 sshd[3696]: Accepted publickey for root from 192.168.4.254 port 39324 ssh2: RSA SHA256:+bNE5YtlrU+NbKSDeszQXuk2C8Dc0si6BMbKVybe4Ig
+Aug 17 11:41:37 svr7 sshd[3696]: pam_unix(sshd:session): session opened for user root by (uid=0)
+
+[root@svr7 ~]# awk  '{print $10,$11,$12}' /var/log/secure | tail -3
+user root by
+from 192.168.4.254 port
+user root by
+
+[root@svr7 ~]# tailf /var/log/secure | awk '{print $10,$11,$12}'
+executing 8 rules
+on the system
+port 22. 
+port 22. 
+user gdm by
+unix-session:c1 (system bus
+from 192.168.4.254 port
+user root by
+from 192.168.4.254 port
+user root by
+
+[root@svr7 shel6]# awk 'BEGIN{A=24;print A*2}'
+48
+[root@svr7 shel6]# awk 'BEGIN{print x+2}'
+2
+[root@svr7 shel6]# awk 'BEGIN{print 3.2+3.3}
+> '
+6.5
+[root@svr7 shel6]# awk 'begin{print 3.3+2.2}'
+^C
+[root@svr7 shel6]# awk 'BEGIN{print 3.3+2.2}'
+5.5
+==================# awk '{print NF,NR}' a.txt #R行；F列====
+# awk -F: '{print $1,"的解释器是",$7}' /etc/passwd | head -3
+
+[root@svr7 shel6]# awk 'BEGIN{x=0}/bash$/{x++}END{print x}' /etc/passwd
+2
+[root@svr7 shel6]# ls -l /etc/passwd
+-rw-r--r--. 1 root root 2201 7月  24 15:47 /etc/passwd
+[root@svr7 shel6]# wc -l /etc/passwd
+43 /etc/passwd
+
+[root@svr7 shel6]# echo "passwd
+> root bash
+> tom ksh
+> jerry bash
+> lisi csh" >xx.txt
+[root@svr7 shel6]# awk 'BEGIN{x=0}/bash$/{x++}END{print x}' xx.txt 
+2
+[root@svr7 shel6]# awk '/bash$/{x++}END{print x}' xx.txt
+2
+[root@svr7 shel6]# echo lilia bash >> xx.txt
+[root@svr7 shel6]# awk '/bash$/{x++}END{print x}' xx.txt
+3
+[root@svr7 shel6]# awk 'BEGIN{x=0}/\<bash$/{x++}END{print x}' xx.txt
+3
+[root@svr7 shel6]# awk 'BEGIN{x=0}/\<bash\>/{x++}END{print x}' xx.txt
+3
+[root@svr7 shel6]# awk '/\<bash\>/{print}' xx.txt
+root bash
+jerry bash
+lilia bash
+
+[root@svr7 shel6]# awk -F: 'BEGIN{print "User\tUID\tHome"}{print $1"\t"$3"\t"$6}END{print "Total",NR,"lines"}' /etc/passwd | column -t  |  head -4
+User                 UID    Home
+root                 0      /root
+bin                  1      /bin
+daemon               2      /sbin
+[root@svr7 shel6]# awk -F: 'BEGIN{print "User\tUID\tHome"}{print $1"\t"$3"\t"$6}END{print "Total",NR,"lines"}' /etc/passwd | column -t  |  tail  -4
+named                25     /var/named
+dhcpd                177    /
+apache               48     /usr/share/httpd
+Total                43     lines
+[root@svr7 shel6]# wc -l /etc/passwd
+43 /etc/passwd
+
+[root@svr7 shel6]# head -4 /etc/passwd
+root  :  x   :  0   :  0   :   root    :   /root        :   /bin/bash
+bin   :  x   :  1   :  1   :   bin     :   /bin         :  /sbin/nologin
+daemon:  x   :  2   :  2   :  daemon   :   /sbin        : /sbin/nologin
+adm   :  x   :  3   :  4   :   adm     :  /var/adm      :/sbin/nologin
+[root@svr7 shel6]# tail -2 /etc/passwd
+dhcpd :  x   : 177  : 177  :DHCP server:   /            :/sbin/nologin
+apache:  x   : 48   : 48   : Apache    :/usr/share/httpd:/sbin/nologin
+
+[root@svr7 shel6]# awk '/\<sbin\>/{print}' /etc/passwd | head -3
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+
+[root@svr7 shel6]# awk  -F: '/^(root|adm)/{print $1,$3}' /etc/passwd
+root 0
+adm 3
+[root@svr7 shel6]# awk  -F: '/^(root|adm)/{print}' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+
+[root@svr7 shel6]# awk -F: '$1~/root/' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+
+==========================================
+[root@svr7 shel6]# awk -F: '$1~/ksh/' xx.txt 
+tom ksh
+[root@svr7 shel6]# awk -F: '$1~/sh/' xx.txt  #模糊匹配
+tom ksh
+lisi csh
+lilia bash
+[root@svr7 shel6]# awk -F: '$7!~/nologin$/{print $1,$7}' xx.txt
+passwd   x    
+root   x    
+tom ksh 
+jerry  x    
+lisi csh 
+lilia bash 
+root      /bin/bash
+[root@svr7 shel6]# awk -F: '$7!~/nologin$/{print $1,$7}' xx.txt |column -t
+passwd  x
+root    x
+tom     ksh
+jerry   x
+lisi    csh
+lilia   bash
+root    /bin/bash
+[root@svr7 shel6]# cat xx.txt 
+passwd   x   :  0   :  0   :   root    :   /root   ksh   
+root   x   :  2   :  2   :  daemon   :   /sbin  bash
+tom ksh
+jerry  x   : 177  : 177  :DHCP server:   /        bash
+lisi csh
+lilia bash
+root  :  x   :  0   :  0   :   root    :   /root        :   /bin/bash
+bin   :  x   :  1   :  1   :   bin     :   /bin         :  /sbin/nologin
+daemon:  x   :  2   :  2   :  daemon   :   /sbin        : /sbin/nologin
+adm   :  x   :  3   :  4   :   adm     :  /var/adm      :/sbin/nologin
+dhcpd :  x   : 177  : 177  :DHCP server:   /            :/sbin/nologin
+apache:  x   : 48   : 48   : Apache    :/usr/share/httpd:/sbin/nologin
+
+[root@svr7 shel6]# awk -F: '$7~/nologin$/{print $1,$7}' xx.txt |column -t #模糊匹配
+bin     /sbin/nologin
+daemon  /sbin/nologin
+adm     /sbin/nologin
+dhcpd   /sbin/nologin
+apache  /sbin/nologin
+[root@svr7 shel6]# awk -F: 'NR==3{print $1}' xx.txt #不匹配F ： ，默认输出整行
+tom ksh
+[root@svr7 shel6]# awk -F- 'NR==1{print $1}' xx.txt  #不匹配F - ，默认输出整行
+passwd   x   :  0   :  0   :   root    :   /root   ksh   
+[root@svr7 shel6]# awk -F: 'NR==7{print $1}' xx.txt
+root  
+
+[root@svr7 shel6]# awk -F: '$3>=10{print $1}' xx.txt
+jerry  x   
+dhcpd 
+apache
+[root@svr7 shel6]# awk -F: '$3<3{print $1}' xx.txt
+passwd   x   
+root   x   
+tom ksh
+lisi csh
+lilia bash
+root  
+bin   
+daemon
+
+=====================================================
+[root@svr7 shel6]# echo root:x:0:0:root:/root:/bin/bash >> xx.txt
+
+[root@svr7 shel6]# awk -F: '$1=="root"' xx.txt  #精确匹配
+root:x:0:0:root:/root:/bin/bash
+
+[root@svr7 shel6]# awk -F: '$1~/root/' xx.txt    #模糊匹配
+root   x   :  2   :  2   :  daemon   :   /sbin  bash
+root  :  x   :  0   :  0   :   root    :   /root        :   /bin/bash
+root:x:0:0:root:/root:/bin/bash
+
+[root@svr7 shel6]# cat xx.txt
+passwd   x   :  0   :  0   :   root    :   /root   ksh   
+root   x   :  2   :  2   :  daemon   :   /sbin  bash
+tom ksh
+jerry  x   : 177  : 177  :DHCP server:   /        bash
+lisi csh
+lilia bash
+root  :  x   :  0   :  0   :   root    :   /root        :   /bin/bash
+bin   :  x   :  1   :  1   :   bin     :   /bin         :  /sbin/nologin
+daemon:  x   :  2   :  2   :  daemon   :   /sbin        : /sbin/nologin
+adm   :  x   :  3   :  4   :   adm     :  /var/adm      :/sbin/nologin
+dhcpd :  x   : 177  : 177  :DHCP server:   /            :/sbin/nologin
+apache:  x   : 48   : 48   : Apache    :/usr/share/httpd:/sbin/nologin
+root:x:0:0:root:/root:/bin/bash
+[root@svr7 shel6]# 
+
+[root@svr7 shel6]# awk -F: '$3>100&&$3<10' xx.txt  ##逻辑错误，语法正确
+[root@svr7 shel6]# echo $?   #检测语法正确
+0
+[root@svr7 shel6]# awk -F: '$3>10&&$3<200' xx.txt #注意 严格控制 空格【-F:  '$3】
+jerry  x   : 177  : 177  :DHCP server:   /        bash
+dhcpd :  x   : 177  : 177  :DHCP server:   /            :/sbin/nologin
+apache:  x   : 48   : 48   : Apache    :/usr/share/httpd:/sbin/nologin
+
+[root@svr7 shel6]# awk  -F: '$3>100||$3<2' xx.txt 
+passwd   x   :  0   :  0   :   root    :   /root   ksh   
+tom ksh
+jerry  x   : 177  : 177  :DHCP server:   /        bash
+lisi csh
+lilia bash
+root  :  x   :  0   :  0   :   root    :   /root        :   /bin/bash
+bin   :  x   :  1   :  1   :   bin     :   /bin         :  /sbin/nologin
+dhcpd :  x   : 177  : 177  :DHCP server:   /            :/sbin/nologin
+root:x:0:0:root:/root:/bin/bash
+
+[root@svr7 shel6]# awk 'BEGIN{x=8;print x+=2}';awk 'BEGIN{x=8;x--;print x}';
+10
+7
+[root@svr7 shel6]# awk 'BEGIN{print 2+33}';awk 'BEGIN{print 3*22}';
+35
+66
+[root@svr7 shel6]# awk 'BEGIN{x++;print x}'; awk 'BEGIN{print x+=2}';
+1
+2
+[root@svr7 shel6]# awk 'BEGIN{print ++x}';awk 'BEGIN{print x++}';
+1
+0
+[root@svr7 shel6]# echo 'x+=2;' | bc;
+[root@svr7 shel6]# echo 'x+=2;x' | bc;
+2
+[root@svr7 shel6]# echo 'x+=2;x;
+> x=22;x*=10;
+> x=22;x%=5;x' |bc
+2
+2
+[root@svr7 shel6]# seq 40 | awk '$1%7==0'
+7
+14
+21
+28
+35
+[root@svr7 shel6]# seq 2099 | awk '$1%4==0&&$1%100!=0||$1%400==0' | wc -l
+509
+[root@svr7 shel6]# seq 2099 | awk '$1%4==0&&$1%100!=0' | wc -l
+504
+[root@svr7 ~]# i=root;awk -F:  -v x=$i '$1==x' /etc/shadow
+root:$6$ZI.C5mPT$xO6qqIf99JjpKDeaG4woFdLq15JuqrC4dDmJAKK4o5ZlBdztDkn.pgAiMx.xV4cFVraQ7C9xKFVOS9XuF6ShT0:17759:0:99999:7:::
+
+[root@svr7 ~]# useradd -s /bin/bash lili
+[root@svr7 ~]# ls /home
+lili  lisi
+
+[root@svr7 ~]# i=root;awk -F:  -v x=$i '$1==x' /etc/shadow
+root:$6$ZI.C5mPT$xO6qqIf99JjpKDeaG4woFdLq15JuqrC4dDmJAKK4o5ZlBdztDkn.pgAiMx.xV4cFVraQ7C9xKFVOS9XuF6ShT0:17759:0:99999:7:::
+
+[root@svr7 ~]# i=lili;awk  -F: -v x=$i '$1==x' /etc/shadow
+lili:!!:17760:0:99999:7:::
+
+[root@svr7 ~]# i=lisi;awk  -F:  -v x=$i '$1==x' /etc/shadow
+lisi:$6$2N.hQXlLD73P0Uwh$BDxynKumwbYqnLoY33myAlwstFyuWaJGLygv4E0OF/lLyLnHinWFzjDxZXdeH/kTG19iwzmaSYVPbSh9jWaLC.::0:99999:7:::
+
+[root@svr7 shel6]# vim user.sh
+[root@svr7 shel6]# bash user.sh
+root $6$ZI.C5mPT$xO6qqIf99JjpKDeaG4woFdLq15JuqrC4dDmJAKK4o5ZlBdztDkn.pgAiMx.xV4cFVraQ7C9xKFVOS9XuF6ShT0
+lisi $6$2N.hQXlLD73P0Uwh$BDxynKumwbYqnLoY33myAlwstFyuWaJGLygv4E0OF/lLyLnHinWFzjDxZXdeH/kTG19iwzmaSYVPbSh9jWaLC.
+lili !!
+for----end
+root:$6$ZI.C5mPT$xO6qqIf99JjpKDeaG4woFdLq15JuqrC4dDmJAKK4o5ZlBdztDkn.pgAiMx.xV4cFVraQ7C9xKFVOS9XuF6ShT0:17759:0:99999:7:::
+lisi:$6$2N.hQXlLD73P0Uwh$BDxynKumwbYqnLoY33myAlwstFyuWaJGLygv4E0OF/lLyLnHinWFzjDxZXdeH/kTG19iwzmaSYVPbSh9jWaLC.::0:99999:7:::
+lili:!!:17760:0:99999:7:::
+[root@svr7 shel6]# cat user.sh
+#!/bin/bash
+A=`awk -F: '/bash$/{print $1}' /etc/passwd`
+for i in $A;
+do
+  grep "^$i" /etc/shadow | awk -F: '{print $1,$2}'
+done
+echo for----end;
+for j in $A;
+do 
+  awk  -F:  -v  x=$j  '$1==x' /etc/shadow;
+done
+[root@svr7 shel6]# 
+========awk 【选项】 ‘条件{指令}’ 文件路径
+[root@svr7 ~]# awk -F: '/bash$/{if($3<=1000){x++};print}END{print x}'  /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+lisi:x:1000:1000:lisi:/home/lisi:/bin/bash
+lili:x:1001:1001::/home/lili:/bin/bash
+2
+[root@svr7 ~]# awk -F: '/sh$/{if($3<=1000){x++}else{y++};print}END{print x,y}' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+lisi:x:1000:1000:lisi:/home/lisi:/bin/bash
+lili:x:1001:1001::/home/lili:/bin/bash
+gongzhe:x:1002:1002::/home/gongzhe:/bin/sh
+2 2
+
+==================================
+https://github.com/redhatedu/course/blob/master/shell/if.pdf
+================================================
+https://github.com/redhatedu/course/tree/master/shell
+==============================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

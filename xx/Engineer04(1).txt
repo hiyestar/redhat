@@ -1,0 +1,566 @@
+﻿教学环境介绍
+[root@room9pc01 ~]# rht-vmctl reset classroom
+
+[root@room9pc01 ~]# rht-vmctl reset server
+
+[root@room9pc01 ~]# rht-vmctl reset desktop
+
+[root@room9pc01 ~]# gos
+[root@server0 ~]# 
+[root@server0 ~]# yum clean all  #清空Yum缓存
+[root@server0 ~]# yum repolist
+
+
+#######################################################
+案例4：Shell脚本
+为系统 server0 书写脚本/root/user.sh
+运行脚本，可以判断用户输入的用户是否存在
+如果存在，输出用户基本信息（id  用户名）
+如果用户，不存在则创建用户，并输出用户创建成功
+
+ [root@server0 ~]# vim /root/user.sh
+ #!/bin/bash
+ read  -p  '请输入您测试的用户:'     a
+ useradd  $a  &>  /dev/null
+ if [  $?  -eq  0  ];then
+  echo  用户$a创建成功
+ else
+  echo  用户$a已存在
+  id  $a
+ fi
+
+#############################################
+Samba服务基础,跨平台的共享，实现Linux与Windows数据的共享
+
+• Samba 软件项目
+– 用途:为客户机提供共享使用的文件夹
+– 协议:SMB(TCP 139)、CIFS(TCP 445)  
+
+环境前提准备：
+虚拟机Server0
+# firewall-cmd  --set-default-zone=trusted
+
+虚拟机Desktop0：
+# firewall-cmd  --set-default-zone=trusted
+
+
+• 所需软件包:samba
+• 系统服务:smb
+
+
+• Samba用户 —— 专用来访问共享文件夹的用户
+– 采用独立设置的密码
+– 但需要提前建立同名的系统用户(可以不设密码)
+– 与系统用户为同一个用户，但是不同密码
+
+• 使用 pdbedit 管理工具
+– 添加用户:pdbedit -a 用户名
+– 查询用户:pdbedit -L [用户名]
+– 删除用户:pdbedit -x 用户名
+
+
+• 修改 /etc/samba/smb.conf
+[自定共享名]
+path = 文件夹绝对路径
+; public = no|yes //默认no
+; browseable = yes|no //默认yes
+; read only = yes|no //默认yes
+; write list = 用户1 .. .. //默认无
+; valid users = 用户1 .. .. //默认任何用户
+; hosts allow = 客户机地址 .. ..
+; hosts deny = 客户机地址 .. ..
+
+######################################################
+环境前提准备：
+虚拟机Server0
+# firewall-cmd   --set-default-zone=trusted
+
+虚拟机Desktop0：
+# firewall-cmd   --set-default-zone=trusted
+
+
+虚拟机Server0
+1.安装软件包samba
+2.创建Samba共享验证用户（Samba共享帐号）
+[root@server0 ~]# useradd -s /sbin/nologin harry
+[root@server0 ~]# useradd -s /sbin/nologin kenji
+[root@server0 ~]# useradd -s /sbin/nologin chihiro
+
+[root@server0 ~]# pdbedit -a harry #将harry添加为Samba共享帐号
+[root@server0 ~]# pdbedit -a kenji
+[root@server0 ~]# pdbedit -a chihiro
+[root@server0 ~]# pdbedit -L        #列出所有的Samba共享帐号  
+
+3.修改配置文件/etc/samba/smb.conf
+[root@server0 ~]# mkdir  /common
+[root@server0 ~]# echo 123  >  /common/1.txt
+[root@server0 ~]# ls  /common/
+[root@server0 ~]# vim /etc/samba/smb.conf 
+#补充vim命令模式：按G（大写）直接到全文最后
+
+#此服务器必须是 STAFF 工作组的一个成员
+
+workgroup = STAFF     #修改工作组
+
+[common]        #共享名
+path = /common  #共享的实际路径
+
+4.重起smb服务
+[root@server0 ~]# systemctl restart smb
+[root@server0 ~]# systemctl enable smb
+ln -s '/usr/lib/systemd/system/smb.service' '/etc/systemd/system/multi-user.target.wants/smb.service'
+
+5.布尔值（功能的开关）
+  – 需要加 -P 选项才能实现永久设置
+[root@server0 ~]# getsebool -a | grep samba
+[root@server0 ~]# setsebool samba_export_all_ro on
+[root@server0 ~]# getsebool -a | grep samba
+
+######################################################
+客户端访问服务端资源：
+   1.防火墙策略
+  2.SELinux策略
+   3.服务本身的访问控制
+   4.服务端本地目录权限
+
+######################################################
+ 客户端虚拟机Desktop0
+ mount更加科学方便的访问方式
+1.创建挂载点
+[root@desktop0 ~]# mkdir /mnt/nsd
+[root@desktop0 ~]# ls /mnt/nsd
+
+2.安装软件包cifs-utils  识别samba共享的数据
+[root@desktop0 ~]# yum -y install cifs-utils
+
+[root@desktop0 ~]# mount  -o user=harry,pass=123   //172.25.0.11/common  /mnt/nsd/
+
+[root@desktop0 ~]# df -h
+
+[root@desktop0 ~]# ls /mnt/nsd
+
+3.完成开机自动挂载
+   _netdev:声明网络设备
+    在开机启动时，需要将网络服务部署完成，自己具备IP地址后进行挂载
+
+[root@desktop0 /]# vim /etc/fstab 
+
+//172.25.0.11/common /mnt/nsd  cifs 
+  defaults,user=harry,pass=123,_netdev  0 0
+
+[root@desktop0 /]# df -h
+[root@desktop0 /]# umount /mnt/nsd
+[root@desktop0 /]# mount -a         
+[root@desktop0 /]# df -h
+
+
+
+
+########################################################
+（了解方式）虚拟机Desktop0
+1.安装软件包samba-client
+2.访问服务端
+• 列出共享资源
+– smbclient -L 服务器地址
+• 连接到共享文件夹
+– smbclient -U  用户名    //服务器地址/共享名
+
+[root@desktop0 ~]# smbclient -L 172.25.0.11
+[root@desktop0 ~]# smbclient -U harry //172.25.0.11/common
+Enter harry's password: 
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+smb: \> 
+
+###################################################
+读写Samba共享
+虚拟机Server0：
+1.创建共享目录
+[root@server0 ~]# mkdir /devops
+[root@server0 ~]# echo 123 > /devops/a.txt
+[root@server0 ~]# ls /devops/
+
+2.修改配置文件/etc/samba/smb.conf
+文件的最后添加
+[devops]
+path = /devops
+write list = chihiro    #允许chihiro可以写入
+
+3.重起smb服务
+[root@server0 ~]# systemctl restart smb
+
+4.修改SELinux布尔值,开放读写功能
+[root@server0 ~]# getsebool -a | grep samba
+[root@server0 ~]# setsebool samba_export_all_rw on
+[root@server0 ~]# getsebool -a | grep samba
+
+5.修改本地权限
+[root@server0 ~]# setfacl  -m   u:chihiro:rwx  /devops/
+[root@server0 ~]# getfacl  /devops/
+
+
+虚拟机Desktop0：
+1.书写开机自动挂载
+[root@desktop0 /]# vim /etc/fstab 
+
+//172.25.0.11/devops /mnt/pub cifs defaults,user=chihiro,pass=123,_netdev  0 0
+
+[root@desktop0 /]# mkdir /mnt/pub
+[root@desktop0 /]# mount -a
+[root@desktop0 /]# df -h
+
+
+###################################################
+ multiuser机制
+
+• SMB客户端的 multiuser 挂载技术(只为普通用户设计)
+– 管理员只需要作一次挂载
+– 客户端在访问挂载点时,若需要不同权限,可以临时
+   切换为新的共享用户(无需重新挂载)
+
+挂载参数调整
+– multiuser,提供对客户端多个用户身份的区分支持
+– sec=ntlmssp,提供NT局域网管理安全支持
+
+
+[root@desktop0 /]# vim /etc/fstab 
+
+//172.25.0.11/devops   /mnt/pub   cifs defaults,user=kenji,pass=123,_netdev,multiuser,sec=ntlmssp  0 0
+
+[root@desktop0 /]# umount /mnt/pub
+[root@desktop0 /]# mount -a
+
+[root@desktop0 /]# su - student
+[student@desktop0 ~]$ cifscreds add -u chihiro 172.25.0.11
+Password: 
+[student@desktop0 ~]$ touch  /mnt/pub/6.txt
+[student@desktop0 ~]$ ls /mnt/pub/
+[student@desktop0 ~]$ exit
+
+#####################################################
+配置NFS共享,Linux与Linux平台之间的共享
+
+• Network File System,网络文件系统
+– 用途:为客户机提供共享使用的文件夹
+– 协议:NFS(TCP/UDP 2049)、RPC(TCP/UDP 111)
+
+• 所需软件包:nfs-utils
+• 系统服务:nfs-server
+
+虚拟机Server0：
+1.安装软件包nfs-utils
+[root@server0 ~]# rpm -q nfs-utils
+nfs-utils-1.3.0-0.el7.x86_64
+[root@server0 ~]# 
+
+2.创建共享目录
+[root@server0 ~]# mkdir /nsd
+[root@server0 ~]# echo  haha > /nsd/abc.txt
+[root@server0 ~]# ls /nsd
+
+3.修改配置文件/etc/exports
+   – 文件夹路径      客户机地址(权限)
+[root@server0 ~]# vim  /etc/exports
+/nsd     *(ro)
+
+4.重起服务nfs-server
+[root@server0 ~]# systemctl restart nfs-server
+[root@server0 ~]# systemctl enable nfs-server
+ln -s '/usr/lib/systemd/system/nfs-server.service' '/etc/systemd/system/nfs.target.wants/nfs-server.service'
+
+客户端虚拟机Desktop0
+
+[root@desktop0 /]# vim  /etc/fstab
+172.25.0.11:/nsd    /mnt/test   nfs  defaults,_netdev 0 0
+
+[root@desktop0 /]# mkdir /mnt/test
+[root@desktop0 /]# mount -a
+[root@desktop0 /]# df  -h
+
+####################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

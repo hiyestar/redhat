@@ -1,0 +1,164 @@
+﻿
+systemctl控制
+
+systemd进程
+• Linux系统和服务管理器
+  – 是内核引导之后加载的第一个初始化进程(PID=1)
+  – 负责掌控整个Linux的运行/服务资源组合
+
+
+systemctl对于服务的控制:
+ systemctl  restart  服务名       #重起服务 
+ systemctl  start  服务名          #起服务 
+ systemctl  stop   服务名          #停服务 
+ systemctl  status  服务名       #查看服务当前状态
+
+ systemctl  enable  服务名        #设置服务随机自起
+ systemctl  disable  服务名       #设置服务不随机自起
+
+ systemctl is-enabled 服务名      #查看服务是否是随机自起
+
+RHEL6运行级别: 
+
+		0:关机   
+		1:修复模式 
+		2:字符界面模式(不支持网络)  
+		3:字符界面模式(支持网络) 
+		4:未定义    
+		5:图形界面 
+		6:重起 
+
+	  切换运行级别: init 
+
+
+RHEL7运行模式:
+
+• 当前切换到文本/图形模式
+ – systemctl isolate multi-user.target   #切换到字符模式
+ – systemctl isolate graphical.target   #切换到图形模式
+
+• 修改默认的运行模式
+ – systemctl set-default graphical.target
+ – systemctl get-default 
+
+
+
+
+1.修改默认的运行模式
+# systemctl get-default 
+# systemctl set-default graphical.target  
+# systemctl get-default 
+# reboot
+
+2.当前切换到文本/图形模式
+# systemctl isolate multi-user.target   #切换到字符模式
+# systemctl isolate graphical.target    #切换到图形模式
+
+
+#####################################################
+环境变量
+
+    变量:以不变的名称,存储可以变化值
+
+   PATH:提供命令程序搜寻的路径
+
+[root@svr7 ~]# echo $PATH
+[root@svr7 ~]# vim /opt/hello.sh
+ #!/bin/bash
+ echo hello
+[root@svr7 ~]# chmod +x  /opt/hello.sh 
+[root@svr7 ~]#  /opt/hello.sh
+[root@svr7 ~]# hello.sh       #运行失败
+
+[root@svr7 ~]# ln -s  /opt/hello.sh   /usr/bin/
+[root@svr7 ~]# hello.sh       #运行成功
+
+
+#####################################################
+ Yum仓库
+
+    作用:为客户端,解决依赖关系安装软件
+
+1.本地Yum仓库:本机是服务端,本机还是客户端
+
+[root@svr7 ~]# mount /dev/cdrom  /mnt/
+mount: /dev/sr0 写保护，将以只读方式挂载
+[root@svr7 ~]# ls /mnt/
+
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo
+
+[development]
+name=rhel7.4
+baseurl=file:///mnt
+enabled=1
+gpgcheck=0
+
+2.网络Yum仓库:
+        服务端搭建服务共享光盘所有内容    客户端书写配置文件指向
+
+    1.在虚拟机A上安装vsftpd软件,利用FTP共享光盘所有内容
+
+    2.在虚拟机B上,书写/etc/yum.repos.d/*.repo文件指向访问虚拟机A
+
+########################################################
+权限和归属
+
+   基本权限     r w  x
+
+   附加权限     SUID  SGID   t  
+
+  ACL策略     为特殊用户,专门设置权限
+
+判断用户具备的权限:
+    1.查看文档权限          ls -l    ls-ld
+    2.用户所属于的角色  (所有者  >  所属组  >  其他人)
+    3.相应角色的权限
+
+######################################################
+LDAP认证,实现网络用户验证
+
+   LDAP服务器: 提供用户账户验证  及密码验证
+
+######################################################
+如何设置SElinux保护 :布尔值   上下文值   非默认端口开放
+
+mv SELinux的上下文值 ,不会发生变化
+cp SELinux的上下文值 ,会发生变化,自动符合目标目录的上下文值
+
+ 建议尽量用cp
+
+#####################################################
+
+以往教学都是自动分配分区大小，在工作中硬盘大小如何分配
+
+
+            /dev/sda1      /boot    500M
+            /dev/sda2      /        100G    
+            /dev/sda3      /data    100G    
+
+            /dev/sda4      扩展分区
+
+            /dev/sda5      swap     2G~8G
+
+
+####################################################
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

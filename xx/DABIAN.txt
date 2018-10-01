@@ -1,0 +1,557 @@
+ACL允许
+R1#show access-lists
+Extended IP access list 100
+    10 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+    20 deny tcp host 192.168.2.2 host 192.168.1.1 eq www
+    30 permit ip any any
+
+R3(config)#ip access-list extended 100 ##进入扩展访问列表
+
+R3(config-ext-nacl)#no 10
+R3(config-ext-nacl)#no 20 #删除已建立的访问控制列表具体条目
+删除已建立的访问控制列表
+R1(config)#no access-list 1
+显示所有访问列表
+R1#show access-lists    
+
+ACL拒绝
+ #禁止主机2.1 访问主机1.1 的 ftp服务
+#扩展访问控制列表一定要配置在接近于源的目标位置。
+  #扩展访问控制列表的访问控制列表号{ 100 ~ 199 }
+#基于源IP地址、目的IP地址、指定协议、端口等来过滤数据包 
+#access-list access-list-number {deny | permit} protocol 
+{ source source-wildcard destination destination-wildcard} [operator operand]
+   #禁止主机2.1 访问主机1.1 的 ftp[端口21] 服务
+R1(config)#access-list 100 deny tcp 
+host 192.168.2.1 host 192.168.1.1 eq 21
+
+       #  协议    源地址  反掩码       目标地址  目标地址反掩码 eq  相应端口   
+ # deny  tcp   host 192.168.2.1 host  192.168.1.1   eq   21
+
+  #允许其它   任意主机any 访问 任意主机any 的所有服务
+R1(config)#access-list 100 permit ip any any
+
+##在接口中应用acl
+R1(config)#interface gigabitEthernet 0/1
+
+#接口模式：ip  access-group  列表号 in或out
+R1(config-if)#ip access-group 100 in
+
+R1#show access-lists
+Extended IP access list 100
+    10 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+    20 deny tcp host 192.168.2.2 host 192.168.1.1 eq www
+    30 permit ip any any
+
+一、访问控制列表的作用：
+
+*过滤：通过过滤经过路由器的数据包来管理IP流量
+
+*分类：标识流量以进行特殊处理
+
+ 
+
+  ACL在作用的时候有两个动作，即允许和拒绝。
+
+允许或拒绝经过路由器的数据包
+
+允许或拒绝来自路由器或到路由器的vty访问
+
+如果没有ACL，所有数据包会发往网络的所有部分。
+
+配置完以后一定要记得调用ACL的访问控制列表。
+
+二、访问列表的分类：
+
+*标准
+
+ -检查源地址
+
+ -通常允许、拒绝的是完整的协议
+
+*扩展
+
+ -检查源地址和目的地址
+
+ -通常允许、拒绝的是某个特定的协议
+
+*进方向和出方向
+
+  -出方向   先查路由表，如果有去往目的网段的路由，就转到出接口，如果出接口调用了访问控制列表ACL，那么就看是否和ACL的访问控制列表匹配，是允许permit还是拒绝deny，如果是允许，就根据路由表转发数据，如果是拒绝就直接将数据包丢弃了。
+
+  -入方向   当入接口收到数据包的时候，先跟入接口的ACL访问控制列表进行匹配，如果允许则查看路由表从而进行转发，如果拒绝则直接丢弃。
+
+而在这个deny的机制中，有一条隐藏的deny所有报文的语句。
+
+也就是说，当接收到的数据包和前面所有的访问控制列表ACL都不匹配的时候，则就会触发这条隐藏的命令。
+
+三、如何来标识ACL
+
+*标准编号IPV4列表（1-99）可测试源地址的所有IP数据包的条件。扩展范围是（1300-1999）
+
+*扩展编号IPV4列表（100-199）可测试源地址和目的地址、特定TCP/IP协议和目的端口条件。扩展范围（2000-2699）
+
+*命名ACL用字母数字字符串（名称）标识IP标准ACL和扩展ACL。
+
+四、配置标准访问控制列表的命令：
+
+标准访问控制列表可以用来匹配：
+
+1用来匹配源地址和目标地址
+
+2用来匹配远程登录
+
+标准访问控制列表建议配在接近于目标的位置，因为如果配置在接近于源的目标的位置，那么发出来的报文就会立刻被deny掉了，而且数据包不仅发送不到目标位置，甚至连接近于源的目标位置以外的其他的路由器也发送不到了，都不可以访问了。
+所以标准访问控制列表一定要放在接近于目标的位置。
+
+实验一：
+
+    Forexample：R3(config)#access-list1 deny 192.168.1.0 0.0.0.255
+
+                            意思就是只要是192.168.1.0网段的（1-254）的IP地址发过来的数据包都会被拒绝。
+
+                    接着要写一个permit语句去保证允许其他网段的数据报文可以通过。
+
+即：R3(config)#access-list 1 permit 0.0.0.0 255.255.255.255
+
+当然 0.0.0.0 255.255.255.255 代表所有网段也可以用 any 来表示。
+
+即：R3(config)#access-list 1 permit any  可以这样来写，也是可以生效的。
+
+隐藏的deny所有的命令：R3(config)#access-list 1 deny any
+
+所以要记得相反的permit允许其他所有的命令：R3(config)#access-list1 deny any
+
+
+1.然后在接口下来掉用这个访问控制列表ACL“
+
+RouterX(config-if)#ipaccess-group access-list-number {in|out}  标识是出方向还是入方向
+
+如果用192.168.1.2来ping192.168.2.2则可以是R3的F0/1的入方向或者F0/0的出方向。
+
+For example：
+
+R3(config)#interfacef0/1
+
+R3(config-if)#ipaccess-gourp 1 in 同样建议配置在in方向，因为可以少一次查询的动作。
+
+到这里访问控制列表ACL就调用成功了，这个时候在去ping就会告诉你目的主机不可达。
+
+即：Destination host unreachable。
+
+2.可以通过show access-lists来产看到当前所被deny掉的数据状态。
+
+
+3.删除访问控制列表：
+
+R3(config)#no access-list 1
+
+    它会将之前配置的deny的语句和permitany的语句在访问控制列表1里面同时删除。
+
+4.如果是只是deny某一个IP地址的数据报文，可以使用完全匹配的方式：
+
+即：R3(config)#access-list 1 deny 192.168.1.2 0.0.0.0 这样后面的四个零就是完全匹配的意思。
+
+当然这个四个零0.0.0.0 也可以用host 来表示：
+
+即：R3(config)#access-list1 deny host 192.168.1.2
+
+  而为了能让其他的数据能够被转发，所以必须要加上permit any的命令，以便让其他的报文可以通
+过。
+
+  即：R3(config)#access-list 1 deny host 192.168.1.2
+
+      R3(config)#access-list 1 permit any
+
+此外，因为在输入访问控制列表的时候，是按照输入的顺序来进行排列的，所有如果将permit any或者deny any语句放在具体的permit或者deny语句之前，即：
+
+先配置了R3(config)#access-list1 permit any
+
+再配置了R3(config)#access-list1 deny host 192.168.1.2
+
+就会发现，后面配置的”R3(config)#access-list1 deny host 192.168.1.2”完全没有生效，报文依旧可以转发。
+
+所以在配置的时候一定要注意先后的顺序，严谨的放在后面。
+
+如果在R3上配置远程管理：
+
+R3(config)#line vty 04
+
+R3(config-line)#passwordcisco
+
+R3(config-line)#login
+
+R3(config-line)#exit
+
+R3(config)#enablepassword cisco
+
+然后不允许192.168.1.2来远程访问R3，则:
+
+R3(config)#access-list1 deny host 192.168.1.2
+
+R3(config)#access-list1 permit any
+
+但是调用的时候则是在line下面来调用的：
+
+
+R3(config)#line vty 04
+
+R3(config-line)#access-class1 in
+
+如果不在line调用的话，也可以在接口下面调用：
+
+R3(config)#interfacef0/1
+
+R3(config-if)#ipaccess-group 1 in
+
+五、扩展访问控制列表：
+
+扩展访问控制列表可以用来匹配：
+
+-不仅可以匹配源地址还可以匹配协议
+
+  -还可以匹配目标地址
+
+  -还可以匹配端口号
+
+
+扩展访问控制列表建议配置在接近于源的位置，如果配置在接近于目标位置或其他位置的路由器上面，因为产生的结构都是一样的，所以会浪费大量的带宽，而如果配置在接近于源的的目标位置就不会出现这种情况，所以，扩展访问控制列表一定要配置在接近于源的目标位置。
+
+实验一：
+
+命令：
+
+建立扩展访问控制列表：    
+                 协议      源地址        反掩码        相应端口        目标地址      目标地址反掩码
+RouterX(config)#access-list access-list-number {permit|deny} protocol source source-wildcard [operatorport] Destination destination-wildcard [operator port] [established] [log]
+#   协议      源地址        反掩码        相应端口           目标地址      目标地址反掩码
+#protocol source source-wildcard [operatorport] Destination destination-wildcard [operator port] [established] [log]
+
+调用扩展访问控制列表：
+
+RouterX(config-if)#ipaccess-group access-list-number {in|out}
+
+“ping”命令是基于ICMP协议的命令。且下面的命令是deny掉了去的报文和回的报文。
+
+“ping”命令是基于ICMP协议的命令。且下面的命令是deny掉了去的报文和回的报文。
+
+即：R3(config)#access-list 100 deny icmp192.168.1.0 0.0.0.255 192.168.2.0 0.0.0.255 echo   报文格式
+
+    R3(config)#access-list 100 deny icmp 192.168.1.00.0.0.255 192.168.2.0 0.0.0.255 echo-reply    回应报文格式
+
+    R3(config)#access-list 100 permit ip any any  因为三层所用的协议是IP协议，所以是ip anyany，这里的IP表示的是协议号。
+
+接下来调用，在R1的入方向来调用这个ACL。
+
+R1(config)#interfacef0/1
+
+R2(config-if)#ipaccess-group 100 in
+
+实验二：
+
+要求：不允许192.168.1.2去telnet远程连接R3路由器。
+
+     而telnet的协议是基于tcp协议的。
+
+R1(config)#access-list 100 deny tcp host 192.168.1.2 host 23.1.1.3 eq telnet  这里的eq指的是“等于”
+
+R1(config)#access-list 100 permit ip any any
+
+然后去接口调用：
+
+R1(config)#ipaccess-group 100 in
+
+常见的协议端口号：
+
+http   80
+
+dhcp   server67 client68
+
+tftp    69
+
+DNS   tcp的53号端口和udp的53号端口，而我们平时上网的时候都是用的UDP的53号端口。
+
+      只有在DNS服务器之间同步DNS服务的时候，才会用到基于TCP的53号端口。或者发的报文比较大的时候也才会用到DNS的第53号端口。
+
+NTP   是网络时间协议，使用的是123号端口
+
+Email  一个是SMTP的25号端口，还有一个是POP3的110号端口。
+
+FTP    一个是20号端口，一个是21号端口，通常情况下被动模式是使用的是21号端口来建立连接的，而传输数据的是随机端口，而如果设置的是主动模式的话，则是用21号端口来建立连接，用20号端口来传输数据。
+
+ACL配置指导：
+
+-标准或扩展代表可过滤经过路由器的内容
+
+-每隔接口、协议、方向只允许有一个ACL
+
+-ACL语句的顺序控制着测试，因此最具体的语句位于列表顶部。
+
+-最后的ACL测试始终是隐式拒绝其他所有语句，因此每隔列表需要至少一条permit语句
+
+-在全局范围内创建ACL，然后将其应用到入站流量或出站流量的接口
+
+-ACL可过滤经过路由器的流量或往返路由器的流量，具体取决于其应用方式
+
+-将ACL置于网络中时:
+
+      *标准ACL应靠近目的地址
+
+      *扩展ACL应靠近源地址。
+
+
+【总结】
+
+-标准IPv4 ACL允许根据源IP地址进行过滤
+
+-扩展ACL允许根据源IP地址、目的IP地址、协议和端口号进行过滤
+
+-命名ACL允许从一条ACL中删除单挑语句
+
+-可以使用show access-lists和show ipinterface命令排除ACL配置的常见错误。
+
+2 .配置SSH访问
+按以下要求配置 SSH 访问：
+用户能够从域 example.com 内的客户端 SSH 远程访问您的两个虚拟机系统
+在域 my133t.org 内的客户端不能访问您的两个虚拟机系统
+
+[root@server0 ~]# vim /etc/ssh/sshd_config 
+[root@server0 ~]# tail -1 /etc/ssh/sshd_config 
+DenyUsers *@*.my133t.org *@172.34.0.*
+[root@server0 ~]# firewall-cmd --get-default-zone 
+trusted
+[root@server0 ~]# firewall-cmd --permanent  --add-source=172.34.0.0/24  --zone=block
+success
+-----------------------------------------------------------------------
+#vim /etc/selinux/config
+SELINUX=enforcing/permissive/disabled
+
+Apache的虚拟主机配置
+[root@server0 ~]# cat /etc/httpd/conf.d/virt.conf 
+<VirtualHost *:80>
+  ServerName    server0.example.com
+  DocumentRoot  /var/www/html/
+</VirtualHost>
+
+[root@server0 ~]# vim /etc/httpd/conf.d/dir.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/dir.conf
+<Directory /var/www/html/>
+#  Deny  from  172.34.0.0/24
+#  Deny  from  172.34.0.0/255.255.255.0
+#  Allow from all
+ <RequireAll>
+   Require all granted
+   Require not ip 172.34.0
+ </RequireAll>
+</Directory>
+
+
+
+文件配置段
+
+
+<Files "hello.html">
+  Order Deny,Allow     #先拒绝 后允许
+  Deny from all            #拒绝所有的访问所有目录下的hello.html文件
+</Files>
+
+如果文件配置段嵌套到目录配置段，就只控制那个目录下文件的访问权限
+
+url配置段
+
+<Location /admin>
+   Deny from all      #拒绝所有的访问/admin这个url
+</Location>
+
+
+文件目录url都可用通配符或正则
+<Directory "/var/*/html/">
+......
+</Directory>
+<FilesMatch \.(gif|png)>
+  Deny from all  #拒绝访问图片
+</FilesMatch>
+----------------------acl-----------------------
+禁止 PC2 访问 PC1 ,允许其它主机pc3访问PC1
+  使用标准acl限制pc2
+R1(config)#access-list 1 deny 192.168.2.1 0.0.0.0
+或者使用
+R1(config)#access-list 1 deny host 192.168.2.1
+
+                        ##放行其他数据
+R1(config)#access-list 1 permit any
+----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================
+
+NAT网络地址转换
+
+前言：NAT主要是为了解决IP地址不够用的问题。
+
+-IP地址是本地地址或全局地址
+
+-本地IPV4地址在网络内部可见
+
+-全局IPv4地址在网络外部可见
+
+NAT类型：
+
+1.      静态NAT  只能把一个私网地址转换成一个公网地址
+
+2.      动态NAT  把一组私网地址转换成一组公网地址
+
+3.      PAT端口复用  把一组私网地址转换成一组公网地址，也可以把一组私网地址转换成一个公网地址
+
+一、静态NAT
+
+                                    
+
+建立内部本地地址与内部全局地址之间的静态转换   
+
+                                                      内部私网地址 外部公网地址
+
+RouterX(config)#ip nat inside sourse static local-ip global-ip
+
+R1(config)#ip nat inside sourse static 192.168.1.2 12.1.1.1
+
+将该接口标记为连接内部网络的接口                                  
+
+RouterX(config-if)#ipnat inside
+
+R1(config)#interfacef0/1
+
+R1(config-if)#ip natinside                                    
+
+将该接口标记为连接外部网络的接口
+
+RouterX(config-if)#ip nat outside
+
+R1(config)#interfacef0/0
+
+R1(config-if)#ip nat outside
+
+显示活动的转换
+
+RouterX#show ip nattranslations
+   outside
+
+
+inside
+
+
+
+Inside global   要接入内网的公网地址
+
+Inside local    要接入外网的内部私网地址
+
+Outside local   外部服务器本地地址
+
+Outside global  外部服务器公网地址
+
+二、动态NAT
+
+定义可根据需要进行分配的全局地址池
+
+RouterX(config)#ipnat pool name start-ip end-ip {netmask netmask|prefix-length prefix-length}
+
+定义允许那些要被转换的内部本地地址的标准IP ACL
+
+RouterX(config)#access-list access-list-number permit sourse[source-wildcard]
+
+建立动态源转换，指定上一步定义的ACL
+
+RouterX(config)#ip nat inside source list access-list-number pool name
+
+显示活动的转换
+
+RouterX#show ip nattranslations
+
+ 
+
+For example:
+
+首先用局域网的访问控制列表来抓局域网的私网地址：
+
+R1(config)#access-list1 permit 192.168.1.0 0.0.0.255
+
+然后，用动态NAT建立一个公网的IP地址池：
+
+R1(config)#ip natpool net-208 171.69.233.209 171.69.233.222 netmask 255.255.255.240
+
+然后让访问控制列表抓来的这些地址映射到先前建立好的地址池里面去：
+
+RouterX(config)#ip nat insidesource list 1 pool net-208
+
+                                                 访问控制列表1 地址池net-208
+但是这里注意看访问控制列表1里面的地址有254个地址，而公网的地址只有222-209=13个，也就是说如果有254台电脑想要上网，但是只能用这13个公网地址上网。那么就会出现一种情况即：这254台电脑的前13台电脑可以上网，也就是254个地址的前13个地址可以上网，当其他的电脑想要上网的时候，除非前面的13台电脑里面的某台电脑不上网了，那么后面的电脑才会被允许进行NAT地址转换上网。这样很多人还是上不了网。
+
+三、PAT配置过载，端口复用
+
+
+
+
+通过端口号来判断从公网上面发回来的数据包该发给谁。
+
+For example：
+
+首先用局域网的访问控制列表来抓局域网的私网地址：
+
+R1(config)#access-list1 permit 192.168.1.0 0.0.0.255
+
+然后，建立一个地址池：
+
+如果公网的地址只有一个，且配置在了边界路由的出端口上，那么这里做NAT地址转换的时候可以将POOL的地址池名称直接改换成端口就可以了，即：R1(config)#ip nat inside source list 1  interface f0/0 overload
+R1(config)#ip nat pool cisco 12.1.1.112.1.1.2 netmask 255.255.255.0
+到这里进行IP地址映射且加上一个端口复用的参数overload：
+
+R1(config)#ip nat inside source list 1 pool cisco overload            
+
+然后指定端口的inside和outside：
+
+R1(config)#interfacef0/0
+
+R1(config-if)#ip natoutside
+
+R1(config)#interfacef0/1
+
+R1(config-if)#ip natinside
+
+最后开启debug进行验证：
+
+R1#debug ip nat
+
+然后用192.168.1.2ping一下192.168.2.2
+
+最后关闭debug信息：
+
+R1#undebug all
+
+关闭nat排错功能
+R#undebug ip nat 
+IP NAT debugging is off
+

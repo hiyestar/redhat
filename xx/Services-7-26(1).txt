@@ -1,0 +1,470 @@
+﻿#######################################################
+环境准备：检查Yum是否可用
+
+虚拟机A：
+[root@svr7 ~]# yum clean all    #清空Yum缓存
+[root@svr7 ~]# yum repolist 
+
+虚拟机B： 
+[root@pc207 ~]# yum clean all   #清空Yum缓存
+[root@pc207 ~]# yum repolist  
+
+####################################################
+日志管理
+
+• 常见的日志文件
+主要用途
+  /var/log/messages 记录内核消息、各种服务的公共消息
+  /var/log/dmesg    记录系统启动过程的各种消息
+  /var/log/cron     记录与cron计划任务相关的消息
+  /var/log/maillog  记录邮件收发相关的消息
+  /var/log/secure   记录与访问限制相关的安全消息
+
+• 通用分析工具
+– tail、tailf、less、grep等文本浏览/检索命令
+– awk、sed等格式化过滤工具
+
+  tailf：实时跟踪日志消息
+
+
+
+用户登录分析
+• users、who、w 命令
+– 查看已登录的用户信息,详细度不同
+
+• last、lastb 命令
+– 查看最近登录成功/失败的用户信息
+
+[root@svr7 ~]# users
+[root@svr7 ~]# who
+[root@svr7 ~]# w
+
+[root@svr7 ~]# last       #登陆成功用户的信息
+[root@svr7 ~]# lastb      #登陆失败用户的信息
+
+
+
+Linux内核定义的事件紧急程度
+– 分为 0~7 共8种优先级别
+– 其数值越小,表示对应事件越紧急/重要
+
+  0  EMERG（紧急）	     会导致主机系统不可用的情况
+  1  ALERT（警告）	     必须马上采取措施解决的问题
+  2  CRIT（严重）	             比较严重的情况
+  3  ERR（错误）	             运行出现错误
+  4  WARNING（提醒）         可能会影响系统功能的事件
+  5  NOTICE（注意）           不会影响系统但值得注意
+  6  INFO（信息）	             一般信息
+  7  DEBUG（调试）	    程序或系统调试信息等
+
+
+使用journalctl工具
+• 提取由 systemd-journal 服务搜集的日志
+– 主要包括内核/系统日志、服务日志
+
+• 常见用法
+– journalctl -u 服务名  
+– journalctl | grep 关键词
+– journalctl -u 服务名    [-p 优先级]
+– journalctl -n 消息条数
+– journalctl --since="yyyy-mm-dd HH:MM:SS" --
+until="yyyy-mm-dd HH:MM:SS"
+
+[root@svr7 ~]# yum -y install httpd
+[root@svr7 ~]# systemctl restart httpd
+
+[root@svr7 ~]# journalctl -u httpd
+
+#####################################################
+systemctl服务管理
+
+systemd介绍
+• 一个更高效的系统&服务管理器
+– 开机服务并行启动,各系统服务间的精确依赖
+– 配置目录:/etc/systemd/system/
+– 服务目录:/lib/systemd/system/
+– 主要管理工具:systemctl
+
+服务的管理
+
+  systemctl start   服务名         #启动服务
+  systemctl stop    服务名         #停止服务
+  systemctl restart 服务名         #重起服务
+  systemctl status  服务名         #查看服务当前状态
+
+  systemctl enable   服务名        #设置开机自起动
+  systemctl disable  服务名        #设置开机不自起
+  systemctl is-enabled  服务名  #查看服务器是否随机自启动
+
+运行模式的管理（运行级别）
+
+ RHEL6：
+            0 : 关机         
+            1 : 单用户模式（破解密码模式）   
+	    2：字符界面（不支持网络）  
+	    3：字符界面（支持网络） 
+	    4：无定义
+	    5：图形界面       
+	    6：重起   
+  
+     切换运行级别的命令：init 
+
+ RHEL7:运行模式
+
+   multi-user.target : 字符模式
+   graphical.target ：图形模式
+
+修改默认运行模式
+[root@svr7 ~]# systemctl set-default graphical.target
+查看默认运行模式
+[root@svr7 ~]# systemctl get-default 
+[root@svr7 ~]# reboot
+
+当前直接切换成字符模式
+[root@svr7 ~]# systemctl isolate multi-user.target
+当前直接切换成图形模式
+[root@svr7 ~]# systemctl isolate graphical.target 
+
+######################################################
+
+PATH变量应用:提供命令搜寻路径
+
+  系统环境变量：由系统定义完成且赋值完成
+
+[root@svr7 ~]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@svr7 ~]# vim /opt/hello.sh 
+#!/bin/bash
+echo  hello world
+
+[root@svr7 ~]# /opt/hello.sh
+[root@svr7 ~]# hello.sh   #运行失败
+    
+[root@svr7 ~]# cp  /opt/hello.sh  /usr/bin
+[root@svr7 ~]# hello.sh   #运行成功
+
+#######################################################
+
+
+
+各种文件传输服务的适用性
+  samba ： Windows与Linux，可以支持挂载
+
+  nfs  ： Linux与Linux，可以支持挂载
+  
+  ftp  :  兼容性强，构建简单
+ 
+  tftp ： 简单数据传输，网络装机
+ 
+  http ： 提供页面，用域名访问用户体验度好
+
+  scp  ： Linux与Linux，较少的文件进行传输
+
+
+##################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

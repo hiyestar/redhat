@@ -1,0 +1,176 @@
+"Open Source" is a good mechanism to develop programs.
+apple is my favorite food.
+Football game is not use feet only.
+t.................
+google is the best tools for search keyword.
+goooooogle yes!
+go! go! Let's go.
+# I am VBird
+===============zili.txt===================
+[root@svr7 shell]# cat zili.txt 
+"Open Source" is a good mechanism to develop programs.
+apple is my favorite food.
+...............
+      ###grep  -n 显示 匹配结果 所在行号
+[root@svr7 shell]# grep -n 'the' zili.txt | head -2
+8:I can't finish the test.
+12:the symbol '*' is represented as start.
+
+                           过滤下载文件中不包含 the 关键字 【-v】
+[root@svr7 shell]# grep -vn 'the' zili.txt | head -2
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+               
+                           过滤下载文件中不论大小写 the 关键字【-i]
+[root@svr7 shell]# grep -in 'the' zili.txt | tail -2
+16:The world <Happy> is the same with "glad".
+18:google is the best tools for search keyword.
+[root@svr7 shell]# mv zili.txt  zi.txt
+[root@svr7 shell]# head -1 zi.txt
+"Open Source" is a good mechanism to develop programs.
+
+                    过滤 test 或 taste 这两个单字
+[root@svr7 shell]# grep -n 't[ae]st' zi.txt
+8:I can't finish the test.
+9:Oh! The soup taste good.
+                                            过滤有 oo 的字符行
+[root@svr7 shell]# grep -n 'oo' zi.txt | head -1
+1:"Open Source" is a good mechanism to develop programs.
+
+                             #过滤不想要 oo 前面有 g 的字符行
+[root@svr7 shell]# grep -n '[^g]oo' zi.txt 
+2:apple is my favorite food.
+3:Football game is not use feet only.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+                              过滤 oo 前面不想有小写字
+[root@svr7 shell]# grep -n '[^a-z]oo' zi.txt 
+3:Football game is not use feet only.
+                                     过滤 oo 前面不想有小写字
+[root@svr7 shell]# grep -n '[^[:lower:]]oo' zi.txt 
+3:Football game is not use feet only.
+
+过滤有数字的那一行
+[root@svr7 shell]# grep -n '[0-9]' zi.txt
+5:However, this dress is about $ 3183 dollars.
+15:You are the best is mean you are the no. 1.
+                   过滤有数字的那一行
+[root@svr7 shell]# grep -n '[[:digit:]]' zi.txt 
+5:However, this dress is about $ 3183 dollars.
+15:You are the best is mean you are the no. 1.
+
+
+过滤以 the 开头的
+[root@svr7 shell]# grep -n '^the' zi.txt 
+12:the symbol '*' is represented as start.
+
+过滤以小写字母开头的
+[root@svr7 shell]# grep -n '^[a-z]' zi.txt | head -2
+2:apple is my favorite food.
+4:this dress doesn't fit me.
+                            过滤以小写字母开头的
+[root@svr7 shell]# grep -n '^[[:lower:]]' zi.txt | head -2
+2:apple is my favorite food.
+4:this dress doesn't fit me.
+
+过滤开头不是英文字母
+[root@svr7 shell]# grep -n '^[^a-zA-Z]' zi.txt
+1:"Open Source" is a good mechanism to develop programs.
+21:# I am VBird
+                       过滤开头不是英文字母
+[root@svr7 shell]# grep -n '^[^[:alpha:]]' zi.txt 
+1:"Open Source" is a good mechanism to develop programs.
+21:# I am VBird
+
+过滤行尾结束为小数点.那一行
+[root@svr7 shell]# grep -n '\.$' zi.txt | tail -2
+18:google is the best tools for search keyword.
+20:go! go! Let's go.
+
+过滤空白行
+[root@svr7 shell]# grep -n '^$' zi.txt 
+22:
+
+过滤出 g??d 的字串
+[root@svr7 shell]# grep -n 'g..g' zi.txt
+18:google is the best tools for search keyword.
+
+       过滤两个 o 以上的字串(可以不连续)
+[root@svr7 shell]# grep -n 'ooo*' zi.txt | head -3
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+3:Football game is not use feet only.
+
+   过滤 连续 两个 o 以上 的字串
+[root@svr7 shell]# grep -En '(o){3,}' zi.txt
+19:goooooogle yes!
+
+过滤 g 开头和 g 结尾但是两个 g 之间仅存在至少一个 o
+[root@svr7 shell]# grep -n 'go*g' zi.txt 
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+
+过滤任意数字的行
+[root@svr7 shell]# grep  '[0-9][0-9]*' zi.txt
+However, this dress is about $ 3183 dollars.
+You are the best is mean you are the no. 1.
+
+过滤两个 o 的字串
+[root@svr7 shell]# grep -n 'o\{2\}' zi.txt | head -2
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+
+过滤 g 后面接 2 到 5 个 o,然后在接一个 g 的字串
+[root@svr7 shell]# grep -n  'go\{2,5\}g' zi.txt 
+18:google is the best tools for search keyword.
+
+过滤 g 后面接 2 个以上 o 的
+[root@svr7 shell]# grep  -n 'go\{2,\}' zi.txt 
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+                     过滤 g 后面接 2 个以上 o 的
+[root@svr7 shell]# grep -nE 'g(o){2,}' zi.txt
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+
+[root@pc207 shell]# var1=120;var2=$var1+20;echo $var2;
+120+20
+[root@pc207 shell]# echo $[var2+20];echo $var2;
+160
+120+20
+使用grep -E 与 使用egrep命令完全等效，推荐使用后者，
+   特别是涉及到复杂的正则表达式的时候。
+[root@pc207 shell]# grep -E '^root|^bin' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+在grep检索式同时组合多个条件，比如输出以“root”或者以“bin”开头的行，
+这时候（“或者| ”必须转义为“\|” )
+[root@pc207 shell]# grep '^root\|^bin' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+使用grep -E或egrep命令，可支持扩展正则匹配模式，
+ 能够自动识别 |、{ 等正则表达式中的特殊字符，用起来更加方便
+[root@pc207 shell]# egrep '^root|^bin' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+[root@pc207 shell]# egrep "\<halt\>" /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+[root@pc207 shell]# egrep '\<halt\>' /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+   
+[root@pc207 shell]# egrep '\bhalt\b' /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+[root@pc207 shell]# egrep "\bhalt\b" /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+
+
+
+
+

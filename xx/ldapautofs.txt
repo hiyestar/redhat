@@ -1,0 +1,501 @@
+[root@server0 ~]# systemctl is-active  sshd
+active
+[root@room11pc13 ~]# systemctl is-active sshd
+active
+[root@server0 ~]# hostnamectl set-hostname server0.example.com
+[root@server0 ~]# hostnamectl set-hostname server0.example.com
+[root@server0 ~]# which hostnamectl 
+/usr/bin/hostnamectl
+
+[root@server0 ~]# ssh ldapuser0@server0
+
+[root@server0 ~]# yum install -y sssd
+[root@server0 ~]# rpm -q sssd
+sssd-1.11.2-65.el7.x86_64
+[root@server0 ~]# getenforce
+Enforcing
+[root@server0 ~]# LANG= authconfig-tui
+authconfig-tui - (c) 1999-2005 Red Hat, Inc.
+    ┌────────────────┤ Authentication Configuration ├─────────────────┐
+    │                                                                 │ 
+    │  User Information        Authentication                         │ 
+    │  [ ] Cache Information   [ ] Use MD5 Passwords                  │ 
+    │  [*] Use LDAP            [*] Use Shadow Passwords               │ 
+    │  [ ] Use NIS             [*] Use LDAP Authentication            │ 
+    │  [ ] Use IPAv2           [ ] Use Kerberos                       │ 
+    │  [ ] Use Winbind         [ ] Use Fingerprint reader             │ 
+    │                          [ ] Use Winbind Authentication         │ 
+    │                          [*] Local authorization is sufficient  │ 
+    │                                                                 │ 
+    │            ┌────────┐                      ┌──────┐             │ 
+    │            │ Cancel │                      │ Next │             │ 
+    │            └────────┘                      └──────┘             │ 
+    │                                                                 │ 
+    │                                                                 │ 
+    └─────────────────────────------------------------------------─────┘ 
+ <Tab                                                                scr
+
+authconfig-tui - (c) 1999-2005 Red Hat, Inc.
+    
+    
+           ┌─────────────────┤ LDAP Settings ├─────────────────┐
+           │                                                   │ 
+           │          [*] Use TLS                              │ 
+           │  Server: ldap://classroom.example.com/___________ │ 
+           │ Base DN: dc=example,dc=com_______________________ │ 
+           │                                                   │ 
+           │         ┌──────┐                  ┌────┐          │ 
+           │         │ Back │                  │ Ok │          │ 
+           │         └──────┘                  └────┘          │ 
+           │                                                   │ 
+           │                                                   │ 
+           └──────────────────────────────────┘
+    
+ <Tab>/<Alt-Tab> between elements   |   <Space> selects   |  <F12> next scr
+
+    
+    
+              ┌────────────────┤ Warning ├─────────────────┐
+              │                                            │ 
+              │ To connect to a LDAP server with TLS       │ 
+              │ protocol enabled you need a CA certificate │ 
+              │ which signed your server's certificate.    │ 
+              │ Copy the certificate in the PEM format to  │ 
+              │ the '/etc/openldap/cacerts' directory.     │ 
+              │ Then press OK.                             │ 
+              │                                            │ 
+              │                  ┌────┐                    │ 
+              │                  │ Ok │                    │ 
+              │                  └────┘                    │ 
+              │                                            │ 
+              │                                            │ 
+              └───────────────────────────────┘ 
+ <Tab>/<Alt-Tab                                              <F12> next scr
+
+[root@server0 ~]# cd  /etc/openldap/cacerts
+[root@server0 cacerts]# ls /etc/openldap/cacerts
+[root@server0 cacerts]# wget http://classroom.example.com/pub/example-ca.crt
+[root@server0 ~]# ls /etc/openldap/cacerts/
+d5912a02.0  example-ca.crt
+[root@server0 ~]# LANG= authconfig-tui   ----再次检查语法是否正确
+
+[root@server0 ~]# systemctl restart sssd
+[root@server0 ~]# systemctl enable  sssd
+[root@server0 ~]# systemctl is-enabled sssd
+enabled
+[root@server0 ~]# id ldapuser0
+uid=1700(ldapuser0) gid=1700(ldapuser0) 组=1700(ldapuser0)
+
+[root@server0 ~]# showmount -e  classroom.example.com 
+Export list for classroom.example.com:
+/home/guests 172.25.0.0/255.255.0.0
+[root@server0 ~]# mkdir /home/guests
+
+[root@server0 ~]# ls /home/guests/
+[root@server0 ~]# mount classroom.example.com:/home/guests /home/guests
+[root@server0 ~]# ls /home/guests/
+ldapuser0   ldapuser11  ldapuser14  ldapuser17  ldapuser2   ldapuser4  ldapuser7
+[root@server0 ~]# umount /home/guests/
+[root@server0 ~]# ls /home/guests/
+
+[root@server0 ~]# yum install -y autofs    ###########
+
+[root@server0 ~]# rpm -q autofs
+autofs-5.0.7-40.el7.x86_64
+
+[root@server0 ~]# vim /etc/auto.
+auto.master    auto.misc      auto.smb       
+auto.master.d/ auto.net       
+[root@server0 ~]# vim /etc/auto.master    ##############
+[root@server0 ~]# head -8 /etc/auto.master | tail -2
+/misc	/etc/auto.misc
+/home/guests/  /etc/auto.guests
+[root@server0 ~]# vim /etc/auto.guests   ##########3
+[root@server0 ~]# cat  /etc/auto.guests
+ldapuser0  -rw  classroom.example.com:/home/guests/ldapuser0
+
+[root@server0 ~]# ls /etc/auto.
+auto.guests    auto.master.d/ auto.net       
+auto.master    auto.misc      auto.smb       
+
+[root@server0 ~]# systemctl start autofs
+[root@server0 ~]# systemctl enable autofs.service 
+[root@server0 ~]# ls /home
+guests  student
+[root@server0 ~]# ls -ld /home
+drwxr-xr-x. 4 root root 33 7月  21 13:23 /home
+
+[root@server0 ~]# ls /home/guests/
+ls: 无法打开目录/home/guests/: 权限不够
+[root@server0 ~]# echo $USER
+root
+[root@server0 ~]# ls -ld /home/guests/
+drwx------. 5 ldapuser0 ldapuser0 104 7月  21 13:39 /home/guests/
+[root@server0 ~]# su  - ldapuser0  -c  'pwd'
+/home/guests/ldapuser0
+[root@server0 ~]# mount | grep ldapuser
+classroom.example.com:/home/guests/ldapuser0 on /home/guests type nfs4 (rw,relatime,vers=4.0,rsize=131072,wsize=131072,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=172.25.0.11,local_lock=none,addr=172.25.254.254)
+[root@server0 ~]# mount | grep ldapuser0
+classroom.example.com:/home/guests/ldapuser0 on /home/guests type nfs4 (rw,relatime,vers=4.0,rsize=131072,wsize=131072,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=172.25.0.11,local_lock=none,addr=172.25.254.254)
+[root@server0 ~]# su - ldapuser0
+上一次登录：六 7月 21 13:42:03 CST 2018pts/1 上
+-bash-4.2$ ls /home
+guests  student
+-bash-4.2$ ls /home/guests/
+ldapuser0
+-bash-4.2$ echo 123 ldapuser0  > /home/guests/ldapuser0/user0.txt
+-bash-4.2$ cat /home/guests/ldapuser0/user0.txt
+123 ldapuser0
+-bash-4.2$ exit
+logout
+[root@server0 ~]# mount | grep ldapuser
+classroom.example.com:/home/guests/ldapuser1 on /home/guests type nfs4 (rw,relatime,vers=4.0,rsize=131072,wsize=131072,namlen=255,hard,proto=tcp,port=0,timeo=600,retrans=2,sec=sys,clientaddr=172.25.0.11,local_lock=none,addr=172.25.254.254)
+
+
+[root@server0 ~]# vim /etc/auto.master
+[root@server0 ~]# mv /etc/longge /etc/auto.guests
+[root@server0 ~]# !sys
+systemctl restart autofs
+[root@server0 ~]# su - ldapuser3
+[ldapuser3@server0 ~]$ exit
+[root@server0 ~]# ls -l /etc/auto.guests 
+-rw-r--r--. 1 root root 236 7月  21 14:37 /etc/auto.guests
+[root@server0 ~]# cat /etc/auto.guests
+ldapuser0 -rw classroom.example.com:/home/guests/ldapuser0
+ldapuser1 -rw classroom.example.com:/home/guests/ldapuser1
+ldapuser2 -rw classroom.example.com:/home/guests/ldapuser2
+ldapuser3 -rw classroom.example.com:/home/guests/ldapuser3
+[root@server0 ~]# su - ldapuser0
+上一次登录：六 7月 21 14:36:46 CST 2018pts/1 上
+[ldapuser0@server0 ~]$ exit
+logout
+[root@server0 ~]# ls -ld /home/guests/
+drwxr-xr-x. 3 root root 0 7月  21 14:48 /home/guests/
+[root@server0 ~]# vim  /etc/auto.master
+[root@server0 ~]# head -14 /etc/auto.master | tail -2
+/home/guests /etc/auto.guests
+/net	-hosts
+
+
+
+[root@server0 ~]# ssh ldapuser0@server0
+
+ldapuser0@server0's password: password
+Last login: Sat Jul 21 14:48:42 2018
+[ldapuser0@server0 ~]$ echo $USER
+ldapuser0
+
+-------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+[root@server0 ~]# yum install -y postfix
+
+[root@server0 ~]# vim /etc/postfix/main.cf 
+318 relayhost = [smtp0.example.com]    ----classroom
+116 inet_interfaces = loopback-only     -----#锁定本机
+100 myorigin = desktop0.example.com   ------
+267 mynetworks = 127.0.0.0/8  [::1]/128  -----#锁定本机
+164 mydestination = null
+165 local_transport =  error:local delivery disabled #####
+
+[root@server0 ~]# systemctl start postfix.service 
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# echo 'Mail Data.' | mail -s 'Test1' student
+[root@server0 ~]# echo $?
+0
+[root@desktop0 ~]# lab smtp-nullclient setup
+Setting up desktop machine... 
+Setting up dovecot... 
+Generating new dovecot certificate... 
+Setting up postfix... Generating new postfix certificates... 
+Setting up firewall... 
+Setting up user student... 
+Installing httpd to share cert...
+
+[root@desktop0 ~]# mail -u student
+Heirloom Mail version 12.5 7/5/10.  Type ? for help.
+"/var/mail/student": 6 messages 6 new
+>N  1 root                  Sat Jul 21 16:55  21/834   "Test1"
+ N  2 root                  Sat Jul 21 16:55  21/834   "Test1"
+ N  3 root                  Sat Jul 21 16:55  21/834   "Test1"
+ N  4 root                  Sat Jul 21 16:55  21/834   "Test1"
+ N  5 root                  Sat Jul 21 16:55  21/834   "Test1"
+ N  6 root                  Sat Jul 21 18:07  21/834   "Test1"
+& 1
+Message  1:
+
+
+--------------------------------------------
+2 配置 SSH 访问-----DenyUsers *@*.my133t.org 
+
+[root@server0 ~]# vim /etc/ssh/sshd_config 
+157 #       ForceCommand cvs server
+158 DenyUsers *@*.my133t.org 
+[root@server0 ~]# tail -1 /etc/ssh/sshd_config
+DenyUsers *@*.my133t.org 
+
+---------------------------------------或者是*@172.34.0.*
+[root@server0 ~]# vim /etc/ssh/sshd_config 
+[root@server0 ~]# tail -1 /etc/ssh/sshd_config
+DenyUsers  *@172.34.0.*
+------------或者 *@*.my133t.org
+[root@desktop0 ~]# tail -1 /etc/ssh/sshd_config 
+DenyUsers *@172.34.0.*
+
+[root@server0 ~]# systemctl start sshd
+[root@server0 ~]# systemctl enable sshd
+
+[root@desktop0 ~]# vim /etc/ssh/sshd_config 
+[root@desktop0 ~]# tail -1 /etc/ssh/sshd_config 
+DenyUsers *@172.34.0.*
+
+
+[root@desktop0 ~]# vim /etc/bashrc
+[root@desktop0 ~]# head  -2 /etc/bashrc
+# /etc/bashrc
+alias qstat='/bin/ps -Ao pid,tt,user,fname,rsz'
+[root@desktop0 ~]# source /etc/bashrc 
+[root@desktop0 ~]# qstat
+  PID TT       USER     COMMAND    RSZ
+    1 ?        root     systemd   6488
+    2 ?        root     kthreadd     0
+    3 ?        root     ksoftirq     0
+    5 ?        root     kworker/     0
+
+[root@server0 ~]# vim /etc/bashrc 
+[root@server0 ~]# head -2 /etc/bashrc
+# /etc/bashrc
+alias qstat='/bin/ps -Ao pid,tt,user,fname,rsz'
+[root@server0 ~]# source  /etc/bashrc
+[root@server0 ~]# qstat | head -5
+  PID TT       USER     COMMAND    RSZ
+    1 ?        root     systemd   6804
+    2 ?        root     kthreadd     0
+    3 ?        root     ksoftirq     0
+    5 ?        root     kworker/     0
+
+[root@server0 ~]# yum install -y httpd
+
+[root@server0 ~]# firewall-cmd --set-default-zone=trusted 
+success
+[root@server0 ~]# firewall-cmd --permanent --add-source=172.34.0.0/24  --zone=block
+success
+[root@server0 ~]# firewall-cmd --permanent --zone=trusted  --add-forward-port=port=5423:proto=tcp:toport=80
+success
+[root@server0 ~]# firewall-cmd --reload
+success
+[root@server0 ~]# echo '<marquee><font color=red>server0.example</font></marquee>' > /var/www/html/index.html
+[root@server0 ~]# ls /var/www/html/
+index.html
+[root@server0 ~]# systemctl start httpd
+[root@server0 ~]# systemctl enable httpd
+
+[root@desktop0 ~]# yum install -y elinks
+[root@desktop0 ~]# elinks -dump http://server0.example.com:80
+   server0.example
+[root@desktop0 ~]# elinks -dump http://server0.example.com:5423
+   server0.example
+
+
+
+----------------------------samba--------------
+
+[root@server0 ~]# mkdir /common
+[root@server0 ~]# id harry
+
+[root@server0 ~]# grep harry /etc/passwd
+harry:x:1002:1003::/home/harry:/bin/bash
+[root@server0 ~]# pdbedit -a harry
+new password:
+
+
+[root@server0 ~]# setsebool -P samba_export_all_ro on
+[root@server0 ~]# setsebool -P samba_export_all_rw on
+[root@server0 ~]# head -89 /etc/samba/smb.conf | tail -2
+#
+	workgroup = STAFF
+[root@server0 ~]# vim /etc/samba/smb.conf 
+[root@server0 ~]# tail -3 /etc/samba/smb.conf 
+[common]
+path = /common
+hosts allow = 172.25.0.0/24
+
+[root@server0 ~]# mkdir /devops
+[root@server0 ~]# id kenji
+id: kenji: no such user
+[root@server0 ~]# useradd kenji ; pdbedit -a kenji
+new password:
+retype new password:
+Unix username:        kenji
+NT username:          
+
+[root@server0 ~]# setfacl -m u:chihiro:rwx /devops
+
+
+[root@server0 ~]# ls -ld /devops
+drwxrwxr-x+ 2 root root 6 7月  22 16:47 /devops
+[root@server0 ~]# vim /etc/samba/smb.conf
+[root@server0 ~]# tail -7 /etc/samba/smb.conf
+[common]
+path = /common
+hosts allow = 172.25.0.0/24
+[devops]
+path = /devops
+hosts allow = 172.25.0.0/24
+write list = chihiro
+[root@server0 ~]# systemctl start smb
+[root@server0 ~]# systemctl enable smb
+
+[root@server0 ~]# echo server0.example.com create > /devops/serv.txt
+[root@server0 ~]# ls -ld /devops/
+drwxrwxr-x+ 2 root root 21 7月  22 17:13 /devops/
+[root@server0 ~]# ls -l /devops/serv.txt 
+-rw-r--r--. 1 root root 27 7月  22 17:13 /devops/serv.txt
+[root@server0 ~]# id chihiro
+uid=3458(chihiro) gid=3458(chihiro) 组=3458(chihiro)
+---------------------------------------------------desktop0.example.com---------
+[root@desktop0 ~]# yum install samba-client.x86_64  cifs-utils.x86_64 -y
+
+
+[root@desktop0 ~]# mkdir /mnt/dev
+
+[root@desktop0 ~]# smbclient -L server0.example.com
+Enter root's password: 
+
+[root@desktop0 ~]# tail -1 /etc/fstab
+//172.25.0.11/devops  /mnt/dev  cifs   username=kenji,password=atenorth,multiuser,sec=ntlmssp,_netdev    0    0
+[root@desktop0 ~]# mount -a
+[root@desktop0 ~]# echo $?
+0
+
+[root@desktop0 ~]# ls /mnt/dev/
+serv.txt
+[root@desktop0 ~]# cat /mnt/dev/serv.txt 
+server0.example.com create
+[root@desktop0 ~]# touch /mnt/dev/desk.txt
+touch: 无法创建"/mnt/dev/desk.txt": 权限不够
+
+[root@desktop0 ~]# su - student 
+[student@desktop0 ~]$ cifscreds add -u chihiro server0.example.com
+Password: 
+
+
+[student@desktop0 ~]$ cat /mnt/dev/serv.txt 
+server0.example.com create
+
+
+[student@desktop0 ~]$ echo 123 >> /mnt/dev/serv.txt
+-bash: /mnt/dev/serv.txt: Permission denied
+[student@desktop0 ~]$ echo 123 > /mnt/dev/serv2.txt
+[student@desktop0 ~]$ ls -l /mnt/dev/serv2.txt
+-rw-r--r--. 1 3458 3458 4 Jul 22 17:21 /mnt/dev/serv2.txt
+[student@desktop0 ~]$ ls -l /mnt/dev/serv.txt
+-rw-r--r--. 1 root root 27 Jul 22 17:13 /mnt/dev/serv.txt
+
+-------------------------------------------------------
+
+
+================nfs------------------------
+[root@server0 ~]# mkdir -p /public   /protected/project
+[root@server0 ~]# chown ldapuser0 /protected/project
+[root@server0 ~]# id ldapuser0
+uid=1700(ldapuser0) gid=1700(ldapuser0) 组=1700(ldapuser0)
+[root@server0 ~]# ls -ld /protected/project
+drwxr-xr-x. 2 ldapuser0 root 6 7月  22 17:31 /protected/project
+
+[root@server0 ~]# ls /etc/krb5.conf 
+/etc/krb5.conf
+
+[root@server0 ~]# lab nfskrb5 setup   [练习环境:lab  nfskrb5  setup]
+Installing packages ...
+Updating authconfig for ldap & krb5 ...
+SUCCESS
+[root@server0 ~]# wget http://classroom.example.com/pub/keytabs/server0.keytab -O /etc/krb5.keytab
+[root@server0 ~]# ls /etc/krb5.
+krb5.conf    krb5.keytab 
+
+[root@server0 ~]# vim /etc/sysconfig/nfs
+ 13 RPCNFSDARGS="-V 4"     //若未明确要求版本,此操作可不做
+
+[root@server0 ~]# vim /etc/sysconfig/nfs 
+[root@server0 ~]# head -14 /etc/sysconfig/nfs | tail -3
+# Optional arguments passed to rpc.nfsd. See rpc.nfsd(8)
+RPCNFSDARGS=""
+# Number of nfs server processes to be started.
+
+[root@server0 ~]# systemctl start nfs-secure-server nfs-server  //启用两个系统服务
+[root@server0 ~]# systemctl enable nfs-secure-server nfs-server.service 
+
+
+[root@desktop0 ~]# lab nfskrb5 setup   [练习环境:lab  nfskrb5  setup]
+Installing packages ...
+Updating authconfig for ldap & krb5 ...
+SUCCESS
+[root@desktop0 ~]# mkdir -p /mnt/nfsmount /mnt/nfssecure
+[root@desktop0 ~]# wget http://classroom.example.com/pub/keytabs/desktop0.keytab -O /etc/krb5.keytab
+[root@desktop0 ~]# ls /etc/krb5.
+krb5.conf    krb5.keytab 
+
+
+
+考试说明
+
+您在考试过程中将使用的两个系统的信息如下：
+ * server0.example.com(ServerX) 是一个主要的服务器
+ * desktop0.example.com(DesktopX)主要用作客户端
+两个系统的root密码为redhat
+系统的IP地址由DHCP提供，您可以视其正常，或者您可以按以下信息重新设置为静态IP：
+ * server0.example.com ：172.25.0.11
+ * desktop0.example.com ：172.25.0.10
+子网掩码为：255.255.255.0
+您的系统是DNS域 .example.com 的成员，所有在DNS域 .example.com 中的系统都在子网172.25.0.0/24中，同样在这个子网中的系统都在DNS域 .example.com 中。除非特别指明，所有要求配置的网络都必须能被 .example.com 域中的系统访问。
+classroom.example.com 提供了集中认证的服务域 .example.com，两个系统 server0 和 desktop0 已经预先配置成此域的客户端，此域提供了下列用户帐号（模拟环境酌情创建）：
+ * ldapuser0 （密码：kerberos)
+ * fleyd （密码：redhat)
+ * sergio （密码：redhat)
+ * krishna （密码：redhat)
+防火墙默认是打开的，在您认为是适当的时候可以关闭。其他的关于防火墙的设置可能在单独的要求中。
+
+您在考试中使用的Red Hat Enterprise Linux操作系统版本对应的分发包可以通过YUM在下面的链接中找到：http://content.example.com/rhel7.0/x86_64/dvd
+一部分要求包含了主机安全、确定您的对主机安全限制没有阻挡要求允许的主机或网络。虽然您正确配置了网络服务但本来允许访问的主机或网络被阻挡。这样也不会得分。
+您将会注意到一些要求明确不允许服务被域 my133t.org 访问，这个域的系统在 172.34.0.0/255.255.255.0 子网中，并且这些子网中的系统都属于域 my133t.org 。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

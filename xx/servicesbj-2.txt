@@ -1,0 +1,602 @@
+
+三个模式：插入模式；命令模式；末行模式
+插入模式：进行常规编辑
+命名模式：可以输入一些命令，比如查找，替换等等
+命令行模式：在vim最下端生成一个命令行
+
+1、导入一个文件
+键入冒号：进入末行格式
+命令：r 绝对路径/文件
+例如   :r !date   （执行一个命令）
+	:r !ls -l
+:r /root/桌面/lingxing.txt                /root/桌面/adminbj-5.txt
+
+2、替换
+:%s/old/new/g
+
+3另存为
+：w/test.bak 另存为
+
+4、查找（忽略大小写）
+/string
+：set ic 忽略大小写
+
+小写u撤销---命令模式下
+
+5、行号
+:set nu 设置行号
+:set nonu 取消行号
+
+6、删除
+X 删除光标所在处字符
+nx 删除n个字符
+
+7、代码注释及取消
+
+    按 Ctrl+v 切换到可视化模式；
+    移动光标(j 或 k)选中需要注释的行的开头；或者上下键盘；
+    按大写 I，然后输入注释符，如 #；
+    最后按 Esc。 
+取消注释：
+
+    按 Ctrl+v 切换到可视化模式；
+    按 j 或 k 选择要删除的注释符；
+    按 d 或 x 删除注释符
+
+小写u撤销---命令模式下
+[root@room11pc13 ~]# which rht-vmctl 
+/usr/local/bin/rht-vmctl
+[root@room11pc13 ~]# /usr/local/bin/rht-vmctl  reset classroom
+
+[root@room11pc13 ~]# systemctl get-default 
+graphical.target
+[root@room11pc13 ~]# systemctl set-default multi-user.target 
+
+#reboot
+[root@room11pc13 ~]# systemctl isolate multi-user.target 
+
+[root@svr7 ~]# systemctl isolate graphical.target 
+[root@svr7 ~]# systemctl get-default 
+multi-user.target
+2.当前切换到文本/图形模式
+# systemctl isolate multi-user.target   #切换到字符模式
+# systemctl isolate graphical.target    #切换到图形模式
+
+[root@desktop0 ~]# echo abc >> /mnt/smb/ser2.txt 
+-bash: /mnt/smb/ser2.txt: 权限不够
+[root@desktop0 ~]# cifscreds add -u harry 172.25.0.11
+You already have stashed credentials for 172.25.0.11 (172.25.0.11)
+If you want to update them use:
+	cifscreds update
+[root@desktop0 ~]# cifscreds update -u harry 172.25.0.11
+Password: 
+[root@desktop0 ~]# ls /mnt/smb/
+ser2.txt  ser.txt
+[root@desktop0 ~]# echo 123desk2 > /mnt/smb/desk.txt
+-bash: /mnt/smb/desk.txt: 权限不够
+
+
+域名注册
+新网http://xinnet.com
+万网        http://www.net.cn
+中国互联   http://hulian.top
+
+[root@svr7 ~]# rpm -q bind bind-chroot
+bind-9.9.4-50.el7.x86_64   域名服务包
+bind-chroot-9.9.4-50.el7.x86_64  --提供虚拟根支持(牢笼政策)
+
+            /etc/httpd/conf/httpd.conf
+		/etc/httpd/conf.d/*.conf
+主配置文件 /etc/named.conf  设置本机负责解析的域名 
+地址库文件:/var/named      所有的完整的主机名与IP对应的关系
+系统服务名named
+默认端口TCP/UDP 53
+[root@server0 ~]# nslookup server0.example.com
+Server:		172.25.254.254
+Address:	172.25.254.254#53
+Name:	server0.example.com
+Address: 172.25.0.11
+
+[root@svr7 ~]# cp /etc/named.conf /root/name.bak
+--------------------------2备份文件,修改主配置文件/etc/named.conf
+[root@svr7 ~]# vim /etc/named.conf
+[root@svr7 ~]# cat /etc/named.conf
+options {
+   directory "/var/named";
+};
+zone "tedu.cn" IN {   #指定本DNS服务器负责解析的域名
+	type master;    #指定本机是权威DNS服务器(主DNS)
+	file "tedu.cn.zone";  #指定地址库文件的名字
+};
+
+[root@svr7 ~]# ls -l /var/named/named.localhost
+-rw-r-----. 1 root named 152 6月  21 2007 /var/named/named.localhost
+[root@svr7 ~]# id named
+uid=25(named) gid=25(named) 组=25(named)
+[root@svr7 ~]# grep named /etc/passwd
+named:x:25:25:Named:/var/named:/sbin/nologin
+-----------------------------------------3建立地址库文件---保持属性不变
+[root@svr7 ~]# cp -pf /var/named/named.localhost /var/named/tedu.cn.zone
+[root@svr7 ~]# ls -l /var/named/tedu.cn.zone
+-rw-r-----. 1 root named 152 6月  21 2007 /var/named/tedu.cn.zone
+
+[root@svr7 ~]# vim /var/named/tedu.cn.zone 
+[root@svr7 ~]# cat /var/named/tedu.cn.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+tedu.cn.	NS	svr7    ---------------主机名svr7
+svr7		A	192.168.4.7
+www		A 	1.2.3.4
+ftp 		A	5.6.7.8
+[root@svr7 ~]# hostname
+svr7.tedu.cn
+
+[root@svr7 ~]# systemctl restart named
+
+[root@pc207 ~]# echo nameserver 192.168.4.7 > /etc/resolv.conf 
+[root@pc207 ~]# nslookup svr7.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	svr7.tedu.cn
+Address: 192.168.4.7
+
+[root@pc207 ~]# nslookup www.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	www.tedu.cn
+Address: 1.2.3.4
+
+[root@pc207 ~]# nslookup ftp.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	ftp.tedu.cn
+Address: 5.6.7.8
+
+[root@svr7 ~]# vim /etc/named.conf 
+[root@svr7 ~]# cat /etc/named.conf
+options {
+   directory "/var/named";
+};
+zone "tedu.cn" IN {
+	type master;
+	file "tedu.cn.zone";
+};
+zone "qq.com" IN {   #指定本DNS服务器负责解析的域名
+        type master;
+	file "qq.com.zone";
+};
+[root@svr7 ~]# cp -p /var/named/tedu.cn.zone  /var/named/qq.com.zone
+[root@svr7 ~]# vim /var/named/qq.com.zone
+[root@svr7 ~]# cat /var/named/qq.com.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr7
+svr7		A	192.168.4.7
+www		A 	1.2.30.40
+ftp 		A	5.6.70.80
+[root@svr7 ~]# systemctl restart named
+
+[root@pc207 ~]# nslookup ftp.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+Name:	ftp.tedu.cn
+Address: 5.6.7.8
+
+[root@pc207 ~]# nslookup ftp.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+Name:	ftp.qq.com
+Address: 5.6.70.80
+------------------------------------------------------------------
+[root@svr7 ~]# systemctl is-active named
+active
+[root@svr7 ~]# cat /var/named/qq.com.zone 
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr7
+svr7		A	192.168.4.7
+www		A 	1.2.30.40
+ftp 		A	5.6.70.80
+
+[root@svr7 ~]# cat /var/named/tedu.cn.zone 
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+tedu.cn.	NS	svr7
+svr7		A	192.168.4.7
+www		A 	1.2.3.4
+ftp 		A	5.6.7.8
+
+[root@svr7 ~]# cat /etc/named.conf 
+options {
+   directory "/var/named";
+};
+zone "tedu.cn" IN {
+	type master;
+	file "tedu.cn.zone";
+};
+zone "qq.com" IN {
+        type master;
+	file "qq.com.zone";
+};
+[root@svr7 ~]# 
+[root@pc207 ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+[root@room11pc13 ~]# virsh list | grep server
+ 10    server                         running
+
+[root@svr7 ~]# vim /var/named/qq.com.zone
+[root@svr7 ~]# cat /var/named/qq.com.zone 
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr7
+svr7		A	192.168.4.7
+www		A 	1.2.30.40
+ftp 		A	5.6.70.80
+wwwhhh		A   	50.68.7.8
+hhh		A	10.11.12.13
+*		A	10.11.12.13
+[root@svr7 ~]# systemctl restart named
+[root@pc207 ~]#  nslookup  hhh.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	hhh.qq.com
+Address: 10.11.12.13
+
+[root@pc207 ~]#  nslookup  hhxxxxh.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	hhxxxxh.qq.com
+Address: 10.11.12.13
+[root@svr7 ~]# vim /var/named/qq.com.zone
+[root@svr7 ~]# cat /var/named/qq.com.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr7
+svr7		A	192.168.4.7
+www		A 	1.2.30.40
+ftp 		A	5.6.70.80
+wwwhhh		A   	50.68.7.8
+hhh		A	10.11.12.13
+*		A	10.11.12.13
+qq.com.		A	192.168.4.7
+[root@svr7 ~]# systemctl restart named
+[root@pc207 ~]#  nslookup  qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	qq.com
+Address: 192.168.4.7
+-----------------------------
+[root@server0 ~]# nslookup server0.example.com
+Server:		172.25.254.254
+Address:	172.25.254.254#53
+
+Name:	server0.example.com
+Address: 172.25.0.11
+[root@server0 ~]# nslookup classroom.example.com
+Server:		172.25.254.254
+Address:	172.25.254.254#53
+
+Name:	classroom.example.com
+Address: 172.25.254.254
+---------------------------------------------------------
+[root@pc207 ~]# nslookup svr7.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	svr7.qq.com
+Address: 192.168.4.7
+
+[root@svr7 ~]# vim /var/named/qq.com.zone
+[root@svr7 ~]# systemctl restart named
+[root@svr7 ~]# cat /var/named/qq.com.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr7
+svr7		A	192.168.4.7
+www		A 	1.2.30.40
+ftp 		A	5.6.70.80
+wwwhhh		A   	50.68.7.8
+hhh		A	10.11.12.13
+*		A	10.11.12.13
+qq.com.		A	192.168.4.7
+$GENERATE  1-50  pc$  	A	192.168.10.$
+
+[root@pc207 ~]# nslookup pc50.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	pc50.qq.com
+Address: 192.168.10.50
+
+[root@svr7 ~]# vim /var/named/qq.com.zone
+[root@svr7 ~]# cat /var/named/qq.com.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr7
+svr7		A	192.168.4.7
+www		A 	1.2.30.40
+ftp 		A	5.6.70.80
+wwwhhh		A   	50.68.7.8
+hhh		A	10.11.12.13
+*		A	10.11.12.13
+qq.com.		A	192.168.4.7
+$GENERATE  1-50  pc$  	A	192.168.10.$
+tts		 CNAME 		ftp
+[root@svr7 ~]# systemctl restart named
+
+
+[root@pc207 ~]# nslookup tts.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+tts.qq.com	canonical name = ftp.qq.com.
+Name:	ftp.qq.com
+Address: 5.6.70.80
+[root@pc207 ~]# nslookup pc50.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	pc50.qq.com
+Address: 192.168.10.50
+
+
+[root@pc207 ~]# rpm -q bind bind-chroot 
+bind-9.9.4-50.el7.x86_64
+bind-chroot-9.9.4-50.el7.x86_64
+[root@pc207 ~]# cp /etc/named.conf /root/name.bak
+[root@pc207 ~]# vim /etc/named.conf 
+[root@pc207 ~]# cat /etc/named.conf 
+options {
+	directory 	"/var/named";
+};
+zone "bj.tedu.cn" IN {
+	type master;
+	file "bj.tedu.cn.zone";
+};
+
+
+[root@pc207 ~]# cp -p /var/named/named.localhost  /var/named/bj.tedu.cn.zone
+[root@pc207 ~]# vim /var/named/bj.tedu.cn.zone
+
+[root@pc207 ~]# cat /var/named/bj.tedu.cn.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+bj.tedu.cn.	NS	pc207
+pc207	A	192.168.4.207
+www	A	6.6.6.6
+bj.tedu.cn.	A	192.168.4.207
+[root@pc207 ~]# systemctl restart named
+[root@pc207 ~]# nslookup bj.tedu.cn 192.168.4.207
+Server:		192.168.4.207
+Address:	192.168.4.207#53
+
+Name:	bj.tedu.cn
+Address: 192.168.4.207
+
+[root@pc207 ~]# nslookup pc207.bj.tedu.cn 192.168.4.207
+Server:		192.168.4.207
+Address:	192.168.4.207#53
+
+Name:	pc207.bj.tedu.cn
+Address: 192.168.4.207
+
+[root@pc207 ~]# nslookup www.bj.tedu.cn 192.168.4.207
+Server:		192.168.4.207
+Address:	192.168.4.207#53
+
+Name:	www.bj.tedu.cn
+Address: 6.6.6.6
+
+[root@svr7 ~]# vim /var/named/tedu.cn.zone 
+[root@svr7 ~]# cat /var/named/tedu.cn.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+tedu.cn.	NS	svr7
+bj.tedu.cn.	NS	pc207     ------------子域名bj.tedu.cn.
+svr7		A	192.168.4.7
+pc207		A	192.168.4.207
+www		A 	1.2.3.4
+ftp 		A	5.6.7.8
+
+[root@svr7 ~]# systemctl restart named
+
+[root@pc207 ~]# nslookup www.bj.tedu.cn 
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Non-authoritative answer:
+Name:	www.bj.tedu.cn
+Address: 6.6.6.6
+
+[root@pc207 ~]# nslookup bj.tedu.cn 
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Non-authoritative answer:  用了默认递归查询recursion yes;
+Name:	bj.tedu.cn
+Address: 192.168.4.207
+
+[root@pc207 ~]# nslookup pc207.bj.tedu.cn 
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Non-authoritative answer:   
+Name:	pc207.bj.tedu.cn
+Address: 192.168.4.207
+
+[root@pc207 ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+[root@svr7 ~]# cat /etc/named.conf
+options {
+   directory "/var/named";
+};
+zone "tedu.cn" IN {   #指定本DNS服务器负责解析的域名
+	type master;    #指定本机是权威DNS服务器(主DNS)
+	file "tedu.cn.zone";  #指定地址库文件的名字
+};
+
+[root@svr7 ~]# vim /etc/named.conf 
+[root@svr7 ~]# cat /etc/named.conf
+options {
+   directory "/var/named";
+   recursion no;  -----禁止递归查询recursion no;
+};
+zone "tedu.cn" IN {
+	type master;
+	file "tedu.cn.zone";
+};
+zone "qq.com" IN {
+        type master;
+	file "qq.com.zone";
+};
+
+[root@svr7 ~]# systemctl restart named
+
+[root@pc207 ~]# nslookup pc207.bj.tedu.cn 
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+  
+Non-authoritative answer:     -----原因是禁用了递归查询recursion no;
+*** Can't find pc207.bj.tedu.cn: No answer
+
+-------------------------------------------------
+[root@svr7 ~]# vim /etc/hosts
+[root@svr7 ~]# cat /etc/hosts   ----1客户端查询/etc/hosts( DNS解析域名过程)
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.4.110  www.sina.com
+192.168.4.207  www.bj.tedu.cn
+
+[root@svr7 ~]# ping -c 1 www.bj.tedu.cn
+--- www.bj.tedu.cn ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.348/0.348/0.348/0.000 ms
+
+[root@svr7 ~]# ping -c 1  www.sina.com
+--- www.sina.com ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+总结:客户端DNS解析域名过程
+1.客户端查询/etc/hosts( DNS解析域名过程)
+2.客户端查询/etc/resolv.conf查看DNS服务器
+3.DNS服务器进行递归查询与迭代查询
+------------------------------
+缓存DNS
+[root@room11pc13 ~]# vim /etc/fstab 
+[root@room11pc13 ~]# tail -2 /etc/fstab
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+/var/lib/libvirt/images/iso/CentOS-7-x86_64-DVD-1708.iso  /var/ftp/centos7  iso9660  defaults 0  0
+[root@room11pc13 ~]# ls /var/ftp/
+centos7  pub  rhel7  share
+[root@room11pc13 ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel7.4
+baseurl=file:///var/ftp/rhel7
+gpgcheck=0
+enabled=1
+[root@room11pc13 ~]# cat /etc/yum.repos.d/centos7.repo
+[centos7]
+name=centos7
+baseurl=file:///var/ftp/centos7
+gpgcheck=0
+enabled=1
+[root@room11pc13 ~]# mount -a
+[root@room11pc13 ~]# ls /var/ftp/centos7
+CentOS_BuildTag  GPL       LiveOS    RPM-GPG-KEY-CentOS-7
+EFI              images    Packages  RPM-GPG-KEY-CentOS-Testing-7
+EULA             isolinux  repodata  TRANS.TBL
+
+
+[root@room11pc13 ~]# cat /etc/resolv.conf 
+# Generated by NetworkManager
+search tedu.cn
+nameserver 176.121.0.100
+[root@room11pc13 ~]# vim  /etc/named.conf
+[root@room11pc13 ~]# cat /etc/named.conf
+options {
+   directory "/var/named";
+   forwarders { 176.121.0.100; };
+};
+[root@room11pc13 ~]# rpm -q bind bind-chroot 
+bind-9.9.4-50.el7.x86_64
+bind-chroot-9.9.4-50.el7.x86_64
+[root@room11pc13 ~]# systemctl start named
+
+[root@pc207 ~]# nslookup www.taobao.com  192.168.4.254
+Server:		192.168.4.254
+Address:	192.168.4.254#53
+
+Non-authoritative answer:   -----原因是禁用了递归查询recursion no;
+www.taobao.com	canonical name = www.taobao.com.danuoyi.tbcache.com.
+Name:	www.taobao.com.danuoyi.tbcache.com
+Address: 220.170.91.114
+
+
+
+
+
+
+
+
+
+
+
+
+
+

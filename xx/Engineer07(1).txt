@@ -1,0 +1,692 @@
+﻿教学环境介绍
+[root@room9pc01 ~]# rht-vmctl reset classroom
+[root@room9pc01 ~]# rht-vmctl reset server
+[root@room9pc01 ~]# rht-vmctl reset desktop
+
+环境前提：
+修改两台虚拟机的防火墙：
+[root@server0 ~]# firewall-cmd --set-default-zone=trusted 
+
+[root@desktop0 ~]# firewall-cmd --set-default-zone=trusted 
+
+
+
+
+
+
+
+
+
+#######################################################
+HTTP服务基础
+
+• 基于 B/S (Browser/Server)架构的网页服务
+– 服务端提供网页
+– 浏览器下载并显示网页
+
+• Hyper Text Markup Language,超文本标记语言(html)
+• Hyper Text Transfer Protocol,超文本传输协议(http)
+
+
+– Listen:监听地址:端口(80)
+– ServerName:本站点注册的DNS名称(空缺)
+– DocumentRoot:网页根目录(/var/www/html)
+– DirectoryIndex:起始页/首页文件名(index.html)
+
+#################################################
+一、安全的Web服务器（https安全的超文本传输协议 默认端口 443）
+
+
+回顾虚拟Web主机：
+虚拟机Server0
+1.安装httpd软件
+
+# echo '<h1>NSD1806 Web1' > /var/www/html/index.html
+# cat /var/www/html/index.html
+
+# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost  *:80>
+   ServerName  www0.example.com
+   DocumentRoot  /var/www/html
+</VirtualHost>
+
+# systemctl  restart  httpd
+
+########################################################
+构建安全加密的Web服务器
+
+一、基础设施
+  – 公钥:主要用来加密数据
+  – 私钥:主要用来解密数据(与相应的公钥匹配)
+  – 数字证书:证明拥有者的合法性/权威性(单位名称、
+      有效期、公钥、颁发机构及签名、......)
+ – Certificate Authority,数字证书授权中心:负责证书
+      的申请/审核/颁发/鉴定/撤销等管理工作
+
+虚拟机Server0
+1.部署网站证书(营业执照)
+# cd /etc/pki/tls/certs/
+# wget http://classroom.example.com/pub/tls/certs/server0.crt
+# ls
+
+2.部署根证书(公安局信息)
+# cd /etc/pki/tls/certs/
+# wget http://classroom.example.com/pub/example-ca.crt
+# ls
+
+3.部署私钥(用于解密数据)
+# cd /etc/pki/tls/private/
+# wget http://classroom.example.com/pub/tls/private/server0.key
+# ls
+
+4.安装mod_ssl软件包，提供安全支持
+# yum -y install mod_ssl
+
+5.修改配置文件/etc/httpd/conf.d/ssl.conf
+[root@server0 /]# vim /etc/httpd/conf.d/ssl.conf
+ 补充：vim末行模式    输入 :set nu 实现添加行号
+
+   59行  DocumentRoot "/var/www/html"
+   60行  ServerName www0.example.com:443
+
+指定网站证书位置
+100行  SSLCertificateFile /etc/pki/tls/certs/server0.crt
+
+指定私钥位置
+107行  SSLCertificateKeyFile /etc/pki/tls/private/server0.key
+
+指定根证书的位置
+122行 SSLCACertificateFile /etc/pki/tls/certs/example-ca.crt
+
+6.重起httpd服务
+[root@server0 /]# systemctl restart httpd
+
+7.验证
+[root@desktop0 ~]# firefox https://www0.example.com
+    选择   我了解风险------->添加例外------->确认安全例外
+
+##########################################################
+基础邮件服务
+
+• 电子邮件服务器的基本功能
+ – 为用户提供电子邮箱存储空间(用户名@邮件域名)
+ – 处理用户发出的邮件（SMTP） —— 传递给收件服务器
+ – 处理用户收到的邮件（pop3 IMAP）—— 投递到邮箱
+
+
+虚拟机Server0
+
+1.安装postfix软件包
+[root@server0 ~]# yum -y install postfix
+[root@server0 ~]# rpm -q postfix
+
+2.修改配置文件/etc/postfix/main.cf
+[root@server0 ~]# vim /etc/postfix/main.cf
+ 补充：vim末行模式    输入 :set nu 实现添加行号
+
+ 99行    myorigin = server0.example.com   #默认补全的域名后缀
+ 116行  inet_interfaces = all           #允许所有人使用邮件服务
+ 164行  mydestination = server0.example.com  #判断为本域邮件
+
+3.重起postfix服务
+[root@server0 ~]# systemctl restart postfix
+
+4.创建本地用户进行收发邮件
+[root@server0 ~]# useradd yg
+[root@server0 ~]# useradd xln
+• mail 发信操作
+– mail -s '邮件标题'   -r 发件人     收件人[@收件域]...
+
+• mail 收信操作
+– mail [-u 用户名]
+[root@server0 ~]# mail -s '葵花宝典'  -r   yg  xln
+haha xixi hehelele
+.    #提交邮件信息
+ 
+[root@server0 ~]# mail -u xln
+Heirloom Mail version 12.5 7/5/10.  Type ? for help.
+"/var/mail/xln": 1 message 1 new
+>N  1 yg@server0.example.c  Tue Jul 17 14:25  19/631   
+& 1
+& q    #退出
+
+
+
+
+
+
+#########################################################
+parted分区工具，划分分区
+
+  GPT：大容量的划分，2T以上，最多支持128个主分区
+
+[root@server0 ~]# parted /dev/vdb 
+(parted) mktable 	gpt         #指定分区模式
+(parted) print                #输出分区表信息
+(parted) mkpart               #划分新的分区
+ 分区名称？  []? nsd              #分区的名字随便起
+ 文件系统类型？  [ext2]? ext4      #分区的文件系统，随便写无实际作用
+ 起始点？ 0            
+ 结束点？ 2G  
+  忽略/Ignore/放弃/Cancel? Ignore    #选择忽略
+(parted) unit GB                   #选择显示容量的单位为GB
+(parted) print
+(parted) mkpart 
+ 分区名称？  []? nsd  
+文件系统类型？  [ext2]? ext4
+起始点？ 2G          
+结束点？ 4G          
+(parted) print 
+(parted) quit
+
+########################################################
+什么是交换空间
+• 相当于虚拟内存,
+– 当物理内存不够用时,使用磁盘空间来模拟内存
+– 在一定程度上缓解内存不足的问题
+
+– 交换分区:以空闲分区充当的交换空间
+
+
+一、 创建交换空间
+
+1.前提要有空闲的分区
+
+2.首先格式化交换文件系统
+[root@server0 ~]# mkswap /dev/vdb1  
+[root@server0 ~]# mkswap /dev/vdb2
+正在设置交换空间版本 1，大小 = 1953104 KiB
+无标签，UUID=cdf9c261-ccee-42a4-be59-d2859e9e81f6
+[root@server0 ~]# blkid /dev/vdb1
+
+3. 启用交换分区
+[root@server0 ~]# swapon /dev/vdb1     #启用/dev/vdb1交换分区
+[root@server0 ~]# swapon  -s           #查看交换空间的组成  成员
+[root@server0 ~]# swapon /dev/vdb2 
+[root@server0 ~]# swapon -s
+[root@server0 ~]# swapoff /dev/vdb2    #停用交换分区
+[root@server0 ~]# swapon -s
+
+4.完成开机自动启用，交换分区
+[root@server0 ~]# vim /etc/fstab
+/dev/vdb1  swap  swap defaults 0 0
+/dev/vdb2  swap  swap defaults 0 0
+
+
+[root@server0 ~]# swapoff  /dev/vdb1
+[root@server0 ~]# swapon  -s
+[root@server0 ~]# swapon  -a    #检测交换分区是否书写正确  
+[root@server0 ~]# swapon  -s
+
+##########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

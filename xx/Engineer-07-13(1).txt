@@ -1,0 +1,499 @@
+﻿教学环境介绍
+[root@room9pc01 ~]# rht-vmctl reset classroom
+
+[root@room9pc01 ~]# rht-vmctl reset server
+
+[root@room9pc01 ~]# rht-vmctl reset desktop
+
+[root@room9pc01 ~]# gos
+[root@server0 ~]# 
+[root@server0 ~]# yum clean all  #清空Yum缓存
+[root@server0 ~]# yum repolist
+
+#######################################################
+配置高级连接
+
+IP地址作用：唯一标识网络中一台主机
+
+IPv4地址：32个二进制数组成，点 分隔 4部分，最终用4个十进制数表示
+
+IPv6地址：
+ 128个二进制数组成，冒号 分隔 8部分，每部分16二进制数，最终用4个16进制数表示
+                   
+     – 每段内连续的前置 0 可省略、连续的多个 : 可简化为 ::                    
+
+
+为两个虚拟机的接口 eth0 配置下列 IPv6 地址
+– server0 上的地址应该是 2003:ac18::305/64
+
+[root@server0 ~]# nmcli connection modify 'System eth0' ipv6.method manual ipv6.addresses '2003:ac18::305/64' connection.autoconnect yes
+
+[root@server0 ~]# nmcli connection up 'System eth0'
+
+[root@server0 ~]# ifconfig | head -4
+
+[root@server0 ~]# ping6 2003:ac18::305
+
+######################################################
+配置聚合连接(链路聚合   网卡绑定    网卡组队)
+
+  解决网卡单点故障（热备份结构）
+
+                    eth1          eth2 
+                        
+                        team0(虚拟网卡)192.168.1.1
+ 
+          
+制作链路聚合
+ 
+1.创建虚拟网卡 team0,再开一个新的终端参考 man teamd.conf
+[root@server0 ~]# nmcli connection add type team       
+   con-name team0 ifname team0 autoconnect  yes         
+   config '{"runner": {"name": "activebackup"}}'
+
+[root@server0 ~]# ifconfig 
+
+  nmcli connection  添加  类型   team（组队）
+    配置文件名  team0   网卡设备名  team0  每次开机自动启用
+    工作模式的配置  热备份方式工作模式
+
+2.添加成员
+[root@server0 ~]# nmcli connection add type team-slave 
+con-name team0-1 ifname eth1 master team0 
+
+[root@server0 ~]# nmcli connection add type team-slave 
+con-name team0-2 ifname eth2 master team0 
+
+ nmcli connection 添加 类型   组队中成员
+  配置文件  team0-1  网卡设备  eth1  主设备为 team0
+
+3.为team0配置IP地址
+[root@server0 ~]# nmcli connection modify 'team0'        
+  ipv4.method manual ipv4.addresses '192.168.1.1/24' 
+  connection.autoconnect  yes
+
+4.激活所有配置
+[root@server0 ~]# nmcli connection up team0
+
+[root@server0 ~]# nmcli connection up team0-1
+[root@server0 ~]# nmcli connection up team0-2
+[root@server0 ~]# ifconfig
+
+5.专业查看team信息
+[root@server0 ~]# teamdctl  team0 state
+[root@server0 ~]# ifconfig eth1 down
+[root@server0 ~]# teamdctl  team0 state
+
+删除配置
+[root@server0 ~]# nmcli connection delete team0
+[root@server0 ~]# nmcli connection delete team0-1
+[root@server0 ~]# nmcli connection delete team0-2
+
+########################################################
+案例4:编写一个判断脚本
+在 server0 上创建 /root/foo.sh 脚本
+ 1)当运行/root/foo.sh redhat,输出为fedora
+ 2)当运行/root/foo.sh fedora,输出为redhat
+ 3)当没有任何参数或者参数不是 redhat 或者
+   fedora时,其错误输出产生以下信息: 
+   /root/foo.sh  redhat|fedora
+
+  >&2:将正确输出信息，修改为错误输出
+ exit 3:退出脚本状态返回值为3
+
+[root@server0 ~]# vim  /root/foo.sh
+ #!/bin/bash
+ if  [ $# -eq 0 ];then
+    echo '/root/foo.sh  redhat|fedora'  >&2  
+    exit  3 
+ elif [ $1 == redhat ];then
+    echo fedora
+ elif [ $1 == fedora ];then
+    echo redhat
+ else
+    echo '/root/foo.sh  redhat|fedora'  >&2
+    exit  4
+ fi
+
+###################################################
+
+案例5:编写一个批量添加用户脚本
+在 server0 上创建 /root/batchusers 脚本
+1)此脚本要求提供用户名列表文件作为参数
+2)如果没有提供参数,此脚本应该给出提示 
+ Usage: /root/batchusers,退出并返回相应值
+3)如果提供一个不存在的文件,
+此脚本应该给出提示 Input file not found,退出并返回相应值
+4)新用户的登录Shell为 /bin/false,无需设置密码
+5)用户列表测试文件:
+
+[root@server0 ~]# vim /root/user.txt
+natasha
+harry
+chihiro
+kenji
+[root@server0 ~]# vim /root/batchusers
+#!/bin/bash
+if  [ $# -eq  0  ];then
+ echo 'Usage: /root/batchusers' >&2
+ exit 2
+elif [ -f $1 ];then
+
+for  i  in `cat $1`
+do
+  useradd -s /bin/false $i
+  echo $i创建成功
+done
+else
+ echo 'Input file not found' >&2
+ exit 3
+fi
+###################################################
+
+
+
+
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

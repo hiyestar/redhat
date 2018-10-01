@@ -1,0 +1,313 @@
+﻿教学环境介绍
+[root@room9pc01 ~]# rht-vmctl reset classroom
+classroom [OK]
+域 classroom 已开始
+
+[root@room9pc01 ~]# rht-vmctl reset server
+server [OK]
+域 server 已开始
+
+[root@room9pc01 ~]# gos
+Last login: Fri Jan 12 18:54:14 2018 from 172.25.0.250
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@server0 ~]# 
+[root@server0 ~]# yum clean all  #清空Yum缓存
+[root@server0 ~]# yum repolist
+
+######################################################
+基本权限 
+
+基本权限的类别
+• 访问方式(权限)
+
+– 读取:允许查看内容 -read   r
+– 写入:允许修改内容 -write    w 
+– 可执行:允许运行和切换 -execute  x
+
+   对于文本文件:
+      r(读取):  cat  less head  tail  grep 
+      w(写入):  vim 保存并退出
+      x(可执行): Shell脚本 
+
+• 权限适用对象(归属)
+
+  – 所有者:拥有此文件/目录的用户-user   u
+  – 所属组:拥有此文件/目录的组-group      g
+  – 其他用户:除所有者、所属组以外的用户-other  o
+
+#################################################
+  
+查看权限
+• 使用 ls -l 命令
+– ls -ld 文件或目录...
+
+权限位   硬连接数  属主 属组 大小 最后修改时间 文件/目录名称
+
+  以 - 开头:文本文件
+  以d 开头:目录
+  以l 开头:快捷方式
+
+######################################################
+设置基本权限
+• 使用 chmod 命令
+– chmod [-R]  归属关系+-=权限类别    文档..
+        [-R]  递归设置
+
+[root@server0 ~]# mkdir /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+[root@server0 ~]# chmod u-w /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+[root@server0 ~]# chmod g+w /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+[root@server0 ~]# chmod u=rwx,g=rx,o=rx /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+[root@server0 ~]# chmod ugo=rwx /nsd01
+[root@server0 ~]# ls -ld /nsd01
+
+[root@server0 ~]# chmod ugo=--- /nsd01
+[root@server0 ~]# ls -ld /nsd01
+#####################################################
+如何判断用户具备的权限:
+   1.判断用户对于文档的角色     所有者>所属组>其他人   匹配及停止
+   2.查看相应角色权限位置
+
+
+#####################################################
+Permission denied : 权限不足
+
+目录的 r 权限:能够 ls 浏览此目录内容
+目录的 w 权限:能够执行 rm/mv/cp/mkdir/touch/ 等更改目录内容的操作
+目录的 x 权限:能够 cd 切换到此目录
+
+####################################################
+以root用户新建/nsddir/目录，在此目录下新建readme.txt文件，
+并进一步完成下列操作
+ 1）使用户lisi能够在此目录下创建子目录     切换用户  su  -  lisi
+     chmod o+w  /nsddir/
+
+ 2）使用户lisi不能够在此目录下创建子目录
+     chmod o-w  /nsddir/
+
+ 3）使用户lisi能够修改readme.txt文件
+     chmod o+w  /nsddir/readme.txt
+
+ 4）调整此目录的权限，使所有用户都不能cd进入此目录
+     chmod u-x,g-x,o-x  /nsddir/
+
+ 5）为此目录及其下所有文档设置权限 rwxr-x---
+     chmod -R  u=rwx,g=rx,o=---  /nsddir/
+######################################################
+设置文档归属
+– chown [-R] 属主 文档...
+– chown [-R] :属组 文档...
+– chown [-R] 属主:属组 文档..
+
+[root@server0 /]# mkdir /nsd03
+[root@server0 /]# ls -ld /nsd03
+
+[root@server0 /]# groupadd tarena
+[root@server0 /]# chown lisi:tarena /nsd03
+[root@server0 /]# ls -ld /nsd03
+
+[root@server0 /]# chown zhangsan /nsd03   #修改所有者
+[root@server0 /]# ls -ld /nsd03
+
+[root@server0 /]# chown :root /nsd03      #修改所属组
+[root@server0 /]# ls -ld /nsd03
+
+#######################################################
+利用root用户新建/nsd06目录，并进一步完成下列操作
+1）将属主设为gelin01，属组设为tarena组
+[root@server0 /]# useradd gelin01
+[root@server0 /]# groupadd tarena
+[root@server0 /]# chown gelin01:tarena  /nsd06
+
+2）使用户gelin01对此目录具有rwx权限，其他人对此目录无任何权限
+[root@server0 /]# chmod o=--- /nsd06
+
+3）使用户gelin02能进入、查看此目录
+[root@server0 /]# useradd gelin02 
+[root@server0 /]# gpasswd -a  gelin02  tarena
+
+4）将gelin01加入tarena组, 将nsd06目录的权限设为rw-r-x---
+      再测试gelin01用户能否进入此目录
+[root@server0 /]# chmod u=rw,g=rx /nsd06
+######################################################
+ 附加权限(特殊权限)
+
+Set GID
+• 附加在属组的 x 位上
+– 属组的权限标识会变为 s
+– 适用于目录,Set GID可以使目录下新增的文档自动设置与父目录相同的属组
+– 继承父目录的所属组身份
+    -R:已建立的所有文档
+    SGID:未来建立的
+[root@server0 /]# mkdir  /nsd08
+[root@server0 /]# chown :tarena /nsd08
+[root@server0 /]# ls -ld  /nsd08
+[root@server0 /]# mkdir   /nsd08/abc01
+[root@server0 /]# ls -ld  /nsd08/abc01   #所属组为root组
+
+[root@server0 /]# chmod g+s /nsd08
+[root@server0 /]# ls -ld   /nsd08
+
+[root@server0 /]# mkdir   /nsd08/abc02
+[root@server0 /]# ls -ld  /nsd08/abc02  #可以看到所属组变化
+
+[root@server0 /]# touch   /nsd08/1.txt
+[root@server0 /]# ls -l   /nsd08/1.txt   #可以看到所属组变化
+
+########################################################
+acl访问控制列表
+
+– 大多数挂载的EXT3/4、XFS文件系统默认已支持
+
+• 文档归属的局限性
+– 任何人只属于三种角色:属主、属组、其他人
+– 无法实现更精细的控制
+
+• acl访问策略
+– 能够对个别用户、个别组设置独立的权限
+
+
+[root@server0 /]# mkdir /nsd11
+[root@server0 /]# chmod o=--- /nsd11
+[root@server0 /]# ls -ld /nsd11
+[root@server0 /]# su - lisi
+[lisi@server0 ~]$ cd /nsd11
+-bash: cd: /nsd11: Permission denied
+[lisi@server0 ~]$ exit
+logout
+[root@server0 /]# setfacl -m u:lisi:rx /nsd11  #为用户单独设置
+[root@server0 /]# getfacl /nsd11     #查看ACL权限
+[root@server0 /]# su - lisi
+[lisi@server0 ~]$ cd /nsd11
+[lisi@server0 nsd11]$ pwd
+[lisi@server0 nsd11]$ exit
+logout
+[root@server0 /]#
+#####################################################
+[root@server0 /]# mkdir /public
+[root@server0 /]# chmod ugo=rwx /public
+[root@server0 /]# ls -ld /public
+drwxrwxrwx. 2 root root 6 7月   5 16:09 /public
+[root@server0 /]# id tom
+uid=1003(tom) gid=1004(tom) 组=1004(tom)
+[root@server0 /]# setfacl -m u:tom:--- /public/
+
+#####################################################
+– setfacl [-R] -m u:用户名:权限类别   文档...
+– setfacl [-R] -m g:组名:权限类别   文档...
+– setfacl [-R] -b  文档...                          #清空所有ACL
+– setfacl [-R] -x u:用户名  文档...            #删除指定ACL
+
+
+[root@server0 /]# mkdir /nsd12
+[root@server0 /]# setfacl -m u:lisi:rwx /nsd12
+[root@server0 /]# setfacl -m u:zhangsan:rx /nsd12
+[root@server0 /]# setfacl -m u:gelin01:rwx /nsd12
+[root@server0 /]# setfacl -m u:gelin02:rx /nsd12
+[root@server0 /]# getfacl /nsd12
+
+[root@server0 /]# setfacl -x u:gelin01 /nsd12  #删除指定用户
+[root@server0 /]# getfacl /nsd12
+
+[root@server0 /]# setfacl -b /nsd12     #清除所有ACL
+[root@server0 /]# getfacl /nsd12
+
+#######################################################
+ 使用LDAP认证
+
+    LDAP服务器:  网络用户认证
+
+• 轻量级目录访问协议
+ – Lightweight Directory Access Protocol
+  – 由服务器来集中存储并向客户端提供的信息,存储方式类似于DNS分层结构
+  – 提供的信息包括:用户名、密码、通信录、主机名映 射记录、......
+
+      网络用户: 由LDAP服务器提供用户名 密码信息
+      本地用户: /etc/passwd  /etc/shadow
+
+
+一  搭建LDAP服务器 classroom.example.com
+
+二  搭建客户端,虚拟机Server0
+
+    1.安装软件sssd,与LDAP服务器沟通
+  [root@server0 /]# yum  -y  install  sssd
+     
+    2.安装图形软件配置sssd软件
+  [root@server0 /]# yum  -y  install  authconfig-gtk
+
+     3.运行图形软件进行配置
+  [root@server0 /]# authconfig-gtk
+
+   选择LDAP
+      dc=example,dc=com             #指定服务端域名
+      classroom.example.com         #指定服务端主机名
+
+  勾选TLS加密
+  使用证书加密: http://classroom.example.com/pub/example-ca.crt
+
+   选择LDAP密码
+
+    4.重起服务
+  [root@server0 ~]# systemctl restart sssd
+  [root@server0 ~]# systemctl enable sssd
+    5.验证:
+  [root@server0 ~]# grep ldapuser0 /etc/passwd
+  [root@server0 ~]# id ldapuser0    #可以看到用户基本信息
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
+
+
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

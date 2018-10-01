@@ -1,0 +1,1088 @@
+[root@pc207 shell]# vim case.sh 
+[root@pc207 shell]# cat case.sh
+#!/bin/bash
+case $1 in
+bce) echo 'scale=2;x=64.88;x*=10;x' | bc ;;
+110) x=110;expr $((x*=2));;
+20) x=20;let $((x%=7)); echo $x ;;
+*)  echo null;;
+esac
+[root@pc207 shell]# bash case.sh bce
+648.80
+[root@pc207 shell]# bash case.sh 110
+220
+[root@pc207 shell]# bash case.sh 20
+6
+[root@pc207 shell]# bash case.sh
+null
+
+[root@pc207 shell]# vim iping.sh
+[root@pc207 shell]# cat iping.sh
+#!/bin/bash
+ip=192.168.4.;
+for i in `seq 6  208`;
+do
+ipping(){
+  ping -c 2 -i0.2 -w0.8 $ip$i &>/dev/null;
+  if [ $? -eq 0 ];then
+    echo $i is up;
+  else
+    echo $i is down;
+  fi
+}
+ipping &  
+wait % $i;
+done
+[root@pc207 shell]# bash iping.sh
+6 is down
+iping.sh:行14: wait: 进程号 6 不是当前 shell 的子进程
+7 is up
+iping.sh:行14: wait: 进程号 7 不是当前 shell 的子进程
+8 is down
+iping.sh:行14: wait: 进程号 8 不是当前 shell 的子进程
+9 is down
+iping.sh:行14: wait: 进程号 9 不是当前 shell 的子进程
+[root@pc207 shell]# phone=13530503630;echo $phone;
+13530503630
+[root@pc207 shell]# echo ${#phone};
+11
+1）方法一，使用 ${}表达式
+                                             格式：${变量名:起始位置:长度}
+                  使用${}方式截取字符串时，起始位置是从0开始的。
+                            使用${}截取时，起始位置可以省略，省略时从第一个字符开始截。
+                 比如，以下操作可以从左侧开始截取前4个字符：
+[root@pc207 shell]# echo -e ${phone:0:3}'\t'${phone::4};
+135	1353
+
+2）方法二，使用 expr substr
+                                           格式：expr substr "$变量名" 起始位置 长度
+[root@pc207 shell]# echo -ne ${phone:1:3}'\t';expr substr $phone 2  3;
+353	353
+
+3）方式三，使用cut分割工具
+格式：echo $变量名 | cut -b 起始位置-结束位置
+选项 -b 表示按字节截取字符，其中起始位置、结束位置都可以省略。
+当省略起始位置时，视为从第1个字符开始（编号也是从1开始，与expr类似），
+当省略结束位置时，视为截取到最后。
+[root@pc207 shell]# echo $phone | cut -b 3-5;
+530
+[root@pc207 shell]# echo $phone | cut -b 3-11;
+530503630
+[root@pc207 shell]# echo $phone | cut -b 3,5,7,9,11;
+50060
+[root@pc207 shell]# echo $phone | cut -b 3-
+530503630
+
+
+[root@pc207 shell]# vim continue.sh
+[root@pc207 shell]# sh continue.sh
+1
+2
+4
+OK
+[root@pc207 shell]# cat continue.sh
+#!/bin/bash
+for i in {1..4};
+do 
+  [ $i -eq 3 ] && continue;
+  echo $i;
+done
+echo OK;
+
+[root@pc207 shell]# vim continue.sh
+[root@pc207 shell]# sh continue.sh
+1
+2
+OK
+[root@pc207 shell]# cat continue.sh
+#!/bin/bash
+for i in {1..4};
+do 
+  [ $i -eq 3 ] && break;
+  echo $i;
+done
+echo OK;
+
+[root@pc207 shell]# vim continue.sh
+[root@pc207 shell]# sh continue.sh
+1
+2
+[root@pc207 shell]# cat continue.sh
+#!/bin/bash
+for i in {1..4};
+do 
+  [ $i -eq 3 ] &&  exit;
+  echo $i;
+done
+echo OK;
+
+[root@svr7 ~]# x=120;read x;
+阿s
+[root@svr7 ~]# echo $x;
+阿s
+[root@svr7 shell]# echo 123400 > red.txt
+[root@svr7 shell]# read x < red.txt;
+[root@svr7 shell]# echo $x
+123400
+
+[root@svr7 shell]# export yy=250;echo $yy;
+250
+[root@svr7 shell]# bash; echo $yy;
+[root@svr7 shell]# bash
+[root@svr7 shell]# echo $yy
+250
+
+4) -z 检查变量的值是否未设置（空值）
+  #-z 检查 变量的 值 是否 为 空值
+[root@svr5 ~]# var1="nb" ; var2=""
+[root@svr5 ~]# [ -z "$var1" ] && echo "空值" || echo "非空值"
+非空值
+[root@svr5 ~]# [ -z $var2 ] && echo "空值" || echo "非空值"
+空值                                      //变量var2已设置，但无任何值，视为空
+[root@svr5 ~]# [ ! -z $var1 ]                //测试var1是否为非空
+还有一个-n可以测试变量是否不为空（相当于! -z）。
+
+[root@svr7 shell]# var1='nb';var2='';
+[root@svr7 shell]# [ -z '$var1' ] && echo 'null' || echo $var1;
+nb
+[root@svr7 shell]# [ -z '$var2' ] && echo 'null' || echo $var2;
+
+[root@svr7 shell]# [ -z $var2 ] && echo 'is null';
+is null
+[root@svr7 shell]# [ ! -z $var1 ] && echo 'is full'$var1;
+is fullnb
+
+[root@svr7 shell]# [ -n $var1 ] && echo -e "is full\t"$var1;
+is full	nb
+[root@svr7 shell]# [ ! -z $var1 ] && echo -e "is full\t"$var1;
+is full	nb
+
+[root@svr7 shell]# [ ! -z $var1 ] && echo -e 'is full\t'$var1;
+is full	nb
+
+
+
+
+
+
+[root@pc207 shell]# cat /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/bin/tcsh
+/bin/csh
+
+[root@pc207 ~]# mkdir /shell
+[root@pc207 ~]# cd /shell
+[root@pc207 shell]# vim continue.sh
+[root@pc207 shell]# sh continue.sh
+1
+2
+4
+OK
+[root@pc207 shell]# cat continue.sh
+#!/bin/bash
+for i in {1..4};
+do 
+  [ $i -eq 3 ] && continue;
+  echo $i;
+done
+echo OK;
+
+[root@pc207 shell]# vim continue.sh
+[root@pc207 shell]# sh continue.sh
+1
+2
+OK
+[root@pc207 shell]# cat continue.sh
+#!/bin/bash
+for i in {1..4};
+do 
+  [ $i -eq 3 ] && break;
+  echo $i;
+done
+echo OK;
+
+[root@pc207 shell]# vim continue.sh
+[root@pc207 shell]# sh continue.sh
+1
+2
+[root@pc207 shell]# cat continue.sh
+#!/bin/bash
+for i in {1..4};
+do 
+  [ $i -eq 3 ] &&  exit;
+  echo $i;
+done
+echo OK;
+
+1）方法一，使用 ${}表达式
+格式：${变量名:起始位置:长度}
+[root@pc207 shell]# phone=13530503630;echo $phone;
+13530503630
+[root@pc207 shell]# echo ${#phone};
+11
+使用${}截取时，起始位置可以省略，省略时从第一个字符开始截。
+比如，以下操作都可以从左侧开始截取前4个字符：
+[root@pc207 shell]# echo -e ${phone:0:3}'\t'${phone::4};
+135	1353
+
+格式：expr substr "$变量名" 起始位置 长度
+[root@pc207 shell]# echo -ne ${phone:1:3}'\t';expr substr $phone 2  3;
+353	353
+
+echo $变量名 | cut -b 起始位置-结束位置
+选项 -b 表示按字节截取字符，其中起始位置、结束位置都可以省略。
+当省略起始位置时，视为从第1个字符开始（编号也是从1开始，与expr类似），
+当省略结束位置时，视为截取到最后
+[root@pc207 shell]# echo $phone | cut -b 3-5;
+530
+[root@pc207 shell]# echo $phone | cut -b 3-11;
+530503630
+截取不连续的字符，比如第3、5、7个字符
+[root@pc207 shell]# echo $phone | cut -b 3,5,7,9,11;
+50060
+[root@pc207 shell]# echo $phone | cut -b 3-
+530503630
+
+[root@svr7 abc]# phe=13530508910;echo $phe | cut -b 1-8;
+13530508
+[root@svr7 abc]# x=`echo $phe | cut -b 1-8`;echo $x;
+13530508
+root@svr7 abc]# x=$(echo $phe | cut -b 1-7);echo $x;
+1353050
+
+
+[root@svr7 abc]# phe=abcd5678ABCD;yy='';tmp=${phe:0:6};yy=$yy$tmp;echo $yy;
+abcd56
+[root@svr7 abc]# phe=abcd5678ABCD;yy='';tmp=${phe:1:6};yy=$yy$tmp;echo $yy;
+bcd567
+[root@svr7 abc]# phe=abcd5678ABCD;yy='';tmp=${phe:2:6};yy=$yy$tmp;echo $yy;
+cd5678
+[root@svr7 abc]# phe=abcd5678ABCD;yy='';tmp=${phe:0:2};yy=$yy$tmp;echo $yy;
+ab
+[root@svr7 abc]# expr substr $phe 2  3;
+bcd
+[root@svr7 abc]# expr substr $phe 2  4;
+bcd5
+[root@svr7 abc]# expr substr $phe 0  4;
+
+[root@svr7 abc]# expr substr $phe 1  4;
+abcd
+
+[root@pc207 shell]# x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';num=$[RANDOM%62+1];sum2=$(echo $x | cut -b $num);sum=$sum$sum2;echo $sum;
+b
+
+[root@pc207 shell]# x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';num=$[RANDOM%62+1];sum2=$(echo $x | cut -b $num);sum=$sum$sum2;echo $sum;
+bh
+
+[root@pc207 shell]# x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';num=$[RANDOM%62+1];sum2=$(echo $x | cut -b $num);sum=$sum$sum2;echo $sum;
+bhW
+
+[root@pc207 shell]# x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';num=$[RANDOM%62];tmp=${x:num:1};pass=$pass$tmp;echo -e 'pass\t'$pass
+pass	j
+[root@pc207 shell]# x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';num=$[RANDOM%62];tmp=${x:num:1};pass=$pass$tmp;echo -e 'pass\t'$pass;
+pass	jb
+[root@pc207 shell]# x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';num=$[RANDOM%62];tmp=${x:num:1};pass=$pass$tmp;echo -e 'pass\t'$pass;
+pass	jbj
+
+[root@pc207 shell]# vim zifu.sh 
+[root@pc207 shell]# cat zifu.sh
+#!/bin/bash
+x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+#62(0-61)  (1-62)
+i=0;a=8;pass='';
+while [ $i -lt $a ];
+do
+  num=$[RANDOM%62+1];
+  sum2=$(echo $x | cut -b $num);
+  sum=$sum$sum2;
+  let i++;
+  if [ $i -eq 8 ];then
+     echo -e 'end\t'$i;
+     echo $sum;
+  fi
+done
+echo forfor=============;
+for i in {1..8}
+do
+  num=$[RANDOM%62];
+  tmp=${x:num:1};pass=$pass$tmp; 
+done
+echo  -e 'pass\t'$pass;
+
+
+[root@pc207 shell]# p='';a=r;p=$p$a;echo $p;
+r
+[root@pc207 shell]# a=8;p=$p$a;echo $p
+r8
+
+[root@pc207 shell]# phone=13530503630;echo $phone;echo ${#phone};
+13530503630
+11                      -----------------------------${#变量名}统计变量的字符数
+[root@pc207 shell]# phone=135阿保存630;echo $phone;echo ${#phone};
+135阿保存630
+9
+
+子串截取的三种用法：
+               [1]    ${变量名:起始位置:长度} #:$ 序号从 [ 0 ] 开始计数
+[root@pc207 shell]# echo p=$p;echo y=$y;
+[root@pc207 shell]# p=abcd5678ABCD;t=${p:0:6};y=$y$t;echo $y;
+abcd56
+[root@pc207 shell]# p=abcd5678ABCD;t=${p:1:3};y=$y$t;echo $y;
+abcd56bcd
+
+   [2]  expr substr "$变量名" 起始位置 长度#: expr substr序号从1 开始计数
+[root@pc207 shell]# phe=abcd5678ABCD;expr substr $phe 1 4;
+abcd
+[root@pc207 shell]# phe=abcd5678ABCD;expr substr $phe 0 4;
+
+[root@pc207 shell]# phe=abcd5678ABCD;expr substr $phe 2 4;
+bcd5
+
+   [3]  echo $变量名 | cut -b 起始位置-结束位置  #: cut 序号从1 开始计数
+[root@pc207 shell]# phe=abcd5678ABCD;echo $phe | cut -b 1-7;
+abcd567
+[root@pc207 shell]# phe=abcd5678ABCD;echo $phe | cut -b 1-;
+abcd5678ABCD
+[root@pc207 shell]# phe=abcd5678ABCD;echo $phe | cut -b 0-3;
+cut: 序号从1 开始计数
+Try 'cut --help' for more information.
+[root@pc207 shell]# phe=abcd5678ABCD;echo $phe | cut -b 2,4,6-9;
+bd678A
+  
+子串替换的两种用法：
+只替换第一个匹配结果：${变量名/old/new}
+[root@pc207 shell]# phe=abcd5678ABCD;echo ${phe/8/x};
+abcd567xABCD
+
+替换全部匹配结果：${变量名//old/new}
+[root@pc207 shell]# phe=abcabcabc;echo ${phe//a/X};
+XbcXbcXbc
+[root@pc207 shell]# echo ${phe//bc/yyy};
+ayyyayyyayyy
+
+字符串掐头去尾：
+从左向右，最短匹配删除：${变量名#*关键词}
+[root@pc207 shell]# A=`head -1 /etc/passwd`;echo $A;echo ${A#*:};
+root:x:0:0:root:/root:/bin/bash
+x:0:0:root:/root:/bin/bash
+
+从左向右，最长匹配删除：${变量名##*关键词}
+[root@pc207 shell]# A=`head -1 /etc/passwd`;echo $A;echo ${A##*:};
+root:x:0:0:root:/root:/bin/bash
+/bin/bash
+从右向左，最短匹配删除：${变量名%关键词*}
+[root@pc207 shell]# A=`head -1 /etc/passwd`;echo $A;echo ${A%:*};
+root:x:0:0:root:/root:/bin/bash
+root:x:0:0:root:/root
+
+从右向左，最长匹配删除：${变量名%%关键词*}
+[root@pc207 shell]# A=`head -1 /etc/passwd`;echo $A;echo ${A%%:*};
+root:x:0:0:root:/root:/bin/bash
+root
+
+只替换第1个子串
+格式：${变量名/old/new}
+[root@svr7 abc]#  echo $phe;
+abcd5678ABCD
+[root@svr7 abc]# echo ${phe/8/x};
+abcd567xABCD
+
+[root@svr7 abc]# echo ${phe/4/Y};
+abcd5678ABCD
+[root@svr7 abc]# echo ${phe/d/Y};
+abcY5678ABCD
+
+[root@svr7 abc]# echo $phe;
+abcd5678ABCD
+[root@svr7 abc]# echo ${nb:-123};echo ${phe:-123}
+123
+abcd5678ABCD
+
+[root@svr7 abc]# echo ${nb-123};echo ${phe -123}|#注意空格 冒号：
+123
+bash: ${phe -123}: 坏的替换
+[root@svr7 abc]# echo ${nb-123};echo ${phe-123}
+123
+abcd5678ABCD
+
+替换全部子串
+格式：${变量名//old/new}
+[root@svr7 abc]# phe=abcabcabc;echo ${phe//a/X};
+XbcXbcXbc
+[root@svr7 abc]# echo ${phe//bc/yyy};
+ayyyayyyayyy
+
+1）从左向右，最短匹配删除
+格式：${变量名#*关键词}
+删除从 左侧第1个 字符到 最近的关键词“：”的部分，* 作通配符理解：
+[root@svr7 abc]# A=`head -1 /etc/passwd`;echo $A;
+root:x:0:0:root:/root:/bin/bash
+
+[root@svr7 abc]# echo ${A#*:} #（一个#）
+x:0:0:root:/root:/bin/bash
+
+2）从左向右，最长匹配删除
+格式：${变量名##*关键词}
+删除 从左侧第1个字符 到 最远的 关键词“:”的部分：
+[root@svr7 abc]# echo $A 
+root:x:0:0:root:/root:/bin/bash
+[root@svr7 abc]#  echo ${A##*:}  ##『二个#注意』
+/bin/bash
+3）从右向左，最短匹配删除
+格式：${变量名%关键词*}
+删除从右侧最后1个字符到往左最近的关键词“:”的部分，* 做通配符理解：
+[root@svr7 abc]# echo $A 
+root:x:0:0:root:/root:/bin/bash
+[root@svr7 abc]# echo ${A%:*}
+root:x:0:0:root:/root
+[root@svr7 shell]# Ab='rw-r--r--. 1 root root 380 8月  14 11:35 zi';echo $Ab;
+rw-r--r--. 1 root root 380 8月 14 11:35 zi
+[root@svr7 shell]# echo ${Ab%t*}
+rw-r--r--. 1 root roo
+
+
+4）从 右 向 左，最 长 匹配删除
+格式：${变量名%%关键词*}
+删除从 右侧 最后 1个字符 到往 左 最远 的关键词“:”的部分：
+[root@svr7 abc]# echo $A;
+root:x:0:0:root:/root:/bin/bash
+[root@svr7 abc]#  echo ${A%%:*}
+root
+
+
+
+
+[root@svr7 abc]# touch {a,b,c,d,e,f,g}.txt
+[root@svr7 abc]# ls
+a.txt  b.txt  c.txt  d.txt  e.txt  f.txt  g.txt
+[root@svr7 abc]# vim for.sh 
+
+[root@svr7 abc]# bash ./for.sh txt doc
+[root@svr7 abc]# ls
+a.doc  b.doc  c.doc  cut  d.doc  e.doc  f.doc  for.sh  g.doc
+[root@svr7 abc]# cat for.sh
+#!/bin/bash
+
+for i in `ls ./*.$1`
+do
+ mv $i ${i%.$1}.$2    ##从右向左，最短匹配删除
+                             ##格式：${变量名%关键词*}
+done
+
+
+
+[root@svr7 abc]# vim add.sh
+[root@svr7 abc]# sh add.sh
+num=5050
+num2=5050
+[root@svr7 abc]# cat add.sh
+#!/bin/bash
+num='';num2='';
+for i in `seq 1 100`;
+do
+ let num2+=i;
+ num=$[$num+$i];
+done
+echo 'num='$num;
+echo 'num2='$num2;
+
+[root@svr7 abc]# sh add.sh
+$num=5050	num2=5050
+[root@svr7 abc]# cat add.sh
+#!/bin/bash
+num='';num2='';
+for i in `seq 1 100`;
+do
+ let num2+=i;
+ num=$[num+i];
+done
+echo -ne '$num='$num'\t'; echo 'num2='$num2;
+
+[root@svr7 abc]# vim read.sh
+[root@svr7 abc]# sh read.sh
+Please input number:
+$sum=55	$sum2=55
+[root@svr7 abc]# cat read.sh
+#!/bin/bash
+read -p 'Please input number:' num
+num=${num:-10};sum=0;sum2='';
+for i in $(seq $num);
+do
+  let sum+=i;sum2=$[sum2+i];
+done
+echo -ne '$sum='$sum'\t';echo '$sum2='$sum2;
+
+
+[root@svr7 abc]# x=(1 2 3 4);echo -ne ${x[0]}'\t';echo ${x[2]};
+1	3
+
+[root@svr7 abc]# x=(1 2 3 4);echo -ne ${x[0]}'\t';echo ${x[*]};
+1	1 2 3 4
+
+[root@svr7 abc]# x[4]=55;x[5]=66;echo ${x[*]};
+1 2 3 4 55 66
+[root@svr7 abc]# echo ${x[@]};
+1 2 3 4 55 66
+[root@svr7 abc]# 
+
+[root@svr7 abc]# sh mail.sh 
+[root@svr7 abc]# tail -13 /var/spool/mail/root
+To: root@svr7.tedu.cn
+Subject: errorMainObject
+User-Agent: Heirloom mailx 12.5 7/5/10
+From: root@svr7.tedu.cn (root)
+xxx
+yyy
+zzz
+
+[root@svr7 abc]# cat mail.sh 
+#!/bin/bash
+mail -s errorMainObject root << EOF  #end of file
+xxx
+yyy
+zzz
+EOF
+[root@svr7 abc]# >/var/spool/mail/root
+[root@svr7 abc]# tail -13 /var/spool/mail/root
+[root@svr7 abc]#
+
+[root@svr7 abc]# yum -y install expect
+[root@svr7 abc]# rpm -q expect
+expect-5.45-14.el7_1.x86_64
+
+
+[root@pc207 ~]# rpm -q expect
+expect-5.45-14.el7_1.x86_64
+
+[root@pc207 shell]# ls 
+continue.sh
+
+[root@svr7 abc]# bash spawn.sh
+spawn ssh 192.168.4.207
+Last login: Tue Aug 14 17:00:57 2018 from 192.168.4.7
+[root@pc207 ~]# touch /shell/abc.txt
+[root@pc207 ~]# 
+
+[root@svr7 abc]# cat spawn.sh 
+#!/bin/bash
+expect << EOF
+spawn ssh 192.168.4.207
+expect "password" {send "123\n"}
+expect "#"        {send "touch /shell/abc.txt\n"}
+expect "#"        {send "exit\r"}
+EOF
+[root@pc207 shell]# ls
+abc.txt  continue.sh
+===========================================
+[root@desktop0 shell]# ./spawn.sh
+spawn ssh -o StrictHostKeyChecking=no 172.25.0.11
+root@172.25.0.11's password: 
+Last login: Tue Aug 14 17:06:27 2018 from desktop0.example.com
+
+[root@server0 ~]# touch /shell/abc.txt
+[root@server0 ~]# [root@desktop0 shell]# 
+
+[root@desktop0 shell]# cat spawn.sh 
+#!/bin/bash
+expect << EOF
+
+spawn ssh -o StrictHostKeyChecking=no 172.25.0.11
+
+expect "password" {send "redhat\n"}
+expect "#"        {send "touch /shell/abc.txt\n"}
+expect "#"        {send "exit\r"}
+EOF
+[root@server0 shell]# ls
+abc.txt
+
+[root@svr7 abc]# vim a.txt
+[root@svr7 abc]# cat a.txt
+a
+ac
+acq
+a,tt
+bac
+[root@svr7 abc]# grep  .*  a.txt
+grep: ..: 是一个目录
+a.txt:a
+a.txt:ac
+a.txt:acq
+a.txt:a,tt
+a.txt:bac
+
+==================================
+https://github.com/redhatedu/course/blob/master/shell/if.pdf
+==================================================
+
+[root@pc207 shell]# var1=120;var2=$var1+20;echo $var2;
+120+20
+[root@pc207 shell]# echo $[var2+20];echo $var2;
+160
+120+20
+使用grep -E 与 使用egrep命令完全等效，推荐使用后者，
+   特别是涉及到复杂的正则表达式的时候。
+[root@pc207 shell]# grep -E '^root|^bin' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+在grep检索式同时组合多个条件，比如输出以“root”或者以“bin”开头的行，
+这时候（“或者| ”必须转义为“\|” )
+[root@pc207 shell]# grep '^root\|^bin' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+使用grep -E或egrep命令，可支持扩展正则匹配模式，
+ 能够自动识别 |、{ 等正则表达式中的特殊字符，用起来更加方便
+[root@pc207 shell]# egrep '^root|^bin' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+[root@pc207 shell]# egrep "\<halt\>" /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+[root@pc207 shell]# egrep '\<halt\>' /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+   
+[root@pc207 shell]# egrep '\bhalt\b' /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+[root@pc207 shell]# egrep "\bhalt\b" /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+
+
+[root@pc207 shell]# x=34; echo $((x-12)),$((x*10));echo $x
+22,340
+34
+[root@pc207 shell]# x=12;expr $x % 5;expr $x / 4;expr $x \* 10;echo $x;
+2
+3
+120
+12
+[root@pc207 shell]# echo 'scale=3;x=0.1;x*0.22;x;' | bc;
+.022
+.1
+[root@pc207 shell]# echo 'scale=3;x=0.1;x*0.22;' | bc;
+.022
+[root@pc207 shell]# echo 'scale=2;x=24.08;x*=10;x' | bc;
+240.80
+[root@pc207 shell]# echo 'scale=3;x=0.1;x*10;' | bc;
+1.0
+[root@pc207 shell]# echo 'scale=3;x=0.1;x*=10;' | bc;
+[root@pc207 shell]# echo $?
+0
+[root@pc207 shell]# echo 'scale=3;x=24.1;x/=10;' | bc;
+[root@pc207 shell]# echo 'scale=3;x=24.1;x/=10;x' | bc;
+2.410
+[root@pc207 shell]# echo 'scale=3;x=24.1;x/10;' | bc;
+2.410
+[root@pc207 shell]# echo 'scale=3;x=24.1;x-=10;' | bc;
+[root@pc207 shell]# echo 'scale=3;x=24.1;x-=10;x' | bc;
+14.1
+
+[root@pc207 shell]# echo 'scale=3;x=10.1;x--;' | bc;
+10.1
+[root@pc207 shell]# echo 'scale=3;x=10.1;x++;' | bc;
+10.1
+[root@pc207 shell]# echo 'scale=3;x=10.1;--x;' | bc;
+9.1
+[root@pc207 shell]# echo 'scale=3;x=10.1;++x;' | bc;
+11.1
+[root@pc207 shell]# x=10.1;echo 'scale=3;++x;' | bc;echo $x;
+1
+10.1
+子串截取的三种用法：
+${变量名:起始位置:长度}
+expr substr "$变量名" 起始位置 长度
+echo $变量名 | cut -b 起始位置-结束位置
+子串替换的两种用法：
+只替换第一个匹配结果：${变量名/old/new}
+替换全部匹配结果：${变量名//old/new}
+字符串掐头去尾：
+从左向右，最短匹配删除：${变量名#*关键词}
+从左向右，最长匹配删除：${变量名##*关键词}
+从右向左，最短匹配删除：${变量名%关键词*}
+从右向左，最长匹配删除：${变量名%%关键词*}
+
+[root@pc207 shell]# egrep -m3 '/sbin/nologin$' /etc/passwd
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+
+[root@pc207 shell]# cat iping.sh
+#!/bin/bash
+ip=192.168.4.;
+for i in `seq 6  208`;
+do
+ipping(){
+  ping -c 2 -i0.2 -w0.8 $ip$i &>/dev/null;
+  if [ $? -eq 0 ];then
+    echo $i is up;
+  else
+    echo $i is down;
+  fi
+}
+ipping &  
+wait % $i;
+done
+
+==================基本正则列表===========
+^                  匹配行首
+$                  匹配行尾
+[ ]                 集合，匹配集合中的任意单个字符
+[^]                 对集合取反
+.                  匹配任意单个字符[【换行符 \n 除外】
+*                  匹配前一个字符任意次数【不可单独使用】
+\{n,m\}        匹配前一个字符n到m次
+\{n\}          匹配前一个字符n次
+\{n,\}         匹配前一个字符n次以上
+\(\)               组合为整体，保留
+===================================
+============扩展正则列表================
+使用grep -E或egrep命令，可支持扩展正则匹配模式，
+能够自动识别 |、{ 等正则表达式中的特殊字符     ==========
++              最少匹配一次
+？              最多匹配一次
+{n,m}        匹配  到  次
+|                或者
+（）            组合为整体，保留
+\b           单词边界
+\<               单词的开头
+\>              单词的结尾
+================================
+============egrep过滤工具============
+-i	  忽略字母大小写
+-v 	  条件取反
+-c      统计匹配的行数
+-q      静默，无任何输出，一般用于测试
+-n      显示匹配结果所在的行号
+--color   标红显示匹配字串
+===============================
+[root@pc207 shell]# grep -n --color '^bin' /etc/passwd
+2:bin:x:1:1:bin:/bin:/sbin/nologin
+
+[root@pc207 shell]# grep '^root\|^daemon' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+[root@room11pc06 ~]# grep '^172.25.0.10' /etc/hosts && echo 'yes' || echo 'no';
+172.25.0.10  desktop0  desktop  desktop0.example.com  smtp0.example.com
+yes
+                ##选项 -q 表示 quiet（静默）的意思，结合此选项可以只做检索而并不输出
+[root@room11pc06 ~]# grep -q '^172.25.0.10' /etc/hosts && echo 'yes' || echo no ;
+yes
+
+[root@room11pc06 ~]# grep '/sbin/nologin$' /etc/passwd
+....................内容太多，可以用参数  -m  显示具体行 数 ................
+[root@room11pc06 ~]# grep -m6 '/sbin/nologin$' /etc/passwd
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+operator:x:11:0:operator:/root:/sbin/nologin
+
+统计本地用户中登录Shell为“/sbin/nologin”的用户个数
+[root@room11pc06 ~]# egrep -m1 '/sbin/nologin' /etc/passwd
+bin:x:1:1:bin:/bin:/sbin/nologin
+[root@room11pc06 ~]# egrep -m6 -c '/sbin/nologin' /etc/passwd 
+6
+[root@room11pc06 ~]# egrep -m2  -c  '/sbin/nologin' /etc/passwd
+2
+[root@room11pc06 ~]# egrep  -c  '/sbin/nologin' /etc/passwd
+38
+[root@room11pc06 ~]# grep  -c  '/sbin/nologin' /etc/passwd
+38
+[root@room11pc06 ~]# grep  '/sbin/nologin' /etc/passwd | wc -l
+38
+[root@room11pc06 ~]# egrep  '/sbin/nologin' /etc/passwd | wc -l
+38
+
+输出/etc/rc.local文件内至少包括一个字符（\n换行符除外）的行，即非空行：
+[root@room11pc06 ~]# grep '.' /etc/rc.local 
+[root@pc207 shell]# egrep '.' /etc/rc.local
+#!/bin/bash
+# THIS FILE IS ADDED FOR COMPATIBILITY PURPOSES
+#
+# It is highly advisable to create own systemd services or udev rules
+输出/etc/rc.local文件内的空行（用 –v 选项将条件取反）：
+[root@pc207 shell]# egrep -v  '.' /etc/rc.local
+
+[root@pc207 shell]# grep -v '.' /etc/rc.local
+
+[root@pc207 shell]#输出包括 f、ff、ff、……的行，即“f”至少出现一次：
+[root@pc207 shell]# grep 'f\+' /etc/rc.local
+# to run scripts during boot instead of using this file.
+# this script will NOT be run after all other services.
+
+[root@pc207 shell]# grep -E 'f+' /etc/rc.local
+# to run scripts during boot instead of using this file.
+# this script will NOT be run after all other services.
+
+[root@pc207 shell]# egrep 'f+' /etc/rc.local
+# to run scripts during boot instead of using this file.
+# this script will NOT be run after all other services.
+
+[root@pc207 shell]# egrep  '(is)+' /etc/rc.local
+[root@pc207 shell]# egrep '(bin)?' /etc/rc.local
+#!/bin/bash
+[root@pc207 shell]# grep '\(bin\)\?' /etc/rc.local
+#!/bin/bash
+
+
+
+
+
+
+
+
+      ###grep  -n 显示 匹配结果 所在行号
+[root@svr7 shell]# grep -n 'the' zili.txt | head -2
+8:I can't finish the test.
+12:the symbol '*' is represented as start.
+
+                           过滤下载文件中不包含 the 关键字 【-v】
+[root@svr7 shell]# grep -vn 'the' zili.txt | head -2
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+               
+                           过滤下载文件中不论大小写 the 关键字【-i]
+[root@svr7 shell]# grep -in 'the' zili.txt | tail -2
+16:The world <Happy> is the same with "glad".
+18:google is the best tools for search keyword.
+[root@svr7 shell]# mv zili.txt  zi.txt
+[root@svr7 shell]# head -1 zi.txt
+"Open Source" is a good mechanism to develop programs.
+
+                    过滤 test 或 taste 这两个单字
+[root@svr7 shell]# grep -n 't[ae]st' zi.txt
+8:I can't finish the test.
+9:Oh! The soup taste good.
+                                            过滤有 oo 的字符行
+[root@svr7 shell]# grep -n 'oo' zi.txt | head -1
+1:"Open Source" is a good mechanism to develop programs.
+
+                             #过滤不想要 oo 前面有 g 的字符行
+[root@svr7 shell]# grep -n '[^g]oo' zi.txt 
+2:apple is my favorite food.
+3:Football game is not use feet only.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+                              过滤 oo 前面不想有小写字
+[root@svr7 shell]# grep -n '[^a-z]oo' zi.txt 
+3:Football game is not use feet only.
+                                     过滤 oo 前面不想有小写字
+[root@svr7 shell]# grep -n '[^[:lower:]]oo' zi.txt 
+3:Football game is not use feet only.
+
+过滤有数字的那一行
+[root@svr7 shell]# grep -n '[0-9]' zi.txt
+5:However, this dress is about $ 3183 dollars.
+15:You are the best is mean you are the no. 1.
+                   过滤有数字的那一行
+[root@svr7 shell]# grep -n '[[:digit:]]' zi.txt 
+5:However, this dress is about $ 3183 dollars.
+15:You are the best is mean you are the no. 1.
+
+
+过滤以 the 开头的
+[root@svr7 shell]# grep -n '^the' zi.txt 
+12:the symbol '*' is represented as start.
+
+过滤以小写字母开头的
+[root@svr7 shell]# grep -n '^[a-z]' zi.txt | head -2
+2:apple is my favorite food.
+4:this dress doesn't fit me.
+                            过滤以小写字母开头的
+[root@svr7 shell]# grep -n '^[[:lower:]]' zi.txt | head -2
+2:apple is my favorite food.
+4:this dress doesn't fit me.
+
+过滤开头不是英文字母
+[root@svr7 shell]# grep -n '^[^a-zA-Z]' zi.txt
+1:"Open Source" is a good mechanism to develop programs.
+21:# I am VBird
+                       过滤开头不是英文字母
+[root@svr7 shell]# grep -n '^[^[:alpha:]]' zi.txt 
+1:"Open Source" is a good mechanism to develop programs.
+21:# I am VBird
+
+过滤行尾结束为小数点.那一行
+[root@svr7 shell]# grep -n '\.$' zi.txt | tail -2
+18:google is the best tools for search keyword.
+20:go! go! Let's go.
+
+过滤空白行
+[root@svr7 shell]# grep -n '^$' zi.txt 
+22:
+
+过滤出 g??d 的字串
+[root@svr7 shell]# grep -n 'g..g' zi.txt
+18:google is the best tools for search keyword.
+
+       过滤两个 o 以上的字串(可以不连续)
+[root@svr7 shell]# grep -n 'ooo*' zi.txt | head -3
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+3:Football game is not use feet only.
+
+   过滤 连续 两个 o 以上 的字串
+[root@svr7 shell]# grep -En '(o){3,}' zi.txt
+19:goooooogle yes!
+
+过滤 g 开头和 g 结尾但是两个 g 之间仅存在至少一个 o
+[root@svr7 shell]# grep -n 'go*g' zi.txt 
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+
+过滤任意数字的行
+[root@svr7 shell]# grep  '[0-9][0-9]*' zi.txt
+However, this dress is about $ 3183 dollars.
+You are the best is mean you are the no. 1.
+
+过滤两个 o 的字串
+[root@svr7 shell]# grep -n 'o\{2\}' zi.txt | head -2
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+
+过滤 g 后面接 2 到 5 个 o,然后在接一个 g 的字串
+[root@svr7 shell]# grep -n  'go\{2,5\}g' zi.txt 
+18:google is the best tools for search keyword.
+
+过滤 g 后面接 2 个以上 o 的
+[root@svr7 shell]# grep  -n 'go\{2,\}' zi.txt 
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+                     过滤 g 后面接 2 个以上 o 的
+[root@svr7 shell]# grep -nE 'g(o){2,}' zi.txt
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+
+[root@pc207 shell]# var1=120;var2=$var1+20;echo $var2;
+120+20
+[root@pc207 shell]# echo $[var2+20];echo $var2;
+160
+120+20
+使用grep -E 与 使用egrep命令完全等效，推荐使用后者，
+   特别是涉及到复杂的正则表达式的时候。
+[root@pc207 shell]# grep -E '^root|^bin' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+在grep检索式同时组合多个条件，比如输出以“root”或者以“bin”开头的行，
+这时候（“或者| ”必须转义为“\|” )
+[root@pc207 shell]# grep '^root\|^bin' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+使用grep -E或egrep命令，可支持扩展正则匹配模式，
+ 能够自动识别 |、{ 等正则表达式中的特殊字符，用起来更加方便
+[root@pc207 shell]# egrep '^root|^bin' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+[root@pc207 shell]# egrep "\<halt\>" /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+[root@pc207 shell]# egrep '\<halt\>' /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+   
+[root@pc207 shell]# egrep '\bhalt\b' /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt
+[root@pc207 shell]# egrep "\bhalt\b" /etc/passwd
+halt:x:7:0:halt:/sbin:/sbin/halt  
+
+[root@pc207 shell]# vim zifu.sh 
+[root@pc207 shell]# cat zifu.sh
+#!/bin/bash
+x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+#62(0-61)  (1-62)
+i=0;a=8;pass='';
+while [ $i -lt $a ];
+do
+  num=$[RANDOM%62+1];
+  sum2=$(echo $x | cut -b $num);
+  sum=$sum$sum2;
+  let i++;
+  if [ $i -eq 8 ];then
+     echo -e 'end\t'$i;
+     echo $sum;
+  fi
+done
+echo forfor=============;
+for i in {1..8}
+do
+  num=$[RANDOM%62];
+  tmp=${x:num:1};pass=$pass$tmp; 
+done
+echo  -e 'pass\t'$pass;
+
+[root@pc207 shell]# xx=11;echo ${xx:-123};echo $ww;echo ${ww-120};echo $xx;
+11
+
+120
+11
+
+[root@pc207 shell]# vim expect_ssh.sh
+[root@pc207 shell]# rpm -q expect
+expect-5.45-14.el7_1.x86_64
+[root@pc207 shell]# cat expect_ssh.sh 
+#!/bin/bash
+expect << EOF
+spawn ssh 192.168.4.7
+expect "password"   {send "123\n"}
+expect "#"          {send "touch ./tmp.txt\r"}
+expect "#"          {send "exit\r"}
+EOF
+[root@pc207 shell]# cat expect_ssh.sh 
+#!/bin/bash
+expect << EOF
+spawn ssh 192.168.4.7
+#expect "yes"        {send "'yes' or 'no':\n"}
+expect "password"   {send "123\n"}
+expect "#"          {send "touch ./tmp.txt\r"}
+expect "#"          {send "exit\r"}
+EOF
+
+[root@pc207 shell]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@pc207 shell]# echo $USER
+root
+[root@pc207 shell]# echo $HOME
+/root
+[root@pc207 shell]# echo $PWD
+/shell
+[root@pc207 shell]# echo $UID
+0
+[root@pc207 shell]# echo $RANDOM 
+28217
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

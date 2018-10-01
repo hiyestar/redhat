@@ -1,0 +1,722 @@
+﻿教学环境介绍
+[root@room9pc01 ~]# rht-vmctl reset classroom
+classroom [OK]
+域 classroom 已开始
+
+[root@room9pc01 ~]# rht-vmctl reset server
+server [OK]
+域 server 已开始
+
+[root@room9pc01 ~]# gos
+Last login: Fri Jan 12 18:54:14 2018 from 172.25.0.250
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@server0 ~]# 
+[root@server0 ~]# yum clean all  #清空Yum缓存
+[root@server0 ~]# yum repolist
+
+#######################################################
+
+Shell脚本基础
+
+    脚本/程序：可以执行文本文件，可以带来某种功能
+
+
+规范Shell脚本的一般组成
+• #! 环境声明(以下代码有谁解释)
+• # 注释文本
+• 可执行代码
+
+
+案例1：书写hello.sh脚本,可以再屏幕输出hello world
+
+[root@server0 ~]# vim /root/hello.sh
+ #!/bin/bash
+ echo   hello world
+ cat /etc/redhat-release
+ hostname
+ uname  -r
+ ifconfig  |  head  -2
+
+
+[root@server0 ~]# chmod  +x  /root/hello.sh
+
+[root@server0 ~]#  /root/hello.sh    #绝对路径进行执行
+
+######################################################
+
+管道传递
+• 使用 | 管道操作
+– 将前一条命令的标准输出交给后一条命令处理
+
+
+重定向输出
+      > : 正确信息重定向,只收集前面命令的正确输出结果
+     2>: 错误信息重定向,只收集前面命令的错误输出结果
+     &>: 正确与错误信息重定向
+[root@server0 ~]# echo 123 > /opt/1.txt
+[root@server0 ~]# cat /opt/1.txt 
+
+[root@server0 ~]# cat /opt/1.txt /etc  
+
+[root@server0 ~]# cat /opt/1.txt /etc >  /mnt/a.txt
+[root@server0 ~]# cat /mnt/a.txt
+
+[root@server0 ~]# cat /opt/1.txt /etc 2> /mnt/a.txt
+[root@server0 ~]# cat /mnt/a.txt
+
+[root@server0 ~]# cat /opt/1.txt /etc &> /mnt/a.txt
+[root@server0 ~]# cat /mnt/a.txt
+
+#######################################################
+   单引号 '  ' ：取消所有特殊字符的含义
+
+   $[  ] :运算    +    -     *     /      %(取余数运算)
+
+[root@server0 ~]# echo $[1+2]
+[root@server0 ~]# echo $[8-6]
+[root@server0 ~]# echo $[2*3]
+
+[root@server0 ~]# echo $[10/5]
+[root@server0 ~]# echo $[10/3]
+
+[root@server0 ~]# echo $[10%3]
+[root@server0 ~]# echo $[10%2]
+
+      余数一定小于除数
+
+    $(  ) 与 反撇号 ` ` :  将命令的输出结果，作为参数 ，  参与命令的运行
+
+[root@server0 ~]# rm -rf /opt/*
+[root@server0 opt]# cd /opt
+
+[root@server0 opt]# date +%F
+
+[root@server0 opt]# mkdir  stu-`date  +%F`
+[root@server0 opt]# ls
+
+[root@server0 opt]# mkdir  nsd-$(date  +%F)
+[root@server0 opt]# ls
+
+[root@server0 opt]# mkdir  $(hostname)-$(date  +%F)
+[root@server0 opt]# ls
+
+######################################################
+案例2：创建用户的脚本
+
+   黑洞设备: /dev/null
+
+[root@server0 /]# vim  /root/user.sh
+ #!/bin/bash
+ useradd  nsd10  &>  /dev/null
+ echo  用户nsd10创建成功
+ echo  123456  |  passwd  --stdin  nsd10  &>  /dev/null
+ echo  用户nsd10密码设置成功
+
+[root@server0 /]# chmod +x /root/user.sh
+
+[root@server0 /]# /root/user.sh
+
+
+   为了增加脚本的灵活度，环境的多变性，方便重复使用一个值
+
+   变量：容器，储存的值在变化。以不变的名称，存放可以变化的值
+
+[root@server0 /]# a=1000
+[root@server0 /]# echo a
+
+[root@server0 /]# echo $a      #输出变量储存的值
+
+[root@server0 /]# a=rhel7
+[root@server0 /]# echo $a
+
+[root@server0 /]# a=dc
+[root@server0 /]# echo $a
+
+[root@server0 /]# a=20
+[root@server0 /]# echo $a
+
+[root@server0 /]# vim  /root/user.sh
+ #!/bin/bash
+ a=nsd15
+ useradd  $a  &>  /dev/null
+ echo  用户$a创建成功
+ echo  123456  |  passwd  --stdin  $a  &> /dev/null
+ echo  用户$a密码设置成功
+
+####################################################
+定义变量
+
+– 等号两边不要有空格
+– 变量名只能由字母/数字/下划线组成,区分大小写
+– 变量名不能以数字开头,不要使用关键字和特殊字符
+
+– 若指定的变量名已存在,相当于为此变量重新赋值
+
+
+查看/引用变量
+
+• 基本格式
+– 引用变量值:$变量名
+– 查看变量值:echo $变量名、echo ${变量名}
+
+[root@server0 /]# a=rhel
+[root@server0 /]# echo $a
+rhel
+[root@server0 /]# echo $a7
+
+[root@server0 /]# echo ${a}7
+rhel7
+[root@server0 /]# 
+
+#####################################################
+
+  环境变量     变量名一般都大写,用来设置用户/系统环境
+  位置变量     bash内置,存储执行脚本时提供的命令行参数
+  预定义变量  bash内置,可直接调用的特殊值,不能直接修改
+  自定义变量  用户自主设置、修改及使用
+
+######################################################
+
+
+环境变量,由系统定义并且赋值完成，用户直接调用
+
+    USER=当前登陆的用户名
+    RANDOM=永远存放一个随机数
+
+[root@server0 /]# echo $USER
+
+[root@server0 /]# su - nsd01
+[nsd01@server0 ~]$ echo $USER
+[nsd01@server0 ~]$ exit
+
+[root@server0 /]# su - student
+[student@server0 ~]$ echo $USER
+[student@server0 ~]$ exit
+
+[root@server0 /]# echo $RANDOM
+
+ 产生一个有范围的随机数字，取余数运算，余数一定小于除数
+
+[root@server0 /]# echo  $[$RANDOM%10]
+
+#####################################################
+位置变量
+• 由系统定义并且赋值完成，用户直接调用
+• 在执行脚本时提供的命令行参数
+– 表示为 $n,n为序号
+– $1、$2、.. .. ${10}、${11}、.. ..
+
+[root@server0 ~]# vim /root/user.sh
+ #!/bin/bash
+ useradd $1  &>  /dev/null
+ echo  用户$1创建成功
+ echo  123456  |  passwd  --stdin  $1  &>  /dev/null
+ echo  用户$1密码设置成功
+
+[root@server0 ~]# /root/user.sh  stu01
+[root@server0 ~]# /root/user.sh  stu02
+
+[root@server0 ~]# vim /root/2.sh
+ #!/bin/bash
+ cat -n $1 | head -$2
+
+[root@server0 ~]# /root/2.sh /etc/passwd  3
+
+[root@server0 ~]# /root/2.sh /etc/group  3
+######################################################
+
+预定义变量
+• 由系统定义并且赋值完成，用户直接调用
+• 用来保存脚本程序的执行信息
+– 直接使用这些变量
+– 不能直接为这些变量赋值
+
+  	$#  统计已加载的位置变量的个数
+   	$*  所有位置变量的值
+   	$?  程序退出后的状态值,0表示正常,其他值异常
+[root@server0 ~]# useradd stu07
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# useradd stu07
+useradd：用户“stu07”已存在
+[root@server0 ~]# echo $?
+9
+[root@server0 ~]# vim /root/1.sh 
+ #!/bin/bash
+ echo  $1
+ echo  $2
+ echo  $#
+ echo  $*
+[root@server0 ~]# /root/1.sh student  classroom  server
+#######################################################
+条件测试及选择
+
+  – [   测试表达式   ]         每一部分到有空格
+
+
+常用的测试选项
+• 检查文件状态
+	-e:文档存在为真
+	-d:文档存在,且必须为目录为真
+	-f:文档存在,且必须为文件为真
+[root@server0 ~]# [  -f  /etc  ]
+[root@server0 ~]# echo $?
+
+[root@server0 ~]# [  -d  /etc  ]
+[root@server0 ~]# echo $?
+
+[root@server0 ~]# [  -f  /etc/passwd  ]
+[root@server0 ~]# echo $?
+
+[root@server0 ~]# [  -f  /etc/1.txt  ]
+[root@server0 ~]# echo $?
+
+• 比较整数大小
+	-gt:大于
+	-ge:大于等于
+	-eq:等于
+	-ne:不等于
+	-lt:小于
+	-le:小于等于
+[root@server0 ~]# [  1  -eq  1  ]
+[root@server0 ~]# echo $?
+
+[root@server0 ~]# [  1  -ge  1  ]
+[root@server0 ~]# echo $?
+
+[root@server0 ~]# [  1  -gt  1  ]
+[root@server0 ~]# echo $?
+
+[root@server0 ~]# [  1  -le  2  ]
+[root@server0 ~]# echo $?
+
+• 字符串比对
+   ==  :  一致为真
+   !=  :  不一致为真
+[root@server0 ~]# [ root  ==   student ]
+[root@server0 ~]# echo $?
+
+[root@server0 ~]# [ root  !=  student ]
+[root@server0 ~]# echo $?
+
+[root@server0 ~]# [ root  ==  root  ]
+[root@server0 ~]# echo $?
+
+[root@server0 ~]# echo $USER
+[root@server0 ~]# [  root  ==  $USER  ]
+[root@server0 ~]# echo $?
+
+##################################################
+    
+if双分支处理
+
+	if  [条件测试];then
+	    命令序列xx
+	else
+	    命令序列yy
+	fi
+
+
+	if  [  1 -eq 2 ];then
+	    echo hello
+	else
+	    echo hi
+	fi
+
+ 案例3：判断用户通过命令行给出参数，参数为IP地址
+            书写一个脚本判断，本机是否可以与用户输入的IP地址进行通信
+            如果能够通信，则输出 可以通信
+            如果不能够通信，则输出 不可以通信   
+
+[root@server0 ~]# vim  /root/ip.sh 
+ #!/bin/bash
+ ping  -c  2  $1  &>  /dev/null
+
+ if   [  $?  -eq  0  ];then
+   echo  $1可以通信
+ else
+   echo  $1不可以通信
+ fi
+
+[root@server0 ~]#  /root/ip.sh  192.168.1.1
+[root@server0 ~]#  /root/ip.sh  172.25.0.11
+
+#################################################
+提升用户的体验
+     产生交互，与用户进行问答，将用户在键盘上输入的答案，作为参数
+
+
+   read:产生交互,将用户在键盘上输入的答案,存放到变量中
+
+[root@server0 ~]# vim  /root/ip.sh
+ #!/bin/bash
+ read   -p   '请输入您要测试的IP地址:'      a
+
+ ping  -c  2  $a   &>  /dev/null
+
+ if   [  $?  -eq  0  ];then
+   echo $a可以通信
+ else
+   echo $a不可以通信
+ fi
+
+##################################################
+案例4：书写猜数的脚本
+    
+      计算机随机产生一个 0至9之间的数字
+      用户输入一个一个 0至9之间的数字
+      如果  计算机随机产生的数字  与  用户输入的数字 相等，则输出 猜对了
+      如果  计算机随机产生的数字  与  用户输入的数字 不相等，则输出 猜错了
+ 
+[root@server0 ~]# vim /root/num.sh
+ #!/bin/bash
+ num1=$[$RANDOM%10]
+ read  -p   '请输入一个0～9之间的数字：'     num2
+
+ if  [  $num1   -eq   $num2   ];then
+     echo 恭喜您，猜对了
+ else
+     echo 猜错了，谢谢
+     echo 正确的数字为$num1
+ fi
+
+#####################################################
+if多分支处理
+
+
+	if [条件测试1];then
+	   命令序列xx
+	elif [条件测试2];then
+	   命令序列yy
+	elif [条件测试3];then
+	   命令序列aa
+	elif [条件测试4];then
+	   命令序列bb
+         ......
+	else
+	   命令序列zz
+	fi
+
+案例5：书写成绩判断脚本
+
+   用户输入本次考试的成绩：
+       如果大于等于90，则输出  优秀
+       如果大于等于80，则输出  良好
+       如果大于等于70，则输出  一般
+       如果大于等于60，则输出  合格
+      
+       如果以上条件均不满足，则输出  再牛的肖邦，也弹不出哥的悲伤
+
+[root@server0 ~]# vim /root/if03.sh
+ #!/bin/bash
+ read -p '请输入您的成绩:'   num
+ 
+ if [ $num -ge 90 ];then
+   echo 优秀
+ elif [ $num -ge 80 ];then
+   echo 良好
+ elif [ $num -ge 70 ];then
+   echo 一般
+ elif [ $num -ge 60 ];then
+   echo 合格
+ else
+   echo 再牛的肖邦，也弹不出哥的悲伤
+ fi
+
+######################################################
+案例6：书写猜数的脚本
+    
+  在案例4基础上，当用户没有猜对，进行判断输出  用户猜大了 或 猜小了
+
+ [root@server0 ~]# vim /root/num.sh 
+ #!/bin/bash
+ num1=$[$RANDOM%10]
+
+ read -p  '请输入一个0～9之间的数字：'     num2
+       
+ if  [ $num1  -eq  $num2  ];then
+     echo 恭喜您，猜对了
+ elif [ $num2 -gt  $num1  ];then
+     echo  猜大了 
+     echo  正确的数字为$num1
+ else
+     echo  猜小了
+     echo  正确的数字为$num1
+ fi
+#####################################################
+ 思考：实现用户可以连续猜三次机会
+[root@server0 ~]# vim  /root/num.sh
+#!/bin/bash
+num1=$[$RANDOM%10]
+read -p  '请输入一个0～9之间的数字：'     num2
+if  [ $num1  -eq  $num2  ];then
+    echo 恭喜您，猜对了
+    exit
+elif [ $num2 -gt  $num1  ];then
+    echo  猜大了 
+else
+    echo  猜小了
+fi
+
+read -p  '请输入一个0～9之间的数字：'     num2
+if  [ $num1  -eq  $num2  ];then
+    echo 恭喜您，猜对了
+    exit
+elif [ $num2 -gt  $num1  ];then
+    echo  猜大了 
+
+else
+    echo  猜小了
+fi
+
+read -p  '请输入一个0～9之间的数字：'     num2
+if  [ $num1  -eq  $num2  ];then
+    echo 恭喜您，猜对了
+    exit
+elif [ $num2 -gt  $num1  ];then
+    echo  猜大了 
+
+else
+    echo  猜小了
+fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

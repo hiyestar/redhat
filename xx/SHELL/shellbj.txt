@@ -1,0 +1,1128 @@
+# yum list bash-completion  #<tab>很重要的软件包bash-completion
+
+[root@room11pc13 ~]# cat /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/bin/tcsh
+/bin/csh
+[root@room11pc13 ~]# ls -l /etc/shells 
+-rw-r--r--. 1 root root 95 3月  10 23:55 /etc/shells
+
+[root@server0 ~]# yum -y install ksh
+[root@server0 ~]# yum list ksh
+已加载插件：langpacks
+已安装的软件包
+ksh.x86_64                20120801-19.el7         @rhel_dvd
+[root@server0 ~]# rpm -q ksh
+ksh-20120801-19.el7.x86_64
+[root@server0 ~]# ksh
+# ls
+anaconda-ks.cfg  Documents  Music     Public	 Videos
+Desktop		 Downloads  Pictures  Templates
+# pwd
+/root
+
+[root@server0 ~]# useradd -s /bin/bash bashx1  #/bin/bash#
+[root@server0 ~]# ls /home
+bashx1  student
+[root@server0 ~]# grep bashx1 /etc/passwd
+bashx1:x:1001:1001::/home/bashx1:/bin/bash
+
+[root@server0 ~]# cat /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/bin/tcsh
+/bin/csh
+/bin/ksh
+
+[root@server0 ~]# useradd -s /bin/ksh bashx2
+[root@server0 ~]# grep bashx /etc/passwd
+bashx1:x:1001:1001::/home/bashx1:/bin/bash
+bashx2:x:1002:1002::/home/bashx2:/bin/ksh
+
+[root@server0 ~]# yum list bash-completion  #<tab>很重要的软件包bash-completion
+已加载插件：langpacks
+已安装的软件包
+bash-completion.noarch      1:2.1-6.el7        @rhel_dvd
+
+[root@server0 ~]# history | wc -l
+144
+[root@server0 ~]# cat -n /etc/profile | grep HISTSIZE
+    46	HISTSIZE=1000
+    53	export PATH USER LOGNAME MAIL HOSTNAME HISTSIZE HISTCONTROL
+
+[root@desktop0 ~]# cat .bash_history | wc -l
+98
+[root@desktop0 ~]# ls -l /root/.bash_history
+-rw-------. 1 root root 3712 8月   9 20:35 /root/.bash_history
+
+[root@desktop0 ~]# >/root/.bash_history
+
+[root@desktop0 ~]# history -c 
+
+[root@desktop0 ~]# ls -l /root/.bash_history
+-rw-------. 1 root root 0 8月  10 10:12 /root/.bash_history
+
+[root@desktop0 ~]# cat .bash_history | wc -l
+0
+[root@desktop0 ~]# reboot
+
+[root@desktop0 ~]# cat .bash_history | wc -l
+8
+
+[root@desktop0 ~]# ls -l nb.txt
+ls: 无法访问nb.txt: 没有那个文件或目录
+[root@desktop0 ~]# ls -l /etc/fstab 
+-rw-r--r--. 1 root root 313 5月   7 2014 /etc/fstab
+[root@desktop0 ~]# ls -l nb.txt /etc/fstab 1>a.txt 2>b2.txt
+[root@desktop0 ~]# cat a.txt
+-rw-r--r--. 1 root root 313 5月   7 2014 /etc/fstab
+[root@desktop0 ~]# cat b2.txt
+ls: 无法访问nb.txt: 没有那个文件或目录
+===================
+重定向标准输入/输出/错误输出
+
+标准输入（stdin），描述号为0；
+标准输出（stdout），描述号为1；
+标准错误（stderr），描述号为2。
+==============================================
+[root@desktop0 ~]# mkdir /shell
+[root@desktop0 ~]# vim /shell/lxi.sh
+[root@desktop0 ~]# chmod +x /shell/lxi.sh
+[root@desktop0 ~]# cat /shell/lxi.sh
+#!/bin/bash
+ for i in {1..10}
+ do 
+     useradd user$i 2>>stderr.txt
+     echo 123 | passwd --stdin user$i 1>>stdout.txt
+ done
+
+[root@desktop0 ~]# yum -y install ksh
+[root@desktop0 ~]# yum list ksh
+已安装的软件包
+ksh.x86_64                20120801-19.el7                 @rhel_dvd
+[root@desktop0 ~]# rpm -q ksh
+ksh-20120801-19.el7.x86_64
+
+[root@desktop0 ~]# useradd -s /bin/ksh user1
+[root@desktop0 ~]# useradd -s /bin/bash user2
+
+[root@desktop0 ~]# /shell/lxi.sh
+[root@desktop0 ~]# echo $?
+0
+[root@desktop0 ~]# grep user /etc/passwd
+user1:x:1001:1001::/home/user1:/bin/ksh
+user2:x:1002:1002::/home/user2:/bin/bash
+user3:x:1003:1003::/home/user3:/bin/bash
+
+[root@desktop0 ~]# cat /root/stderr.txt
+useradd：用户“user1”已存在
+useradd：用户“user2”已存在
+
+[root@desktop0 ~]# cat /root/stdout.txt
+更改用户 user1 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+更改用户 user2 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+更改用户 user3 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+
+[root@desktop0 ~]# grep user1 /etc/passwd
+user1:x:1001:1001::/home/user1:/bin/ksh
+user10:x:1010:1010::/home/user10:/bin/bash
+
+[root@desktop0 ~]# grep user2 /etc/passwd
+user2:x:1002:1002::/home/user2:/bin/bash
+
+[root@desktop0 ~]# grep user3 /etc/passwd
+user3:x:1003:1003::/home/user3:/bin/bash
+===============================================
+[root@desktop0 ~]# echo hahahahaxiixixiix > /shell/lxi2.txt
+
+[root@desktop0 ~]# mail -s Errorxxx root < /shell/lxi2.txt #标准输入（stdin），描述号为0；
+
+[root@desktop0 ~]# mail -u root
+Heirloom Mail version 12.5 7/5/10.  Type ? for help.
+"/var/mail/root": 1 message 1 new
+>N  1 root                  Fri Aug 10 11:27  18/611   "Errorxxx"
+& 1
+Message  1:
+From root@desktop0.example.com  Fri Aug 10 11:27:29 2018
+Return-Path: <root@desktop0.example.com>
+X-Original-To: root
+Delivered-To: root@desktop0.example.com
+Date: Fri, 10 Aug 2018 11:27:29 +0800
+To: root@desktop0.example.com
+Subject: Errorxxx
+User-Agent: Heirloom mailx 12.5 7/5/10
+Content-Type: text/plain; charset=us-ascii
+From: root@desktop0.example.com (root)
+Status: R
+
+hahahahaxiixixiix
+
+& quit
+Held 1 message in /var/mail/root
+
+[root@desktop0 ~]# yum list | wc -l
+4399
+您在 /var/spool/mail/root 中有邮件
+
+[root@desktop0 ~]# echo 'XXXSASSSS SSXXX' | mail -s '主题2'  -r student root
+[root@desktop0 ~]# mail -u root
+
+===============================
+[root@room11pc13 ~]# systemctl is-active vsftpd
+active
+[root@room11pc13 ~]# tail -2 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+/var/lib/libvirt/images/iso/CentOS-7-x86_64-DVD-1708.iso  /var/ftp/centos7  iso9660  defaults 0  0
+
+[root@svr7 ~]# vim /root/yum.sh
+[root@svr7 ~]# chmod +x /root/yum.sh
+[root@svr7 ~]# cat /root/yum.sh
+#!/bin/bash
+ echo '[centos7]
+name=centos7
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/centos7'> /etc/yum.repos.d/centos7.repo
+
+[root@svr7 ~]# ls /etc/yum.repos.d
+rhel7.repo
+[root@svr7 ~]# /root/yum.sh
+[root@svr7 ~]# ls /etc/yum.repos.d
+centos7.repo  rhel7.repo
+[root@svr7 ~]# yum clean all
+
+[root@svr7 ~]# yum repolist
+
+源标识                           源名称                            状态
+centos7                   centos7                    3,894
+rhel7                     rhel7.4                    4,986
+repolist: 8,880
+
+[root@svr7 ~]# yum repolist
+
+[root@room11pc13 ~]# cat /etc/yum.repos.d/centos7.repo 
+[centos7]
+name=centos7
+baseurl=file:///var/ftp/centos7
+gpgcheck=0
+enabled=1
+[root@svr7 ~]#  cat /etc/yum.repos.d/centos7.repo 
+[centos7]
+name=centos7
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/centos7
+
+[root@svr7 ~]# mkdir /shell
+[root@svr7 ~]# vim /shell/hello.sh
+[root@svr7 ~]# chmod +x /shell/hello.sh
+[root@svr7 ~]# cat /shell/hello.sh
+#!/bin/bash
+echo hello world
+yum -y install vsftpd 1>>/shell/stdout.txt 2>>/shell/stderr.txt
+systemctl restart vsftpd
+systemctl enable vsftpd  &>/dev/null
+cp /etc/hosts /var/ftp/
+
+[root@svr7 ~]# /shell/hello.sh
+hello world
+Created symlink from /etc/systemd/system/multi-user.target.wants/vsftpd.service to /usr/lib/systemd/system/vsftpd.service.
+[root@svr7 ~]# ls /shell
+hello.sh  stderr.txt  stdout.txt
+[root@svr7 ~]# cat /shell/stderr.txt 
+[root@svr7 ~]# cat /shell/stdout.txt 
+
+[root@svr7 ~]# ls -l /shell/stderr.txt 
+-rw-r--r--. 1 root root 0 8月  10 14:18 /shell/stderr.txt
+[root@svr7 ~]# ls -l /shell/stdout.txt 
+-rw-r--r--. 1 root root 1239 8月  10 14:18 /shell/stdout.txt
+
+[root@svr7 ~]# systemctl is-active vsftpd
+active
+[root@svr7 ~]# systemctl is-enabled vsftpd
+enabled
+[root@svr7 ~]# ls /var/ftp/
+hosts  pub
+
+[root@svr7 ~]# vim /shell/hi.sh
+[root@svr7 ~]# cat /shell/hi.sh
+#!/bin/bash
+echo hello world
+
+[root@svr7 ~]# bash /shell/hi.sh
+hello world
+[root@svr7 ~]# sh /shell/hi.sh
+hello world
+
+[root@svr7 ~]# tcsh /shell/hi.sh
+hello world
+[root@svr7 ~]# csh /shell/hi.sh
+hello world
+
+[root@svr7 ~]# source /shell/hi.sh
+hello world
+
+[root@svr7 ~]# vim  /shell/hi.sh 
+[root@svr7 ~]# cat /shell/hi.sh
+#!/bin/bash
+echo hello world
+sleep 200
+
+
+[root@svr7 ~]# bash /shell/hi.sh
+hello world
+^C
+[root@svr7 ~]# pstree   #注意区别─sshd─┬─sshd───bash───bash───sleep
+systemd─┬─ModemManager───2*[{ModemManager}]
+        ├─smartd
+        ├─sshd─┬─sshd───bash───bash───sleep
+        │      └─sshd───bash───pstree
+
+[root@svr7 ~]# source /shell/hi.sh
+hello world
+[root@svr7 ~]# pstree  #注意区别─sshd─┬─sshd───bash───sleep
+systemd─┬─ModemManager───2*[{ModemManager}]
+        ├─smartd
+        ├─sshd─┬─sshd───bash───sleep
+        │      └─sshd───bash───pstree
+
+[root@svr7 ~]# vim /shell/hi.sh
+[root@svr7 ~]# bash /shell/hi.sh
+hello world
+[root@svr7 ~]# cat /shell/hi.sh
+#!/bin/bash
+echo hello world
+exit
+[root@svr7 ~]# source /shell/hi.sh
+hello world
+Connection to 192.168.4.7 closed.
+================================================
+[root@desktop0 ~]# echo 'XXXSSS  XXX SSS' | mail -s '邮件主题小SX' -r student root
+[root@desktop0 ~]# mail -u root
+
+[root@desktop0 ~]# cat /var/mail/root
+[root@desktop0 ~]# ls -l /var/mail/root
+-rw-------. 1 root mail 1910 8月  10 15:09 /var/mail/root
+[root@desktop0 ~]# ls /var/mail/
+root  student  user10  user3  user5  user7  user9
+rpc   user1    user2   user4  user6  user8
+
+[root@svr7 ~]# echo 'ss hahah==ahaxiix==ixiix' > /shell/stu.txt
+                                                   #标准输入（stdin），描述号为0；{<}
+[root@svr7 ~]# mail -s '邮件主题小SX' -r root student < /shell/stu.txt
+[root@svr7 ~]# mail -u student
+重定向标准输入/输出/错误输出
+
+标准输入（stdin），描述号为0；
+标准输出（stdout），描述号为1；
+标准错误（stderr），描述号为2。
+=========================================================
+[root@svr7 ~]# echo 'wo de kuaile jiushi xiangni' > /shell/stu2.txt
+
+    ############                #标准输入（stdin），描述号为0；{{ < }}
+[root@svr7 ~]# mail -s 'Main Object' -r root lisi < /shell/stu2.txt
+
+[root@svr7 ~]# mail -u lisi
+
+Heirloom Mail version 12.5 7/5/10.  Type ? for help.
+"/var/mail/lisi": 1 message 1 new
+>N  1 root@svr7.tedu.cn     Fri Aug 10 16:15  18/557   "Main Object"
+& 1
+Message  1:
+From root@svr7.tedu.cn  Fri Aug 10 16:15:59 2018
+Return-Path: <root@svr7.tedu.cn>
+X-Original-To: lisi
+Delivered-To: lisi@svr7.tedu.cn
+Date: Fri, 10 Aug 2018 16:15:59 +0800
+From: root@svr7.tedu.cn
+To: lisi@svr7.tedu.cn
+Subject: Main Object
+User-Agent: Heirloom mailx 12.5 7/5/10
+Content-Type: text/plain; charset=us-ascii
+Status: R
+
+wo de kuaile jiushi xiangni
+
+& quit
+Held 1 message in /var/mail/lisi
+
+==========================================
+[root@svr7 ~]# vim /etc/profile
+[root@svr7 ~]# head -46 /etc/profile | tail -1
+HISTSIZE=30
+[root@svr7 ~]# bash /etc/profile
+[root@svr7 ~]# history | wc -l
+293
+[root@svr7 ~]# source /etc/profile
+[root@svr7 ~]# history | wc -l
+30
+
+[root@svr7 ~]# test=111
+您在 /var/spool/mail/root 中有邮件
+[root@svr7 ~]# echo $test RMB
+111 RMB
+[root@svr7 ~]# echo $test-RMB
+111-RMB
+[root@svr7 ~]# echo $test:RMB
+111:RMB
+[root@svr7 ~]# echo $test,RMB
+111,RMB
+[root@svr7 ~]# echo ${test}RMB
+111RMB
+[root@svr7 ~]# echo "$test"RMB
+111RMB
+
+[root@svr7 ~]# echo '$test'RMB
+$testRMB
+
+[root@svr7 ~]# unset test  #取消变量 test
+[root@svr7 ~]# echo ${test}
+
+
+[root@svr7 ~]# echo $HOME
+/root
+[root@svr7 ~]# echo $PWD
+/root
+[root@svr7 ~]# echo $UID
+0
+[root@svr7 ~]# echo $HOSTNAME
+svr7.tedu.cn
+[root@svr7 ~]# echo $MAIL
+/var/spool/mail/root
+
+[root@svr7 ~]# PS1='WWXX#'
+WWXX#ls
+
+WWXX#pwd
+/root
+WWXX#exit
+登出
+Connection to 192.168.4.7 closed.
+[root@room11pc13 ~]# ssh -X root@192.168.4.7
+
+[root@svr7 ~]# echo $PS1
+[\u@\h \W]\$
+[root@svr7 ~]# vim /etc/profile
+[root@svr7 ~]# env
+XDG_SESSION_ID=27
+HOSTNAME=svr7.tedu.cn
+SHELL=/bin/bash
+HISTSIZE=30
+SSH_CLIENT=192.168.4.254 41460 22
+MAIL=/var/spool/mail/root
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+PWD=/root
+HOME=/root
+LOGNAME=root
+SSH_CONNECTION=192.168.4.254 41460 192.168.4.7 22
+
+
+[root@svr7 ~]# set
+ABRT_DEBUG_LOG=/dev/null
+BASH=/bin/bash
+DISPLAY=localhost:11.0
+dequote () 
+{ 
+    eval printf %s "$1" 2> /dev/null
+}
+quote () 
+{ 
+    local quoted=${1//\'/\'\\\'\'};
+    printf "'%s'" "$quoted"
+}
+quote_readline () 
+{ 
+    local quoted;
+    _quote_readline_by_ref "$1" ret;
+    printf %s "$ret"
+}
+
+[root@svr7 ~]# vim  /shell/test.sh
+[root@svr7 ~]# ls -l /shell/test.sh
+-rw-r--r--. 1 root root 68 8月  10 16:23 /shell/test.sh
+[root@svr7 ~]# chmod +x /shell/test.sh
+[root@svr7 ~]# /shell/test.sh aa b 11 c
+/shell/test.sh
+aa
+b
+11
+aa b 11 c
+4
+4984
+[root@svr7 ~]# cat /shell/test.sh
+#!/bin/bash
+echo $0   -------- /shell/test.sh #脚本名称 $0
+echo $1   -------- aa
+echo $2   -------- b
+echo $3   -------- 11
+echo $*   -------- aa b 11 c
+echo $#   -------- 4
+echo $$   -------- 4984
+
+[root@svr7 ~]# ps -aux | grep 4984
+root      5047  0.0  0.0 112676   984 pts/1    R+   16:29   0:00 grep --color=auto 4984
+
+
+[root@svr7 ~]# vim /shell/test.sh 
+[root@svr7 ~]# /shell/test.sh yonghu 123
+更改用户 yonghu 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+[root@svr7 ~]# cat /shell/test.sh
+#!/bin/bash
+useradd $1
+echo $2 | passwd --stdin $1
+
+[root@svr7 ~]# mkdir /test
+[root@svr7 ~]# cd /test
+[root@svr7 test]# touch a b c
+[root@svr7 test]# touch 'a b c'
+[root@svr7 test]# ls
+a  a b c  b  c
+[root@svr7 test]# ll
+总用量 0
+-rw-r--r--. 1 root root 0 8月  10 16:52 a
+-rw-r--r--. 1 root root 0 8月  10 16:52 a b c
+-rw-r--r--. 1 root root 0 8月  10 16:52 b
+-rw-r--r--. 1 root root 0 8月  10 16:52 c
+[root@svr7 test]# rm a
+rm：是否删除普通空文件 "a"？y
+[root@svr7 test]# rm -f b
+[root@svr7 test]# rm -f c
+[root@svr7 test]# ls
+a b c
+[root@svr7 test]# rm -f a
+[root@svr7 test]# rm -f b
+[root@svr7 test]# rm -f c
+[root@svr7 test]# ls
+a b c
+[root@svr7 test]# rm -f 'a b c'
+[root@svr7 test]# ls
+
+[root@svr7 test]# unset PS2
+[root@svr7 test]# PS2
+bash: PS2: 未找到命令...
+[root@svr7 test]# echo $PS2
+
+[root@svr7 test]# tar -cJPf log-`date +%F`.tar.xz /var/log
+[root@svr7 test]# tar -czPf log-`date +%F`.tar.gz /var/log
+[root@svr7 test]# ls
+log-2018-08-10.tar.gz  log-2018-08-10.tar.xz  log-.tar.gz  log-.tar.xz
+[root@svr7 test]# ls -l log-.tar.xz
+-rw-r--r--. 1 root root 294828 8月  10 17:33 log-.tar.xz
+
+[root@svr7 test]# read abc
+123
+[root@svr7 test]# echo $abc
+123
+
+[root@svr7 test]# vim new.sh
+
+[root@svr7 test]# cat new.sh
+#!/bin/bash
+read -p 'Please input username :' user
+read -p 'Please input password :' pass
+useradd $user
+echo $pass | passwd --stdin $user
+[root@svr7 test]# bash new.sh
+Please input username :barbarla
+Please input password :123
+更改用户 barbarla 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+
+[root@svr7 test]# ls /home
+barbarla  lisi  yonghu
+
+[root@svr7 test]# echo x123 > x123.txt
+[root@svr7 test]# passwd --stdin yonghu < x123.txt
+更改用户 yonghu 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+
+[root@svr7 test]# set tty 简写stty
+
+[root@svr7 test]# stty -echo #开启屏蔽
+[root@svr7 test]# log-2018-08-10.tar.gz  log-.tar.gz  new.sh
+log-2018-08-10.tar.xz  log-.tar.xz  x123.txt
+
+            ###[stty echo]取消屏蔽 
+[root@svr7 test]#stty echo [root@svr7 test]# 
+
+[root@svr7 test]# vim new.sh
+[root@svr7 test]# cat new.sh
+#!/bin/bash
+read -p 'Please input username :' user
+stty -echo         #开启屏蔽
+read -p 'Please input password :' pass
+stty echo       #开启回显功能
+echo ""
+useradd $user
+echo $pass | passwd --stdin $user
+
+[root@svr7 test]# pwd
+/test
+[root@svr7 test]# chmod +x /test/new.sh
+[root@svr7 test]# /test/new.sh
+Please input username :lili
+Please input password :
+更改用户 lili 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+[root@svr7 test]# grep lili /etc/passwd
+lili:x:1003:1003::/home/lili:/bin/bash
+
+
+
+
+
+
+
+[root@svr7 ~]# export x=1234  #全局变量x
+[root@svr7 ~]# echo $x
+1234
+[root@svr7 ~]# bash 
+[root@svr7 ~]# echo $x
+1234
+[root@svr7 ~]# bash
+[root@svr7 ~]# echo $x
+1234
+[root@svr7 ~]# pstree | grep bash
+        |-sshd---sshd---bash---bash---bash-+-grep
+[root@svr7 ~]# pstree | head -3
+systemd-+-ModemManager---2*[{ModemManager}]
+        |-NetworkManager---2*[{NetworkManager}]
+        |-abrt-dbus---2*[{abrt-dbus}]
+[root@svr7 ~]# unset x
+[root@svr7 ~]# echo $?
+0
+[root@svr7 ~]# echo $x
+
+
+）使用expr命令
+乘法操作应采用 \* 转义，避免被作为Shell通配符；参与运算的整数值与运算操作符之间需要以空格分开，引用变量时必须加$符号。
+首先定义变量X=1234，然后分别计算与78的加减乘除和求模运算结果
+[root@svr7 ~]# x=1212
+[root@svr7 ~]# expr $x
+1212
+[root@svr7 ~]# expr $x '*' 10
+12120
+[root@svr7 ~]# expr $x * 10
+expr: 语法错误
+[root@svr7 ~]# expr $x / 10
+121
+[root@svr7 ~]# expr $x % 10
+2
+[root@svr7 ~]# expr $x + 8
+1220
+[root@svr7 ~]# expr $x - 8
+1204
+
+[root@svr7 ~]# expr $x - 2000
+-788
+[root@svr7 ~]# expr $x % -1212
+0
+[root@svr7 ~]# expr $x % -1211
+1
+[root@svr7 ~]# expr $x %  -1210
+2
+[root@svr7 ~]# x=123
+[root@svr7 ~]# echo $[x+10]
+133
+[root@svr7 ~]# echo $[x-10]
+113
+[root@svr7 ~]# echo $[x%10]
+3
+[root@svr7 ~]# echo $[x/10]
+12
+[root@svr7 ~]# echo $[x*10]
+1230
+）使用let命令
+expr或$[]、$(())方式只进行运算，并不会改变变量的值；而let命令可以直接对变量值做运算再保存新的值。因此变量X=1234，在执行let运算后的值会变更；另外，let运算操作并不显示结果，但是可以结合echo命令来查看：
+[root@svr7 ~]# x=1200;expr $[x+=10]
+1210
+[root@svr7 ~]# echo $x
+1210
+[root@svr7 ~]# expr $((x*=10));expr $[x/=10]
+12100
+1210
+[root@svr7 ~]# let $((x*=10));echo $x
+12100
+
+
+[root@svr7 ~]# x=2
+[root@svr7 ~]# let x++ ; let x++2
+bash: let: x++2: 表达式中有语法错误 （错误符号是 "2"）
+[root@svr7 ~]# echo $x
+4
+[root@svr7 ~]# let x+=2;echo $x
+6
+[root@svr7 ~]# let x*=2;echo $x
+12
+[root@svr7 ~]# let x%=5;echo $x
+2
+[root@svr7 ~]# let x/=5;echo $x
+0
+[root@svr7 ~]# let x-=100;echo $x
+-100
+
+[root@svr7 ~]# expr 1.2+2.2
+1.2+2.2
+[root@svr7 ~]# let 1.2+2.2
+bash: let: 1.2+2.2: 语法错误: 无效的算术运算符 （错误符号是 ".2+2.2"）
+[root@svr7 ~]# echo '1.2+2.2' | bc
+3.4
+[root@svr7 ~]# echo 3.3+5.5 > bc.txt
+[root@svr7 ~]# bc < bc.txt
+8.8
+
+[root@svr7 ~]# vim bc.txt
+[root@svr7 ~]# bc < bc.txt
+8.8
+200
+500
+[root@svr7 ~]# cat bc.txt
+3.3+5.5
+10*20
+500/1
+[root@svr7 ~]# vim bc.txt
+[root@svr7 ~]# bc < bc.txt
+8.8
+200
+500
+1
+0
+[root@svr7 ~]# cat bc.txt
+3.3+5.5
+10*20
+500/1
+
+
+[root@svr7 ~]# [ 3 == 3 ]
+[root@svr7 ~]# echo $?
+0
+[root@svr7 ~]# [ "3" == "3" ]
+[root@svr7 ~]# echo $?
+0
+[root@svr7 ~]# [ '3' == '3' ]
+[root@svr7 ~]# echo $?
+0
+
+[root@svr7 ~]# [ ss == ss ]
+[root@svr7 ~]# echo $?
+0
+[root@svr7 ~]# [ 'ss' == 'ss' ]
+[root@svr7 ~]# echo $?
+0
+[root@svr7 ~]# [ "ss" == "ss" ]
+[root@svr7 ~]# echo $?
+0
+[root@svr7 opt]# [ 'ww' != 'ww' ]
+[root@svr7 opt]# echo $?
+1
+[root@svr7 opt]# [ 'ww' == 'ww' ]
+[root@svr7 opt]# echo $?
+0
+
+[root@svr7 ~]# cd /mnt && ls
+[root@svr7 mnt]# echo $?
+0
+[root@svr7 mnt]# cd /xxs && ls
+bash: cd: /xxs: 没有那个文件或目录
+[root@svr7 mnt]# cd /opt && lx
+bash: lx: 未找到命令...
+[root@svr7 opt]# echo $?
+127
+
+[root@svr7 opt]# cd /mnt || lx
+[root@svr7 mnt]# echo $?
+0
+[root@svr7 mnt]# cd /op || ls
+bash: cd: /op: 没有那个文件或目录
+[root@svr7 mnt]# echo $? 
+0
+[root@svr7 mnt]# cd /opt
+[root@svr7 opt]# ls
+rh
+[root@svr7 opt]# [ $USER = root ] && echo y || echo n 
+y
+[root@svr7 opt]# [ $USER = rot ] && echo y || echo n 
+n
+
+
+[root@svr7 opt]# vim /root/bc.txt
+[root@svr7 opt]# bc < /root/bc.txt
+8.8
+200
+50
+76
+1
+0
+1
+
+[root@svr7 opt]# rm -rf /root/.
+./             .bash_profile  .cshrc         .local/
+../            .bashrc        .dbus/         .tcshrc
+.1.txt.swp     .bc.txt.swp    .esd_auth      .viminfo
+.bash_history  .cache/        .history       .Xauthority
+.bash_logout   .config/       .ICEauthority  
+[root@svr7 opt]# rm -rf /root/.bc.txt.swp  /root/.1.txt.swp 
+
+[root@svr7 opt]# var1="nb";var2=''
+[root@svr7 opt]# [ -z "$var1" ] && echo "null" || echo "full"
+full
+[root@svr7 opt]# [ -z "$var2" ] && echo "null" || echo "full"
+null
+[root@svr7 opt]# [ ! -z $var1 ]
+[root@svr7 opt]# echo $?
+0
+
+[root@svr7 opt]# vim /opt/user.sh
+[root@svr7 opt]# chmod +x /opt/user.sh
+[root@svr7 opt]# /opt/user.sh
+Please input username: 
+Null username
+[root@svr7 opt]# echo $?
+1
+[root@svr7 opt]# /opt/user.sh
+Please input username: qq
+Please input password:Null password
+[root@svr7 opt]# echo $?
+2
+[root@svr7 opt]# /opt/user.sh
+Please input username: qq
+Please input password:更改用户 qq 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+
+[root@svr7 opt]# cat /opt/user.sh
+#!/bin/bash
+read -p 'Please input username: ' user
+[ -z $user ] && echo 'Null username' && exit 1
+stty -echo
+read -p 'Please input password:' pass
+stty echo
+[ -z $pass ] && echo 'Null password' && exit 2
+useradd $user
+echo $pass | passwd --stdin $user
+
+[root@svr7 ~]# [ 4 -ge 2 ]
+[root@svr7 ~]# echo $?
+0
+[root@svr7 ~]# >/var/spool/mail/root
+[root@svr7 ~]# cat /var/spool/mail/root
+[root@svr7 opt]# echo 'Why Why why why' > /opt/mail.txt
+
+[root@svr7 opt]# crontab -r -u root
+[root@svr7 opt]# crontab -l -u root
+no crontab for root
+[root@svr7 opt]# crontab -e -u root
+no crontab for root - using an empty one
+crontab: installing new crontab
+
+[root@svr7 opt]# which mail
+/usr/bin/mail
+
+[root@svr7 opt]# crontab -l -u root
+
+*/2 13 11 08 6 [ $(who | wc -l) -ge 3 ] && /usr/bin/mail  -s 'Main ObjectX2' -r student root < /opt/mail.txt ; echo It is 4 >>/opt/cro.txt
+您在 /var/spool/mail/root 中有新邮件
+
+[root@svr7 opt]# systemctl restart crond
+
+[root@svr7 opt]# tail -3 /var/log/cron
+Aug 11 13:11:23 svr7 crontab[5971]: PAM pam_end: NULL pam handle passed
+Aug 11 13:12:02 svr7 CROND[5974]: (root) CMD ([ $(who | wc -l) -ge 3 ] && /usr/bin/mail  -s 'Main ObjectX2' -r student root < /opt/mail.txt ; echo It is 4 >>/opt/cro.txt)
+Aug 11 13:14:01 svr7 CROND[6004]: (root) CMD ([ $(who | wc -l) -ge 3 ] && /usr/bin/mail  -s 'Main ObjectX2' -r student root < /opt/mail.txt ; echo It is 4 >>/opt/cro.txt)
+您在 /var/spool/mail/root 中有新邮件
+
+[root@svr7 opt]# cat /var/spool/mail/root
+From student@svr7.tedu.cn  Sat Aug 11 13:10:02 2018
+Date: Sat, 11 Aug 2018 13:10:01 +0800
+From: student@svr7.tedu.cn
+To: root@svr7.tedu.cn
+Subject: Main ObjectX2
+
+Why Why why why
+
+[root@svr7 opt]# cat /opt/cro.txt 
+It is 4
+It is 4
+It is 4
+It is 4
+It is 4
+您在 /var/spool/mail/root 中有新邮件
+
+[root@svr7 opt]# mail -u root
+ N 11 student@svr7.tedu.cn  Sat Aug 11 13:30  18/556   "Main ObjectX2"
+& 11
+From: student@svr7.tedu.cn
+To: root@svr7.tedu.cn
+Subject: Main ObjectX2
+Why Why why why
+
+& quit
+
+
+
+
+[root@svr7 opt]# lscpu | head -3
+Architecture:          x86_64
+CPU op-mode(s):        32-bit, 64-bit
+Byte Order:            Little Endian
+[root@svr7 opt]# free -lh | head -5
+              total        used        free      shared  buff/cache   available
+Mem:           992M        575M         85M         11M        331M        227M
+Low:           992M        907M         85M
+High:            0B          0B          0B
+Swap:          2.0G         26M        2.0G
+[root@svr7 opt]# top | grep free
+KiB Mem :  1016260 total,    86492 free,   589684 used,   340084 buff/cache
+KiB Swap:  2097148 total,  2069532 free,    27616 used.   232888 avail Mem 
+
+
+[root@svr7 opt]# ls -l /lib/systemd/system/runlevel0.target
+lrwxrwxrwx. 1 root root 15 1月  30 2018 /lib/systemd/system/runlevel0.target -> poweroff.target
+[root@svr7 opt]# ls -l /lib/systemd/system/poweroff.target
+-rw-r--r--. 1 root root 552 6月  27 2017 /lib/systemd/system/poweroff.target
+[root@svr7 opt]# head -4 /lib/systemd/system/poweroff.target
+[root@svr7 opt]# tail -4 /lib/systemd/system/poweroff.target
+JobTimeoutAction=poweroff-force
+
+[Install]
+Alias=ctrl-alt-del.target
+
+[root@svr7 opt]# ls -l /etc/shadow
+----------. 1 root root 1690 8月  11 11:43 /etc/shadow
+[root@svr7 opt]# [ -x /etc/shadow ]
+[root@svr7 opt]# echo $?
+1
+[root@svr7 opt]# [ -r /etc/shadow ] && echo 'is readable' || echo 'unreadable'
+is readable
+[root@svr7 opt]# [ -w '/etc/shadow' ] && echo 'is writeable' || echo 'UNWRITEABLE'
+is writeable
+                     ##即使root用户也没有可执行权,但是可以有读写权,也可以修改成可执行+x
+[root@svr7 opt]# [ -x "/etc/shadow" ] && echo 'is executable' || echo "inexecutable"
+inexecutable
+
+[root@svr7 opt]# [ -e /etc/shadow ] && echo 'is file or directory' || echo 'inexistent'
+is file or directory
+[root@svr7 opt]# [ -d /etc/shadow ] && echo 'is directory' || echo 'not directory'
+not directory
+[root@svr7 opt]# [ -f /etc/shadow ] && echo 'is file' || echo " not file"
+is file
+
+[root@svr7 opt]# [ ! -d /Maimai ] && mkdir /Maimai
+[root@svr7 opt]# echo $?
+0
+[root@svr7 opt]# ls /Maimai/
+
+[root@svr7 opt]# [ 3 -gt 3 ] && echo $? || echo $?
+1
+[root@svr7 opt]# [ 3 -eq 3 ] && echo $? || echo $?
+0
+[root@svr7 opt]# [ 3 -lt 2 ] && echo $? || echo $?
+1
+[root@svr7 opt]# [ 3 == 3 ] ; echo $?
+0
+[root@svr7 opt]# [ "33" == "33" ] ; echo $?
+0
+[root@svr7 opt]# [ WW == WW ];echo $?
+0
+[root@svr7 opt]# [ 'ww' != 'ww' ];echo $?
+1
+[root@svr7 opt]# [ 'ww' == 'ww' ];echo $?
+0
+[root@svr7 opt]# vim mk.sh
+[root@svr7 opt]# bash mk.sh
+[root@svr7 opt]# cat mk.sh
+#!/bin/bash
+dir='/opt/mk'
+if [ ! -d $dir ];then
+ mkdir -p  $dir
+fi
+[root@svr7 opt]# ls /opt
+cro.txt  mail.txt  mk  mk.sh  rh  user.sh
+
+[root@svr7 opt]# vim mk.sh
+[root@svr7 opt]# cat mk.sh
+#!/bin/bash
+dir='/mnt/mk2'
+if [ ! -d $dir ];then
+ mkdir -p  $dir
+fi
+[root@svr7 opt]# bash mk.sh
+[root@svr7 opt]# ls /mnt/
+mk2
+[root@svr7 opt]# head -3 /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+
+操作符    含义
+-eq    equal 等于
+-ne    not equal 不等于
+-ge    greater or equal 大于等于
+-le    lesser or equal  小于等于
+-gt    greater than    大于
+-lt    lesser than    小于
+
+[root@svr7 mnt]# vim test.sh
+[root@svr7 mnt]# bash test.sh
+input ip:192.168.4.7
+it is active
+[root@svr7 mnt]# bash test.sh
+input ip:192.168.4.77
+it is dead
+[root@svr7 mnt]# cat test.sh
+#!/bin/bash
+read -p 'input ip:' ip
+ping -c1 -i 0.1 -w 1 $ip &> /dev/null
+if [ $? -eq 0 ];then
+  echo it is active
+else
+  echo it is dead
+fi
+
+[root@svr7 mnt]# vim test.sh
+[root@svr7 mnt]# bash test.sh
+input ip:192.168.4.7
+it is active
+[root@svr7 mnt]# bash test.sh
+input ip:192.168.4.77
+it is dead
+[root@svr7 mnt]# cat test.sh
+#!/bin/bash
+read -p 'input ip:' ip
+ping -c1 -i0.1 -w0.2 $ip &> /dev/null
+if [ $? -eq 0 ];then
+  echo it is active
+else
+  echo it is dead
+fi
+
+[root@svr7 mnt]# ping -c1 -i0.1 -w0.3 192.168.4.7; echo $?
+PING 192.168.4.7 (192.168.4.7) 56(84) bytes of data.
+64 bytes from 192.168.4.7: icmp_seq=1 ttl=64 time=0.050 ms
+
+--- 192.168.4.7 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.050/0.050/0.050/0.000 ms
+0
+
+[root@svr7 mnt]# echo $[RANDOM%11]
+0
+[root@svr7 mnt]# echo $[RANDOM%11]
+10
+[root@svr7 mnt]# echo $[RANDOM%11]
+1
+
+[root@svr7 ~]# cat /proc/cpuinfo | grep model
+model		: 94
+model name	: Intel Core Processor (Skylake)
+
+[root@svr7 ~]# cat /proc/cpuinfo | grep vendor_id
+vendor_id	: GenuineIntel
+
+==================================
+https://github.com/redhatedu/course/blob/master/shell/if.pdf
+==================================================
+[root@room11pc13 ~]# wget https://github.com/redhatedu/course/raw/master/shell/if.pdf
+[root@room11pc13 ~]# mv if.pdf /root/桌面/
+
+============================
+
+[root@svr7 ~]# echo y=10.4;y+=30 | bc
+y=10.4
+[root@svr7 ~]# export y=11.5; echo ++y | bc
+1
+[root@svr7 ~]# y=11.5;echo ++y | bc
+1
+[root@svr7 ~]# y=11.5;echo y++ | bc
+0
+
+
+[root@svr7 ~]# echo $y
+11.5
+[root@svr7 ~]# echo 'y=11.5;  ++y' | bc
+12.5
+[root@svr7 ~]# echo 'export y=11.5;  ++y' | bc
+(standard_in) 1: syntax error
+[root@svr7 ~]# echo $?
+0
+[root@svr7 ~]# y=10.4;y+=30
+[root@svr7 ~]# echo $y
+10.430
+
+[root@svr7 ~]# let x=78; let x-=10; echo $x
+68
+[root@svr7 ~]# let x=100;let ++x; echo $x
+101
+[root@svr7 ~]# let x=100;let x*=2;echo $x
+200
+[root@svr7 ~]# let x=100;let x%=9;echo $x
+1
+[root@svr7 ~]# let x=100;let x%9;echo $x
+100
+[root@svr7 ~]# let x=100;let x/=10;echo $x
+10
+bc非交互式运算
+将需要运算的表达式通过管道操作交给bc运算。注意，小数位的长度可采用scale=N限制，
+除此以外也受参与运算的数值的小数位影响。
+以计算小数12.34与5.678的四则运算为例，相关操作如下：
+[root@svr5 ~]# echo 'scale=4;12.34+5.678' | bc
+18.018
+[root@svr5 ~]# echo 'scale=4;12.34*5.678' | bc 
+70.0665
+[root@svr5 ~]# echo 'scale=4;12.34/5.678' | bc 
+2.1733
+[root@svr7 ~]# echo 'scale=2;x=100;x++' | bc
+100
+[root@svr7 ~]# echo 'scale=2;x=100;++x' | bc
+101
+[root@svr7 ~]# echo 'scale=2;x=100.8;x+=0.8;++x' | bc
+102.6
+
+[root@svr7 ~]# echo 'scale=2;x=100.8;x+=0.8;x' | bc
+101.6
+[root@svr7 ~]# echo 'scale=2;x=64.88;x*=10;' | bc
+[root@svr7 ~]# echo 'scale=2;x=64.88;x*=10;x' | bc
+648.80
+
+[root@svr7 ~]# x=1200;expr $[x+=10]
+1210
+[root@svr7 ~]# echo $x
+1210
+[root@svr7 ~]# expr $((x*=10));expr $[x/=10]
+12100
+1210
+[root@svr7 ~]# let $((x*=10));echo $x
+12100
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+==================================
+https://github.com/redhatedu/course/blob/master/shell/if.pdf
+==================================================
+
+

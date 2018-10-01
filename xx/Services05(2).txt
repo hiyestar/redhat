@@ -1,0 +1,599 @@
+﻿#######################################################
+环境准备：检查Yum是否可用
+
+虚拟机A：
+[root@svr7 ~]# yum clean all    #清空Yum缓存
+[root@svr7 ~]# yum repolist 
+
+虚拟机B： 
+[root@pc207 ~]# yum clean all   #清空Yum缓存
+[root@pc207 ~]# yum repolist  
+
+####################################################
+下午环境准备：安装CentOS7虚拟机
+ 1.图形方式进行安装
+ 2.内存“2G”
+ 3.磁盘大小“50G”
+ 4.网络类型“private1”
+ 5.分区选择“自动分区”即可
+ 6.软件包的选择“带GUI的服务器”
+ 7.设置root密码  创建普通用户lisi
+####################################################
+rsync同步操作
+• 命令用法
+– rsync [选项...] 源目录    目标目录
+
+• 同步与复制的差异
+– 复制:完全拷贝源到目标
+– 同步:增量拷贝,只传输变化过的数据
+
+• 本地同步
+– rsync [选项...] 本地目录1    本地目录2
+– rsync [选项...] 本地目录1/   本地目录2
+[root@svr7 ~]# mkdir /todir
+[root@svr7 ~]# rsync -a /boot  /todir    //同步整个文件夹
+[root@svr7 ~]# rsync -a /boot/ /todir/  //只同步目录下的数据
+
+同步控制
+• rsync操作选项
+– -n:测试同步过程,不做实际修改
+– --delete:删除目标文件夹内多余的文档
+– -a:归档模式,相当于-rlptgoD
+– -v:显示详细操作信息
+– -z:传输过程中启用压缩/解压
+
+[root@svr7 /]# mkdir /nsd
+[root@svr7 /]# mkdir /test
+[root@svr7 /]# cp /etc/passwd /nsd/
+[root@svr7 /]# touch /nsd/1.txt
+[root@svr7 /]# ls /nsd
+
+[root@svr7 /]# rsync -avz /nsd/   /test     #同步目录下内容
+[root@svr7 /]# ls /test
+
+[root@svr7 /]# touch /nsd/2.txt
+[root@svr7 /]# rsync -avz /nsd/   /test     #同步目录下内容
+[root@svr7 /]# ls /test
+
+[root@svr7 /]# touch /nsd/3.txt
+[root@svr7 /]# rsync -avz /nsd/   /test        
+
+#######################################################
+删除目标多余的文档
+[root@svr7 /]# rsync -avz --delete  /nsd/  /test/
+
+[root@svr7 /]# ls /nsd 
+[root@svr7 /]# ls /test
+
+[root@svr7 /]# touch /test/10.txt
+[root@svr7 /]# rsync -avz  --delete  /nsd/  /test/
+[root@svr7 /]# ls /nsd 
+[root@svr7 /]# ls /test
+
+#######################################################
+rsync+SSH远程同步
+
+与远程的 SSH目录保持同步
+– 下行:rsync [...]   user@host:远程目录      本地目录
+– 上行:rsync [...]   本地目录        user@host:远程目录
+
+
+虚拟机A
+ # rsync -avz --delete /opt/  root@192.168.4.207:/opt/
+
+虚拟机B
+ #  ls /opt
+
+
+虚拟机A
+ # touch /opt/{1..5}.txt
+
+ # rsync -avz --delete /opt/  root@192.168.4.207:/opt/
+
+虚拟机B
+ #  ls /opt
+
+###########################################################
+实时远程同步
+
+虚拟机A：
+一、无密码验证
+ 1.生成公钥  私钥验证
+[root@svr7 /]# ssh-keygen     #一路回车
+[root@svr7 /]# ls /root/.ssh
+
+   /root/.ssh/known_hosts     #记录ssh远程客户端标识文件
+
+ 2.传递公钥  到对方机器
+[root@svr7 /]# ssh-copy-id root@192.168.4.207
+
+ 3.测试无需密码
+ # rsync -avz --delete /opt/  root@192.168.4.207:/opt/
+
+
+二、目录内容的监控
+ 真机上传tools.tar.gz到虚拟机A的/root目录下
+
+1.安装 inotify-tools 控制工具可调用此机制实现监控
+标准的源码、编译安装即可
+
+[root@svr7 /]# tar -xf /root/tools.tar.gz -C /
+[root@svr7 /]# ls /tools/
+
+ rpm包：  利用 yum  rpm -ivh  进行安装
+
+  源码包------开发工具(gcc与make)----->可以执行的程序-------->运行安装
+
+• 主要优点
+ – 获得软件的最新版,及时修复bug
+ – 软件功能可按需选择/定制,有更多软件可供选择
+ – 源码包适用各种平台
+
+步骤1：安装gcc与make
+[root@svr7 /]# yum -y install gcc make
+
+步骤2：tar进行解包
+# tar -xf  /tools/inotify-tools-3.13.tar.gz  -C   /
+# ls /
+# cd /inotify-tools-3.13
+# ls
+
+步骤3：  ./configure 配置,指定功能模块等选项
+                                  检测系统是否安装gcc
+                   --prefix=路径      #指定安装目录
+
+ # cd /inotify-tools-3.13
+ # ./configure
+
+
+常见错误提示：gcc软件没有安装
+ checking for gcc... no
+ checking for cc... no
+ checking for cl.exe... no
+ configure: error: no acceptable C compiler found in $PATH
+ See `config.log' for more details.
+
+
+步骤4:make 编译,生成可执行的二进制程序文件
+ # cd /inotify-tools-3.13
+ # make
+
+
+步骤5:make install 安装,将编译好的文件复制到安装目录
+ # cd /inotify-tools-3.13
+ # make  install
+
+[root@svr7 /]# which inotifywait     #查看是否具备该程序
+/usr/local/bin/inotifywait
+
+
+• 基本用法
+– inotifywait [选项] 目标文件夹
+
+• 常用命令选项
+– -m,持续监控(捕获一个事件后不退出)
+– -r,递归监控、包括子目录及文件
+– -q,减少屏幕输出信息
+– -e,指定监视的 modify、move、create、delete、attrib 等事件类别
+
+[root@svr7 /]# inotifywait -rq /opt/
+
+
+三、书写Shell脚本
+
+   for循环   适合次数固定 的事件
+   while循环      适合死循环  
+ 
+     while  [条件]
+      do
+              循环执行的语句  
+      done
+
+[root@svr7 /]# vim /root/rsync.sh
+  #!/bin/bash 
+   while inotifywait -rqq /opt/
+    do
+       rsync -az --delete /opt/  root@192.168.4.207:/opt/
+    done &
+
+[root@svr7 /]# chmod +x /root/rsync.sh
+
+########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,536 @@
+﻿教学环境介绍
+[root@room9pc01 ~]# rht-vmctl reset classroom
+classroom [OK]
+域 classroom 已开始
+
+[root@room9pc01 ~]# rht-vmctl reset server
+server [OK]
+域 server 已开始
+
+[root@room9pc01 ~]# gos
+Last login: Fri Jan 12 18:54:14 2018 from 172.25.0.250
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@server0 ~]# 
+[root@server0 ~]# yum clean all  #清空Yum缓存
+[root@server0 ~]# yum repolist
+
+#######################################################
+
+列表式循环,自动帮助用户，重复执行一个动作
+
+
+  for 变量名 in 值列表
+   do
+        命令序列
+   done
+
+
+  for   a   （献血车 ）  in    zhangsan  lisi  wangwu  （队伍） 
+   do
+           useradd $a    （重复执行的操作）
+   done
+
+
+
+[root@server0 ~]# vim  /root/for01.sh
+ #!/bin/bash
+ for  a  in  zhangsan  lisi   wangwu   tom  natasha
+ do
+   useradd  $a
+   echo  $a创建成功
+ done
+
+[root@server0 ~]# 
+
+  循环方面： 
+        1. 循环的列表值，参与循环体
+        2. 循环的列表值，不参与循环体
+
+
+   造数工具：  {起点..结束}
+
+  
+
+[root@server0 /]# vim  /root/for01.sh
+#!/bin/bash
+num1=$[$RANDOM%10]
+for  a   in   {1..3}
+do
+ read -p '请输入0～9之间的一个数字:'  num2
+
+ if  [ $num1 -eq $num2 ];then
+    echo 恭喜您，猜对啦
+    exit
+ elif  [ $num2 -gt $num1 ];then
+    echo 您猜大了
+ else
+    echo 您猜小了
+ fi
+done
+[root@server0 /]
+#######################################################
+
+
+系统安全保护
+
+ SELinux安全机制
+• Security-Enhanced Linux
+– 美国NSA国家安全局主导开发,一套增强Linux系统安
+全的强制访问控制体系
+
+• SELinux的运行模式
+– enforcing(强制)、permissive(宽松)
+– disabled(彻底禁用)
+
+   所有的模式进入disabled模式，都要经过重起系统
+
+• 切换运行模式
+– 查看当前SELinux模式：getenforce
+– 临时切换:setenforce 1|0
+
+
+每次开机默认的模式：
+– 固定配置:/etc/selinux/config 文件
+
+
+虚拟机Server0
+1.当前修改
+[root@server0 /]# getenforce     #查看SELinux当前的状态 
+Enforcing
+[root@server0 /]# setenforce 0   #修改SELinux当前的状态
+[root@server0 /]# getenforce 
+Permissive
+
+2.修改配置文件/etc/selinux/config
+SELINUX=permissive
+
+虚拟机desktop0，做同样的修改
+
+####################################################
+配置用户环境
+
+alias别名设置
+• 查看已设置的别名
+– alias [别名名称]
+• 定义新的别名
+– alias 别名名称= '实际执行的命令行'
+• 取消已设置的别名
+– unalias [别名名称]
+
+• 影响指定用户的 bash 解释环境
+– ~/.bashrc,每次开启 bash 终端时生效
+
+
+• 影响所有用户的 bash 解释环境
+– /etc/bashrc,每次开启 bash 终端时生效
+
+##############################################
+[root@server0 /]# vim /root/.bashrc   #只针对与root用户
+alias hi='echo hi'
+
+[root@server0 /]# vim /etc/bashrc     #针对所有用户
+alias hello='echo hello'
+
+[root@server0 /]# vim /home/student/.bashrc 
+alias haxi='echo hahaxixi'
+
+[root@server0 /]# su - student
+
+[student@server0 ~]$ hi        #执行失败
+[student@server0 ~]$ hello     #执行成功
+[student@server0 ~]$ haxi      #执行成功
+[student@server0 ~]$ exit
+
+####################################################
+防火墙策略管理
+
+一、搭建基本Web服务
+
+Web服务器：虚拟机Server0
+1.安装软件包    Apache(httpd)  
+[root@server0 /]# yum -y install httpd
+ 
+2.启动httpd服务
+[root@server0 /]# systemctl restart httpd
+[root@server0 /]# systemctl enable httpd
+ln -s '/usr/lib/systemd/system/httpd.service' '/etc/systemd/system/multi-user.target.wants/httpd.service'
+
+3.本机测试
+[root@server0 /]# firefox  172.25.0.11
+
+4.书写网页文件
+  默认存放网页路径：/var/www/html
+  默认网页文件名字：index.html
+[root@server0 ~]# vim  /var/www/html/index.html
+<marquee><font  color=red><h1>NSD1806 阳光明媚</marquee>
+   滚动          字体颜色为红色   最大字体
+
+#####################################################
+搭建FTP服务
+
+虚拟机Server0：
+1.安装vsftpd软件
+[root@server0 ~]# yum info vsftpd    #查看软件包的基本信息
+[root@server0 ~]# yum -y install vsftpd 
+
+2.重起vsftpd服务
+[root@server0 ~]# systemctl restart vsftpd  
+[root@server0 ~]# systemctl enable vsftpd   #设置开机自启动
+ln -s '/usr/lib/systemd/system/vsftpd.service' '/etc/systemd/system/multi-user.target.wants/vsftpd.service'
+
+3.本机测试
+ 默认FTP服务共享路径：/var/ftp
+
+[root@server0 ~]# firefox  ftp://172.25.0.11
+
+####################################################
+RHEL7防火墙
+
+  防火墙作用： 隔离， 默认允许出站 ，过滤入站
+
+  硬件防火墙
+
+  软件防火墙
+ 
+
+RHEL7防火墙 :firewalld
+
+• 管理工具:firewall-cmd、firewall-config(图形工具)
+
+
+
+预设安全区域
+• 根据所在的网络场所区分,预设保护规则集
+
+ – public:仅允许访问本机的sshd、ping、DHCP服务
+ – trusted:允许任何访问
+ – block:阻塞任何来访请求，明确拒绝
+ – drop:丢弃任何来访的数据包，不给出回应，节省资源
+
+##################################################
+防火墙的判定规则：匹配及停止
+  1.查看数据包中源IP地址，检查所有区域中，那个区域由改源IP地址的规则
+则进入该区域
+
+  2.进入默认区域
+
+##################################################
+防火墙默认区域的修改
+
+虚拟机Server0
+# firewall-cmd --get-default-zone    #查看默认区域
+虚拟机Desktop0
+# ping 172.25.0.11                   #可以通信
+
+虚拟机Server0
+# firewall-cmd --set-default-zone=block   #修改默认区域
+# firewall-cmd --get-default-zone
+虚拟机Desktop0
+# ping 172.25.0.11           #不可以通信，有回应
+
+虚拟机Server0
+# firewall-cmd --set-default-zone=drop    #修改默认区域
+# firewall-cmd --get-default-zone
+虚拟机Desktop0 
+# ping 172.25.0.11           #不可以通信，没有回应
+
+#####################################################
+默认区域 服务添加
+
+虚拟机Server0
+# firewall-cmd --set-default-zone=public   #修改默认区域  
+# firewall-cmd --zone=public --list-all    #查看public区域规则
+虚拟机Desktop0 
+# firefox 172.25.0.11           #访问失败
+# firefox ftp://172.25.0.11     #访问失败
+
+虚拟机Server0
+# firewall-cmd --zone=public  --add-service=http    #添加http协议
+# firewall-cmd --zone=public  --list-all      #查看public区域规则
+虚拟机Desktop0 
+# firefox 172.25.0.11        #访问成功
+# firefox ftp://172.25.0.11  #访问失败
+
+虚拟机Server0
+# firewall-cmd --zone=public  --add-service=ftp   #添加ftp协议
+# firewall-cmd --zone=public  --list-all      #查看public区域规则
+虚拟机Desktop0 
+# firefox 172.25.0.11        #访问成功
+# firefox ftp://172.25.0.11  #访问成功
+
+
+#####################################################
+互联网常见的应用服务协议
+       http:超文本传输协议            端口号：80
+       FTP：文件传输协议                端口号：21
+       https:安全超文本传输协议    端口号：443
+       DNS:域名解析协议                  端口号：53
+       tftp:简单的文件传输协议      端口号：69
+       telnet:远程管理协议            端口号：23
+       smtp:发邮件协议                   端口号：25
+       pop3:收邮件协议                   端口号：110
+       snmp:互联管理协议                端口号：161
+
+   端口：编号标识协议（程序、服务）
+
+   数据包： 源IP地址   目标IP地址    数据    访问的端口号
+
+#################################################
+######################################################
+• 永久配置规则(permanent)
+
+# firewall-cmd --reload            #重新加载防火墙所有配置
+# firewall-cmd --zone=public --list-all 
+
+# firewall-cmd --permanent --zone=public --add-service=http
+# firewall-cmd --reload 
+# firewall-cmd --zone=public --list-all 
+
+# firewall-cmd --permanent --zone=public --add-service=ftp
+# firewall-cmd --reload 
+# firewall-cmd --zone=public --list-all 
+
+###################################################
+实现本机的端口映射
+• 本地应用的端口重定向(端口1 --> 端口2)
+– 从客户机访问 端口1 的请求,自动映射到本机 端口2
+– 比如,访问以下两个地址可以看到相同的页面:
+
+  http://172.25.0.11:5423
+  http://172.25.0.11:80
+
+虚拟机Server0
+# firewall-cmd --permanent --zone=public
+   --add-forward-port=port=5423:proto=tcp:toport=80
+
+# firewall-cmd --reload 
+# firewall-cmd --zone=public --list-all
+
+虚拟机Desktop0
+[root@desktop0 ~]# firefox 172.25.0.11:5423
+
+
+##################################################
+ 当客户端访问本机，协议为tcp端口号为5423，将其端口修改为访问80端口
+
+
+
+                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

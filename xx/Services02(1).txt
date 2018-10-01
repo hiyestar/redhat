@@ -1,0 +1,681 @@
+﻿#######################################################
+环境准备：检查Yum是否可用
+
+虚拟机A：
+[root@svr7 ~]# yum clean all    #清空Yum缓存
+[root@svr7 ~]# yum repolist 
+
+虚拟机B： 
+[root@pc207 ~]# yum clean all   #清空Yum缓存
+[root@pc207 ~]# yum repolist  
+
+
+######################################################
+基础DNS服务
+
+• DNS服务器的功能
+– 正向解析:根据注册的域名查找其对应的IP地址
+– 反向解析:根据IP地址查找对应的注册域名,不常用
+
+
+域名体系：
+       所有的域名，都要以 点 结尾(称为 根域名)
+  
+                               根 .
+
+一级域名： .cn   .kr   .hk  .tw  .jp  .us  .com  .net  .org ....
+
+
+二级域名： .com.cn   .edu.cn   .net.cn   .gov.cn   .mil.cn ....
+
+
+三级域名: .dawai.com.cn    .nb.com.cn    .haxi.com.cn  .dc.com.cn
+
+
+完整主机名: www.dawai.com.cn   ftp.dawai.com.cn  tts.dawei.com.cn
+
+• Full Qualified Domain Name,完全合格主机名(FQDN)
+– = 站点名.域名后缀
+– = 站点名. .. .. .二级域.一级域
+
+ 
+######################################################
+
+
+BIND域名服务
+• BIND(Berkeley Internet Name Daemon)
+– 伯克利 Internet 域名服务
+– 官方站点:https://www.isc.org/
+
+
+ • 主配置文件:/etc/named.conf    #设置本机负责解析的域名  
+ • 地址库文件:/var/named/        #所有的完整的主机名与IP对应关系
+
+ – 系统服务:named
+ – 默认端口:TCP/UDP 53   
+
+#########################################################                                
+搭建基本的DNS服务
+虚拟机A：
+1.安装软件包
+[root@svr7 ~]# yum -y install  bind-chroot   bind
+
+  bind-9.9.4-29.el7.x86_64         #域名服务包
+  bind-chroot-9.9.4-29.el7.x86_64  #提供虚拟根支持(牢笼政策)
+
+2.修改主配置文件/etc/named.conf
+[root@svr7 ~]# cp /etc/named.conf  /root/name.bak
+[root@svr7 ~]# vim /etc/named.conf
+ options {
+ 	directory 	"/var/named";     #指定地址库文件存放路径
+ };
+ zone "tedu.cn" IN {           #指定本DNS服务器负责解析的域名
+  	type master;               #指定本机为权威DNS服务器(主DNS)
+ 	file "tedu.cn.zone";      #指定地址库文件的名字
+ };
+
+3.建立地址库文件/var/named/tedu.cn.zone
+# cd  /var/named
+# cp -p named.localhost tedu.cn.zone    #保持属性不变，进行复制
+# vim tedu.cn.zone
+ 所有的域名必须以 "." 作为结尾
+ 没有以 "." 作为结尾，则默认补全地址库文件负责的域名
+
+  tedu.cn.  NS    svr7
+  svr7      A     192.168.4.7    
+  www       A     1.2.3.4
+  ftp       A     5.6.7.8
+
+
+虚拟机B：验证
+1.指定DNS服务器
+[root@pc207 ~]# echo nameserver 192.168.4.7 > /etc/resolv.conf 
+[root@pc207 ~]# nslookup www.tedu.cn
+
+###########################################################
+多区域DNS服务器
+虚拟机A：
+1.修改主配置文件/etc/named.conf
+ zone "qq.com" IN {
+        type master;
+        file "qq.com.zone";
+ };
+
+2.建立地址库文件/var/named/qq.com.zone
+# cd /var/named/
+# cp -p tedu.cn.zone qq.com.zone
+# vim qq.com.zone
+
+ qq.com.  NS     svr7
+ svr7      A     192.168.4.7
+ www       A     2.2.2.2
+ ftp       A     3.3.3.3
+
+3.重起named服务
+########################################################
+特殊的解析记录
+
+一、DNS负载均衡(解析结果的轮询)
+
+[root@svr7 /]# vim /var/named/qq.com.zone 
+
+ qq.com.   NS     svr7
+ svr7      A     192.168.4.7
+ www       A     192.168.4.1
+ www       A     192.168.4.2
+ www       A     192.168.4.3
+ www       A     192.168.4.4
+ ftp       A     3.3.3.3
+[root@svr7 /]# systemctl restart named
+
+[root@pc207 ~]# ping www.qq.com
+[root@pc207 ~]# ping www.qq.com
+
+
+二、泛域名解析
+虚拟机A：
+[root@svr7 /]# vim /var/named/qq.com.zone
+ qq.com.  NS     svr7
+ svr7      A     192.168.4.7
+
+  ........
+ *         A     10.11.12.13
+ qq.com.   A     14.15.16.17
+
+[root@svr7 /]# systemctl restart named
+
+虚拟机B：
+[root@pc207 /]# nslookup  www.qq.com
+[root@pc207 /]# nslookup  wwww.qq.com
+[root@pc207 /]# nslookup  haha.qq.com
+[root@pc207 /]# nslookup  qq.com
+
+
+三、有规律的泛域名解析
+        pc1.qq.com-------》192.168.10.1       
+        pc2.qq.com-------》192.168.10.2
+        pc3.qq.com-------》192.168.10.3
+              ......
+
+        pc50.qq.com-------》192.168.10.50
+
+  DNS服务内置的变量：  $GENERATE  可以产生连续的数字
+
+虚拟机A：
+[root@svr7 /]# vim /var/named/qq.com.zone
+
+  $GENERATE   1-50    pc$    A    192.168.10.$
+
+    #产生连续范围的数字1至50 ，其中$代表1至50 范围内的所有数字
+
+[root@svr7 /]# systemctl  restart named
+
+虚拟机B：
+[root@pc207 /]# nslookup  pc1.qq.com
+[root@pc207 /]# nslookup  pc3.qq.com
+[root@pc207 /]# nslookup  pc28.qq.com
+[root@pc207 /]# nslookup  pc50.qq.com
+
+
+四、解析记录的别名
+虚拟机A：
+[root@svr7 /]# vim /var/named/qq.com.zone
+
+  tts       CNAME     ftp
+
+  #tts解析结果与ftp解析结果相同
+
+[root@svr7 /]# systemctl  restart named
+
+
+虚拟机B：
+[root@pc207 /]# nslookup  tts.qq.com
+
+#######################################################
+DNS子域授权
+
+    父域: www.tedu.cn
+
+    子域: www.bj.tedu.cn  
+
+    虚拟机A  负责解析 父域 tedu.cn
+    
+    虚拟机B  负责解析 子域 bj.tedu.cn  
+   
+    虚拟机A  可以解析 子域 bj.tedu.cn 
+
+######################################################
+虚拟机B：
+1.安装软件包  bind-chroot   bind
+2.修改主配置文件/etc/named.conf
+[root@pc207 ~]# cp /etc/named.conf  /root/name.bak
+[root@pc207 ~]# vim /etc/named.conf
+ options {
+ 	directory 	"/var/named";    
+ };
+ zone "bj.tedu.cn" IN {          
+  	type master;               
+ 	file "bj.tedu.cn.zone";    
+ };
+3.建立地址库文件/var/named/bj.tedu.cn.zone
+# cp -p /var/named/named.localhost /var/named/bj.tedu.cn.zone 
+# vim /var/named/bj.tedu.cn.zone
+  bj.tedu.cn.  NS    pc207
+  pc207        A     192.168.4.207    
+  www          A     6.6.6.6
+[root@pc207 /]# systemctl restart named
+[root@pc207 /]# nslookup www.bj.tedu.cn 192.168.4.207
+
+##########################################################
+  虚拟机A 可以解析 子域 bj.tedu.cn （子域授权）
+
+
+虚拟机A：
+1.修改地址库文件
+[root@svr7 /]# vim /var/named/tedu.cn.zone 
+ tedu.cn.    NS    svr7
+ bj.tedu.cn. NS    pc207
+ svr7        A     192.168.4.7
+ pc207       A     192.168.4.207
+ www         A     1.2.3.4
+ ftp         A     5.6.7.8
+[root@svr7 /]# systemctl restart named
+
+2.验证：
+[root@pc207 /]# nslookup www.bj.tedu.cn 192.168.4.7
+ Server:		192.168.4.7
+ Address:	192.168.4.7#53
+
+ Non-authoritative answer:     #非权威解答
+ Name:	www.bj.tedu.cn
+ Address: 6.6.6.6
+#########################################################
+
+DNS查询的工作方式
+
+ 递归解析：
+      客户端询问DNS服务器解析请求，DNS服务器与其他DNS服务器交互，最终把解析结果带回来
+
+ options {
+        directory       "/var/named";
+        recursion no;        #禁止递归
+  };
+
+  迭代解析：首选DNS服务器与其他DNS服务器交互过程
+
+###########################################################
+主机映射文件/etc/hosts(只为本机提供DNS域名解析的功能)
+
+[root@svr7 /]# vim /etc/hosts
+
+ 192.168.4.110   www.sina.com
+
+[root@svr7 /]# ping www.sina.com
+
+#########################################################
+
+总结：客户端DNS解析域名过程
+    1.客户端查询/etc/hosts
+    2.客户端查询/etc/resolv.conf 查看DNS服务器
+  3.DNS服务器进行递归查询与迭代查询
+
+#########################################################
+缓存DNS，加速解析效率
+
+真机搭建Yum仓库
+1.真机挂载光盘
+# cat /etc/redhat-release 
+# mkdir /dvd
+# mount /iso/CentOS-7-x86_64-DVD-1708.iso   /dvd/
+# ls /dvd
+
+2.真机书写客户端配置文件
+# cd /etc/yum.repos.d/
+# ls
+# mkdir  repo
+# mv  *.repo   repo     #排除错误的文件干扰
+# vim   dvd.repo 
+ [dvd]
+ name=CentOS7.4
+ baseurl=file:///dvd
+ enabled=1
+ gpgcheck=0
+
+# yum -y install bind  bind-chroot
+
+#########################################################
+搭建缓存DNS服务器
+1.查看真机DNS服务器IP地址
+[root@room9pc01 /]# cat /etc/resolv.conf 
+nameserver 172.40.1.10
+
+2.配置缓存DNS服务器
+[root@room9pc01 /]# vim /etc/named.conf 
+
+ options {
+        directory       "/var/named";
+        forwarders  {  172.40.1.10;  };  #转发给达内DNS服务器
+  };  
+
+3.重起named服务
+虚拟机A上验证：
+[root@svr7 /]# nslookup www.qq.com 192.168.4.254
+##########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

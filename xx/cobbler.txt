@@ -1,0 +1,299 @@
+[root@My176 ~]# touch /root/桌面/cobbler.txt
+
+[root@My176 ~]# ls /var/lib/libvirt/images/iso/
+CentOS-7-x86_64-DVD-1708.iso  rhel-server-6.7-x86_64-dvd.iso  Win10_Pro_X64_zh_CN.iso
+lost+found                    rhel-server-7.4-x86_64-dvd.iso
+
+[root@My176 ~]# tail -3 /etc/fstab 
+
+
+[root@My176 ~]# yum clean all 
+
+[root@My176 ~]# rpm -q vsftpd 
+vsftpd-3.0.2-22.el7.x86_64
+
+[root@My176 ~]# systemctl status vsftpd.service
+● vsftpd.service - Vsftpd ftp daemon
+
+[root@My176 ~]# systemctl is-enabled vsftpd.service 
+enabled
+[root@My176 ~]# vim /etc/fstab 
+[root@My176 ~]# tail -6 /etc/fstab
+UUID=bb62e9f9-f903-40e2-be01-730eb61cc7ea /                       ext4    defaults        1 1
+UUID=d60728be-85d6-4b5d-8ca8-b29016db27f1 /var/lib/libvirt/images ext4    defaults        1 2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+/var/lib/libvirt/images/iso/rhel-server-6.7-x86_64-dvd.iso  /var/ftp/rhel6.7 iso9660 defaults  0 0
+/var/lib/libvirt/images/iso/CentOS-7-x86_64-DVD-1708.iso  /var/ftp/CentOS7 iso9660 defaults  0 0
+
+[root@My176 ~]# mkdir /var/ftp/rhel6.7  /var/ftp/CentOS7  /var/ftp/Win10
+[root@My176 ~]# ls /var/ftp/
+CentOS7  pub  rhel6.7  rhel7  share  Win10
+
+[root@My176 ~]# mount -a
+
+[root@My176 ~]# df -h
+文件系统        容量  已用  可用 已用% 挂载点
+[root@My176 ~]# ls /var/ftp/Win10/
+[root@My176 ~]# vim /etc/fstab 
+[root@My176 ~]# tail -3 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+/var/lib/libvirt/images/iso/rhel-server-6.7-x86_64-dvd.iso  /var/ftp/rhel6.7 iso9660 defaults  0 0
+/var/lib/libvirt/images/iso/CentOS-7-x86_64-DVD-1708.iso  /var/ftp/CentOS7 iso9660 defaults  0 0
+
+[root@My176 ~]# mount -a
+[root@My176 ~]# df -h
+[root@My176 ~]# firefox  ftp://192.168.4.254/
+^C
+
+[root@Cob ~]# hostname
+Cob
+[root@Cob ~]# ifconfig eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.169  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet6 fe80::fe42:c988:6ec2:4346  prefixlen 64  scopeid 0x20<link>
+
+[root@Cob ~]# vim /etc/yum.repos.d/rhel-centos.repo
+[root@Cob ~]# cat /etc/yum.repos.d/rhel-centos.repo
+[rhel7]
+name=rhel7
+enabled=1
+baseurl=ftp://192.168.4.254/rhel7
+gpgcheck=0
+[rhel6.7]
+name=rhel6.7
+enabled=1
+baseurl=ftp://192.168.4.254/rhel6.7
+gpgcheck=0
+[Cent]
+name=CentOS7
+enabled=1
+baseurl=ftp://192.168.4.254/CentOS7
+gpgcheck=0
+[root@Cob ~]# ls /etc/yum.repos.d/
+redhat.repo  rhel-centos.repo
+
+[root@Cob ~]# yum clean all 
+
+[root@Cob ~]# yum  repolist  
+(3/6): Cent/group_gz                                                                                 | 156 kB  00:00:00     
+(4/6): Cent/primary_db                                                                               | 3.1 MB  00:00:00     
+(5/6): rhel6.7/primary_db                                                                            | 3.1 MB  00:00:00     
+(6/6): rhel7/primary_db                                                                              | 4.0 MB  00:00:00     
+源标识                                                     源名称                                         状态
+Cent                                        CentOS7                                3,894
+rhel6.7                                     rhel6.7                                  3,819
+rhel7                                        rhel7                                  4,986
+repolist: 12,699
+[root@Cob ~]# firewall-cmd --getnot running
+^C
+[root@Cob ~]# setenforce 0
+[root@Cob ~]# getenforce 
+
+[root@My176 ~]# scp /root/桌面/Cobbler.zip   root@192.168.4.169:/root/
+root@192.168.4.169's password: 
+Cobbler.zip     
+  
+[root@Cob ~]# ls /root
+anaconda-ks.cfg  initial-setup-ks.cfg  公共  模板  视频  图片  文档  下载  音乐  桌面
+[root@Cob ~]# ls /root
+anaconda-ks.cfg  Cobbler.zip  initial-setup-ks.cfg  公共  模板  视频  图片  文档  下载  音乐  桌面
+[root@Cob ~]# unzip /root/Cobbler.zip  -d /
+Archive:  /root/Cobbler.zip
+
+[root@Cob ~]# ls /
+bin  boot  Cobbler  dev  etc  home  lib  lib64  media  mnt  nsd03  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+[root@Cob ~]# cd /Cobbler/
+[root@Cob Cobbler]# ls 
+cobbler_boot.tar.gz  cobbler_web.png  cobbler.zip
+[root@Cob Cobbler]# ls /opt/
+rh
+[root@Cob Cobbler]# unzip /Cobbler/cobbler.zip  -d  /opt/
+[root@Cob Cobbler]# ls /opt/
+cobbler  rh
+[root@Cob Cobbler]# ls /opt/cobbler/
+
+[root@Cob Cobbler]# yum -y install /opt/cobbler/*.rpm
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+
+[root@Cob ~]# ifconfig eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.169  netmask 255.255.255.0  broadcast 192.168.4.255
+
+[root@Cob Cobbler]# vim /etc/cobbler/settings 
+
+271 # if you do not set this correctly, this will be manifested in TFTP open timeouts.
+272 next_server: 192.168.4.169
+383 # of the manpage for how that works.
+384 server: 192.168.4.169
+
+240 # set to 1 to enable Cobbler's DHCP management features.
+241 # the choice of DHCP management engine is in /etc/cobbler/modules.conf
+242 manage_dhcp: 1
+291 # for --netboot-enabled.
+292 pxe_just_once: 1
+
+[root@Cob Cobbler]# vim /etc/cobbler/dhcp.template 
+
+     next-server                $next_server;
+     class "pxeclients" {
+:%s /192.168.1/192.168.4/g
+     next-server                $next_server;
+     class "pxeclients" {
+5 次替换，共 4 行     
+
+[root@Cob Cobbler]# tar -tf /Cobbler/cobbler_boot.tar.gz 
+tar: 从成员名中删除开头的“/”
+/var/lib/cobbler/loaders/
+
+[root@Cob Cobbler]# tar -xPf /Cobbler/cobbler_boot.tar.gz
+[root@Cob Cobbler]# ls /var
+
+[root@Cob Cobbler]# ls /var/lib
+
+[root@Cob Cobbler]# ls /var/lib/cobbler/
+config  distro_signatures.json  kickstarts  loaders  scripts  snippets  triggers  webui_sessions
+[root@Cob Cobbler]# ls /var/lib/cobbler/loaders/
+COPYING.elilo     COPYING.yaboot  grub-x86_64.efi  menu.c32    README
+COPYING.syslinux  elilo-ia64.efi  grub-x86.efi     pxelinux.0  yaboot
+[root@Cob ~]# systemctl restart cobblerd.service 
+[root@Cob ~]# systemctl restart httpd.service 
+[root@Cob ~]# systemctl restart tftp.socket 
+[root@Cob ~]# systemctl restart rsyncd
+
+[root@Cob ~]# systemctl enable cobblerd.service 
+
+[root@Cob ~]# systemctl enable httpd.service 
+
+[root@Cob ~]# systemctl enable tftp.socket 
+
+[root@Cob ~]# systemctl enable rsyncd
+
+[root@Cob ~]# cobbler sync
+task started: 2018-06-27_100114_sync
+task started (id=Sync, time=Wed Jun 27 10:01:14 2018)
+
+[root@Cob ~]# firefox https://192.168.4.169/
+
+[root@Cob ~]# ls /var/www
+cgi-bin  cobbler  cobbler_webui_content  html
+[root@Cob ~]# ls /var/www/html
+
+[root@Cob ~]# ls -l /var/www/html
+总用量 0
+[root@Cob ~]# firefox https://192.168.4.169/cobbler_web    ###用户cobbler   密码cobbler
+
+[root@Cob ~]# ls -l  /var/www/cobbler_webui_content/
+
+[root@Cob ~]# cat /etc/yum.repos.d/rhel-centos.repo 
+[rhel7]
+name=rhel7
+enabled=1
+baseurl=ftp://192.168.4.254/rhel7
+gpgcheck=0
+[rhel6.7]
+name=rhel6.7
+enabled=1
+baseurl=ftp://192.168.4.254/rhel6.7
+gpgcheck=0
+[Cent]
+name=CentOS7
+enabled=1
+baseurl=ftp://192.168.4.254/CentOS7
+gpgcheck=0
+
+[root@Cob ~]# cobbler import  --path=/rhel7 --name=Rhel7.4
+
+[root@Cob ~]# mkdir -p  /rhel-centos/rhel7 /rhel-centos/rhel6.7  /rhel-centos/CentOS7
+[root@Cob ~]# ls /rhel-centos/
+CentOS7  rhel6.7  rhel7
+
+[root@My176 ~]# ls /var/ftp
+CentOS7  pub  rhel6.7  rhel7  share  Win10
+[root@My176 ~]# firefox ftp://192.168.4.254/rhel7
+
+[root@Cob ~]# vim /etc/fstab
+
+[root@Cob ~]# tail -4  /etc/fstab
+/dev/mapper/rhel-root   /                       xfs     defaults        0 0
+UUID=5d6c8afe-b75a-4e6b-9de1-1a3eeeaf23d9 /boot                   xfs     defaults        0 0
+/dev/mapper/rhel-swap   swap                    swap    defaults        0 0
+ftp://192.168.4.254/rhel7   /rhel-centos/rhel7  iso9660  defaults,_netdev  0  0
+
+[root@Cob ~]# vim /etc/fstab
+[root@Cob ~]# cat /etc/fstab
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/rhel-root   /                       xfs     defaults        0 0
+UUID=5d6c8afe-b75a-4e6b-9de1-1a3eeeaf23d9 /boot                   xfs     defaults        0 0
+/dev/mapper/rhel-swap   swap                    swap    defaults        0 0
+#ftp://192.168.4.254/rhel7   /rhel-centos/rhel7  iso9660  defaults,_netdev  0  0
+[root@Cob ~]# ls /dev/cdrom
+/dev/cdrom
+[root@Cob ~]# ls -l /dev/cdrom
+lrwxrwxrwx. 1 root root 3 6月  27 19:43 /dev/cdrom -> sr0
+[root@Cob ~]# mount -o ro /dev/cdrom  /rhel-centos/CentOS7/
+
+[root@Cob ~]# mount -a
+[root@Cob ~]# df -h
+文件系统               容量  已用  可用 已用% 挂载点
+/dev/mapper/rhel-root   17G  3.5G   14G   21% /
+
+
+[root@Cob ~]# cobbler import --path=/rhel-centos/CentOS7/  --name=Centos7
+
+looking for /var/www/cobbler/ks_mirror/Centos7/repodata/*comps*.xml
+Keeping repodata as-is :/var/www/cobbler/ks_mirror/Centos7/repodata
+*** TASK COMPLETE ***
+[root@Cob ~]# cobbler list
+distros:
+   Centos7-x86_64
+
+profiles:
+   Centos7-x86_64
+
+systems:
+
+repos:
+
+images:
+
+mgmtclasses:
+
+packages:
+
+files:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

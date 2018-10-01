@@ -1,0 +1,471 @@
+sed 修改文件
+awk 过滤文件
+
+awk  -F分隔符 'BEGIN{} /zhengze/{} $1~/zhengze/{} $2~/zhengze/{} $1~/zhengze/{}' /wen/jian/lujin
+
+[root@pc207 shel7]# awk 'BEGIN{x[0]=110;x[1]=22;x[4]=55;print x[0],x[1],"x[2]="x[2],"x[3]="x[3],x[4]}' | column -t
+110  22  x[2]=  x[3]=  55
+
+[root@pc207 shel7]# awk 'BEGIN{a["bb"]++;print a["bb"];print a["bb"]*=10;print a["bb"]}'
+1
+10
+10
+[root@pc207 shel7]# awk 'BEGIN{x=10;print x++;;print ++y}'
+10
+1
+
+#[root@server0 ~]# ab -c100 -n10000 http://172.25.0.254/
+
+# ll -h /var/log/httpd/access_log
+
+[root@room11pc06 ~]# > /var/log/httpd/access_log
+[root@room11pc06 ~]# ll -h /var/log/httpd/access_log
+-rw-r--r-- 1 root root 0 8月  18 10:06 /var/log/httpd/access_log
+
+[root@pc207 shel7]# ab -c100 -n10000 http://192.168.4.254/
+Server Software:        Apache/2.4.6
+Server Hostname:        192.168.4.254
+Server Port:            80
+
+Document Path:          /
+Document Length:        4897 bytes
+
+Concurrency Level:      100
+Time taken for tests:   0.524 seconds
+Complete requests:      10000
+
+[root@room11pc06 ~]# ll -h /var/log/httpd/access_log
+-rw-r--r-- 1 root root 928K 8月  18 10:06 /var/log/httpd/access_log
+[root@room11pc06 ~]# tail -2 /var/log/httpd/access_log
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+
+[root@pc207 shel7]# vim a.log
+[root@pc207 shel7]# cat a.log
+192.168.4.7
+201.2.8.32
+192.168.4.7
+192.168.4.7
+201.2.8.32
+192.168.4.7
+19.19.191.19
+10.10.101.10
+192.168.4.7
+[root@pc207 shel7]# awk '{ip[$1]++}END{print ip[$1]}' a.log
+5
+[root@pc207 shel7]# awk '{ip[$1]++}END{print ip[$1]}' a.txt 
+8
+[root@pc207 shel7]# cat a.txt
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.7 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.7 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.7 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.7 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+192.168.4.207 - - [18/Aug/2018:10:06:53 +0800] "GET / HTTP/1.0" 403 4897 "-" "ApacheBench/2.3"
+--------------------------------------------------------------------------
+[root@pc207 shel7]# awk '{ip[$1]++}END{print ip[$1]}' a.txt 
+8
+[root@pc207 shel7]# awk '{ip[$1]++}END{for(i in ip){print ip[i],"i=\t"i}}' a.txt
+2 i=	
+4 i=	192.168.4.7
+8 i=	192.168.4.207
+[root@pc207 shel7]# awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}' a.txt
+2 i=	
+4 i=	192.168.4.7
+8 i=	192.168.4.207
+[root@pc207 shel7]# awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}' a.txt |sort
+2 i=	
+4 i=	192.168.4.7
+8 i=	192.168.4.207
+[root@pc207 shel7]# awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}' a.txt |sort -n
+2 i=	
+4 i=	192.168.4.7
+8 i=	192.168.4.207
+[root@pc207 shel7]# awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}' a.txt |sort -rn
+8 i=	192.168.4.207
+4 i=	192.168.4.7
+2 i=	
+
+---------------------------------------------------
+[root@pc207 shel7]# awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}' a.log 
+1 i=	10.10.101.10
+2 i=	201.2.8.32
+5 i=	192.168.4.7
+1 i=	19.19.191.19
+[root@pc207 shel7]# cat a.log
+192.168.4.7
+201.2.8.32
+192.168.4.7
+192.168.4.7
+201.2.8.32
+192.168.4.7
+19.19.191.19
+10.10.101.10
+192.168.4.7
+[root@pc207 shel7]# awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}' a.log | sort #
+1 i=	10.10.101.10
+1 i=	19.19.191.19
+2 i=	201.2.8.32
+5 i=	192.168.4.7
+[root@pc207 shel7]# awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}' a.log |sort -n #升序排列
+1 i=	10.10.101.10
+1 i=	19.19.191.19
+2 i=	201.2.8.32
+5 i=	192.168.4.7
+[root@pc207 shel7]# awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}' a.log |sort -rn #-rn降序
+5 i=	192.168.4.7
+2 i=	201.2.8.32
+1 i=	19.19.191.19
+1 i=	10.10.101.10
+
+
+
+==========================================
+[root@room11pc06 ~]# who
+root     :0           2018-08-18 08:40 (:0)
+root     pts/0        2018-08-18 08:42 (:0)
+root     pts/1        2018-08-18 08:42 (:0)
+root     pts/7        2018-08-18 08:45 (:0)
+root     pts/8        2018-08-18 08:45 (:0)
+root     pts/5        2018-08-18 09:18 (:0)
+root     pts/10       2018-08-18 10:11 (:0)
+[root@room11pc06 ~]# who | awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}' 
+7 i=	root
+[root@room11pc06 ~]# who | awk '{p[$2]++}END{for(i in p){print p[i],"i=\t"i}}' 
+1 i=	pts/5
+1 i=	:0
+1 i=	pts/10
+1 i=	pts/7
+1 i=	pts/8
+1 i=	pts/0
+1 i=	pts/1
+[root@room11pc06 ~]# who | awk '{p[$1]++}END{for(i in p){print p[i],"i=\t"i}}'  | sort -n
+7 i=	root
+
+=======================================================
+源标识                                源名称                            状态
+development                           rhel7.4                           4,986
+repolist: 4,986
+
+[root@pc207 shel7]# yum repolist | sed -n '/repolist/s/,//p'
+repolist: 4986
+[root@pc207 shel7]# yum repolist | sed -n '/repolist/s/,//p' | awk '/repolist/{print $2}'
+4986
+
+[root@pc207 shel7]# ps aux | grep -v httpd | wc -l
+134
+[root@pc207 shel7]# ps aux | grep -v httpd | tail -3
+root     11294  0.0  0.0 107904   608 ?        S    11:28   0:00 sleep 60
+root     11334  0.0  0.1 151064  1812 pts/0    R+   11:29   0:00 ps aux
+root     11336  0.0  0.1 116564  1624 pts/0    D+   11:29   0:00 -bash
+[root@pc207 shel7]# ps aux | grep  httpd | tail -3
+apache    5604  0.0  0.3 228324  3148 ?        S    09:51   0:00 /usr/sbin/httpd -DFOREGROUND
+apache    5605  0.0  0.3 228324  3148 ?        S    09:51   0:00 /usr/sbin/httpd -DFOREGROUND
+root     11349  0.0  0.0 112676   976 pts/0    R+   11:29   0:00 grep --color=auto httpd
+[root@pc207 shel7]# ps aux | grep  httpd | tail -3
+apache    5604  0.0  0.3 228324  3148 ?        S    09:51   0:00 /usr/sbin/httpd -DFOREGROUND
+apache    5605  0.0  0.3 228324  3148 ?        S    09:51   0:00 /usr/sbin/httpd -DFOREGROUND
+root     11445  0.0  0.0 112676   980 pts/0    R+   11:30   0:00 grep --color=auto httpd
+[root@pc207 shel7]# ps aux | grep -v httpd | tail -3
+root     11428  0.0  0.0 107904   612 ?        S    11:30   0:00 sleep 60
+root     11452  0.0  0.1 151064  1812 pts/0    R+   11:30   0:00 ps aux
+root     11454  0.0  0.0 108156   684 pts/0    S+   11:30   0:00 tail -3
+[root@pc207 shel7]# ps aux | grep -v httpd | tail -3
+root     11428  0.0  0.0 107904   612 ?        S    11:30   0:00 sleep 60
+root     11458  0.0  0.1 151064  1812 pts/0    R+   11:31   0:00 ps aux
+root     11460  0.0  0.0 108156   680 pts/0    S+   11:31   0:00 tail -3
+[root@pc207 shel7]# netstat -nutlp | tail -5
+udp        0      0 0.0.0.0:67              0.0.0.0:*                           1250/dnsmasq        
+udp        0      0 0.0.0.0:5353            0.0.0.0:*                           718/avahi-daemon: r 
+udp        0      0 127.0.0.1:323           0.0.0.0:*                           725/chronyd         
+udp        0      0 0.0.0.0:34642           0.0.0.0:*                           718/avahi-daemon: r 
+udp6       0      0 ::1:323                 :::*                                725/chronyd         
+[root@pc207 shel7]# netstat -nutlp | grep  sshd
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1002/sshd           
+tcp        0      0 127.0.0.1:6010          0.0.0.0:*               LISTEN      1639/sshd: root@pts 
+tcp        0      0 127.0.0.1:6011          0.0.0.0:*               LISTEN      2811/sshd: root@pts 
+tcp6       0      0 :::22                   :::*                    LISTEN      1002/sshd           
+tcp6       0      0 ::1:6010                :::*                    LISTEN      1639/sshd: root@pts 
+tcp6       0      0 ::1:6011                :::*                    LISTEN      2811/sshd: root@pts 
+[root@pc207 shel7]# netstat -nutlp | grep  httpd
+tcp6       0      0 :::80                   :::*                    LISTEN      5543/httpd          
+[root@pc207 shel7]# 
+[root@pc207 shel7]# netstat -nutlp | grep -q  httpd ;echo $?
+0
+
+
+[root@pc207 shel7]# top | head -3
+
+top - 11:34:34 up  2:50,  2 users,  load average: 0.00, 0.01, 0.05
+Tasks: 139 total,   2 running, 137 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  6.2 sy,  0.0 ni, 93.8 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+[root@pc207 shel7]# 
+[root@pc207 shel7]# uptime
+ 11:35:02 up  2:51,  2 users,  load average: 0.00, 0.01, 0.05
+
+[root@pc207 shel7]# rpm -qa | wc -l
+1320
+
+========================================================
+[root@room11pc06 ~]# mount -a
+[root@room11pc06 ~]# df -hT /var/ftp/centos7  /var/ftp/rhel7
+文件系统       类型     容量  已用  可用 已用% 挂载点
+/dev/loop1     iso9660  4.3G  4.3G     0  100% /var/ftp/centos7
+/dev/loop0     iso9660  3.8G  3.8G     0  100% /var/ftp/rhel7
+[root@room11pc06 ~]# tail -2 /etc/fstab
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0 
+/var/lib/libvirt/images/iso/CentOS-7-x86_64-DVD-1708.iso  /var/ftp/centos7 iso9660 defaults 0 0
+[root@room11pc06 ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhle7.4
+baseurl=file:///var/ftp/rhel7
+enabled=1
+gpgcheck=0
+[root@room11pc06 ~]# vim /etc/yum.repos.d/centos7.repo
+[root@room11pc06 ~]# cat /etc/yum.repos.d/centos7.repo
+[centos7]
+name=centos7
+baseurl=file:///var/ftp/centos7
+enabled=1
+gpgcheck=0
+[root@room11pc06 ~]# ls /etc/yum.repos.d/
+centos7.repo  NSD-2018-1-12.tar.gz  packagekit-media.repo  repo  rhel7.repo
+[root@room11pc06 ~]# yum repolist | tail -4
+源标识                                源名称                                 状态
+centos7                               centos7                                3,894
+rhel7                                 rhle7.4                                4,986
+repolist: 8,880
+[root@room11pc06 ~]# lsblk | tail -2
+loop0    7:0    0   3.8G  1 loop /var/ftp/rhel7
+loop1    7:1    0   4.2G  1 loop /var/ftp/centos7
+[root@room11pc06 ~]# systemctl is-active vsftpd
+active
+[root@room11pc06 ~]# ls /var/ftp/
+centos7  pub  rhel7  share
+[root@pc207 shel7]# cat /etc/yum.repos.d/rhel7.repo 
+[development]
+name=rhel7.4
+baseurl=ftp://192.168.4.254/rhel7
+enabled=1
+gpgcheck=0
+[root@pc207 shel7]# yum clean all
+[root@pc207 shel7]# yum repolist | tail -3
+源标识                                 源名称                              状态
+development                  rhel7.4                       4,986
+repolist: 4,986
+======================================================
+[root@pc207 shel7]# yum repolist | tail -3 | column -t
+源标识       源名称   状态
+development  rhel7.4  4,986
+repolist:    4,986
+ =========== 先 sed 修改文件  后  awk 过滤文件 ==============
+-----------------------------------------------------------------------------------------------------------------
+[root@pc207 ~]# yum repolist | sed -n '/repolist/s/,//p'
+repolist: 4986
+[root@pc207 ~]# yum repolist | sed -n '/repolist/s/,//p' | awk '/repolist/{print $2}'
+4986
+--------------------------------------------------------------------------------------
+[root@pc207 ~]# yum repolist | awk '/repolist/{print $2}' #如果先过滤 awk 再修改sed 结果无显示
+4,986
+[root@pc207 ~]# yum repolist | awk '/repolist/{print $2}' | sed -n '/repolist/s/,//p'
+[root@pc207 ~]# echo $?
+0
+--------------------------------------------------------------------------------------------
+[root@pc207 ~]# N=$(yum repolist | sed -n '/repolist/s/,//p' | awk '/repolist/{print $2}');echo $N;
+4986
+[root@pc207 ~]# [ $N -gt 0 ] && echo 'yum is enabled';
+yum is enabled
+[root@pc207 shel7]# vim test.sh
+[root@pc207 shel7]# cat test.sh
+#!/bin/bash
+N=$(yum repolist | sed -n '/repolist/s/,//p' | awk '/repolist/{print $2}');echo $N;
+if [ $N -le 0 ];then
+  echo 'yum is disabled';exit 1;
+fi
+yum -y install gcc openssl-devel pcre-devel &>/dev/null;
+useradd -s /sbin/nologin nginx;
+echo "nginx $? is ok $0";
+
+tar -xPf nginx-1.12.2.tar.gz &> /dev/null;
+cd nginx-1.12.2/
+./configure  --prefix=/usr/local/nginx/ --user=nginx --group=nginx --with-http_ssl_module  &>/dev/null;
+make &>/dev/null;
+make install &>/dev/null;
+
+[root@pc207 shel7]# cp /root/nginx-1.12.2.tar.gz  ./
+[root@pc207 shel7]# ls
+a.log  a.txt  local  nginx-1.12.2.tar.gz  rc.sh  test.sh  usr
+[root@pc207 shel7]# bash test.sh 
+[root@pc207 shel7]# sh test.sh
+4986
+useradd：用户“nginx”已存在
+nginx 9 is ok test.sh
+
+[root@pc207 shel7]# ls /usr/local/nginx/sbin/
+nginx
+[root@pc207 shel7]# /usr/local/nginx/sbin/nginx
+[root@pc207 shel7]#  /usr/local/nginx/sbin/nginx    -s stop
+nginx: [error] open() "/usr/local/nginx/logs/nginx.pid" failed (2: No such file or directory)
+[root@pc207 shel7]# /usr/local/nginx/sbin/nginx    -V
+nginx version: nginx/1.12.2
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC)
+脚本通过位置变量$1读取用户的操作指令，判断是start、stop、restart还是status。
+netstat命令可以查看系统中启动的端口信息，该命令常用选项如下：
+-n以数字格式显示端口号 #netstat -ntulp | grep -q nginx;
+-t显示TCP连接的端口
+-u显示UDP连接的端口
+-l显示服务正在监听的端口信息，如httpd启动后，会一直监听80端口
+-p显示监听端口的服务名称是什么（也就是程序名称）
+[root@pc207 shel7]# vim test2.sh
+[root@pc207 shel7]# cat test2.sh
+#!/bin/bash
+case $1 in
+start)
+  /usr/local/nginx/sbin/nginx;;
+stop)
+  /usr/local/nginx/sbin/nginx -s stop;;
+restart)
+  /usr/local/nginx/sbin/nginx -s stop;
+  /usr/local/nginx/sbin/nginx ;;
+status)
+  netstat -ntulp | grep -q nginx;
+  if [ $? -eq 0 ];then
+     echo "system is started";
+  else
+    echo  "system is disabled";
+  fi;;
+*)
+   echo Error ;
+esac
+
+[root@pc207 shel7]# netstat -ntulp | grep -q nginx
+[root@pc207 shel7]# echo $?
+1
+[root@pc207 shel7]# vim test2.sh
+[root@pc207 shel7]# sh test2.sh
+Error
+[root@pc207 shel7]# sh test2.sh status
+system is disabled
+[root@pc207 shel7]# sh test2.sh start
+Nginx默认安装路径为/usr/local/nginx,该目录下会提供4个子目录，分别如下：
+/usr/local/nginx/conf	配置文件目录
+/usr/local/nginx/html	网站页面目录
+/usr/local/nginx/logs	Nginx日志目录
+/usr/local/nginx/sbin	主程序目录
+[root@pc207 shel7]# ls /usr/local/nginx/
+client_body_temp  fastcgi_temp  logs        sbin       uwsgi_temp
+conf              html          proxy_temp  scgi_temp
+=======================================================
+[root@pc207 shel7]# uptime    //查看CPU负载
+ 16:40:11 up  7:56,  2 users,  load average: 0.00, 0.04, 0.08
+[root@pc207 shel7]# ifconfig eth0 | head -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.207  netmask 255.255.255.0  broadcast 192.168.4.255
+[root@pc207 shel7]# free
+              total        used        free      shared  buff/cache   available
+Mem:        1016252      259232      139380        7500      617640      542116
+Swap:       2097148           0     2097148
+[root@pc207 shel7]# df 
+文件系统                 1K-块    已用     可用 已用% 挂载点
+/dev/mapper/rhel-root 17811456 3855228 13956228   22% /
+devtmpfs                492196       0   492196    0% /dev
+[root@pc207 shel7]# wc -l /etc/passwd
+46 /etc/passwd
+[root@pc207 shel7]# who | wc -l   //查看登录账户数量
+2
+[root@pc207 shel7]# rpm -qa |wc -l
+1336
+[root@pc207 ~]# ip=`ifconfig eth0 | awk '/inet /{print $2}'`;echo bendi ip is$ip;
+bendi ip is192.168.4.207
+[root@pc207 ~]# ifconfig eth0 | grep inet  #"本地IP地址是
+        inet 192.168.4.207  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet6 fe80::4b41:b1c4:9961:fe13  prefixlen 64  scopeid 0x20<link>
+#awk中NF为当前行的列数，$NF是最后一列
+[root@pc207 ~]# uptime | awk '{print $NF}' 本机CPU最近15分钟的负载是:
+0.05
+[root@pc207 ~]# uptime
+ 16:55:49 up  8:11,  2 users,  load average: 0.00, 0.01, 0.05
+
+
+
+
+
+
+
+
+
+
+
+[root@pc207 ~]# awk '{print "a"}{print "b"}' /etc/hosts
+a
+b
+a
+b
+[root@pc207 ~]# awk '{print "a";print "b"}' /etc/hosts
+a
+b
+a
+b
+[root@pc207 ~]# sed  -e '1i III'  -e '1a AAA' -e '2c CCCC' /etc/hosts
+III
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+AAA
+CCCC
+[root@pc207 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+[root@pc207 ~]# echo #
+
+[root@pc207 ~]# echo $$
+20503
+[root@pc207 ~]# echo ~
+/root
+[root@pc207 ~]# echo \| ;
+|
+[root@pc207 ~]# echo \# ;
+#
+[root@pc207 ~]# tail -7 /root/.bashrc
+alias cp='cp -i'
+alias mv='mv -i'
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+[root@pc207 ~]# sh x.sh aa bb 3c 4d
+x.sh	aa	aa bb 3c 4d	4	0
+[root@pc207 ~]# cat x.sh
+#!/bin/bash
+echo -ne "$0\t$1\t$*\t$#\t";
+echo $?;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

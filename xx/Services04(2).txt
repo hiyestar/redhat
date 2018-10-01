@@ -1,0 +1,648 @@
+﻿了解：虚拟机命令行管理指令
+[root@room9pc01 ~]# virt-manager       #启用图形虚拟系统管理器
+[root@room9pc01 ~]# virsh list         #列出正在运行的虚拟机
+[root@room9pc01 ~]# virsh list --all   #列出所有虚拟机
+
+[root@room9pc01 ~]# clone-vm7     #产生一个新的虚拟机
+Enter VM number: 5
+
+[root@room9pc01 ~]# virsh list --all
+[root@room9pc01 ~]# virsh start rh7_node05   #开启虚拟机
+[root@room9pc01 ~]# virsh list --all
+
+[root@room9pc01 ~]# virsh console rh7_node05  #控制虚拟机不需要IP
+
+   退出终端管理模式：Ctrl +  】
+
+#######################################################
+环境准备：检查Yum是否可用
+
+虚拟机A：
+[root@svr7 ~]# yum clean all    #清空Yum缓存
+[root@svr7 ~]# yum repolist 
+
+虚拟机B： 
+[root@pc207 ~]# yum clean all   #清空Yum缓存
+[root@pc207 ~]# yum repolist  
+
+######################################################
+DHCP概述及原理
+
+• Dynamic Host Configuration Protocol
+– 动态主机配置协议,由 IETF(Internet 网络工程师任
+务小组)组织制定, 用来简化主机地址分配管理
+
+• 主要分配以下入网参数
+– IP地址/子网掩码/广播地址
+– 默认网关地址、DNS服务器地址
+
+
+DHCP概述及原理（广播进行，一个网络中只能有一个DHCP服务器，先到先的）
+• DHCP地址分配的四次会话
+– DISCOVERY --> OFFER --> REQUEST -->ACK
+
+
+虚拟机A：
+1.安装软件包dhcp
+2. 修改配置文件/etc/dhcp/dhcpd.conf
+  末行模式读入  :r  /usr/share/doc/dhcp*/dhcpd.conf.example
+
+ subnet 192.168.4.0 netmask 255.255.255.0 {   #分配的网段
+  range 192.168.4.100 192.168.4.200;        #分配的IP地址范围
+  option domain-name-servers 192.168.4.7;   #分配的DNS地址
+  option routers 192.168.4.254;             #分配的网关地址
+  default-lease-time 600;                   #IP地址默认租期时间
+  max-lease-time 7200;                      #IP地址最大租期时间
+  }
+3.重起服务
+[root@svr7 /]# systemctl restart dhcpd
+
+############################################################
+网络装机
+
+• 规模化:同时装配多台主机
+• 自动化:装系统、配置各种服务
+• 远程实现:不需要光盘、U盘等物理安装介质
+
+• PXE,Pre-boot eXecution Environment
+  – 预启动执行环境,在操作系统之前运行
+  – 可用于远程安装
+• 工作模式
+ – PXE client 集成在网卡的启动芯片中
+  – 当计算机引导时,从网卡芯片中把PXE client调入内存
+执行,获取PXE server配置、显示菜单,根据用户选
+择将远程引导程序下载到本机运行
+
+
+• 需要哪些服务组件?
+– DHCP服务,分配IP地址、定位引导程序
+– TFTP服务,提供引导程序下载
+– HTTP服务,提供yum安装源
+
+########################################################
+一、配置DHCP网络装机设置
+
+1.修改配置文件
+[root@svr7 /]# vim /etc/dhcp/dhcpd.conf 
+subnet 192.168.4.0 netmask 255.255.255.0 {
+  range 192.168.4.100 192.168.4.200;
+  option domain-name-servers 192.168.4.7;
+  option routers 192.168.4.254;
+  default-lease-time 600;
+  max-lease-time 7200;
+  next-server  192.168.4.7;   #指定下一个服务器
+  filename  "pxelinux.0";     #指定网卡引导文件名称
+ }
+
+2.重起dhcpd服务
+[root@svr7 /]# systemctl  restart dhcpd
+
+  pxelinux.0:网卡引导文件(网络装机说明书) 二进制文件
+                       安装一个软件可以自动产生默认叫pxelinux.0
+
+
+######################################################
+二、搭建tftp服务，提供众多的引导文件
+
+    简单的文件传输协议   端口 69
+  tftp默认共享数据路径：/var/lib/tftpboot
+
+1.安装tftp-server软件包   
+[root@svr7 /]# yum -y install tftp-server
+
+2.启动tftp服务即可
+[root@svr7 /]# systemctl restart tftp
+[root@svr7 /]# ls /var/lib/tftpboot/
+
+3.部署pxelinux.0文件
+ # yum provides */pxelinux.0       #查询仓库中那个软件包产生该文件
+ #  yum -y install syslinux        
+
+ # rpm -ql syslinux | grep pxelinux.0  #查询已安装的软件包安装清单
+
+ # cp /usr/share/syslinux/pxelinux.0   /var/lib/tftpboot/
+ # ls /var/lib/tftpboot/
+
+4.部署菜单文件  
+   pxelinux.0----》/var/lib/tftpboot/pxelinux.cfg/default
+
+# mkdir  /var/lib/tftpboot/pxelinux.cfg
+# mount  /dev/cdrom   /mnt/
+# ls  /mnt/
+
+# cp  /mnt/isolinux/isolinux.cfg /var/lib/tftpboot/pxelinux.cfg/default
+
+# ls  /var/lib/tftpboot/pxelinux.cfg
+
+# ls  -l  /var/lib/tftpboot/pxelinux.cfg/default
+
+# chmod  u+w  /var/lib/tftpboot/pxelinux.cfg/default
+
+# ls  -l  /var/lib/tftpboot/pxelinux.cfg/default
+
+5.部署引导文件
+   vesamenu.c32  图形模块，呈现背景图片  及 颜色
+     vmlinuz     启动内核
+    initrd.img   驱动程序
+    splash.png   黑色背景图片
+
+ # cp /mnt/isolinux/vesamenu.c32 
+      /mnt/isolinux/vmlinuz 
+      /mnt/isolinux/initrd.img 
+      /mnt/isolinux/splash.png     /var/lib/tftpboot/
+
+ # ls /var/lib/tftpboot/
+ initrd.img  pxelinux.cfg  vesamenu.c32
+ pxelinux.0  splash.png    vmlinuz
+
+6.修改菜单文件内容
+# vim  /var/lib/tftpboot/pxelinux.cfg/default
+  1 default vesamenu.c32    默认加载图形模块
+  2 timeout 600             默认读秒
+
+ 10 menu background splash.png     指定默认的表背景图片
+ 11 menu title NSD1806 PXE Server  指定菜单的标题  
+
+ 61 label linux
+ 62   menu label Install RHEL7     菜单显示内容
+      menu default                 读秒结束默认选择
+ 63   kernel vmlinuz               加载内核
+ 64   append initrd=initrd.img     加载驱动程序
+
+##########################################################
+总结：
+    dhcp----》IP地址、next-server、filename
+    tftp----》pxelinux.0
+    pxelinux.0----》/var/lib/tftpboot/pxelinux.cfg/default
+    default----》vesamenu.c32\splash.png\vmlinuz\initrd.img
+
+########################################################
+初步测试：
+    1.新建虚拟机 选择PXE网络引导安装
+    2.网络类型选择 private1
+
+#######################################################
+三、构建httpd服务，利用Web共享众多的RPM包
+
+1.安装软件包
+[root@svr7 /]# yum -y install httpd
+[root@svr7 /]# systemctl restart httpd
+
+2.建立共享路径
+[root@svr7 /]# mkdir /var/www/html/rhel7
+[root@svr7 /]# mount /dev/cdrom  /var/www/html/rhel7
+mount: /dev/sr0 写保护，将以只读方式挂载
+[root@svr7 /]# ls /var/www/html/rhel7
+
+3.测试
+[root@svr7 /]# firefox 192.168.4.7/rhel7
+
+########################################################
+四、部署无人值守安装，生成应答文件
+
+1.图形生成应答文件工具system-config-kickstart 
+[root@svr7 /]# yum -y install system-config-kickstart 
+
+2.运行工具system-config-kickstart 
+[root@svr7 /]# system-config-kickstart 
+
+     检测 “软件包选择” 是否可以选择
+       
+     与本机Yum仓库标识: [development]
+ [root@svr7 /]# vim /etc/yum.repos.d/rhel7.repo 
+  [development]
+
+[root@svr7 /]# system-config-kickstart 
+
+     检测 “软件包选择” 是否可以选择
+
+3.查看应答文件
+[root@svr7 /]# ls /root/ks.cfg 
+[root@svr7 /]# vim  /root/ks.cfg
+
+4.利用Web共享ks文件，传递给客户端
+[root@svr7 /]# cp  /root/ks.cfg  /var/www/html/
+[root@svr7 /]# ls  /var/www/html/
+
+#######################################################
+五、修改菜单文件，指定ks应答文件
+[root@svr7 /]# vim /var/lib/tftpboot/pxelinux.cfg/default 
+
+label linux
+  menu label Install RHEL7
+  menu default
+  kernel vmlinuz
+  append initrd=initrd.img  ks=http://192.168.4.7/ks.cfg
+
+#######################################################
+总结：
+    dhcp----》IP地址、next-server、filename
+    tftp----》pxelinux.0
+    pxelinux.0----》/var/lib/tftpboot/pxelinux.cfg/default
+    default----》vesamenu.c32\splash.png\vmlinuz\initrd.img
+    ks=http://192.168.4.7/ks.cfg---》url --  url="http://192.168.4.7/rhel7"
+
+#########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,521 @@
+[root@pc207 shel5]# x=123abcdefghijklmnopqrstuvwxyz456ABCDEFGHIJKLMNOPQRSTUVWXYZ7890;echo $x > aZ.txt;grep [a-Z] aZ.txt;
+
+[root@pc207 shel5]# grep [^a-Z] aZ.txt;
+
+[root@pc207 shel5]# grep [0-9] aZ.txt;
+
+[root@pc207 shel5]# grep [[:digit:]] aZ.txt;
+
+[root@pc207 shel5]# grep [[:alpha:]] aZ.txt;
+
+[root@pc207 shel5]# grep [^[:alpha:]] aZ.txt;
+
+[root@pc207 shel5]# grep [^[:lower:]] aZ.txt;
+
+[root@pc207 shel5]# grep [[:lower:]] aZ.txt;
+123abcdefghijklmnopqrstuvwxyz456ABCDEFGHIJKLMNOPQRSTUVWXYZ7890
+  
+[root@svr7 shel5]# cat num.sh
+#!/bin/bash
+read -p 'Please input number:'  num1
+read -p 'Please input number2:' num2
+read -p 'Please input number3:'  num3
+#num1<num2<num3
+tmp='';
+if [ $num1 -gt $num2 ];then
+     tmp=$num1;num1=$num2;num2=$tmp;
+fi
+if [ $num1 -gt $num3 ];then
+     tmp=$num1;num1=$num3;num3=$tmp;
+fi
+if [ $num2 -gt $num3 ];then
+     tmp=$num2;num2=$num3;num3=$tmp;
+fi
+echo  -e "$num1\t$num2\t$num3";
+
+[root@pc207 shel5]# cp /etc/hosts hs.txt
+[root@pc207 shel5]# cat hs.txt
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+                      seq -n 屏蔽默认输出（全部文本）
+               seq -i 直接修改文件内容
+        seq -r 启用扩展的正则表达式，在组合中必须作为首个选项
+[root@pc207 shel5]# sed -n 2p hs.txt
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+[root@pc207 shel5]# sed -n 1p hs.txt
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+
+[root@pc207 shel5]# sed -n p hs.txt
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+[root@pc207 shel5]# sed -i d hs.txt #永久 i 删除 d 清空 文件
+[root@pc207 shel5]# echo $?
+0
+[root@pc207 shel5]# ls -l hs.txt
+-rw-r--r--. 1 root root 0 8月  16 10:34 hs.txt
+
+[root@pc207 shel5]# cat hs.txt
+[root@pc207 shel5]# echo $(cat /etc/passwd) >> hs.txt
+                 #结果多行变成 只 有一行，但内容不减少
+[root@pc207 shel5]# ls -l hs.txt
+-rw-r--r--. 1 root root 2201 8月  16 10:36 hs.txt
+
+[root@pc207 shel5]# sed d hs.txt
+[root@pc207 shel5]# ls -l hs.txt
+-rw-r--r--. 1 root root 2201 8月  16 10:36 hs.txt
+
+[root@pc207 shel5]# sed -i d hs.txt   #永久 i 删除 d 清空 文件
+[root@pc207 shel5]# ls -l hs.txt
+-rw-r--r--. 1 root root 0 8月  16 10:36 hs.txt
+
+[root@pc207 shel5]# cp -f  /etc/passwd hs.txt
+cp：是否覆盖"hs.txt"？ ^C
+[root@pc207 shel5]# \cp -f /etc/passwd hs.txt
+[root@pc207 shel5]# head -2 hs.txt
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+[root@pc207 shel5]# sed -n 3p hs.txt
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+[root@pc207 shel5]# sed -n 3,5p hs.txt #行号可以是连续的行号
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+==================追加文件内容========================
+[root@pc207 shel5]# echo $(head -2 /etc/passwd) > wj.txt;  read x < /etc/passwd;   echo $x >> wj.txt;cat wj.txt;
+root:x:0:0:root:/root:/bin/bash bin:x:1:1:bin:/bin:/sbin/nologin
+root:x:0:0:root:/root:/bin/bash
+[root@pc207 shel5]# cat /etc/passwd >> wj.txt
+[root@pc207 shel5]# ls -l wj.txt
+-rw-r--r--. 1 root root 2298 8月  16 13:03 wj.txt
+===============================================
+[root@pc207 shel5]# echo "12*20
+> 12/7
+> 12%7
+> 12+20
+> 12-20" > bc.txt
+[root@pc207 shel5]# cat bc.txt
+12*20
+12/7
+12%7
+12+20
+12-20
+[root@pc207 shel5]# bc < bc.txt
+240
+1
+5
+32
+-8
+==============================
+
+[root@pc207 shel5]# \cp -f /etc/passwd  hs.txt
+[root@pc207 shel5]# ls -l hs.txt
+-rw-r--r--. 1 root root 2201 8月  16 11:14 hs.txt
+                      seq -n 屏蔽默认输出（全部文本）
+               seq -i 直接修改文件内容
+        seq -r 启用扩展的正则表达式，在组合中必须作为首个选项
+[root@pc207 shel5]# sed -n /root/p hs.txt
+root:x:0:0:root:/root:/bin/bash
+operator:x:11:0:operator:/root:/sbin/nologin
+[root@pc207 shel5]# sed -n /^root/p hs.txt
+root:x:0:0:root:/root:/bin/bash
+[root@pc207 shel5]# sed -n $= hs.txt  //输出文件的总行数
+43
+[root@pc207 shel5]# wc -l hs.txt
+43 hs.txt
+[root@pc207 shel5]# sed -n /^root/= hs.txt  //输出【开头是root】的文件的行数
+1
+[root@pc207 shel5]# sed -n /nologin$/= hs.txt  //输出【结尾是nologin】的文件的行数
+2
+3
+4
+5
+.......
+[root@pc207 shel5]#  sed -n /nologin$/= hs.txt |wc -l //输出【结尾是nologin】的文件的总行数
+38
+[root@pc207 shel5]# grep nologin$ hs.txt | wc -l
+38
+[root@pc207 shel5]# sed -n 4,+2p hs.txt  #打印出第4行并且输出其后2行
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+sync:x:5:0:sync:/sbin:/bin/sync
+
+[root@pc207 shel5]# sed -n 4p hs.txt  #打印出第4行
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+
+[root@pc207 shel5]# vim hs.txt
+[root@pc207 shel5]# head -4 hs.txt
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+[root@pc207 shel5]# sed -n $= hs.txt
+48
+[root@pc207 shel5]# sed 3,5d hs.txt  #删除第三到第5行
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+..........
+
+[root@pc207 shel5]# sed -i 3,5d hs.txt  #真实 删除第三到第5行
+[root@pc207 shel5]# sed -n $= hs.txt
+1
+[root@pc207 shel5]# cat hs.txt
+1
+[root@pc207 shel5]#  \cp -f /etc/passwd  hs.txt
+[root@pc207 shel5]# sed -n $= hs.txt
+43
+[root@pc207 shel5]# echo "2017 2011 2018
+> 2017 2017 2024
+> 2017 2017 2017" > a.txt
+[root@pc207 shel5]# sed -n $= a.txt
+3
+[root@pc207 shel5]# sed s/2017/xxyy/g a.txt
+xxyy 2011 2018
+xxyy xxyy 2024
+xxyy xxyy xxyy
+[root@pc207 shel5]# cat a.txt
+2017 2011 2018
+2017 2017 2024
+2017 2017 2017
+[root@pc207 shel5]# sed s/2017/XXYY/  a.txt
+XXYY 2011 2018
+XXYY 2017 2024
+XXYY 2017 2017
+[root@pc207 shel5]# sed s/2017/XXYY/2  a.txt
+2017 2011 2018
+2017 XXYY 2024
+2017 XXYY 2017
+
+[root@pc207 shel5]# sed 's/2017//g' a.txt
+ 2011 2018
+  2024
+  
+[root@pc207 shel5]# cat a.txt
+2017 2011 2018
+2017 2017 2024
+2017 2017 2017
+[root@pc207 shel5]# sed -n s/2017/xxx/gp a.txt
+xxx 2011 2018
+xxx xxx 2024
+xxx xxx xxx
+[root@pc207 shel5]# sed -n s/2017/xxx/g a.txt
+[root@pc207 shel5]# echo $?
+0
+===================================
+ 
+                      sed -n 屏蔽默认输出（全部文本）
+               sed -i 直接修改文件内容
+        sed -r 启用扩展的正则表达式，在组合中必须作为首个选项
+# sed -n s/old/new/gp a.txt 将所有的【g】old换成new 并且打印【p】出有过替换的行
+# sed -i 4d a.txt  永久【-i】删除【d】a.txt文件内容的第4行
+# sed  3,5d a.txt    临时删除第3到第5行
+# sed -i 3,5d a.txt    永久删除第3到第5行
+
+insert 前
+append 后
+===========================================
+
+[root@pc207 shel5]# sed -n "s/\/bin\/bash/\/bin\/sh/gp" a.txt
+root:x:0:0:root:/root:/bin/sh
+lisi:x:1000:1000:lisi:/home/lisi:/bin/sh
+
+[root@pc207 shel5]# sed  's#/bin/sh#/bin/bash#' a.txt 
+root:x:0:0:root:/root:/bin/bash
+
+[root@pc207 shel5]# sed -n '3,8s/^/#/p' a.txt
+#daemon:x:2:2:daemon:/sbin:/sbin/nologin
+#adm:x:3:4:adm:/var/adm:/sbin/nologin
+#lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+#sync:x:5:0:sync:/sbin:/bin/sync
+#shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+#halt:x:7:0:halt:/sbin:/sbin/halt
+
+[root@pc207 shel5]# sed -in '2,4s/^/#/p' a.txt
+[root@pc207 shel5]# echo $?
+0
+[root@pc207 shel5]# head -4 a.txt
+root:x:0:0:root:/root:/bin/bash
+#bin:x:1:1:bin:/bin:/sbin/nologin
+#bin:x:1:1:bin:/bin:/sbin/nologin
+#daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+[root@pc207 shel5]# vim a.txt
+[root@pc207 shel5]# cat a.txt
+ROOT:x:0:0:root:/root:/bin/
+BINx:1:1:bin:/b
+DAEMON:x:2:2:daemonsbin/no
+ADMx:3:4:adm:/var
+LPx:4:7:lp:/var/spool
+SYNC:x:5:0:sync:/sbin:/bi
+SHUtdown:x
+HALt:x:7:0:halt:/sbin:/sbin/
+[root@pc207 shel5]# sed -r 's/^(.)(.*)(.)$/\3\2\1/' a.txt
+/OOT:x:0:0:root:/root:/binR
+bINx:1:1:bin:/B
+oAEMON:x:2:2:daemonsbin/nD
+rDMx:3:4:adm:/vaA
+lPx:4:7:lp:/var/spooL
+iYNC:x:5:0:sync:/sbin:/bS
+xHUtdown:S
+/ALt:x:7:0:halt:/sbin:/sbinH
+[root@pc207 shel5]# sed -r 's/^(.)(.*)(.)$/\1\3\2/' a.txt
+R/OOT:x:0:0:root:/root:/bin
+BbINx:1:1:bin:/
+DoAEMON:x:2:2:daemonsbin/n
+ArDMx:3:4:adm:/va
+LlPx:4:7:lp:/var/spoo
+SiYNC:x:5:0:sync:/sbin:/b
+SxHUtdown:
+H/ALt:x:7:0:halt:/sbin:/sbin
+[root@pc207 shel5]# sed -n '1p;3p;5p' a.txt
+ROOT:x:0:0:root:/root:/bin/
+DAEMON:x:2:2:daemonsbin/no
+LPx:4:7:lp:/var/spool
+
+[root@pc207 shel5]# cat a.txt
+ROOT:x:0:0:root:/root:/bin/
+BINx:1:1:bin:/b
+DAEMON:x:2:2:daemonsbin/no
+ADMx:3:4:adm:/var
+LPx:4:7:lp:/var/spool
+SYNC:x:5:0:sync:/sbin:/bi
+SHUtdown:x
+HALt:x:7:0:halt:/sbin:/sbin/
+
+[root@pc207 shel5]# sed -n '2,+4p' a.txt #输出第2行及其后的4行
+BINx:1:1:bin:/b
+DAEMON:x:2:2:daemonsbin/no
+ADMx:3:4:adm:/var
+LPx:4:7:lp:/var/spool
+SYNC:x:5:0:sync:/sbin:/bi
+
+[root@pc207 shel5]# sed -n 1~2p a.txt  #奇数行打印
+ROOT:x:0:0:root:/root:/bin/
+DAEMON:x:2:2:daemonsbin/no
+LPx:4:7:lp:/var/spool
+SHUtdown:x
+[root@pc207 shel5]# sed -n 2~2p a.txt #偶数行打印
+BINx:1:1:bin:/b
+ADMx:3:4:adm:/var
+SYNC:x:5:0:sync:/sbin:/bi
+HALt:x:7:0:halt:/sbin:/sbin/
+
+           没有条件，则表示匹配所有行 //输出所有行
+[root@pc207 shel5]# sed -n p a.txt  #没有条件，则表示匹配所有行
+ROOT:x:0:0:root:/root:/bin/
+BINx:1:1:bin:/b
+DAEMON:x:2:2:daemonsbin/no
+ADMx:3:4:adm:/var
+LPx:4:7:lp:/var/spool
+SYNC:x:5:0:sync:/sbin:/bi
+SHUtdown:x
+HALt:x:7:0:halt:/sbin:/sbin/
+
+[root@pc207 shel5]# sed -n $= a.txt   //输出文件的行数
+8
+
+[root@pc207 shel5]# sed -i  '/SYNC/!d' a.txt  //永久删除不包含SYNC的行，!符号表示取反
+[root@pc207 shel5]# cat  a.txt
+SYNC:x:5:0:sync:/sbin:/bi
+
+
+
+
+[root@pc207 shel5]# vim anonftp.sh  #装配匿名FTP服务
+[root@pc207 shel5]# cat anonftp.sh
+#!/bin/bash
+yum -y install vsftpd
+cp -rp /etc/vsftpd/vsftpd.conf  /etc/vsftpd/vsftpd.bak
+sed -i "/^#anon/s/^#//" /etc/vsftpd/vsftpd.conf
+chmod 777 /var/ftp/pub
+systemctl restart vsftpd;
+systemctl enable vsftpd;
+[root@pc207 shel5]# bash anonftp.sh
+
+[root@pc207 shel5]# ls /etc/vsftpd/
+ftpusers   vsftpd.bak   vsftpd_conf_migrate.sh
+user_list  vsftpd.conf
+[root@pc207 shel5]# rpm -q vsftpd
+vsftpd-3.0.2-22.el7.x86_64
+[root@pc207 shel5]# systemctl is-enabled vsftpd
+enabled
+[root@pc207 shel5]# ls /var/ftp/pub/
+roomdesk
+[root@pc207 shel5]# ls -ld /var/ftp/pub/roomdesk/
+drwx------. 2 ftp ftp 6 8月  16 16:12 /var/ftp/pub/roomdesk/
+[root@pc207 shel5]# ls -ld /var/ftp/pub/
+drwxrwxrwx. 3 root root 22 8月  16 16:12 /var/ftp/pub/
+
+=================================
+[root@pc207 shel5]# vim vs.txt
+[root@pc207 shel5]# cat vs.txt
+ 12 anonymous_enable=YES
+anonymous_enable=YES
+#anon_upload_enable=YES
+ 29 anon_upload_enable=YES
+#anon_mkdir_write_enable=YES
+ 33 anon_mkdir_write_enable=YES
+
+[root@pc207 shel5]# sed -i '/^#anon/s/^#//' vs.txt
+[root@pc207 shel5]# echo $?
+0
+[root@pc207 shel5]# cat vs.txt
+ 12 anonymous_enable=YES
+anonymous_enable=YES
+anon_upload_enable=YES
+ 29 anon_upload_enable=YES
+anon_mkdir_write_enable=YES
+ 33 anon_mkdir_write_enable=YES
+======================================
+insert 前------i
+append 后-----a
+
+[root@pc207 shel5]# cat a.txt
+SYNC:x:5:0:sync:/sbin:/bi
+SYNC:x:5:0:sync:/sbin:/bi
+[root@pc207 shel5]# sed -i '2i xxx' a.txt #在第2行前插入xxx
+[root@pc207 shel5]# cat a.txt
+SYNC:x:5:0:sync:/sbin:/bi
+xxx
+SYNC:x:5:0:sync:/sbin:/bi
+[root@pc207 shel5]# sed -i '3a yyy' a.txt #在第3行后插入yyy
+[root@pc207 shel5]# cat a.txt
+SYNC:x:5:0:sync:/sbin:/bi
+xxx
+SYNC:x:5:0:sync:/sbin:/bi
+yyy
+
+[root@pc207 shel5]# sed '2c wwwwwww' a.txt  #在第2行 替换 xxx 插入wwwww
+SYNC:x:5:0:sync:/sbin:/bi
+wwwwwww
+SYNC:x:5:0:sync:/sbin:/bi
+yyy
+[root@pc207 shel5]# cat a.txt
+SYNC:x:5:0:sync:/sbin:/bi
+xxx
+SYNC:x:5:0:sync:/sbin:/bi
+yyy
+
+SYNC:x:5:0:sync:/sbin:/bi
+^C
+[root@pc207 shel5]# vim random.sh 
+[root@pc207 shel5]# cat random.sh
+#!/bin/bash
+
+while :
+do
+  clear;
+  line=$(sed -n  '$='  a.txt);
+  num=$[RANDOM%line+1];
+  sed -n "${num}p" a.txt ;
+  sleep 1;
+done
+[root@pc207 shel5]# sed -n '$=' a.txt
+4
+[root@pc207 shel5]# sed -n $[RANDOM%4+1]P a.txt
+SYNC:x:5:0:sync:/sbin:/bi
+
+[root@pc207 shel5]# sed -n $[RANDOM%4+1]P a.txt
+xxx
+[root@pc207 shel5]# sed -n $[RANDOM%4+1]P a.txt
+yyy
+
+
+
+[root@pc207 shel5]# useradd -s /bin/sh lili;useradd -s /sbin/nologin  xixi;
+
+[root@pc207 shel5]# ls /home
+lili  lisi  xixi
+[root@pc207 shel5]# sed -n /bash$/s/:.*//p /etc/passwd
+root
+lisi
+[root@pc207 shel5]# sed -n /sh$/s/:.*//p /etc/passwd
+root
+lisi
+lili
+
+
+[root@pc207 shel5]# sed -n /nologin$/s/:.*//p /etc/passwd
+bin
+daemon
+adm
+lp
+
+
+
+====================?=========
+[root@pc207 shel5]# ls /home
+lili  lisi  xixi
+[root@pc207 shel5]# sh pasuser.sh 
+/bin/bash ---> 
+/bin/bash ---> 
+[root@pc207 shel5]# echo $?
+0
+[root@pc207 shel5]# cat pasuser.sh
+#!/bin/bash
+A=$(sed -n '/bash$/s/.*://p' /etc/passwd);
+for i in $A;
+do
+  pass1=$(grep $i /etc/shadow);
+  pass2=${pass1#*:};
+  pass=${pass2%%:*};
+  echo "$i ---> $pass"
+done
+
++++++++++=========?=============
+
+
+[root@pc207 shel5]# sed '$r /etc/hosts' a.txt
+SYNC:x:5:0:sync:/sbin:/bi
+xxx
+SYNC:x:5:0:sync:/sbin:/bi
+yyy
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+
+[root@pc207 shel5]# sed '1r /etc/hosts' a.txt
+SYNC:x:5:0:sync:/sbin:/bi
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+xxx
+SYNC:x:5:0:sync:/sbin:/bi
+yyy
+
+
+[root@pc207 shel5]# sed '1i /etc/hosts' a.txt #在第一行前面插入/etc/hosts
+/etc/hosts
+SYNC:x:5:0:sync:/sbin:/bi
+xxx
+SYNC:x:5:0:sync:/sbin:/bi
+yyy
+[root@pc207 shel5]# sed '1ir /etc/hosts' a.txt
+r /etc/hosts
+SYNC:x:5:0:sync:/sbin:/bi
+xxx
+SYNC:x:5:0:sync:/sbin:/bi
+yyy
+
+[root@pc207 shel5]# sed 'w b.txt' a.txt
+SYNC:x:5:0:sync:/sbin:/bi
+xxx
+SYNC:x:5:0:sync:/sbin:/bi
+yyy
+[root@pc207 shel5]# sed -i '1,3w b.txt' a.txt
+[root@pc207 shel5]# cat b.txt 
+SYNC:x:5:0:sync:/sbin:/bi
+xxx
+SYNC:x:5:0:sync:/sbin:/bi
+
+
+
+
+
+
+
+
+
+
