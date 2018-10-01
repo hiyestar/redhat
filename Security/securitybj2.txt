@@ -1,0 +1,693 @@
+生成密钥（ ssh-keygen)putty,xshell,scureCRT
+手动拷贝密钥（公钥） authorized_keys
+
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+A (126) 1  -126.0.0.0  [0000 0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000 0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100 0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+
+client (eth0 192.168.4.100    eth1               )
+proxy  (eth0 192.168.4.5      eth1 192.168.2.5   )
+web1   (eth0 192.168.4.2      eth1 192.168.2.100 )
+web2   (eth0 192.168.4.200    eth1 192.168.2.200 )
+
+----[root@client ~]# ifconfig |grep 'net '|head -4 |column -t  ------
+inet  192.168.4.100  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.1    netmask  255.255.255.0  broadcast  192.168.2.255
+inet  201.1.2.200    netmask  255.255.255.0  broadcast  201.1.2.255
+inet  127.0.0.1      netmask  255.0.0.0
+[root@client ~]# yum -y install ftp |tail -3
+  ftp.x86_64 0:0.17-67.el7                                                      
+
+完毕！
+[root@client ~]# ftp 192.168.4.5 
+Connected to 192.168.4.5 (192.168.4.5).
+220 (vsFTPd 3.0.2)
+Name (192.168.4.5:root): tom   #必须对方电脑有用户tom,密码123
+331 Please specify the password.
+Password: 123
+230 Login successful.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+ftp> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----[root@proxy ~]# ifconfig |grep 'net '|head -4 |column -t ------
+inet  192.168.4.5  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.5  netmask  255.255.255.0  broadcast  192.168.2.255
+inet  201.1.2.5    netmask  255.255.255.0  broadcast  201.1.2.255
+inet  127.0.0.1    netmask  255.0.0.0
+[root@proxy ~]# ls /
+bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
+boot  etc  lib   media  opt  root  sbin  sys  usr
+[root@proxy ~]# yum -y install nmap |tail -5 ;
+已安装:
+  nmap.x86_64 2:6.40-7.el7                                                      
+
+完毕！
+[root@proxy ~]# nmap -sP 192.168.4.100   #检查192.168.4.100主机是否可以ping通
+Starting Nmap 6.40 ( http://nmap.org ) at 2018-08-30 14:08 CST
+
+mass_dns: warning: Unable to determine any DNS servers. Reverse DNS is disabled. Try using --system-dns or specify valid servers with --dns-servers
+
+Nmap scan report for host3 (192.168.4.100)
+Host is up (0.00016s latency).
+MAC Address: 52:54:00:31:EA:4A (QEMU Virtual NIC)
+Nmap done: 1 IP address (1 host up) scanned in 0.01 seconds
+
+[root@proxy ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.4.5 www.a.com www.b.com www.c.com www.aa.com
+192.168.2.100  host1
+192.168.2.200  host2
+192.168.4.100  host3                  #使用-n选项可以不执行DNS解析
+[root@proxy ~]# nmap -n -sP 192.168.4.100  #检查192.168.4.100主机是否可以ping通
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2018-08-30 14:12 CST
+Nmap scan report for 192.168.4.100
+Host is up (0.00026s latency).
+MAC Address: 52:54:00:31:EA:4A (QEMU Virtual NIC)
+Nmap done: 1 IP address (1 host up) scanned in 0.01 seconds
+
+[root@proxy ~]# nmap -n -sP 192.168.2.0/24 
+             #检查192.168.2.0/24网段内哪些主机可以ping通
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2018-08-30 14:13 CST
+Nmap scan report for 192.168.2.1
+Host is up (0.00026s latency).
+MAC Address: 52:54:00:95:30:9C (QEMU Virtual NIC)
+Nmap scan report for 192.168.2.100
+Host is up (0.00073s latency).
+MAC Address: 52:54:00:65:FA:95 (QEMU Virtual NIC)
+Nmap scan report for 192.168.2.200
+Host is up (0.00051s latency).
+MAC Address: 52:54:00:CD:58:15 (QEMU Virtual NIC)
+Nmap scan report for 192.168.2.252
+Host is up (0.00049s latency).
+MAC Address: 52:54:00:20:79:8C (QEMU Virtual NIC)
+Nmap scan report for 192.168.2.5
+Host is up.
+Nmap scan report for 192.168.2.254
+Host is up (0.00012s latency).
+MAC Address: 52:54:00:37:78:11 (QEMU Virtual NIC)
+Nmap done: 256 IP addresses (6 hosts up) scanned in 1.64 seconds
+[root@proxy ~]# 
+//基本用法：
+# nmap  [扫描类型]  [选项]  <扫描目标 ...>
+//常用的扫描类型
+// -sS，TCP SYN扫描（半开）
+// -sT，TCP 连接扫描（全开）
+// -sU，UDP扫描
+// -sP，ICMP扫描
+// -A，目标系统全面分析
+[root@proxy ~]# nmap -n -sP 192.168.2.0/24 |awk '/scan report/{print $5}'
+192.168.2.1
+192.168.2.100
+192.168.2.200
+192.168.2.252
+192.168.2.5
+192.168.2.254
+[root@proxy ~]# nmap -n -sT 192.168.2.100   #使用-n选项可以不执行DNS解析
+Starting Nmap 6.40 ( http://nmap.org ) at 2018-08-30 14:24 CST
+Nmap scan report for 192.168.2.100
+Host is up (0.00061s latency).
+Not shown: 996 closed ports
+PORT     STATE SERVICE
+21/tcp   open  ftp
+22/tcp   open  ssh
+111/tcp  open  rpcbind
+3306/tcp open  mysql
+MAC Address: 52:54:00:65:FA:95 (QEMU Virtual NIC)
+
+Nmap done: 1 IP address (1 host up) scanned in 0.05 seconds
+[root@proxy ~]# nmap -n -sT 192.168.2.0/24    #使用-n选项可以不执行DNS解析
+................
+Nmap scan report for 192.168.2.254
+Host is up (0.00060s latency).
+Not shown: 992 closed ports
+PORT      STATE SERVICE
+21/tcp    open  ftp
+53/tcp    open  domain
+80/tcp    open  http
+111/tcp   open  rpcbind
+2049/tcp  open  nfs
+5900/tcp  open  vnc
+7920/tcp  open  unknown
+34573/tcp open  unknown
+MAC Address: 52:54:00:37:78:11 (QEMU Virtual NIC)
+Nmap done: 256 IP addresses (6 hosts up) scanned in 1.82 seconds
+
+##检查192.168.4.0/24网段内哪些主机开启了FTP、SSH服务
+# nmap -p 21-22 192.168.4.0/24
+
+[root@proxy ~]# nmap -n -sT -p 22-80 192.168.2.0/24
+..........
+Nmap scan report for 192.168.2.100
+...............
+Nmap scan report for 192.168.2.200
+....................
+Nmap scan report for 192.168.2.252
+................
+Nmap scan report for 192.168.2.5
+..................
+Nmap scan report for 192.168.2.254
+Host is up (0.00038s latency).
+Not shown: 57 closed ports
+PORT   STATE SERVICE
+53/tcp open  domain
+80/tcp open  http
+MAC Address: 52:54:00:37:78:11 (QEMU Virtual NIC)
+
+Nmap done: 256 IP addresses (6 hosts up) scanned in 1.66 seconds
+
+[root@proxy ~]# ss -anptul |grep :22
+tcp    LISTEN     0      128       *:22                    *:*                   users:(("sshd",pid=1069,fd=3))
+tcp    LISTEN     0      128      :::22                   :::*                   users:(("sshd",pid=1069,fd=4))
+[root@proxy ~]# nmap -n -sS -p 22-7980 192.168.4.5
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2018-08-30 14:39 CST
+Nmap scan report for 192.168.4.5
+Host is up (0.0000030s latency).
+Not shown: 7955 closed ports
+PORT     STATE SERVICE
+22/tcp   open  ssh
+111/tcp  open  rpcbind
+1723/tcp open  pptp
+3306/tcp open  mysql
+
+Nmap done: 1 IP address (1 host up) scanned in 0.09 seconds
+      ####）检查目标主机所开启的UDP服务
+[root@proxy ~]# nmap -n -sU -p 22-7980 192.168.4.5
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2018-08-30 14:40 CST
+Stats: 0:00:04 elapsed; 0 hosts completed (1 up), 1 undergoing UDP Scan
+UDP Scan Timing: About 2.42% done; ETC: 14:43 (0:02:41 remaining)
+Stats: 0:00:06 elapsed; 0 hosts completed (1 up), 1 undergoing UDP Scan
+.................
+              ##全面分析目标主机192.168.2.100的操作系统信息
+[root@proxy ~]# nmap -n -A  192.168.2.100
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2018-08-30 14:44 CST
+Nmap scan report for 192.168.2.100
+Host is up (0.00046s latency).
+Not shown: 996 closed ports
+PORT     STATE SERVICE VERSION
+21/tcp   open  ftp     vsftpd 3.0.2
+| ftp-anon: Anonymous FTP login allowed (FTP code 230)
+|_drwxr-xr-x    2 0        0               6 Aug 03  2017 pub
+22/tcp   open  ssh     OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 d1:df:2f:c5:20:ec:71:8f:0b:97:8f:7a:a8:0b:02:6e (RSA)
+|_256 7e:6e:95:ed:84:fe:5b:8e:26:94:73:9b:c3:4b:90:cb (ECDSA)
+111/tcp  open  rpcbind 2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|_  100000  2,3,4        111/udp  rpcbind
+3306/tcp open  mysql?
+| mysql-info: MySQL Error detected!
+| Error Code was: 1130
+|_Host '192.168.2.5' is not allowed to connect to this MariaDB server
+..................
+Network Distance: 1 hop
+Service Info: OS: Unix
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.46 ms 192.168.2.100
+
+OS and Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 17.87 seconds
+[root@proxy ~]# 
+[root@proxy ~]# traceroute  www.a.com
+traceroute to www.a.com (192.168.4.5), 30 hops max, 60 byte packets
+ 1  www.a.com (192.168.4.5)  0.060 ms  0.022 ms  0.017 ms
+
+[root@proxy ~]# systemctl is-active vsftpd
+active
+[root@proxy ~]# ls /home
+lisi  nginx  softadm  tom  u1  u2  varnish
+[root@proxy ~]# echo 123 |passwd --stdin tom
+
+-----------Ascii
+[root@proxy ~]# tcpdump -A host 192.168.4.5 ;
+......
+11053 packets captured
+16446 packets received by filter
+5330 packets dropped by kernel
+[root@proxy ~]# tcpdump -A  -i eth2  // -i，指定监控的网络接口
+^C
+3 packets captured
+3 packets received by filter
+0 packets dropped by kernel
+[root@proxy ~]# mkdir /time
+[root@proxy ~]# cd /time;ls
+           // -A，转换为 ACSII 码，以方便阅读
+            // -w，将数据包信息保存到指定文件
+[root@proxy time]# tcpdump -A  -w a.log
+tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+^C32 packets captured
+32 packets received by filter
+0 packets dropped by kernel
+
+[root@proxy time]# ll a.log
+-rw-r--r--. 1 tcpdump tcpdump 2402 8月  30 15:51 a.log
+                  // -r，从指定文件读取数据包信息
+[root@proxy time]# tcpdump -A  -r  a.log
+reading from file a.log, link-type EN10MB (Ethernet)
+..
+1.............n.....W....+.x..Y.	..h.fq8'
+[root@proxy time]# 
+[root@proxy time]# tcpdump -A  src  host 192.168.4.5 
+.............
+4957 packets captured
+5520 packets received by filter
+555 packets dropped by kernel
+[root@proxy time]# yum -y install ftp
+已安装:
+  ftp.x86_64 0:0.17-67.el7                                       
+
+完毕！
+[root@proxy time]# tcpdump -A host 192.168.4.5 and tcp port 21
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+...?..%.USER tom
+
+482], length 10: FTP: PASS 123
+
+[root@proxy time]# tcpdump -w ftp.log  -A host 192.168.4.5 and tcp port 21
+tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+
+[root@client ~]# ftp 192.168.4.5
+Connected to 192.168.4.5 (192.168.4.5).
+220 (vsFTPd 3.0.2)
+Name (192.168.4.5:root): tom
+331 Please specify the password.
+Password:
+230 Login successful.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+ftp> quit
+221 Goodbye.
+
+^C25 packets captured
+25 packets received by filter
+0 packets dropped by kernel
+[root@proxy time]# tcpdump -A -r ftp.log |egrep '(USER|PASS)'
+reading from file ftp.log, link-type EN10MB (Ethernet)
+16:26:39.749983 IP host3.55092 > www.a.com.ftp: Flags [P.], seq 1:11, ack 21, win 229, options [nop,nop,TS val 28531799 ecr 28520526], length 10: FTP: USER tom
+..\W..0NUSER tom
+16:26:41.705748 IP host3.55092 > www.a.com.ftp: Flags [P.], seq 11:21, ack 55, win 229, options [nop,nop,TS val 28533755 ecr 28523833], length 10: FTP: PASS 123
+..c...=9PASS 123
+
+
+[root@proxy time]# cd /usr/local/nginx/conf/;ls
+[root@proxy conf]# cp nginx.conf.default nginx.conf
+cp：是否覆盖"nginx.conf"？ yes
+[root@proxy conf]# vim /usr/local/nginx/conf/nginx.conf
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+ 38         auth_basic "xx";
+ 39         auth_basic_user_file "/usr/local/nginx/pass";
+
+[root@proxy conf]# htpasswd -c /usr/local/nginx/pass jerry
+New password: 
+Re-type new password: 
+Adding password for user jerry
+[root@proxy conf]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  20 13:27 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+[root@proxy conf]# nginx
+
+[root@proxy conf]# tcpdump -A host 192.168.4.5 and tcp port 80
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+---[root@room11pc06 ~]# firefox http://192.168.4.5-----
+-----------------------------------------------------------------------------------------
+ ^C
+Accept-Language: zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Authorization: Basic amVycnk6MTIz
+Connection: keep-alive
+
+35 packets captured
+35 packets received by filter
+0 packets dropped by kernel
+[root@proxy conf]# 
+[root@proxy conf]# echo "amVycnk6MTIz" |base64 -d
+jerry:123[root@proxy conf]#
+[root@proxy conf]# echo "abc" |base64 ;
+YWJjCg==
+[root@proxy conf]# echo "YWJjCg==" |base64 -d;
+abc
+
+
+------------wireshark 图形
+
+[root@proxy conf]# yum -y install wireshark |tail -4;
+作为依赖被安装:
+  c-ares.x86_64 0:1.10.0-3.el7           libsmi.x86_64 0:0.4.8-13.el7          
+
+完毕！
+[root@proxy conf]# wireshark
+bash: wireshark: 未找到命令...
+[root@proxy conf]# yum -y install wireshark-gnome |tail -4;
+已安装:
+  wireshark-gnome.x86_64 0:1.10.14-14.el7                                       
+
+完毕！
+[root@proxy conf]# wireshark
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------[root@web1 ~]# ifconfig |grep 'net '|head -4 |column -t ---------
+inet  192.168.4.2    netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.100  netmask  255.255.255.0  broadcast  192.168.2.255
+inet  127.0.0.1      netmask  255.0.0.0
+inet  192.168.122.1  netmask  255.255.255.0  broadcast  192.168.122.255
+[root@web1 time]# cat m.txt 
+mount -o relatime /dir
+[root@web1 time]# md5sum m.txt
+77145fe846854e4a96122029a88b1f3a  m.txt
+[root@web1 time]# cp -p  m.txt m2.txt ;md5sum m2.txt;
+77145fe846854e4a96122029a88b1f3a  m2.txt
+[root@web1 time]# mv m.txt  mm.txt ;md5sum mm.txt;
+77145fe846854e4a96122029a88b1f3a  mm.txt
+[root@web1 time]# sha512sum m2.txt
+79df30e42ea8b0dc4c672a06f2824cc1c8f2dd941579343709e6d3b26a9cc525240caef76e213097e83f81613232ee8ee7c72e89c5bf4300a0dcd35e7a235369  m2.txt
+[root@web1 time]# sha512sum mm.txt 
+79df30e42ea8b0dc4c672a06f2824cc1c8f2dd941579343709e6d3b26a9cc525240caef76e213097e83f81613232ee8ee7c72e89c5bf4300a0dcd35e7a235369  mm.txt
+
+[root@web1 time]# sh
+sh               
+sha1sum           
+sha224sum         
+sha256sum        
+sha384sum        
+sha512sum 
+
+[root@web1 time]# yum -y install gnupg2
+
+软件包 gnupg2-2.0.22-4.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@web1 time]# gpg --version
+...
+Home: ~/.gnupg
+支持的算法：
+公钥：RSA, ?, ?, ELG, DSA
+对称加密：IDEA, 3DES, CAST5, BLOWFISH, AES, AES192, AES256,
+     TWOFISH, CAMELLIA128, CAMELLIA192, CAMELLIA256
+散列：MD5, SHA1, RIPEMD160, SHA256, SHA384, SHA512, SHA224
+压缩：不压缩, ZIP, ZLIB, BZIP2
+[root@web1 time]# ls
+m2.txt  mm.txt
+[root@web1 time]# gpg -c m2.txt
+gpg: 已创建目录‘/root/.gnupg’
+gpg: 新的配置文件‘/root/.gnupg/gpg.conf’已建立
+gpg: 警告：在‘/root/.gnupg/gpg.conf’里的选项于此次运行期间未被使用
+     需要输入自定义密码 123 再次输入解密 密码 123 
+  pinentry-gtk-2   Passphrase  ***
+gpg: 钥匙环‘/root/.gnupg/pubring.gpg’已建立
+[root@web1 time]# rm -f m2.txt ;cat m2.txt.gpg 
+W=��PoK��3���
+                  �6�B�ρ�����9tV�.O�h_�E���I���CQ�Z�	�a/��l?[root@web1 time]# ls
+m2.txt.gpg  mm.txt
+[root@web1 time]# gpg -d m2.txt.gpg >file2.txt
+gpg: 钥匙环‘/root/.gnupg/secring.gpg’已建立
+gpg: CAST5 加密过的数据
+gpg: 以 1 个密码加密
+      ##需要输入自定义密码 123 
+gpg: 警告：报文未受到完整的保护
+[root@web1 time]# cat file2.txt  #//查看解密后的文件
+mount -o relatime /dir
+
+[root@web1 time]# gpg --gen-key
+
+您的选择？ 回车
+您想要用多大的密钥尺寸？(2048) 回车
+您所要求的密钥尺寸是 2048 位
+密钥的有效期限是？(0) 
+密钥永远不会过期
+以上正确吗？(y/n)y
+姓名至少要有五个字符长
+真实姓名：xxxxx
+电子邮件地址：x@163.com
+注释：x
+您选定了这个用户标识：
+    “xxxxx (x) <x@163.com>”
+更改姓名(N)、注释(C)、电子邮件地址(E)或确定(O)/退出(Q)？O
+您需要一个密码来保护您的私钥。 密码123
+        [[[[ take this one any way  ]]]]
+pub   2048R/2321C9B2 2018-08-30
+密钥指纹 = 4474 7043 5100 79DD 2CB7  1545 CAD4 94D3 2321 C9B2
+uid                  xxxxx (x) <x@163.com>
+sub   2048R/79119281 2018-08-30
+
+注意：生产密钥后当前终端可能会变的无法使用，执行reset命令即可
+
+[root@web1 time]# gpg  --list-keys     //查看公钥环
+/root/.gnupg/pubring.gpg
+------------------------
+pub   2048R/2321C9B2 2018-08-30
+uid                  xxxxx (x) <x@163.com>
+sub   2048R/79119281 2018-08-30
+
+使用gpg命令结合--export选项将其中的公钥文本导出：
+                            ####真实姓名：xxxxx
+//--export的作用是导出密钥，-a的作用是导出的密钥存储为ASCII格式
+[root@web1 time]# gpg -a --export xxxxx > userx.pub
+
+[root@web1 time]# ls
+file2.txt  m2.txt.gpg  mm.txt  userx.pub
+           ##//将密钥传给web2  192.168.2.200：/time
+[root@web1 time]# scp userx.pub  192.168.2.200:/time/
+root@192.168.2.200's password: 123
+userx.pub                      100% 1703     3.4MB/s   00:00
+
+使用gpg命令结合--import选项导入发送方的公钥信息，以便在加密文件时指定对应的公钥。
+
+[root@web2 ~]# mkdir /time/
+[root@web2 ~]# gpg --import /time/userx.pub
+gpg: /root/.gnupg/trustdb.gpg：建立了信任度数据库
+gpg: 密钥 2321C9B2：公钥“xxxxx (x) <x@163.com>”已导入
+gpg: 合计被处理的数量：1
+gpg:           已导入：1  (RSA: 1)
+[root@web2 ~]# cd /time/
+[root@web2 time]# echo "xxxx:" > xx.txt
+
+  ##UserB使用公钥加密数据，并把加密后的数据传给UserA
+//-e选项是使用密钥加密数据
+//-r选项后面跟的是密钥，说明使用哪个密钥对文件加密
+
+[root@web2 time]# gpg -e -r xxxxx  xx.txt
+pub  2048R/79119281 2018-08-30 xxxxx (x) <x@163.com>
+ 主钥指纹： 4474 7043 5100 79DD 2CB7  1545 CAD4 94D3 2321 C9B2
+ 子钥指纹： DE25 410A F942 4C9A 61D4  97F7 CB5A B283 7911 9281
+这把密钥并不一定属于用户标识声称的那个人。如果您真的知道自
+己在做什么，您可以在下一个问题回答 yes。
+无论如何还是使用这把密钥吗？(y/N)y
+[root@web2 time]# ls
+userx.pub  xx.txt  xx.txt.gpg
+
+   //加密的数据传给UserA web1 -- 192.168.2.100:/time
+[root@web2 time]# scp xx.txt.gpg 192.168.2.100:/time
+root@192.168.2.100's password: 123
+xx.txt.gpg                     100%  342   536.3KB/s   00:00 
+
+            ##UserA以自己的私钥解密文件xx.txt.gpg 
+[root@web1 time]# gpg  -d  xx.txt.gpg > we1.txt
+
+您需要输入密码，才能解开这个用户的私钥：“xxxxx (x) <x@163.com>”
+2048 位的 RSA 密钥，钥匙号 79119281，建立于 2018-08-30 (主钥匙号 2321C9B2)
+
+gpg: 由 2048 位的 RSA 密钥加密，钥匙号为 79119281、生成于 2018-08-30
+      “xxxxx (x) <x@163.com>”
+[root@web1 time]# ls
+file2.txt  m2.txt.gpg  mm.txt  userx.pub  we1.txt  xx.txt.gpg
+[root@web1 time]# cat we1.txt 
+xxxx:
+[root@web1 time]# ls
+file2.txt  m2.txt.gpg  mm.txt  userx.pub  we1.txt  xx.txt.gpg
+-----------
+[root@web1 time]# tar zcf web1mm.tar.gz  mm.txt
+[root@web1 time]# ls
+file2.txt   mm.txt     we1.txt        xx.txt.gpg
+m2.txt.gpg  userx.pub  web1mm.tar.gz
+[root@web1 time]# gpg -b web1mm.tar.gz   #//创建分离式数字签名
+     #pinentry-gtk-2   Passphrase 123
+您需要输入密码，才能解开这个用户的私钥：“xxxxx (x) <x@163.com>”
+2048 位的 RSA 密钥，钥匙号 2321C9B2，建立于 2018-08-30
+[root@web1 time]# ls
+file2.txt   mm.txt     we1.txt        web1mm.tar.gz.sig
+m2.txt.gpg  userx.pub  web1mm.tar.gz  xx.txt.gpg
+[root@web1 time]# ls -lh web1mm*
+-rw-r--r--. 1 root root 137 8月  30 11:25 web1mm.tar.gz
+-rw-r--r--. 1 root root 287 8月  30 11:26 web1mm.tar.gz.sig
+     ########/将签名文件与签名传给UserB
+[root@web1 time]# scp web1mm* 192.168.2.200:/time/
+root@192.168.2.200's password: 
+web1mm.tar.gz                  100%  137   248.4KB/s   00:00    
+web1mm.tar.gz.sig              100%  287   628.4KB/s   00:00 
+[root@web2 time]# ls
+userx.pub  web1mm.tar.gz  web1mm.tar.gz.sig  xx.txt  xx.txt.gpg
+
+[root@web2 time]# gpg --verify web1mm.tar.gz.sig  web1mm.tar.gz ##验证签名
+gpg: 于 2018年08月30日 星期四 11时26分43秒 CST 创建的签名，使用 RSA，钥匙号 2321C9B2
+gpg: 完好的签名，来自于“xxxxx (x) <x@163.com>”
+gpg: 警告：这把密钥未经受信任的签名认证！
+gpg:       没有证据表明这个签名属于它所声称的持有者。
+主钥指纹： 4474 7043 5100 79DD 2CB7  1545 CAD4 94D3 2321 C9B2
+
+=========================
+Aide通过检查数据文件的权限、时间、大小、哈希值等，校验数据的完整性。
+
+[root@web1 time]# yum -y install aide |tail -5
+
+已安装:
+  aide.x86_64 0:0.15.1-13.el7                                                   
+
+完毕！
+[root@web1 time]# vim /etc/aide.conf 
+  3 @@define DBDIR /var/lib/aide   #//数据库目录
+  4 @@define LOGDIR /var/log/aide   #   //日志目录
+  5 
+  6 # The location of the database to be read.
+  7 database=file:@@{DBDIR}/aide.db.gz
+  8 
+ 12 database_out=file:@@{DBDIR}/aide.db.new.gz   #//数据库文件名
+//注意：为了校验的效率，这里将所有默认的校验目录与文件都注释
+//仅保留/root目录，其他目录都注释掉
+ 93 DATAONLY =  p+n+u+g+s+acl+selinux+xattrs+sha256
+ 94 /root  DATAONLY
+ 95 # Next decide what directories/files you want in the database  . Aide
+
+[root@web1 time]# aide --init
+
+AIDE, version 0.15.1
+
+### AIDE database at /var/lib/aide/aide.db.new.gz initialized.
+   ##备份数据库，将数据库文件拷贝到U盘（非必须的操作）
+[root@web1 aide]# cp /var/lib/aide/aide.db.new.gz  /time/
+[root@web1 aide]# ls /time/
+aide.db.new.gz  mm.txt     web1mm.tar.gz
+file2.txt       userx.pub  web1mm.tar.gz.sig
+m2.txt.gpg      we1.txt    xx.txt.gpg
+         ###入侵后检测
+[root@web1 aide]# mv aide.db.new.gz  aide.db.gz
+[root@web1 aide]# ls
+aide.db.gz
+[root@web1 aide]# aide --check   # //检查哪些数据发生了变化????
+AIDE, version 0.15.1
+
+### All files match AIDE database. Looks okay!
+[root@web1 aide]# cd /var/lib/aide/ ;ls
+aide.db.gz
+
+
+
+
+
+
+
+
+-----[root@web2 ~]# ifconfig |grep 'net '|head -4 |column -t -----------
+inet  192.168.4.200  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.200  netmask  255.255.255.0  broadcast  192.168.2.255
+inet  127.0.0.1      netmask  255.0.0.0
+inet  192.168.122.1  netmask  255.255.255.0  broadcast  192.168.122.255
+
+=========================
+================================
+=======================================
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+VM1(eth0:192.168.4.7    eth1:192.168.2.7  )
+VM2(eth0:192.168.4.252  eth1:192.168.2.252)
+VM3(eth0:192.168.4.207  eth1:192.168.2.207)
+VM4(eth0:192.168.4.208  eth1:192.168.2.208)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

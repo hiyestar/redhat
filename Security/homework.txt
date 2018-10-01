@@ -1,0 +1,451 @@
+=======================================
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+VM1(eth0:192.168.4.7    eth1:192.168.2.7  )
+VM2(eth0:192.168.4.252  eth1:192.168.2.252)
+VM3(eth0:192.168.4.207  eth1:192.168.2.207)
+VM4(eth0:192.168.4.208  eth1:192.168.2.208)
+[root@VM1 file]# chage -l
+用法：chage [选项] 登录
+选项：
+  -d, --lastday 最近日期        将最近一次密码设置时间设为“最近日期”
+  -E, --expiredate 过期日期     将帐户过期时间设为“过期日期”
+  -h, --help                    显示此帮助信息并推出
+  -I, --inactive INACITVE       过期 INACTIVE 天数后，设定密码为失效状态
+  -l, --list                    显示帐户年龄信息
+  -m, --mindays 最小天数        将两次改变密码之间相距的最小天数设为“最小天数”
+  -M, --maxdays 最大天数        将两次改变密码之间相距的最大天数设为“最大天数”
+  -R, --root CHROOT_DIR         chroot 到的目录
+  -W, --warndays 警告天数       将过期警告天数设为“警告天数”
+准备 2 台虚拟机,配置如下:
+vm1(eth1:192.168.2.7),vm2(eth1:192.168.2.252)
+vm1 创建账户 netadm,softadm,useradm,procadm;为所有的账户设置初始密码 1234
+vm1 创建账户 devel1,devel2,devel3,test1,test2,test3;为所有账户设置初始密码 passwd
+vm1 设置 test3 的账户过期时间为 2019-12-12.
+vm1 使用 passwd 命令临时锁定 devel3 账户
+vm1 为/etc/resolv.conf 文件添加 i 锁定属性,为/etc/hosts 添加 a 仅可追加属性
+vm1 用 test1 用户登陆系统,使用 su 命令切换为 test2 账户在 tmp 下创建一个文件(非
+交互模式)
+vm1 使用 root 登陆系统,设置 sudo 权限,要求如下:
+vm1 让 netadm 能以 root 的身份执行网络管理的任务(参考 sudo 命令别名)
+vm1 让 softadm 能以 root 的身份执行软件管理的任务
+vm1 让 useradm 能以 root 的身份执行账户管理的任务(不能修改 root 密码)
+vm1 让 procadm 能以 root 的身份执行进程管理任务(如杀死进程)
+vm1 设置虚拟机 ssh 配置,禁止 root 远程本机,设置 sshd 黑名单,禁止 test3 从任何
+主机远程本机(通过 vm2 虚拟机连接 vm1 测试效果)
+vm1 真实主机创建一对 ssh 密钥,让真实机可以无密码远程虚拟机,观察密钥在虚拟机
+中的位置
+----[root@VM1 ~]# ifconfig eth0 |grep 'net ';ifconfig eth1 |grep 'net ';\
+> ifconfig eth2 |grep 'inet ';
+        inet 192.168.4.7  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.7  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.1.100  netmask 255.255.255.0  broadcast 201.1.1.255
+[root@VM1 file]# vim /file/usrad.sh
+[root@VM1 file]# cat /file/usrad.sh
+#!/bin/bash
+useradd $1 2>/dev/null;
+echo $2 |passwd --stdin $1 ;
+[root@VM1 file]# sh /file/usrad.sh netadm 1234
+[root@VM1 file]# sh /file/usrad.sh softadm 1234
+[root@VM1 file]# sh /file/usrad.sh useradm 1234
+[root@VM1 file]# sh /file/usrad.sh procadm 1234
+
+[root@VM1 file]# sh /file/usrad.sh devel1 passwd
+[root@VM1 file]# sh /file/usrad.sh devel2 passwd
+[root@VM1 file]# sh /file/usrad.sh devel3 passwd
+
+[root@VM1 file]# sh /file/usrad.sh test1  passwd
+[root@VM1 file]# sh /file/usrad.sh test2  passwd
+[root@VM1 file]# sh /file/usrad.sh test3  passwd
+[root@VM1 file]# ls /home
+devel1  devel3  netadm  procadm  test1  test3
+devel2  lisi    nginx   softadm  test2  useradm
+[root@VM1 file]# chage -E 2019-12-12 test3;
+[root@VM1 file]# chage -l test3 |grep 2019
+帐户过期时间						：12月 12, 2019
+[root@VM1 file]# cat -n /etc/login.defs |egrep '(PASS_|UID_)' | egrep -v "#";
+    25	PASS_MAX_DAYS	99999      //密码最长有效期
+    26	PASS_MIN_DAYS	0          //密码最短有效期
+    27	PASS_MIN_LEN	5           //密码最短长度
+    28	PASS_WARN_AGE	7           //密码过期前几天提示警告信息
+    33	UID_MIN                  1000   //UID最小值
+    34	UID_MAX                 60000
+    36	SYS_UID_MIN               201
+    37	SYS_UID_MAX               999
+vm1 使用 passwd 命令临时锁定 devel3 账户
+[root@VM1 file]# passwd -l devel3
+锁定用户 devel3 的密码 。
+passwd: 操作成功
+[root@VM1 file]# passwd -S devel3   //查看状态status
+devel3 LK 2018-08-31 0 99999 7 -1 (密码已被锁定。)
+[root@VM1 file]# passwd --help
+用法: passwd [选项...] <帐号名称>
+  -k, --keep-tokens       保持身份验证令牌不过期
+  -d, --delete            删除已命名帐号的密码(只有根用户才能进行此操作)
+  -l, --lock              锁定指名帐户的密码(仅限 root 用户)
+  -u, --unlock            解锁指名账户的密码(仅限 root 用户)
+  -e, --expire            终止指名帐户的密码(仅限 root 用户)
+  -f, --force             强制执行操作
+  -x, --maximum=DAYS      密码的最长有效时限(只有根用户才能进行此操作)
+  -n, --minimum=DAYS      密码的最短有效时限(只有根用户才能进行此操作)
+  -w, --warning=DAYS      在密码过期前多少天开始提醒用户(只有根用户才能进行此操作)
+  -i, --inactive=DAYS     当密码过期后经过多少天该帐号会被禁用(只有根用户才能进行此操作)
+  -S, --status            报告已命名帐号的密码状态(只有根用户才能进行此操作)
+  --stdin                 从标准输入读取令牌(只有根用户才能进行此操作)
+
+Help options:
+  -?, --help              Show this help message
+[root@VM1 file]# 
+#vm1 为/etc/resolv.conf 文件添加 i 锁定属性,为/etc/hosts 添加 a 仅可追加属性
+[root@VM1 file]# lsattr /etc/resolv.conf
+---------------- /etc/resolv.conf
+[root@VM1 file]# chattr +i /etc/resolv.conf
+[root@VM1 file]# chattr +a /etc/hosts
+[root@VM1 file]# lsattr /etc/hosts
+-----a---------- /etc/hosts
+[root@VM1 file]# lsattr /etc/resolv.conf 
+----i----------- /etc/resolv.conf
+##vm1 用 test1 用户登陆系统,使用 su 命令切换为 test2 账户在 tmp 下创建一个文件(非
+交互模式)
+[root@VM1 file]# ssh test1@192.168.2.7
+test1@192.168.2.7's password: passwd
+Last login: Fri Aug 31 20:41:45 2018
+[test1@VM1 ~]$ echo $USER
+test1
+[test1@VM1 ~]$ su - test2  -c "touch /tmp/test12.txt"
+密码： passwd
+[test1@VM1 ~]$ echo $USER
+test1
+[test1@VM1 ~]$ ll /tmp/test12.txt 
+-rw-rw-r--. 1 test2 test2 0 8月  31 20:46 /tmp/test12.txt
+[test1@VM1 ~]$ su - test2 -c "echo test1add > /tmp/test12.txt";
+密码： passwd 
+[test1@VM1 ~]$ ll /tmp/test12.txt 
+-rw-rw-r--. 1 test2 test2 9 8月  31 20:51 /tmp/test12.txt
+[test1@VM1 ~]$ exit
+登出
+vm1 使用 root 登陆系统,设置 sudo 权限,要求如下:
+vm1 让 netadm 能以 root 的身份执行网络管理的任务(参考 sudo 命令别名)
+vm1 让 softadm 能以 root 的身份执行软件管理的任务
+vm1 让 useradm 能以 root 的身份执行账户管理的任务(不能修改 root 密码)
+vm1 让 procadm 能以 root 的身份执行进程管理任务(如杀死进程)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------[root@VM2 ~]# ifconfig eth0 |grep 'net ';ifconfig eth1 |grep 'net ';ifconfig eth2 |grep 'inet ';ifconfig eth3 |grep 'inet ';
+        inet 192.168.4.252  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.252  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.1.5  netmask 255.255.255.0  broadcast 201.1.1.255
+        inet 201.1.2.5  netmask 255.255.255.0  broadcast 201.1.2.255 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=========================================
+[root@VM1 ~]# nmcli connection show
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    afa2eb5d-76aa-4e4c-9e5c-8fd15bfddf6a  802-3-ethernet  eth1   
+eth2    54d7d0bf-2315-4ba1-b9ba-636ce35de078  802-3-ethernet  eth2   
+virbr0  e7c8a960-c955-4eab-bacb-9d20e238cfd9  bridge          virbr0 
+[root@VM1 ~]# ifconfig eth0 |grep 'net ';ifconfig eth1 |grep 'net ';\
+> ifconfig eth2 |grep 'inet ';
+        inet 192.168.4.7  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.7  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.1.100  netmask 255.255.255.0  broadcast 201.1.1.255
+[root@VM1 file]# ls -Z  wenj.txt 
+-rw-r--r--. root root unconfined_u:object_r:default_t:s0 wenj.txt
+
+[root@VM1 file]# ls -Zd /var/ftp/pub/
+drwxr-xr-x. root root system_u:object_r:public_content_t:s0 /var/ftp/pub/
+        #修改安全上下文值 public_content_t
+[root@VM1 file]# chcon  -t   public_content_t   wenj.txt 
+
+[root@VM1 file]# ls -Z wenj.txt
+-rw-r--r--. root root unconfined_u:object_r:public_content_t:s0 wenj.txt
+
+
+   ## GnuPG是非常流行的加密软件，支持所有常见加密算法，并且开源免费使用。
+[root@VM1 ~]# yum -y install gnupg2  
+软件包 gnupg2-2.0.22-4.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@VM1 ~]# rpm -q gnupg2 
+gnupg2-2.0.22-4.el7.x86_64
+加密算法主要有以下几种分类：
+1.为确保数据机密性算法：
+a) 对称加密算法(AES,DES)
+b) 非对称加密算法（RSA，DSA）
+2.为确保数据完整性算法：
+a) 信息摘要（MD5，SHA256，SHA512）
+##在 vm1 主机使用 gpg 软件对/etc/rc.d/rc.local 文件进行对称加密,并将加密文件传给 vm2
+[root@VM1 ~]# mkdir /file ;cd /file/ ;ls
+[root@VM1 file]# echo file2txttxt > file2.txt;ls
+file2.txt
+[root@VM1 file]# gpg -c file2.txt #gpg使用对称加密算法加密数据的操作
+      需要输入自定义密码 123 再次输入解密 密码 123 
+     pinentry-gtk-2   Passphrase  ***
+    -------弹出对话框  pinentry-gtk-2(于 VM1)---
+    |    请输入密码                                 |
+   |   Passphrase  123                  |
+   |                 Cancel     OK      |
+    -------------------------------------------------------------------
+    -------弹出对话框  pinentry-gtk-2(于 VM1)---
+   |  Please re-enter this passphrase   |
+   |   Passphrase  123                  |
+   |                 Cancel     OK      |
+    -------------------------------------------------------------------
+[root@VM1 file]# ls
+file2.txt  file2.txt.gpg
+[root@VM1 file]# tail -1 /etc/rc.d/rc.local
+touch /var/lock/subsys/local
+---------------------------------------------------------------------------------------------------------------
+[root@VM1 file]# cp /etc/rc.d/rc.local wenj.txt
+[root@VM1 file]# wc -l wenj.txt
+13 wenj.txt
+[root@VM1 file]# sed -i '1~1s/^#/#??#/' wenj.txt  #1~1从1开始步长1即每次加一行
+[root@VM1 file]# head -3 wenj.txt
+#??#!/bin/bash
+#??# THIS FILE IS ADDED FOR COMPATIBILITY PURPOSES
+#??#
+[root@VM1 file]# tail -3 wenj.txt
+#??# that this script will be executed during boot.
+
+touch /var/lock/subsys/local
+---------------------------------------------------------------------------------------
+[root@VM1 file]# gpg -c /etc/rc.d/rc.local  #gpg使用对称加密算法加密数据的操作
+[root@VM1 file]# ls /etc/rc.d/
+init.d  rc1.d  rc3.d  rc5.d  rc.local
+rc0.d   rc2.d  rc4.d  rc6.d  rc.local.gpg
+
+[root@VM1 file]# scp /etc/rc.d/rc.local.gpg 192.168.2.252:/lianxi/
+root@192.168.2.252's password: 123
+rc.local.gpg                      100%  358   565.4KB/s   00:00    
+
+ #========在 vm1 上使用 gpg 创建非对称密钥对,并将公钥传给 vm2
+使用GPG非对称加密方式保护文件
+非对称加密/解密文件时，UserA（192.168.2.7）生成私钥与公钥，
+并把公钥发送给UserB（192.168.2.252），UserB使用公钥加密数据，
+ 并把加密后的数据传给UserA，
+ UserA最后使用自己的私钥解密数据
+-------------[ 1 ]接收方UserA创建自己的公钥、私钥对
+[root@VM1 file]# gpg --gen-key      //创建密钥对
+请选择您要使用的密钥种类：
+   (1) RSA and RSA (default)
+您的选择？ 回车                     //默认算法为RSA
+您想要用多大的密钥尺寸？(2048) 回车
+您所要求的密钥尺寸是 2048 位
+请设定这把密钥的有效期限。
+         0 = 密钥永不过期
+密钥的有效期限是？(0) 0  【注意数字0】
+密钥永远不会过期
+以上正确吗？(y/n)y
+姓名至少要有五个字符长
+真实姓名：hiyes
+电子邮件地址：hi@163.com
+注释：hiyes
+您选定了这个用户标识：
+    “hiyes (hiyes) <hi@163.com>”
+更改姓名(N)、注释(C)、电子邮件地址(E)或确定(O)/退出(Q)？O 【注意大写字母O】
+    -------弹出对话框  pinentry-gtk-2(于 VM1)---
+    |    请输入密码                                 |
+   |   Passphrase  123                  |
+   |    Quality :-------不需要理会这里-----  |
+   |                 Cancel     OK      |
+    -------------------------------------------------------------------
+    |-------弹出对话框  pinentry-gtk-2(于 VM1)---             |
+   | Warning:You have entered an insecure passphrase.  |
+   | A passphrase should be at least 8 characters long.|
+   |【Enter new passphrase】    【Take this one anyway 选择这项】| 
+    -----------------------------------------------------------------------------------------------------
+    -------弹出对话框  pinentry-gtk-2(于 VM1)---
+   |  Please re-enter this passphrase   |
+   |   Passphrase  123                  |
+   |                 Cancel     OK      |
+    -------------------------------------------------------------------
+gpg: /root/.gnupg/trustdb.gpg：建立了信任度数据库
+gpg: 密钥 C57C1E78 被标记为绝对信任
+公钥和私钥已经生成并经签名。
+
+gpg: 深度：0 有效性：  1 已签名：  0 信任度：0-，0q，0n，0m，0f，1u
+pub   2048R/C57C1E78 2018-08-30
+密钥指纹 = B765 65C6 8423 6B20 D062  2161 A31F 2C76 C57C 1E78
+uid                  hiyes (hiyes) <hi@163.com>
+sub   2048R/E9EB8BE0 2018-08-30
+###注意：生产密钥后当前终端可能会变的无法使用，执行reset命令即可，或者关闭后再开一个终端
+=============UserA导出自己的公钥文件(
+[root@VM1 file]# gpg  --list-keys     //查看公钥环
+/root/.gnupg/pubring.gpg
+------------------------
+pub   2048R/C57C1E78 2018-08-30
+uid                  hiyes (hiyes) <hi@163.com>
+sub   2048R/E9EB8BE0 2018-08-30
+
+[root@VM1 file]# ls
+file2.txt  file2.txt.gpg  wenj.txt
+=========使用gpg命令结合--export选项将其中的公钥文本导出：
+=====//--export的作用是导出密钥，-a的作用是导出的密钥存储为ASCII格式
+                    === 真实姓名：hiyes
+[root@VM1 file]# gpg -a  --export  hiyes > hiyes.pub
+[root@VM1 file]# ls
+file2.txt  file2.txt.gpg  hiyes.pub  wenj.txt
+                                       ## 将密钥hiyes.pub传给VM2
+[root@VM1 file]# scp hiyes.pub  192.168.2.252:/lianxi/  
+root@192.168.2.252's password: 
+hiyes.pub                         100% 1711     2.9MB/s   00:00
+===在 vm2 主机将 vm1 传过来的公钥导入,并使用公钥对/etc/sysctl.conf 文件加密,并将
+加密文件传给 vm1,在 vm1 主机使用自己的私钥解密该文件
+[root@VM2 lianxi]# scp /etc/sysctl.conf.gpg  192.168.2.7:/file/
+root@192.168.2.7's password: 
+sysctl.conf.gpg                   100%  569   846.7KB/s   00:00 
+                 
+[root@VM1 file]# ls
+file2.txt  file2.txt.gpg  hiyes.pub  sysctl.conf.gpg  wenj.txt
+[root@VM1 file]# head -1 sysctl.conf.gpg 
+�
+  @�	M�����A6�n�
+             ==== ##UserA以自己的私钥解密文件/etc/sysctl.conf.gpg
+                  #解密操作 --decrypt 或 -d
+[root@VM1 file]# gpg  -d sysctl.conf.gpg > sysctl.conf
+
+    -------弹出对话框  pinentry-gtk-2(于 VM1)---
+   |  Please enter the passphrase to unlock secret key fo  |
+  | the OpenPGP certificate:                |
+   |  "hiyes(hiyes)<hi@163.com>"             |
+   |     2048-bit RSA key,ID E9EB8BEO,       |
+    |   created 2018-08-30(主钥匙号 C57C1E78).|
+   |   Passphrase  123                  |
+   |                 Cancel     OK      |
+    -------------------------------------------------------------------
+gpg: 由 2048 位的 RSA 密钥加密，钥匙号为 E9EB8BE0、生成于 2018-08-30
+      “hiyes (hiyes) <hi@163.com>”
+--------------------------------------------------
+b) 非对称加密算法（RSA，DSA） 解密操作 --decrypt 或 -d
+----------------------------------------------------------
+[root@VM1 file]# ls
+file2.txt      hiyes.pub    sysctl.conf.gpg
+file2.txt.gpg  sysctl.conf  wenj.txt
+[root@VM1 file]# head -1 sysctl.conf
+# sysctl settings are defined through files in
+===================================================
+
+
+
+
+
+[root@VM2 ~]# nmcli connection show
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    9ac67a27-3d77-4d61-a5df-b7391ed982f9  802-3-ethernet  eth1   
+eth2    366a4b17-fae2-4c29-8676-d80601546666  802-3-ethernet  eth2   
+eth3    36447881-233d-46de-b31a-02605ea1b654  802-3-ethernet  eth3   
+virbr0  a0f81954-3b53-4cdb-b9a5-d69f93a9af8e  bridge          virbr0 
+[root@VM2 ~]# ifconfig eth0 |grep 'net ';ifconfig eth1 |grep 'net ';ifconfig eth2 |grep 'inet ';ifconfig eth3 |grep 'inet ';
+        inet 192.168.4.252  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.252  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.1.5  netmask 255.255.255.0  broadcast 201.1.1.255
+        inet 201.1.2.5  netmask 255.255.255.0  broadcast 201.1.2.255 
+    ##在 vm2 对主机 vm1 传来的加密文件进行解密
+[root@VM2 lianxi]# ls
+rc.local.gpg
+[root@VM2 lianxi]# head -1 rc.local.gpg 
+Y:��&G����������h�B�r̤հ�,dE�ZC
+�I3��-dL�A����S�g��i����<O���]N-v���' tjݍ�
+
+               # ## 使用gpg对加密文件进行解密操作 
+[root@VM2 lianxi]# gpg -d rc.local.gpg > rc.local
+gpg: 已创建目录‘/root/.gnupg’
+gpg: 新的配置文件‘/root/.gnupg/gpg.conf’已建立
+gpg: 警告：在‘/root/.gnupg/gpg.conf’里的选项于此次运行期间未被使用
+gpg: 钥匙环‘/root/.gnupg/secring.gpg’已建立
+gpg: 钥匙环‘/root/.gnupg/pubring.gpg’已建立
+gpg: CAST5 加密过的数据
+   |  需要输入自定义密码 123 再次输入解密 密码 123 |
+  |   pinentry-gtk-2   Passphrase  ***   |
+gpg: 以 1 个密码加密
+gpg: 警告：报文未受到完整的保护
+[root@VM2 lianxi]#  ls
+rc.local  rc.local.gpg
+[root@VM2 lianxi]# head -1 rc.local   #//查看解密后的文件
+#!/bin/bash
+=====使用gpg命令结合--import选项导入发送方的公钥信息，以便在加密文件时指定对应的公钥
+[root@VM2 lianxi]# ls
+rc.local  rc.local.gpg
+[root@VM2 lianxi]# ls
+hiyes.pub  rc.local  rc.local.gpg
+===在 vm2 主机将 vm1 传过来的公钥导入,并使用公钥对/etc/sysctl.conf 文件加密,并将
+加密文件传给 vm1,在 vm1 主机使用自己的私钥解密该文件
+
+[root@VM2 lianxi]# gpg --import hiyes.pub
+gpg: /root/.gnupg/trustdb.gpg：建立了信任度数据库
+gpg: 密钥 C57C1E78：公钥“hiyes (hiyes) <hi@163.com>”已导入
+gpg: 合计被处理的数量：1
+gpg:           已导入：1  (RSA: 1)
+=======UserB使用公钥加密数据，并把加密后的数据传给UserA
+[root@VM2 lianxi]# wc -l /etc/sysctl.conf
+10 /etc/sysctl.conf
+
+//-e选项是使用密钥加密数据
+//-r选项后面跟的是【密钥hiyes】，说明使用哪个密钥对文件加密
+
+[root@VM2 lianxi]# gpg -e -r hiyes /etc/sysctl.conf
+
+gpg: E9EB8BE0：没有证据表明这把密钥真的属于它所声称的持有者
+pub  2048R/E9EB8BE0 2018-08-30 hiyes (hiyes) <hi@163.com>
+ 主钥指纹： B765 65C6 8423 6B20 D062  2161 A31F 2C76 C57C 1E78
+ 子钥指纹： 6FAC C1DF 1B3D E9D8 C72E  734E 409B 094D E9EB 8BE0
+这把密钥并不一定属于用户标识声称的那个人。如果您真的知道自
+己在做什么，您可以在下一个问题回答 yes。
+无论如何还是使用这把密钥吗？(y/N)y
+[root@VM2 lianxi]# ls /etc/sysctl.<tab键>
+sysctl.conf      sysctl.conf.gpg  sysctl.d/
+[root@VM2 lianxi]# scp /etc/sysctl.conf.gpg  192.168.2.7:/file/ #加密的数据传给VM1
+root@192.168.2.7's password: 
+sysctl.conf.gpg                   100%  569   846.7KB/s   00:00 
+==================================================
+
+
+

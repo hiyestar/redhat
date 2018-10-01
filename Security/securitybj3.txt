@@ -1,0 +1,620 @@
+
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+A (126) 1  -126.0.0.0  [0000 0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000 0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100 0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+
+client (eth0 192.168.4.100    eth1               )
+proxy  (eth0 192.168.4.5      eth1 192.168.2.5   )
+web1   (eth0 192.168.4.2      eth1 192.168.2.100 )
+web2   (eth0 192.168.4.200    eth1 192.168.2.200 )
+
+----[root@client ~]# ifconfig |grep 'net '|head -4 |column -t  ------
+
+[root@client ~]# ifconfig |awk '/net /{print $0;i++;if(i==4){exit}} ' |column -t
+inet  192.168.4.100  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.1    netmask  255.255.255.0  broadcast  192.168.2.255
+inet  201.1.2.200    netmask  255.255.255.0  broadcast  201.1.2.255
+inet  127.0.0.1      netmask  255.0.0.0
+   #实现密钥对验证登录（私钥口令）、免密码登入
+[root@client ~]# ssh-keygen
+Enter file in which to save the key (/root/.ssh/id_rsa): 回车
+Enter passphrase (empty for no passphrase): 回车
+Enter same passphrase again: 回车
+
+Your identification has been saved in【 /root/.ssh/id_rsa】】.
+Your public key has been saved in 【/root/.ssh/id_rsa.pub】】.
+The key fingerprint is:
+SHA256:wF3BMzhhlNTH78MWSp9Bo+yP8fN1V9gMMHXrdAPucik root@client
+
+[root@client ~]# ls /root/.ssh/   //确认密钥对文件
+authorized_keys  id_rsa  id_rsa.pub  known_hosts
+[root@client ~]# ssh-copy-id  root@192.168.4.5  #自己的公钥部署到服务器
+
+root@192.168.4.5's password: 123
+------------------------------------------------------------------------------------------
+[root@proxy ~]# tail -1 /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDDNU6K3NO2e2+vSv6eQWHk5Jep4SY5Mk8BQOcQwVMG17PamALJT90qQrLVJaCOrZRHcSHvHL5zOgkzt+s+kzUnISiD82ISGN6bMZW/XRs9RzT3j35ZRxAC47AjL2Vaq3ktTMuHTZh22CGyoPbLxFzcMtyH6UahKO1F0ixsIdn2NdUVtrpJP0hsvW6q8tDYXj6ZmxB2H5JoIwOWMhZcMFzde6Qp4wYCt5hBFXZHkokIDQ1rSoYhOH/9ymKv1UNsF1PTqM/sNWcYWVbDD7UkeGlO4VXady20lNFcoYn2c8nSI9YUJn6YT6Yt/lnbRK27OSJbHjTLRgsS5CwKSymFMty/ root@client
+---------------------------------------------------------------------------------------------
+[root@client ~]# ssh root@192.168.4.5
+Last login: Sat Sep  1 08:46:05 2018 from 192.168.4.254
+[root@proxy ~]# exit
+登出
+Connection to 192.168.4.5 closed.
+[root@client ~]# 
+[root@proxy ~]# vim /etc/ssh/sshd_config
+ 64 PermitEmptyPasswords no
+ 65 PasswordAuthentication yes   //将此行yes改成no
+        ## 确认密钥验证使用正常后，禁用口令验证
+[root@proxy ~]# systemctl restart sshd
+---------------------------------------------------------------------------------
+[root@client ~]# rpm -q audit
+audit-2.7.6-3.el7.x86_64
+[root@client ~]# systemctl is-active auditd
+active
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----[root@proxy ~]# ifconfig |grep 'inet ' |head -4 |column -t;
+inet  192.168.4.5  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.5  netmask  255.255.255.0  broadcast  192.168.2.255
+inet  201.1.2.5    netmask  255.255.255.0  broadcast  201.1.2.255
+inet  127.0.0.1    netmask  255.0.0.0
+[root@proxy ~]# yum -y install audit    
+软件包 audit-2.7.6-3.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@proxy ~]# cat /etc/audit/auditd.conf 
+local_events = yes
+write_logs = yes
+log_file = /var/log/audit/audit.log  # #日志文件路径
+log_group = root
+max_log_file = 8
+num_logs = 5
+
+distribute_network = no
+[root@proxy ~]# systemctl is-active auditd
+active
+[root@proxy ~]# wc -l /var/log/audit/audit.log #日志文件路径
+9708 /var/log/audit/audit.log
+[root@proxy ~]# auditctl -l    //查看规则
+No rules
+[root@proxy ~]# auditctl -s   #/查询状态
+enabled 1
+failure 1
+pid 645
+rate_limit 0
+backlog_limit 8192
+lost 0
+backlog 0
+loginuid_immutable 0 unlocked
+[root@proxy ~]# auditctl -D   //删除所有规则
+No rules
+   ------------定义临时文件系统规则：
+#语法格式：auditctl  -w  path  -p  permission  -k  key_name
+# path为需要审计的文件或目录
+# 权限可以是r,w,x,a(文件或目录的属性发生变化)
+# Key_name为可选项，方便识别哪些规则生成特定的日志项
+
+[root@proxy ~]#  auditctl  -w  /etc/passwd  -p wa  -k  passwd_change
+[root@proxy ~]# wc -l /etc/passwd
+49 /etc/passwd
+[root@proxy ~]# useradd audit1 && echo 123 |passwd --stdin audit1;
+更改用户 audit1 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+[root@proxy ~]# wc -l /etc/passwd
+50 /etc/passwd
+[root@proxy ~]# auditctl -w /etc/passwd -p wa -k passwd_changed
+
+[root@proxy ~]# id audit1
+uid=1007(audit1) gid=1007(audit1) 组=1007(audit1)
+
+[root@proxy ~]# tail -2 /var/log/audit/audit.log |grep 'id=1007'
+type=USER_CHAUTHTOK msg=audit(1535769080.179:320): pid=3619 uid=0 auid=0 ses=2 subj=unconfined_u:unconfined_r:passwd_t:s0-s0:c0.c1023 msg='op=change password id=1007 exe="/usr/bin/passwd" hostname=proxy addr=? terminal=pts/0 res=success'
+#内容分析
+# type为类型
+# msg为(time_stamp:ID)，时间是date +%s（1970-1-1至今的秒数）
+# arch=c000003e，代表x86_64（16进制）
+# success=yes/no，事件是否成功
+# a0-a3是程序调用时前4个参数，16进制编码了
+# ppid父进程ID，如bash，pid进程ID，如cat命令
+# auid是审核用户的id，su - test, 依然可以追踪su前的账户
+# uid，gid用户与组
+# tty:从哪个终端执行的命令
+# comm="cat"            用户在命令行执行的指令
+# exe="/bin/cat"        实际程序的路径
+# key="sshd_config"    管理员定义的策略关键字key
+# type=CWD        用来记录当前工作目录
+# cwd="/home/username"
+# type=PATH
+# ouid(owner's user id）    对象所有者id
+# guid(owner's groupid）    对象所有者id
+[root@proxy ~]# ls -i /var/log/audit/audit.log  # inode节点33574981
+33574981 /var/log/audit/audit.log
+
+[root@proxy ~]# ausearch -k passwd_change -i |grep audit1
+type=PROCTITLE msg=audit(2018年09月01日 10:31:19.669:313) : proctitle=useradd audit1 
+type=PROCTITLE msg=audit(2018年09月01日 10:31:19.810:317) : proctitle=useradd audit1 
+
+    #如果需要创建永久审计规则，则需要修改规则配置文件
+[root@proxy ~]# vim /etc/audit/rules.d/audit.rules 
+[root@proxy ~]# tail -2 /etc/audit/rules.d/audit.rules
+-w  /etc/passwd  -p wa  -k  passwd_change
+-w  /etc/ssh/sshd_conf  -p warx  -k  sshd_config
+
+#语法格式：auditctl  -w  path  -p  permission  -k  key_name
+# path为需要审计的文件或目录
+# 权限可以是r,w,x,a(文件或目录的属性发生变化)
+# Key_name为可选项，方便识别哪些规则生成特定的日志项
+
+[root@proxy ~]# rm -rf /usr/local/nginx/
+[root@proxy ~]# cd nginx-1.12.2/;ls
+
+[root@proxy nginx-1.12.2]# ./configure --without-http_autoindex_module \
+>  --with-http_ssl_module --with-stream  --with-http_stub_status_module \
+> --without-http_ssi_module |tail -9 ;
+  nginx pid file: "/usr/local/nginx/logs/nginx.pid"
+  nginx error log file: "/usr/local/nginx/logs/error.log"
+  nginx http access log file: "/usr/local/nginx/logs/access.log"
+  nginx http client request body temporary files: "client_body_temp"
+  nginx http proxy temporary files: "proxy_temp"
+  nginx http fastcgi temporary files: "fastcgi_temp"
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+
+[root@proxy nginx-1.12.2]# make |tail -3 && make install |tail -4; 
+
+[root@proxy nginx-1.12.2]# nginx
+[root@proxy nginx-1.12.2]# ss -anptul |grep nginx
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("nginx",pid=7017,fd=6),("nginx",pid=7016,fd=6))
+[root@proxy nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 17 http {
+ 18     include       mime.types;
+ 19     default_type  application/octet-stream;
+ 20     server_tokens off;    修改版本信息，并隐藏具体的版本号
+[root@proxy nginx-1.12.2]# nginx -s reload
+                                # //查看服务器响应的头部信息
+[root@proxy nginx-1.12.2]# curl -I http://192.168.4.5
+HTTP/1.1 200 OK
+Server: nginx      #修改版本信息，并隐藏具体的版本号nginx/1.12.2
+Date: Sat, 01 Sep 2018 03:37:06 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Sat, 01 Sep 2018 03:31:17 GMT
+Connection: keep-alive
+ETag: "5b8a0805-264"
+Accept-Ranges: bytes
+[root@proxy nginx-1.12.2]# nginx -v
+nginx version: nginx/1.12.2
+
+[root@proxy nginx-1.12.2]#  ls
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+[root@proxy nginx-1.12.2]# vim src/http/ngx_http_header_filter_module.c
+ 47 static u_char ngx_http_server_string[] = "Server:Jacob" CRLF;
+ 48 static u_char ngx_http_server_full_string[] = "Server:Jacob" CRLF;
+ 49 static u_char ngx_http_server_build_string[] = "Server:Jacob" CRLF;
+ 50 
+ 51 /*#static u_char ngx_http_server_string[] = "Server: nginx" CRLF;
+ 52 #static u_char ngx_http_server_full_string[] = "Server: " NGINX_VER CR    LF;
+ 53 #static u_char ngx_http_server_build_string[] = "Server: " NGINX_VER_B    UILD CRLF;*/
+[root@proxy nginx-1.12.2]# ./configure |tail -5;
+
+[root@proxy nginx-1.12.2]# make |tail -3 && make install |tail -3 ;
+
+[root@proxy nginx-1.12.2]# killall nginx
+[root@proxy nginx-1.12.2]# nginx
+[root@proxy nginx-1.12.2]# curl -I http://192.168.4.5  # //查看服务器响应的头部信息
+HTTP/1.1 200 OK
+Server:Jacob    # #修改版本信息，并隐藏具体的版本号
+Date: Sat, 01 Sep 2018 05:55:21 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Sat, 01 Sep 2018 03:31:17 GMT
+Connection: keep-alive
+ETag: "5b8a0805-264"
+Accept-Ranges: bytes
+
+     #Nginx提供了一个ngx_http_limit_req_module模块，可以有效降低DDOS攻击的风险
+[root@proxy nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 33     #gzip  on;
+ 34     limit_req_zone $binary_remote_addr zone=one:10m rate=1r/s;
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+ 38         limit_req zone=one burst=5;
+//limit_req_zone语法格式如下：
+//limit_req_zone key zone=name:size rate=rate;
+//上面案例中是将客户端IP信息存储名称为one的共享内存，内存空间为10M
+//1M可以存储8千个IP信息，10M可以存储8万个主机连接的状态，容量可以根据需要任意调整
+//每秒中仅接受1个请求，多余的放入漏斗
+//漏斗超过5个则报错
+[root@proxy nginx-1.12.2]# nginx -s reload
+[root@proxy nginx-1.12.2]# ab -c 100 -n 200 http://192.168.4.5/
+Completed 100 requests
+Completed 200 requests
+Finished 200 requests
+
+Time taken for tests:   5.002 seconds
+Complete requests:      200
+Failed requests:        194
+
+Non-2xx responses:      194
+
+ 100%   5001 (longest request)
+
+  #Nginx提供了一个ngx_http_limit_req_module模块，可以有效降低DDOS攻击的风险
+
+[root@proxy nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 33     #gzip  on;
+ 34     limit_req_zone $binary_remote_addr zone=one:10m rate=1r/s;
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+ 38         limit_req zone=one burst=5;
+ 39         if ($request_method !~ ^(GET|POST)$){
+ 40             return  444;
+ 41         }
+ 42         #charset koi8-r;
+  #这里，!符号表示对正则取反，~符号是正则匹配符号
+  #如果用户使用非GET或POST方法访问网站，则retrun返回444的错误信息
+[root@proxy nginx-1.12.2]# nginx -s reload
+      //curl命令选项说明：
+//-i选项：访问服务器页面时，显示HTTP的头部信息
+//-X选项：指定请求服务器的方法
+[root@proxy nginx-1.12.2]# curl -i http://192.168.4.5
+HTTP/1.1 200 OK
+Server:Jacob
+[root@proxy nginx-1.12.2]# curl -i -X GET  http://192.168.4.5
+HTTP/1.1 200 OK
+Server:Jacob
+
+[root@proxy nginx-1.12.2]# curl -i -X HEAD  http://192.168.4.5
+curl: (52) Empty reply from server
+[root@proxy nginx-1.12.2]# echo $?
+52
+[root@proxy nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+    limit_req_zone $binary_remote_addr zone=one:10m rate=1r/s;
+    server {
+        listen       80;
+        server_name  localhost;
+        limit_req zone=one burst=5;
+        if ($request_method !~ ^(GET|POST)$){
+            return 404;
+        }
+[root@proxy nginx-1.12.2]# nginx -s reload
+[root@proxy nginx-1.12.2]# curl -i -X HEAD http://192.168.4.5/HTTP/1.1 404 Not Found
+Server:Jacob
+Date: Sat, 01 Sep 2018 07:06:46 GMT
+Content-Type: text/html
+Content-Length: 162
+Connection: keep-alive
+
+[root@proxy nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+        limit_req zone=one burst=5;
+        if ($request_method !~ ^(GET|POST)$){
+            return 500;
+        }
+[root@proxy nginx-1.12.2]# nginx -s reload
+[root@proxy nginx-1.12.2]# curl -i -X HEAD  http://192.168.4.5/
+HTTP/1.1 500 Internal Server Error
+Server:Jacob
+Date: Sat, 01 Sep 2018 07:09:07 GMT
+Content-Type: text/html
+Content-Length: 186
+Connection: close
+
+curl: (18) transfer closed with 186 bytes remaining to read
+==========================
+4） 防止buffer溢出
+当客户端连接服务器时，服务器会启用各种缓存，用来存放连接的状态信息。
+如果攻击者发送大量的连接请求，而服务器不对缓存做限制的话，内存数据就有可能溢出（空间不足）。
+修改Nginx配置文件，调整各种buffer参数，可以有效降低溢出风险。
+[root@proxy ~]# vim /usr/local/nginx/conf/nginx.conf
+http{
+client_body_buffer_size  1K;
+client_header_buffer_size 1k;
+client_max_body_size 1k;
+large_client_header_buffers 2 1k;
+ … …
+}
+[root@proxy ~]# /usr/local/nginx/sbin/nginx -s reload
+==========================================
+[root@proxy nginx-1.12.2]# rpm -qf /sbin/nginx
+文件 /sbin/nginx 不属于任何软件包
+[root@proxy nginx-1.12.2]# rpm -q mariadb
+mariadb-5.5.56-2.el7.x86_64
+[root@proxy nginx-1.12.2]# cd 
+[root@proxy ~]# systemctl restart mariadb && systemctl enable mariadb
+[root@proxy ~]# systemctl is-active  mariadb
+active
+[root@proxy ~]# mysql_secure_installation 
+
+Change the root password? [Y/n] y
+New password: 123
+Re-enter new password: 123
+Password updated successfully!
+
+Remove anonymous users? [Y/n] y
+
+Disallow root login remotely? [Y/n] y
+
+Remove test database and access to it? [Y/n] y
+Reload privilege tables now? [Y/n] y
+ ... Success!
+Thanks for using MariaDB!  
+                        ## password old password "new"
+[root@proxy ~]# mysqladmin -uroot -p123 password "mysql"
+
+[root@proxy ~]# mysql -uroot -pmysql
+
+MariaDB [(none)]> show databases;
+MariaDB [(none)]> select user,host,password from mysql.user;
++------+-----------+-------------------------------------------+
+| user | host      | password                                  |
++------+-----------+-------------------------------------------+
+| root | localhost | *E74858DB86EBA20BC33D0AECAE8A8108C56B17FA |
+| root | 127.0.0.1 | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |
+| root | ::1       | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |
+| tom  | localhost | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |
++------+-----------+-------------------------------------------+
+                                                 ##  password "new"
+MariaDB [(none)]> set password for root@'localhost'=password('redhat');
+Query OK, 0 rows affected (0.01 sec)
+
+MariaDB [(none)]> select user,host,password from mysql.user;
++------+-----------+-------------------------------------------+
+| user | host      | password                                  |
++------+-----------+-------------------------------------------+
+| root | localhost | *84BB5DF4823DA319BBF86C99624479A198E6EEE9 |
+| root | 127.0.0.1 | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |
+| root | ::1       | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |
+| tom  | localhost | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |
++------+-----------+-------------------------------------------+
+MariaDB [(none)]> quit
+Bye
+[root@proxy ~]# ls -a |grep history
+.bash_history
+.mysql_history
+[root@proxy ~]# tail -3 .mysql_history 
+select user,host,password from mysql.user;
+set password for root@'localhost'=password('redhat');
+select user,host,password from mysql.user;
+
+[root@proxy ~]# cat  .bash_history |grep password
+mysqladmin -u root password '123';
+
+[root@proxy ~]# rpm -qa mariadb-server
+mariadb-server-5.5.56-2.el7.x86_64
+[root@proxy ~]# ls /var/lib/mysql/
+aria_log.00000001  ibdata1      ib_logfile1  mysql.sock
+aria_log_control   ib_logfile0  mysql        performance_schema
+
+[root@proxy ~]# mysqladmin -uroot -predhat password "123"
+[root@proxy ~]# mysql -uroot -p123
+
+MariaDB [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
++--------------------+
+MariaDB [(none)]> grant select on mysql.* to tom@"localhost" identified by "123";
+Query OK, 0 rows affected (0.00 sec)
+MariaDB [(none)]> quit
+Bye
+[root@proxy ~]# mysql -utom -p123
+MariaDB [(none)]> quit
+Bye
+另外数据库还有一个binlog日志里也有明文密码（5.6版本后修复了）。
+怎么解决？
+管理好自己的历史，不使用明文登录，选择合适的版本5.6以后的版本，
+日志，行为审计（找到行为人），使用防火墙从TCP层设置ACL（禁止外网接触数据库）。
+-----------------------------------------------------------------------------------------------------
+[root@proxy ~]# mysql -uroot -p123
+MariaDB [(none)]> grant all on *.* to tom@"192.168.2.100" identified by "123";
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [(none)]> quit
+Bye
+
+[root@proxy ~]# tcpdump -A -i eth1 host 192.168.2.5 and tcp port 3306
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+[root@web1 ~]# useradd tom && echo 123 |passwd --stdin tom
+更改用户 tom 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+[root@web1 ~]# mysql -utom -p123 -h 192.168.2.5   #
+ERROR 1130 (HY000): Host '192.168.4.2' is not allowed to connect to this MariaDB server
+[root@web1 ~]# ssh -X 192.168.4.5
+
+
+---------------------------------------------------------------------------------------------------
+[root@proxy ~]# mkdir /diff;cd /diff/;vim test1.sh
+[root@proxy diff]# sh test1.sh
+test1
+[root@proxy diff]# vim test2.sh
+[root@proxy diff]# cat test2.sh
+#!/bin/bash
+echo test2-2
+[root@proxy diff]# sh test2.sh
+test2-2
+[root@proxy diff]# diff test1.sh test2.sh   //查看文件差异
+2c2
+< echo test1
+---
+> echo test2-2
+
+[root@proxy diff]# diff -u test1.sh test2.sh
+--- test1.sh	2018-09-01 17:38:04.294494868 +0800
++++ test2.sh	2018-09-01 17:38:46.951494868 +0800
+@@ -1,2 +1,2 @@
+ #!/bin/bash    #解决方案
+-echo test1    #把此行删了
++echo test2-2  #增加这一行
+[root@proxy diff]# diff -u test1.sh test2.sh > test.patch 生成补丁文件
+[root@proxy diff]# cat test.patch
+--- test1.sh	2018-09-01 17:38:04.294494868 +0800
++++ test2.sh	2018-09-01 17:38:46.951494868 +0800
+@@ -1,2 +1,2 @@
+ #!/bin/bash
+-echo test1
++echo test2-2
+[root@proxy diff]# yum -y install patch
+[root@proxy diff]# rpm -q patch
+patch-2.7.1-8.el7.x86_64           #使用patch命令对单文件代码打补丁
+[root@proxy diff]# patch -p0 < test.patch #注意数字0，不是大写字母O
+patching file test1.sh
+[root@proxy diff]# cat test1.sh 
+#!/bin/bash
+echo test2-2
+[root@proxy diff]# sh test1.sh
+test2-2
+[root@proxy diff]# patch -RE -p0 < test.patch # //还原旧版本，反向修复
+patching file test1.sh
+[root@proxy diff]# cat test1.sh
+#!/bin/bash
+echo test1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------[root@web1 ~]# ifconfig |grep 'inet ' |head -4 |column -t;
+inet  192.168.4.2    netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.100  netmask  255.255.255.0  broadcast  192.168.2.255
+inet  127.0.0.1      netmask  255.0.0.0
+inet  192.168.122.1  netmask  255.255.255.0  broadcast  192.168.122.255
+
+
+[root@web1 ~]# yum -y install java-1.8.0-openjdk-devel 
+已安装:
+  java-1.8.0-openjdk-devel.x86_64 1:1.8.0.131-11.b12.el7                
+
+完毕！
+[root@web1 ~]# cd /usr/local/tomcat/lib/;ls |grep  catalina
+catalina-ant.jar
+catalina-ha.jar
+catalina.jar
+catalina-storeconfig.jar
+catalina-tribes.jar
+[root@web1 lib]# jar -xf catalina.jar 
+[root@web1 lib]# vim org/apache/catalina/util/ServerInfo.properties 
+ 16 server.info=Apache Tomcat/8.0.30
+ 17 server.number=8.0.30.0
+ 18 server.built=Dec 1 2015 22:30:46 UTC
+
+  ##[root@web1 lib]# /usr/local/tomcat/bin/shutdown.sh
+[root@web1 lib]# /usr/local/tomcat/bin/startup.sh 
+Using CATALINA_BASE:   /usr/local/tomcat
+Using CATALINA_HOME:   /usr/local/tomcat
+
+[root@web1 lib]# vim /usr/local/tomcat/conf/server.xml
+ 53   <Service name="Catalina">
+
+ 69     <Connector port="8080" protocol="HTTP/1.1"
+ 70                connectionTimeout="20000"
+ 71                redirectPort="8443" server="jacob" />
+[root@web1 lib]# /usr/local/tomcat/bin/shutdown.sh 
+
+Using CLASSPATH:       /usr/local/tomcat/bin/bootstrap.jar:/usr/local/tomcat/bin/tomcat-juli.jar
+[root@web1 lib]# /usr/local/tomcat/bin/startup.sh
+
+[root@proxy ~]#  curl -I http://192.168.2.100:8080/xx
+HTTP/1.1 404 Not Found
+Content-Type: text/html;charset=utf-8
+Content-Language: en
+Content-Length: 998
+Date: Sat, 01 Sep 2018 08:56:53 GMT
+Server: jacob    ##redirectPort="8443" server="jacob" />
+
+[root@web1 lib]# useradd tomcat && echo 123 |passwd --stdin tomcat;
+   //修改tomcat目录的权限，让tomcat账户对该目录有操作权限
+[root@web1 lib]# chown -R tomcat.tomcat /usr/local/tomcat/
+[root@web1 lib]# su -c /usr/local/tomcat/bin/shutdown.sh tomcat
+    //修改tomcat目录的权限，让tomcat账户对该目录有操作权限
+   //使用su命令切换为tomcat账户，以tomcat账户的身份启动tomcat服务
+[root@web1 lib]# su -c /usr/local/tomcat/bin/startup.sh  tomcat
+
+[root@web1 lib]# chmod +x /etc/rc.local   //该文件为开机启动文件
+[root@web1 lib]# vim /etc/rc.local 
+[root@web1 lib]# tail -2  /etc/rc.local
+touch /var/lock/subsys/local
+su -c /usr/local/tomcat/bin/startup.sh tomcat
+
+[root@web1 lib]# ss -anptul |grep 3306
+tcp    LISTEN     0      50        *:3306                  *:*                   users:(("mysqld",pid=1454,fd=14))
+[root@web1 lib]# ps -aux |grep tomcat
+tomcat    7581  0.9  8.9 2304332 90876 ?       Sl   17:09   0:03 /usr/bin/java -Djava.util.logging.config.file=/usr/local/tomcat/conf/Dcatalina.base=/usr/local/tomcat -Dcatalina.home=/usr/local/tomcat -Djava.io.tmpdir=/usr/local/tomcat/temp org.apache.catalina.startup.Bootstrap start
+root      7675  0.0  0.0 112676   980 pts/0    R+   17:14   0:00 grep --color=auto tomcat
+
+
+
+
+
+
+
+
+
+
+
+
+----[root@web2 ~]# ifconfig |grep 'inet ' |head -4 |column -t;
+inet  192.168.4.200  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.200  netmask  255.255.255.0  broadcast  192.168.2.255
+inet  127.0.0.1      netmask  255.0.0.0
+inet  192.168.122.1  netmask  255.255.255.0  broadcast  192.168.122.255
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
