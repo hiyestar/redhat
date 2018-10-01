@@ -1,0 +1,987 @@
+
+1.
+(单选题)在命令行中执行如下命令 
+#sed -i '1~2d' a.txt 
+关于最后的执行结果，以下描述正确的是（ d ）。
+ A.删除文件中的第2行
+ B.删除文件中的前2行
+ C.删除文件中的第1行和第2行
+ D.删除文件中的奇数行
+
+
+
+
+2是步长
+
+2.
+(单选题)将subversion版本仓库中的代码下载到本地副本的指令是（  c ）
+ A.download
+ B.upload
+ C.checkout
+ D.import
+
+
+3.
+(单选题)使用（ a）工具可以对Web服务器进行压力测试
+ A.ab
+ B.web
+ C.press
+ D.test
+
+
+(单选题)在Shell脚本中，若要屏蔽终端的输出默认显示功能，可以执行（ d ）命令？
+ A.set tty -echo
+ B.-echo
+ C.stty echo
+ D.stty -echo
+
+
+5.
+(单选题)Varnish代理Web服务器一般会将端口修为什么（A X）？
+ A.80
+ B.6081
+ C.8000
+ D.65535
+
+
+6.
+(单选题)awk命令使用（a ）变量，存储当前正内容的行号。
+ A.NR
+ B.NU
+ C.NF
+ D.NP
+
+
+7.
+(单选题)使用test进行条件判断，测试两个数字的关系时，大于或等于用（c ）表示。
+ A.-le
+ B.-gt
+ C.-ge
+ D.-eq
+
+
+8.
+(单选题)Shell脚本中，使用什么语句可以直接退出脚本（ d）？
+ A.kill
+ B.q
+ C.quit
+ D.exit
+
+
+9.
+(单选题)使用test进行条件判断，测试两个数字的关系时，小于用（a ）表示。
+ A.-lt
+ B.-gt
+ C.-ge
+ D.-eq
+
+
+10.
+(单选题)启动nginx程序时，其命令选项（b ）可用于查看版本信息？
+ A.-s
+ B.-V
+ C.-t
+ D.-c
+
+
+(单选题)在命令行中执行如下命令： 
+#sed '2d' a.txt 
+关于最后的执行结果，以下描述正确的是（b ）
+ A.从文件的第2行开始删除行
+ B.共删除1行
+ C.删除文件中的第1~2行
+ D.命令语法格式错误
+
+
+12.
+(单选题)Shell脚本中可以进行小数运算的命令工具是（a ）？
+ A.bc
+ B.gc
+ C.tc
+ D.tc
+
+
+(单选题)以下（d ）选项可以重新加载nginx配置文件？
+ A.stop
+ B.start
+ C.restart
+ D.reload
+
+
+14.
+(单选题)默认PHP无法连接memcached服务器进行数据库的读写操作，需要为
+其安装（　d ）扩展才可以实现该功能
+ A.extention
+ B.so
+ C.dll
+ D.php-pecl-memcache
+
+15.
+(单选题)awk命令如何输出当前读入行的最后一列内容（b ）？
+ A.print $NR
+ B.print $NF
+ C.print $NP
+ D.print $NN
+
+
+16.
+(单选题)Linux操作系统对能够打开的最大文件数量进行了限制，默认为1024，
+通过哪个命令可以调整这个限制（ b）？
+ A.limit
+ B.ulimit
+ C.glimit
+ D.climit
+
+17.
+(单选题)Nginx配置文件中（ b）指令可以定义客户端浏览器缓存数据的时间。
+ A.cached
+ B.expires
+ C.ttl
+ D.time
+
+18.
+(单选题)关于命令 hostname=www.tarena.com; echo ${hostname%%.*} 的执行结果，以下描述正确的是（b ）。
+ A.tarena.com
+ B.www
+ C.com
+ D.www.tarena
+
+(单选题)以下哪个选项（d ）可以删除文件中所有包含数字的行？
+ A.sed -i '0-9d' a.txt
+ B.sed -i '/0-9/d' a.txt
+ C.sed -i '[0-9]d' a.txt
+ D.sed -i '/[0-9]/d' a.txt
+
+
+20.
+(单选题)memcached服务默认监听的端口是（　b ）
+ A.11221
+ B.11211
+ C.22112
+ D.22121
+
+
+21.
+(单选题)awk命令使用（ c ）变量可以读取当前行的整行内容。
+ A.$1
+ B.$3
+ C.$0
+ D.$2
+
+
+(单选题)使用test命令进行判断测试时，如下哪个选项可以判断一个文件或目录
+是否存在(d )？
+ A.-f
+ B.-d
+ C.-r
+ D.-e
+
+23.
+(单选题)以下哪个选项（ C X）可以删除文件test.txt中每一行里的所有数字。
+ A.sed -i 's/[0-9]//' test.txt
+ B.sed -ri 's/[0-9]+//g' test.txt
+ C.sed -i 's/[0-9]+//g' test.txt
+ D.sed -ri 's/[0-9]+//' test.txt
+
+24.
+(单选题)将本地修改后的副本提交至subversion版本仓库的指令是（b ）
+ A.upload
+ B.commit
+ C.update
+ D.import
+
+25.
+(单选题)HTTP协议返回码中，404代码的含义是什么（C X ）
+ A.权限不足
+ B.服务器错误
+ C.文件不存在
+ D.访问被拒绝
+
+
+(单选题)命令行中执行如下命令： 
+#sed '3d;6a hello' a.txt 
+关于最后执行的执行结果，以下描述正确的是（b ）?
+ A.把文件的第3行删除，在第6行前面插入hello
+ B.把文件的第3行删除，在第6行后面追加hello
+ C.把文件的第6行删除，在第3行后面插入hello
+ D.把文件的第6行删除，在第3行后面插入hello
+
+
+27.
+(单选题)Linux命令行中，对多个命令进行逻辑分隔时，仅前一个命令不成功才
+执行下一个命令，应该使用什么分隔符（ d）？
+ A.&
+ B.%%
+ C.&&
+ D.||
+
+
+28.
+(单选题)若执行如下命令 
+#head -5 /etc/passwd | awk -F: 'END{print NR,NF}' 
+则最后输出的结果是（ d）。
+ A.1 7
+ B.4 7
+ C.3 7
+ D.5 7
+
+
+
+29.
+(单选题)使用svn命令查看版本库中代码的修改历史，需要的具体指令是什么
+（ A X ）？
+ A.log
+ B.history
+ C.info
+ D.his
+
+30.
+(单选题)命令行如下命令：
+x=10;y=${x:-30};echo $y，其输出结果是什么（ A ）？
+ A.10
+ B.30
+ C.0
+ D.无值
+
+返回30
+31.
+(单选题)Linux命令行中，对多个命令进行逻辑分隔时，仅前一个命令成功才执行
+下一个命令，应该使用什么分隔符（ c ）？
+ A.&
+ B.%
+ C.&&
+ D.|
+
+
+32.
+(单选题)Shell脚本中使用，什么命令可以取消一个已经定义的变量(a )？
+ A.unset 变量名
+ B.set 变量名
+ C.delete 变量名
+ D.clear 变量名
+
+
+(单选题)使用（B X）命令可以创建subversion版本仓库？
+ A.repocreate
+ B.svnadmin
+ C.svn
+ D.svncreate
+
+
+(单选题)Tomcat中（ D X ）负责将用户的请求调度给具体的Host虚拟主机
+ A.server
+ B.service
+ C.host
+ D.Engine
+
+
+(单选题)若要输出student数组中第3个元素的值，可以执行（b ）操作。
+ A.${student[2]:0:3
+ B.echo ${student[2]}
+ C.echo ${student[2]:0}
+ D.echo ${student[3]:3}
+
+
+36.
+(单选题)使用什么（B　）指令可以清空memcached数据库中的所有数据。
+ A.flush
+ B.flush_all
+ C.delete
+ D.delete_all
+
+
+37.
+(单选题)若执行如下命令 
+x=10;unset x;y=${x:-30};echo $y 
+则最后的输出结果是（ b）。
+ A.10
+ B.30
+ C.0
+ D.无值
+
+
+38.
+(单选题)Shell中如果需要查看student数组的元素的所有内容，可以执行如下哪条命令（C X）？
+ A.echo ${#student[@]}
+ B.${#student[@]}
+ C.echo ${student[*]}
+ D.echo ${student[0]}
+
+
+39.
+(单选题)Shell脚本中使用哪个命令可以对数据进行排序（ d）？
+ A.uniq
+ B.more
+ C.sed
+ D.sort
+
+
+40.
+(单选题)启动memcached服务时，使用什么（　A ）选项可以指定其所占用的
+内存容量大小。
+ A.-m
+ B.-u
+ C.-l
+ D.-v
+
+
+41.
+(多选题)awk命令支持有条件地执行某些指令，仅当条件满足时才执行{}中的指令，awk支持如下哪些判断条件( abc)？
+ A.正则判断
+ B.数字判断
+ C.字符判断
+ D.文件大小判断
+
+42.
+(多选题)下列关于Shell脚本中的if判断语句，说法正确的是（ db）？
+ A.仅支持单分支条件判断
+ B.支持单分支条件判断
+ C.不支持多分支条件判断
+ D.支持多分支条件判断
+
+
+43.
+(多选题)awk命令中条件判断的”逻辑与”和”逻辑或”分别使用（bc ）表示。
+ A.&
+ B.&&
+ C.||
+ D.|
+
+
+44.
+(多选题)如下哪条命令（ ab），可以对变量i进行自加2的操作。
+ A.let i+=2
+ B.let i=i+2
+ C.let i++
+ D.let ++i
+
+45.
+(多选题)Bash具有记录命令历史的功能，哪些方式可以定义最大历史记录的
+数量(c A)?
+ A.命令行直接执行：HISTSIZE=500
+ B.命令行直接执行：history=500
+ C.修改/etc/profile文件，设置HISTSIZE=500
+ D.修改/etc/profile文件，设置history=500
+
+(多选题)常见的版本控制软件有哪些（dc ）？
+ A.soft
+ B.version
+ C.Subversion
+ D.git
+
+正确答案：CD
+svn与git都是目前主流的版本控制软件
+47.
+(多选题)目前支持JAVA的Web服务器有哪些（a BCD X）
+ A.Tomcat
+ B.Jboss
+ C.Websphere
+ D.Weblogic
+
+(多选题)Varnish支持将缓存数据存储在哪些设备（ ab X）？
+ A.内存
+ B.硬盘
+ C.CPU一级缓存
+ D.显存
+
+
+49.
+(多选题)在memcached中创建一个新的键值对，可以使用哪些（ 　cd ）指令。
+ A.new
+ B.append
+ C.set
+ D.add
+
+(多选题)客户端可以通过哪些方式访问subversion版本库（B dc X）？
+ A.通过FTP共享
+ B.通过本地访问
+ C.通过SVN服务
+ D.通过Web服务
+
+中关村中心企业合作：62117598 UID中心企业合作：82168421、82168831
+
+
+--------------------------------------------------
+[root@web1 ~]# ifconfig |grep 'inet '
+        inet 192.168.4.2  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@web1 ~]# useradd zhsan
+[root@web1 ~]# chage -l zhsan
+最近一次密码修改时间					：8月 29, 2018
+密码过期时间					：从不
+密码失效时间					：从不
+帐户过期时间						：从不
+两次改变密码之间相距的最小天数		：0
+两次改变密码之间相距的最大天数		：99999
+在密码过期之前警告的天数	：7
+[root@web1 ~]# chage -E 2015-12-11 zhsan
+[root@web1 ~]# id zhsan
+uid=1003(zhsan) gid=1003(zhsan) 组=1003(zhsan)
+
+[root@web1 ~]# vim /etc/login.defs 
+#QMAIL_DIR      Maildir
+MAIL_DIR        /var/spool/mail
+
+UID_MIN                  1000
+UID_MAX                 60000    //UID最大值
+# System accounts
+SYS_UID_MIN               201
+SYS_UID_MAX               999
+
+GID_MIN                  1000
+GID_MAX                 60000
+PASS_MAX_DAYS    99999            //密码最长有效期
+PASS_MIN_DAYS    0                //密码最短有效期
+PASS_MIN_LEN    5                  //密码最短长度
+PASS_WARN_AGE    7                 //密码过期前几天提示警告信息
+# Use SHA512 to encrypt password.
+ENCRYPT_METHOD SHA512
+[root@web1 ~]# ssh -X zhsan@192.168.2.100 
+Your account has expired; please contact your system administrator
+Authentication failed.
+[root@web1 ~]# echo $USER
+root
+[root@web1 ~]# chage -E 2018-12-11 zhsan   # //修改失效日期
+[root@web1 ~]# ssh -X zhsan@192.168.2.100
+[zhsan@web1 ~]$ echo $USER
+zhsan
+[zhsan@web1 ~]$ exit
+登出
+Connection to 192.168.2.100 closed.
+[root@web1 ~]# chage -l zhsan         //查看账户年龄信息
+最近一次密码修改时间					：8月 29, 2018
+密码过期时间					：从不
+密码失效时间					：从不
+帐户过期时间						：12月 11, 2018
+两次改变密码之间相距的最小天数		：0
+两次改变密码之间相距的最大天数		：99999
+在密码过期之前警告的天数	：7
+[root@web1 ~]#  vim /etc/issue //修改该文件防止内核信息泄露。
+###########  修改tty登录的提示信息，隐藏系统版本
+[root@web1 ~]# cat /etc/issue
+\S
+Kernel \r on an \m
+hello shesheshe
+
+[root@web1 ~]# passwd -l zhsan     //锁定用户账号lock
+锁定用户 zhsan 的密码 。
+passwd: 操作成功
+[root@web1 ~]# passwd -S zhsan   //查看状态status
+zhsan LK 2018-08-29 0 99999 7 -1 (密码已被锁定。)
+
+[root@web1 ~]# ssh -X zhsan@192.168.2.100  #无法登陆
+zhsan@192.168.2.100's password: 
+Permission denied, please try again.
+[root@web1 ~]# passwd -u zhsan  //解锁用户账号
+解锁用户 zhsan 的密码。
+passwd: 操作成功
+[root@web1 ~]# ssh -X zhsan@192.168.2.100
+zhsan@192.168.2.100's password: 
+[zhsan@web1 ~]$ echo $USER
+zhsan
+[zhsan@web1 ~]$ exit
+登出
+Connection to 192.168.2.100 closed.
+[root@web1 ~]# passwd -S zhsan    //查看状态status
+zhsan PS 2018-08-29 0 99999 7 -1 (密码已设置，使用 SHA512 算法。)
+
+=----------------------------------------------------------------------------------
+[root@proxy ~]# cat /etc/fstab
+/dev/vda1   /boot    xfs   defaults,noexec   0  0
+/dev/vda3   /home    xfs   defaults,noatime  0  0
+备注：
+noexec属性可以让分区下的所有程序都不可执行，包括病毒与木马
+noatime让分区下的所有文件都不再更新atime时间，atime时间为文件的访问时间
+[root@proxy ~]# vim /etc/fstab
+[root@proxy ~]# tail -2 /etc/fstab  #noexec属性可以让分区下的所有程序都不可执行，包括病毒与木马
+UUID=5d6c8afe-b75a-4e6b-9de1-1a3eeeaf23d9 /boot   xfs   defaults,noexec    0 0
+/dev/mapper/rhel-swap       swap        swap    defaults      0       0
+[root@proxy ~]# df -hT /boot
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/vda1      xfs  1014M  161M  854M   16% /boot
+[root@proxy ~]# umount /boot
+[root@proxy ~]# mount -a
+[root@proxy ~]# df -hT /boot
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/vda1      xfs  1014M  161M  854M   16% /boot
+ 1>访问时间（access time 简写为atime）
+2>修改时间（modify time 简写为mtime）
+3>状态修改时间(change time 简写为ctime)
+ atime:（access time）显示的是文件中的数据最后被访问的时间，比如系统
+的进程直接使用或通过一些命令和脚本间接使用。（执行一些可执行文件或脚本）
+
+mtime: （modify time）显示的是文件内容被修改的最后时间，比如用vi编辑
+时就会被改变。（也就是Block的内容）
+
+ctime: （change time）显示的是文件的权限、拥有者、所属的组、链接数发
+生改变时的时间。当然当内容改变时也会随之改变（即inode内容发生改变和Block内容
+发生改变时）
+[root@web1 ~]# mkdir /time ;echo "mount -o relatime /dir" >/time/m.txt
+[root@web1 ~]# cd /time/; ll m.txt 
+-rw-r--r--. 1 root root 23 8月  29 13:37 m.txt
+[root@web1 time]# stat m.txt
+  文件："m.txt"
+  大小：23        	块：8          IO 块：4096   普通文件
+设备：fd00h/64768d	Inode：2706690     硬链接：1
+权限：(0644/-rw-r--r--)  Uid：(    0/    root)   Gid：(    0/    root)
+环境：unconfined_u:object_r:default_t:s0
+最近访问：2018-08-29 13:37:43.214555632 +0800
+最近更改：2018-08-29 13:37:43.214555632 +0800
+最近改动：2018-08-29 13:37:43.214555632 +0800
+创建时间：-
+[root@web1 time]# mount -o relatime /time/
+mount: 在 /etc/fstab 中找不到 /time/
+----------------------------------------------------------------------------------------
+[root@web1 ~]# ll test.sh
+-rw-r--r--. 1 root root 30 8月  27 09:55 test.sh
+[root@web1 ~]# cat test.sh
+#!/bin/bash
+echo qq ;echo www
+[root@web1 ~]# chattr +i test.sh # 使用+i锁定文件，使用lsattr查看属性
+[root@web1 ~]# sh test.sh
+qq
+www
+[root@web1 ~]# echo "echo addadd" >> test.sh
+-bash: test.sh: 权限不够
+[root@web1 ~]# lsattr test.sh   # lsattr查看属性
+----i----------- test.sh
+[root@web1 ~]# chattr +a test.sh
+[root@web1 ~]# echo "echo addadd ;" >> test.sh
+-bash: test.sh: 权限不够
+[root@web1 ~]# lsattr test.sh 
+----ia---------- test.sh
+[root@web1 ~]# chattr -i test.sh
+[root@web1 ~]# echo "echo addadd ;" >> test.sh
+[root@web1 ~]# sh test.sh
+qq
+www
+addadd
+[root@web1 ~]# lsattr test.sh
+-----a---------- test.sh
+# chattr +i  文件名                    //锁定文件（无法修改、删除等）
+# chattr -i  文件名                    //解锁文件
+# chattr +a  文件名                    //锁定后文件仅可追加
+# chattr -a  文件名                    //解锁文件
+# lsattr 文件名                        //查看文件特殊属性
+[root@web1 ~]# rm -rf test.sh
+rm: 无法删除"test.sh": 不允许的操作
+
+##su(Substitute User)命令可以快速切换账户身份
+[root@web1 ~]# ls /home
+lisi  nginx  nginx2  zhsan
+[root@web1 ~]# su - zhsan -c "touch zsx.txt"
+[root@web1 ~]# ls /home/zhsan
+zsx.txt
+[root@web1 ~]# ll /home/zhsan/zsx.txt 
+-rw-rw-r--. 1 zhsan zhsan 0 8月  29 10:23 /home/zhsan/zsx.txt
+[root@web1 ~]# whoami
+root
+[root@web1 ~]# echo $USER
+root
+---------# visudo    ##等同于vim /etc/sudoers----
+
+[root@web1 ~]# PATH=
+[root@web1 ~]# echo $PATH
+
+[root@web1 ~]# ls
+-bash: ls: 没有那个文件或目录
+[root@web1 ~]# PATH=/root
+[root@web1 ~]# echo $PATH
+/root
+[root@web1 /]# unset PATH
+[root@web1 /]# echo $PATH
+
+[root@web1 /]# cd /home ;pwd
+/home
+[root@web1 home]# clear
+-bash: clear: 没有那个文件或目录
+[root@web1 home]# reboot
+-bash: reboot: 没有那个文件或目录
+[root@web1 home]# exit
+登出
+Connection to 192.168.2.100 closed.
+[root@room11pc06 ~]# ssh -X 192.168.2.100
+[root@web1 ~]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@web1 ~]# ls /home
+lisi  nginx  nginx2  zhsan
+
+[root@web1 time]# lsblk
+vdb           252:16   0   20G  0 disk 
+[root@web1 time]# blkid /dev/vdb
+[root@web1 time]# parted /dev/vdb
+(parted) mktable gpt
+  (parted) unit MB
+  (parted) mkpart datax1000
+  文件系统类型？  [ext2]? ext4
+  起始点？ 0M  
+  结束点？ 1000M
+忽略/Ignore/放弃/Cancel? i                                                             
+(parted) print
+Number Start End    Size  File system  Name   标志
+ 1   0.02MB  1000MB 1000MB            datax1000
+(parted) quit
+[root@web1 time]# partprobe /dev/vdb
+
+[root@web1 time]# lsblk /dev/vdb1
+NAME MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+vdb1 252:17   0 953.7M  0 part 
+[root@web1 time]# mkfs.xfs /dev/vdb1
+[root@web1 time]# blkid /dev/vdb1
+/dev/vdb1: UUID="5ca8d8fa-e325-4da6-ab67-64bdfc30748a" TYPE="xfs" 
+PARTLABEL="datax1000" PARTUUID="d6de08d5-0ad3-433c-a130-96cc60b8e988" 
+[root@web1 time]# stat /time/ |column -t
+文件："/time/"
+大小：19                                  块：0               IO         块：4096  目录
+设备：fd00h/64768d                        Inode：2706689      硬链接：2
+权限：(0755/drwxr-xr-x)               Uid：(  0/  root)     Gid：(  0/  root)
+环境：unconfined_u:object_r:default_t:s0
+最近访问：2018-08-29                      13:37:55.163555632  +0800
+最近更改：2018-08-29                      13:37:43.214555632  +0800
+最近改动：2018-08-29                      13:37:43.214555632  +0800
+创建时间：-
+ 1>访问时间（access time 简写为atime）
+2>修改时间（modify time 简写为mtime）
+3>状态修改时间(change time 简写为ctime)
+ atime:（access time）显示的是文件中的数据最后被访问的时间，比如系统
+的进程直接使用或通过一些命令和脚本间接使用。（执行一些可执行文件或脚本）
+
+mtime: （modify time）显示的是文件内容被修改的最后时间，比如用vi编辑
+时就会被改变。（也就是Block的内容）
+
+ctime: （change time）显示的是文件的权限、拥有者、所属的组、链接数发
+生改变时的时间。当然当内容改变时也会随之改变（即inode内容发生改变和Block内容
+发生改变时）
+[root@web1 time]# cat m.txt 
+mount -o relatime /dir
+[root@web1 time]# mount  -o  relatime /dev/vdb1  /time/
+[root@web1 time]# df -hT /time/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/vdb1      xfs   951M   33M  919M    4% /time
+[root@web1 time]# echo "add twice" >> /time/m.txt #???源有内容消失，
+[root@web1 time]# cat /time/m.txt
+add twice
+[root@web1 time]# stat /time/ |column -t
+文件："/time/"
+大小：19                                块：0               IO         块：4096  目录
+设备：fc11h/64529d                      Inode：64           硬链接：2
+权限：(0755/drwxr-xr-x)                 Uid：(              0/         root)     Gid：(  0/  root)
+环境：system_u:object_r:unlabeled_t:s0
+最近访问：2018-08-29                    16:18:18.613555632  +0800
+最近更改：2018-08-29                    16:18:36.701555632  +0800
+最近改动：2018-08-29                    16:18:36.701555632  +0800
+创建时间：-
+[root@web1 time]# stat /time/m.txt |column -t
+文件："/time/m.txt"
+大小：20                                    块：8               IO         块：4096  普通文件
+设备：fc11h/64529d                          Inode：67           硬链接：1
+权限：(0644/-rw-r--r--)                     Uid：(              0/         root)     Gid：(    0/  root)
+环境：unconfined_u:object_r:unlabeled_t:s0
+最近访问：2018-08-29                        16:18:40.591555632  +0800
+最近更改：2018-08-29                        16:27:16.957555632  +0800
+最近改动：2018-08-29                        16:27:16.957555632  +0800
+创建时间：-
+[root@web1 time]# parted /dev/vdb
+(parted) unit MB
+  (parted) mkpart datx500
+    文件系统类型？  [ext2]? ext4
+    起始点？ 1000M
+  结束点？ 1500M
+忽略/Ignore/放弃/Cancel? i
+(parted) print
+Number  Start   End     Size    File system  Name       标志
+ 1      0.02MB  1000MB  1000MB  xfs          datax1000
+ 2      1000MB  1500MB  500MB                datx500
+(parted) quit
+[root@web1 time]# partprobe /dev/vdb
+[root@web1 time]# lsblk /dev/vdb
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+vdb    252:16   0    20G  0 disk 
+├─vdb1 252:17   0 953.7M  0 part /time
+└─vdb2 252:18   0 476.9M  0 part 
+[root@web1 time]# mkfs.xfs /dev/vdb2
+[root@web1 time]# blkid /dev/vdb2
+/dev/vdb2: UUID="efd15002-c810-4a7a-84a6-f428a2dfdd21" TYPE="xfs" PARTLABEL="datx500" PARTUUID="71d0cc15-8811-4afe-bb04-9a65240489cb"
+[root@web1 time]# mkdir /exec
+[root@web1 time]# cd /exec/ 
+[root@web1 exec]# 
+---------------noexec属性可以让分区下的所有程序都不可执行，包括病毒与木马
+[root@web1 exec]# mount -o exec /dev/vdb2 /exec/
+[root@web1 exec]# vim /exec/test.sh
+[root@web1 exec]# cat /exec/test.sh
+#!/bin/bash
+echo hello world
+[root@web1 exec]# bash /exec/test.sh
+hello world
+[root@web1 exec]# chmod +x /exec/test.sh
+[root@web1 exec]# test.sh
+-bash: /usr/bin/test.sh: 没有那个文件或目录
+[root@web1 exec]# ln -s /exec/test.sh /bin/
+[root@web1 exec]# test.sh
+hello world
+[root@web1 exec]# df -hT /exec/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/vdb2      xfs   474M   25M  450M    6% /exec
+[root@web1 exec]# umount /exec/
+    # # noexec属性可以让分区下的所有程序都不可执行，包括病毒与木马
+[root@web1 exec]# mount -o noexec /dev/vdb2  /exec/
+[root@web1 exec]# cat /exec/test.sh 
+#!/bin/bash
+echo hello world
+[root@web1 exec]# test.sh
+-bash: /usr/bin/test.sh: 权限不够
+[root@web1 exec]# ll /bin/test.sh 
+lrwxrwxrwx. 1 root root 13 8月  29 17:14 /bin/test.sh -> /exec/test.sh
+[root@web1 exec]# /bin/test.sh
+-bash: /bin/test.sh: 权限不够
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@web1 time]# ls -Z m.txt 
+-rw-r--r--. root root unconfined_u:object_r:default_t:s0 m.txt
+[root@web1 time]# ls /var/ftp/
+pub
+[root@web1 time]# ls -Z /var/ftp/
+drwxr-xr-x. root root system_u:object_r:public_content_t:s0 pub
+[root@web1 time]# ls -Zd /var/ftp/
+drwxr-xr-x. root root system_u:object_r:public_content_t:s0 /var/ftp/
+[root@web1 time]# systemctl restart vsftpd
+[root@web1 time]# systemctl restart vsftpd && systemctl enable vsftpd
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------
+[root@client ~]# ifconfig |grep 'inet '
+        inet 192.168.4.100  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.1  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.2.200  netmask 255.255.255.0  broadcast 201.1.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@client ~]# mount |grep boot
+/dev/vda1 on /boot type xfs (rw,relatime,seclabel,attr2,inode64,noquota)
+   #noexec属性可以让分区下的所有程序都不可执行，包括病毒与木马
+[root@client ~]# mount -o remount,rw,noexec  /dev/vda1  /boot/[root@client ~]# mount |grep boot
+/dev/vda1 on /boot type xfs (rw,noexec,relatime,seclabel,attr2,inode64,noquota)
+[root@client ~]# tail -4 /etc/fstab |column -t
+#
+/dev/mapper/rhel-root                      /      xfs   defaults  0  0
+UUID=5d6c8afe-b75a-4e6b-9de1-1a3eeeaf23d9  /boot  xfs   defaults  0  0
+/dev/mapper/rhel-swap                      swap   swap  defaults  0  0
+
+
+[root@client ~]# visudo    ##等同于vim /etc/sudoers
+ 91 ## Allow root to run any commands anywhere 
+ 92 root    ALL=(ALL)       ALL
+ 93 lisi    ALL=(ALL)      /usr/bin/systemctl
+
+[root@client ~]# head -93 /etc/sudoers |tail -3
+## Allow root to run any commands anywhere 
+root	ALL=(ALL) 	ALL
+lisi    ALL=(ALL)      /usr/bin/systemctl
+[root@client ~]# echo 123 |passwd --stdin lisi
+[root@client ~]# sudo -l
+用户 root 可以在 client 上运行以下命令：
+    (ALL) ALL
+
+[root@client ~]# su - lisi
+上一次登录：三 8月 29 10:46:25 CST 2018pts/0 上
+[lisi@client ~]$ sudo -l
+[sudo] lisi 的密码：123
+用户 lisi 可以在 client 上运行以下命令：
+    (ALL) /usr/bin/systemctl
+[lisi@client ~]$ systemctl restart crond
+==== AUTHENTICATING FOR org.freedesktop.systemd1.manage-units ===
+Authentication is required to manage system services or units.
+Authenticating as: root
+Password: 
+==== AUTHENTICATION COMPLETE ===
+[lisi@client ~]$ /usr/bin/systemctl
+UNIT                      LOAD   ACTIVE SUB       DESCRIPTION
+proc-sys-fs-binfmt_misc.automount loaded active waiting   Arbitra
+sys-devices-pci0000:00-0000:00:01.1-ata1-host0-target0:0:0-0:0:0:
+[lisi@client ~]$ sudo systemctl restart crond
+[sudo] lisi 的密码：
+[lisi@client ~]$ exit
+登出
+[root@client ~]# adduser useradm
+[root@client ~]# echo 123 |passwd --stdin useradm
+
+[root@client ~]# visudo
+     91 ## Allow root to run any commands anywhere
+     92 root    ALL=(ALL)       ALL
+     93 lisi    ALL=(ALL)      /usr/bin/systemctl
+     94 useradm ALL=(root)     /usr/bin/passwd,!/usr/sbin/passwd root,/usr/s        bin/user*,!/usr/sbin/user* * root
+[root@client ~]# head -94 /etc/sudoers |tail -1
+useradm  ALL=(root)   /usr/bin/passwd,!/usr/sbin/passwd root,/usr/sbin/user*,!/usr/sbin/user* * root
+
+[root@client ~]# su - useradm
+[useradm@client ~]$ sudo -l
+
+用户 useradm 可以在 client 上运行以下命令：
+    (root) /usr/bin/passwd, !/usr/sbin/passwd root, /usr/sbin/user*,
+        !/usr/sbin/user* * root
+
+[useradm@client ~]$ sudo useradd newuser1 ;ls /home
+lisi  newuser1  nginx  tom  useradm
+[useradm@client ~]$ echo 1234 |passwd --stdin newuser1
+只有根用户才能进行此操作。
+[useradm@client ~]$ sudo passwd newuser1   //可以修改普通用户的口令
+更改用户 newuser1 的密码 。
+新的 密码：1234
+无效的密码： 密码少于 8 个字符
+重新输入新的 密码：1234
+passwd：所有的身份验证令牌已经成功更新。
+[root@client ~]# head -100 /etc/sudoers |tail -2
+## Allows people in group wheel to run all commands
+%wheel	ALL=(ALL)	ALL    #允许wheel组成员以特权执行所有命令
+
+[root@client ~]# vim /etc/sudoers
+102 ## Same thing without a password
+103 # %wheel        ALL=(ALL)       NOPASSWD: ALL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------[root@proxy ~]# ifconfig |grep 'inet '  --------------------------
+        inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.5  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.2.5  netmask 255.255.255.0  broadcast 201.1.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+------------------------------------------------------------------------
+允许wheel组成员以特权执行所有命令
+
+此案例用来展示sudo的便利性及设置不当带来的危险性，生产环境下慎用。
+实现时参考下列操作(如果没有普通用户则先创建该账户)：
+[root@proxy ~]# vim /etc/sudoers
+.. ..
+%wheel ALL=(ALL)  ALL
+[root@proxy ~]# usermod -a -G wheel zengye
+[zengye@proxy ~]$ sudo -l
+.. ..
+用户 zengye 可以在该主机上运行以下命令：
+(root) /bin/*
+为sudo机制启用日志记录，以便跟踪sudo执行操作
+
+1）修改/etc/sudoers配置，添加日志设置
+[root@proxy ~]# visudo
+Defaults  logfile="/var/log/sudo"
+.. ..
+2）以root（默认有所有权限）执行sudo操作
+[root@proxy ~]# sudo -l                                  //查看授权的sudo操作
+[softadm@proxy ~]# sudo systemctl status httpd          //查看授权的sudo操作
+3）确认日志记录已生效
+[root@proxy ~]# tail /var/log/sudo 
+.. ..
+May 16 22:14:49 : root : TTY=pts/1 ; PWD=/root ; USER=root ; COMMAND=list
+Feb 22 22:35:43 : softadm : TTY=pts/11 ; PWD=/home/softadm ; USER=root ;
+    COMMAND=/bin/systemctl status httpd
+-------------------------------------------------------
+[root@proxy ~]# vim /etc/ssh/sshd_config
+ 37 LoginGraceTime 3m        //登录限时
+ 38 PermitRootLogin no     //禁止root用户登录
+ 39 #StrictModes yes
+ 40 MaxAuthTries 6        //每连接最多认证次数
+ 41 #MaxSessions 10
+ 64 PermitEmptyPasswords no    //禁止密码为空的用户登录
+ 65 PasswordAuthentication yes
+
+114 #ShowPatchLevel no
+115 UseDNS no               //不解析客户机地址
+[root@proxy ~]# ls /home
+lisi  nginx  softadm  tom  varnish
+[root@proxy ~]# useradd u1 ;echo 1234 |passwd --stdin u1 ;
+
+[root@proxy ~]# useradd u2 ;echo 1234 |passwd --stdin u2 ;
+[root@proxy ~]# vim /etc/ssh/sshd_config 
+140 AllowUsers root u1 u2 tom@192.168.4.5/24
+ 38 PermitRootLogin yes
+ 47 AuthorizedKeysFile      .ssh/authorized_keys  #密钥文件名
+
+[root@proxy ~]# ls /home
+lisi  nginx  softadm  tom  u1  u2  varnish
+[root@proxy ~]# systemctl restart sshd
+
+[root@proxy ~]# tail -1 /etc/ssh/sshd_config
+#AllowUsers root u1 u2 tom@192.168.4.5/24
+---------------------------------------------------------------------------------
+：确认密钥验证使用正常后，禁用口令验证
+1）调整sshd服务配置，将PasswordAuthentication设为no
+[root@proxy ~]# vim /etc/ssh/sshd_config
+.. ..
+PasswordAuthentication no     //将此行yes改成no
+----------------------------------------------------------------------------------
+
+
+
+
+
+
+
+常见的挂载选项
+rw 读写
+ro 只读
+suid 支持suid
+dev 支持设备文件
+nodev 不支持设备文件
+noexec 不允许执行二进制文件
+exec 允许执行二进制文件
+auto mount -a 开机自动挂载
+noauto mount -a 开机不自动挂载
+async 异步写入
+sync 同步同入
+noatime 不更新访问时间atime
+usrquota 支持用户级磁盘配额功能
+grpquota 支持组级磁盘配额功能
+acl 支持acl功能
+remount 在线重新挂载
+pri 指定优先级
+
+
+[root@room11pc06 ~]# nslookup http://8.8.8.8/
+Server:		8.8.8.8
+Address:	8.8.8.8#53
+
+** server can't find http://8.8.8.8/: NXDOMAIN
+
+[root@room11pc06 ~]# tail -1 /etc/resolv.conf
+nameserver 8.8.8.8
+
+
+

@@ -1,0 +1,482 @@
+[root@c4 ~]# ifconfig |awk '/inet /{print $2}';
+192.168.4.208
+192.168.2.208
+127.0.0.1
+192.168.122.1
+[root@pc207 ~]# ifconfig |awk '/inet /{print $2}';
+192.168.4.207
+192.168.2.207
+127.0.0.1
+192.168.122.1
+[root@a4 ~]# ifconfig |awk '/inet /{print $2}';
+192.168.4.7
+192.168.2.7
+127.0.0.1
+192.168.122.1
+[root@c4 ~]# ifconfig eth0 |awk '/inet /{print $2}';ifconfig eth1 |awk '/inet /{print $2}';ifconfig virbr0 |awk '/inet /{print $2}';
+192.168.4.208
+192.168.2.208
+192.168.122.1
+[root@c4 ~]#  ifconfig |awk '/inet /{print $0}';
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.208  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@c4 ~]#  ifconfig |awk '/inet /';
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.208  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@c4 ~]# ifconfig |sed -n '2p';
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+[root@c4 ~]# ifconfig |sed -n '/inet /p'
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.208  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@c4 ~]# ifconfig |grep "inet ";
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.208  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@proxy conf]# netstat -anptlu |grep :80
+[root@proxy conf]# nginx
+[root@proxy conf]# netstat -anptlu |grep :80
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      5618/nginx: master  
+[root@proxy conf]# openssl genrsa > cert.key;     //生成私钥
+Generating RSA private key, 2048 bit long modulus
+.............................+++
+...........+++
+e is 65537 (0x10001)
+
+[root@proxy conf]# vim /usr/local/nginx/conf/nginx.conf
+[root@proxy conf]# openssl req -new -x509 -key cert.key > cert.pem   //生成证书
+
+Country Name (2 letter code) [XX]:CA
+State or Province Name (full name) []:ns    
+Locality Name (eg, city) [Default City]:gz
+Organization Name (eg, company) [Default Company Ltd]:ds
+Organizational Unit Name (eg, section) []:ds
+Common Name (eg, your name or your server's hostname) []:ds
+Email Address []:ds
+
+[root@proxy conf]# vim /usr/local/nginx/conf/nginx.conf
+
+ 98     server {
+ 99         listen       443 ssl;
+100         server_name  www.c.com;
+101 
+102         ssl_certificate      cert.pem;   #这里是证书文件
+103         ssl_certificate_key  cert.key;    #这里是私钥文件
+[root@proxy conf]# nginx -s reload
+[root@proxy conf]# vim /etc/hosts
+------修改客户端主机192.168.4.100的/etc/hosts文件，进行域名解析
+[root@proxy conf]# tail -1 /etc/hosts  
+192.168.4.5 www.a.com www.b.com www.c.com
+
+[root@proxy conf]# firefox https://www.c.com
+
+[root@proxy conf]# yum -y install elinks.x86_64 
+[root@proxy conf]# elinks -dump https://www.c.com
+ELinks: SSL error
+
+[root@client ~]# nginx -v
+nginx version: nginx/1.12.2
+[root@client ~]# netstat -anptul |grep :80
+[root@client ~]# nginx ;netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      5960/nginx: master
+[root@client html]# ifconfig |grep "inet ";
+        inet 192.168.4.100  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+
+[root@proxy html]# ifconfig |grep "inet ";
+        inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.5  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+------安装部署Nginx、MariaDB、PHP环境---------安装部署Nginx、MariaDB、PHP、PHP-FPM；
+
+[root@proxy nginx]# yum -y install mariadb mariadb-server mariadb-devel php  php-mysql | tail -12;
+已安装:
+  mariadb.x86_64 1:5.5.56-2.el7           mariadb-devel.x86_64 1:5.5.56-2.el7   
+  mariadb-server.x86_64 1:5.5.56-2.el7    php.x86_64 0:5.4.16-42.el7            
+  php-mysql.x86_64 0:5.4.16-42.el7       
+
+作为依赖被安装:
+  httpd.x86_64 0:2.4.6-67.el7          libzip.x86_64 0:0.10.1-8.el7             
+  mailcap.noarch 0:2.1.41-2.el7        perl-DBD-MySQL.x86_64 0:4.023-5.el7      
+  php-cli.x86_64 0:5.4.16-42.el7       php-common.x86_64 0:5.4.16-42.el7        
+  php-pdo.x86_64 0:5.4.16-42.el7      
+
+完毕！
+[root@proxy ~]# cd lnmp_soft/
+----------------       php-fpm(该软件包在lnmp_soft中提供)
+[root@proxy lnmp_soft]# ls
+apache-tomcat-8.0.30.tar.gz
+apache-tomcat-9.0.6-fulldocs.tar.gz
+apache-tomcat-9.0.6.tar.gz
+buffer.sh
+DenyHosts-2.6.tar.gz
+install_lnmp.sh
+libevent-devel-2.0.21-4.el7.x86_64.rpm
+nginx-1.10.3
+nginx-1.10.3.tar.gz
+nginx-1.12.2.tar.gz
+nginx.conf
+nginx.spec
+php-bcmath-5.4.16-42.el7.x86_64.rpm
+php-fpm-5.4.16-42.el7.x86_64.rpm     <-------------------
+php-mbstring-5.4.16-42.el7.x86_64.rpm
+php_scripts
+pssh-2.3.1-5.el7.noarch.rpm
+python-docutils-0.11-0.2.20130715svn7687.el7.noarch.rpm
+redis-3.0.6.tar.gz
+tomcat_session
+varnish-5.2.1.tar.gz
+vpn
+wordpress-4.9-zh_CN.tar.gz
+www_template.zip
+zabbix-3.4.4.tar.gz
+-------------         php-fpm(该软件包在lnmp_soft中提供)----------
+[root@proxy lnmp_soft]# yum -y install php-fpm-5.4.16-42.el7.x86_64.rpm  |tail -4
+已安装:
+  php-fpm.x86_64 0:5.4.16-42.el7                                                
+
+完毕！
+[root@proxy ~]# cd /usr/local/nginx/html/
+33[root@proxy html]# vim test.php
+[root@proxy html]# php test.php
+33
+[root@proxy html]# cat test.php
+<?php
+$i=33;echo  $i;echo "\n";
+?>
+[root@client lnmp_soft]# rpm -q mariadb mariadb-server mariadb-devel php php-mysql php-fpm ;
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+===============================
+https://www.centos.org 下载镜像包来源
+CentOS-7-X86_64-Everything-1708.iso #8G文件大小
+   csdn.net   
+===============
+
+
+[root@proxy html]# systemctl start mariadb && systemctl enable mariadb;
+Created symlink from /etc/systemd/system/multi-user.target.wants/mariadb.service to /usr/lib/systemd/system/mariadb.service.
+
+[root@proxy html]# systemctl start php-fpm.service  && systemctl enable php-fpm;
+Created symlink from /etc/systemd/system/multi-user.target.wants/php-fpm.service to /usr/lib/systemd/system/php-fpm.service.
+[root@proxy html]# nginx
+[root@client html]# systemctl is-active mariadb && systemctl is-active php-fpm;
+active
+active
+[root@proxy html]# systemctl is-active mariadb && systemctl is-active php-fpm;
+active
+active
+
+注意，FastCGI的内存消耗问题，一个PHP-FPM解释器将消耗约25M的内存
+[root@proxy html]# firewall-cmd  --get-defaultnot running
+
+FirewallD is not running
+[root@proxy html]# netstat -anptul |grep :80 ;netstat -anptul |grep :3306;\
+> netstat -anptul |grep :9000;
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      5618/nginx: master  
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      11273/mysqld        
+tcp        0      0 127.0.0.1:9000          0.0.0.0:*               LISTEN      11368/php-fpm: mast 
+[root@proxy html]# 
+
+[root@client html]# systemctl start mariadb && systemctl enable mariadb;systemctl start php-fpm.service  && systemctl enable php-fpm;
+[root@client html]# netstat -anptul |grep ":9000\|:80\|3306";
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      5960/nginx: master  
+tcp        0      0 127.0.0.1:9000          0.0.0.0:*               LISTEN      7344/php-fpm: maste 
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      7268/mysqld  
+[root@client html]# netstat -anptul |sed -n "/:9000\|:80\|3306/p";
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      5960/nginx: master  
+tcp        0      0 127.0.0.1:9000          0.0.0.0:*               LISTEN      7344/php-fpm: maste 
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      7268/mysqld    
+===============================================
+
+[root@proxy html]# ifconfig |grep "inet ";
+        inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.5  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+----------------------------注意，FastCGI的内存消耗问题，一个PHP-FPM解释器将消耗约25M的内存
+
+[root@proxy conf]# cp nginx.conf.default nginx.conf    #还原nginx配置文件
+cp：是否覆盖"nginx.conf"？ y
+[root@proxy conf]# vim nginx.conf
+  65     location ~ \.php$ {
+ 66           root           html;
+ 67           fastcgi_pass   127.0.0.1:9000;#将请求转发给本机9000端口，PHP解释器
+ 68           fastcgi_index  index.php;
+ 69       #  fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_n    ame;    
+ 70             include        fastcgi.conf;
+ 71         }
+[root@proxy html]# ls /usr/local/nginx/conf/
+cert.key                koi-utf             scgi_params
+cert.pem                koi-win             scgi_params.default
+fastcgi.conf            mime.types          uwsgi_params
+fastcgi.conf.default    mime.types.default  uwsgi_params.default
+fastcgi_params          nginx.conf          win-utf
+fastcgi_params.default  nginx.conf.default
+
+[root@proxy nginx]# php html/test.php 
+33
+[root@proxy nginx]# 
+[root@proxy nginx]# nginx -s reload
+[root@proxy nginx]# echo $?
+0
+[root@proxy nginx]# ls html/
+50x.html  index.html  test.php
+
+[root@proxy nginx]# firefox 192.168.4.5/test.php
+[root@proxy nginx]# curl 192.168.4.5/test.php
+33
+[root@proxy nginx]# elinks -dump 192.168.4.5/test.php
+   33
+[root@proxy nginx]# ls
+client_body_temp  fastcgi_temp  logs  proxy_temp  scgi_temp   www
+conf              html          pass  sbin        uwsgi_temp
+[root@proxy nginx]# tail -1 /usr/local/nginx/logs/error.log  #Nginx 错误日志文件
+[root@proxy nginx]# >/usr/local/nginx/logs/error.log
+[root@proxy nginx]# tailf /usr/local/nginx/logs/error.log
+
+^C
+[root@proxy nginx]# tail -1 /var/log/php-fpm/error.log   #php错误日志文件
+[21-Aug-2018 11:26:20] NOTICE: systemd monitor interval set to 10000ms
+-----------------------------------------------------------------------------------------------------------
+    server {
+        listen       443 ssl;
+        server_name  www.c.com;
+
+        ssl_certificate      cert.pem;
+        ssl_certificate_key  cert.key;
+
+        ssl_session_cache    shared:SSL:1m;
+        ssl_session_timeout  5m;
+
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers  on;
+
+        location / {
+            root   html;
+            index  index.php    index.html index.htm;
+        }
+        location  ~ \.php$ {
+                root html;
+                fastcgi_pass 127.0.0.1:9000;
+                fastcgi_index index.php;
+                include        fastcgi.conf;
+        }
+    }
+------------------------------------------------------------------------------------
+[root@proxy html]# cat /etc/php-fpm.d/www.conf 
+  2 [www]
+
+ 12 listen = 127.0.0.1:9000  #PHP端口号
+
+ 24 listen.allowed_clients = 127.0.0.1
+ 41 group = apache
+
+ 70 pm.max_children = 50    #最大进程数量
+ 75 pm.start_servers = 5   #最少进程
+
+ 80 pm.min_spare_servers = 5  #最少需要空闲进程
+
+ 85 pm.max_spare_servers = 35 #最多允许进程
+----------------------------------------------------------------------------------------
+
+[root@client html]# cat test.php 
+<?php
+$i=30;  echo  $i;  echo "\n";
+?>
+[root@client html]# ls /root/lnmp_soft/php_scripts/
+mem.php  mysql.php  php-memcached-demo.tar.gz  test.php
+         ----------------创建PHP测试页面,连接并查询MariaDB数据库。
+
+[root@client html]# cp /root/lnmp_soft/php_scripts/mysql.php test2.php
+[root@client html]# ls
+50x.html  index.html  test2.php  test.php
+[root@client html]# vim test2.php
+[root@client html]# cat test2.php
+<?php
+$mysqli = new mysqli('localhost','root','123','mysql');
+if (mysqli_connect_errno()){
+	die('Unable to connect!'). mysqli_connect_error();
+}
+$sql = "select * from user";
+$result = $mysqli->query($sql);
+while($row = $result->fetch_array()){
+	printf("Host:%s",$row[0]);
+	printf("</br>");
+	printf("Name:%s",$row[1]);
+	printf("</br>");
+}
+?>
+
+[root@client html]# systemctl is-active mariadb.service 
+active
+[root@client html]# mysqladmin -u root password '123';
+[root@client html]# mysql -uroot -p123
+
+MariaDB [(none)]> show databases;
+MariaDB [(none)]> use mysql;
+MariaDB [mysql]> grant select on *.* to tom@localhost identified by '123';
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [mysql]> quit
+Bye
+
+[root@client html]# useradd tom;
+[root@client html]# nginx -s reload
+
+[root@client html]# ls
+50x.html  index.html  test2.php  test.php
+
+[root@client html]# firefox http://192.168.4.100/test.php
+[root@client html]# firefox http://192.168.4.100/test2.php
+
+[root@proxy nginx]# vim /usr/local/nginx/conf/nginx.conf
+ 43      location / {
+ 44          root   html;
+ 45          index  index.html index.htm;
+ 46          rewrite /a.html /b.html; #所有访问a.html的请求，重定向到b.html;
+ 47         }
+[root@proxy nginx]# cd html
+[root@proxy html]# ls
+50x.html  index.html  test2.php  test.php
+[root@proxy html]# echo BB > /usr/local/nginx/html/b.html;
+[root@proxy html]# ls
+50x.html  b.html  index.html  test2.php  test.php
+[root@proxy html]# nginx -s reload     #注意别忘了重新加载
+[root@proxy html]# firefox http://192.168.4.5/a.html
+[root@proxy html]# elinks -dump http://192.168.4.5/a.html
+   BB
+[root@proxy html]# curl http://192.168.4.5/a.html
+BB
+       ---------访问a.html重定向到b.html（跳转地址栏）redirect 临时重定向
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+        location / {
+            root   html;
+            index  index.html index.htm;
+            rewrite /a.html /b.html redirect;  #网页跳转 #redirect 临时重定向
+        }
+[root@proxy html]# nginx -s reload
+[root@proxy html]# elinks -dump http://192.168.4.5/a.html
+   BB
+[root@proxy html]# firefox http://192.168.4.5/a.html
+http://192.168.4.5/b.html
+
+     修改配置文件(访问192.168.4.5的请求重定向至www.tmooc.cn)----------
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+
+ 43         location / {
+ 44             root   html;
+ 45             index  index.html index.htm;
+ 46             rewrite ^/  http://www.tmooc.cn;  #网页跳转 2
+ 47         }
+[root@proxy html]# nginx -s reload
+[root@proxy html]# ls
+50x.html  b.html  index.html  test2.php  test.php
+[root@room11pc06 ~]# firefox http://192.168.4.5
+https://www.tmooc.cn/
+[root@room11pc06 ~]# firefox http://192.168.4.5/b.html #网页跳转
+http://www.tmooc.cn/
+----------------------------------------------------------
+  区分大小写匹配～   不区分大小写匹配~*
+   区分大小写不匹配 ！～   不区分大小写 不匹配 ！~*
+ #   ~*firefox 不区分大小写 匹配正则   #Nginx规则
+# rewrite ^/(.*)$  http://www.tmooc.cn/$1;  #Nginx规则 $1
+# rewrite ^/(.*)$  http://www.tmooc.cn/\1;  #Shell规则 \1
+
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+ 43      location / {
+ 44          root   html;
+ 45          index  index.html index.htm;
+ 46          rewrite ^/(.*)$  http://www.tmooc.cn/$1;#网页跳转 #redirect 临时重定向
+ 47         }
+[root@proxy html]# nginx -s reload
+[root@room11pc06 ~]# firefox http://192.168.4.5/b.html 
+http://www.tmooc.cn/b.html                 #网页跳转 3
+   
+
+   -----------/usr/local/nginx/conf/nginx.conf-------------------------
+'$remote_addr - $remote_user [$time_local] "$request" '
+ 22     #                  '$status $body_bytes_sent "$http_referer" '
+ 23     #                  '"$http_user_agent" "$http_x_forwarded_for"';
+----------------------------------------------------------------------------------------
+"$http_user_agent"
+Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0
+"Mozilla/5.0  (X11;  Linux  x86_64;  rv:52.0)  Gecko/20100101  Firefox/52.0"
+
+[root@client nginx]# cat logs/access.log |tail -5 |column -t;
+192.168.4.100  -  jerry  [21/Aug/2018:15:37:10  +0800]  "GET  /test.php     HTTP/1.1"  200  13   "-"  "Mozilla/5.0  (X11;  Linux  x86_64;  rv:52.0)  Gecko/20100101  Firefox/52.0"
+192.168.4.100  -  tom    [21/Aug/2018:15:37:38  +0800]  "GET  /test2.php    HTTP/1.1"  200  221  "-"  "Mozilla/5.0  (X11;  Linux  x86_64;  rv:52.0)  Gecko/20100101  Firefox/52.0"
+------------------------------------------------------------------------------------------------------------------------
+修改配置文件(实现curl和火狐访问相同链接返回的页面不同)
+[root@proxy html]# ls
+50x.html  b.html  index.html  test2.php  test.php
+[root@proxy html]# echo "normal page" > test.html;
+[root@proxy html]# mkdir firefox
+[root@proxy html]# echo "firefox page" > firefox/test.html; #火狐访问相同链接返回的页面
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+ 43         location / {
+ 44             root   html;
+ 45             index  index.html index.htm;
+ 46            # rewrite ^/(.*)$  http://www.tmooc.cn/$1;
+ 47         }
+ 48         if ($http_user_agent ~* firefox){
+ 49               rewrite ^(.*)$   /firefox/$1;
+ 50         }
+[root@proxy html]# nginx -s reload
+[root@proxy html]# pwd
+/usr/local/nginx/html
+[root@proxy html]# ls
+50x.html  b.html  firefox  index.html  test2.php  test.html  test.php
+[root@proxy html]# cat firefox/test.html 
+firefox page
+
+[root@proxy html]# curl http://192.168.4.5/test.html;  ##curl访问相同链接返回的页面
+normal page
+[root@proxy html]# elinks -dump  http://192.168.4.5/test.html ##elinks访问相同链接返回的页面
+   normal page
+
+[root@proxy html]# firefox http://192.168.4.5/test.html  ##火狐访问相同链接返回的页面
+http://192.168.4.5/test.html
+firefox page 
+5）地址重写格式【总结】
+rewrite 旧地址 新地址 [选项];
+last 不再读其他rewrite
+break 不再读其他语句，结束请求
+redirect 临时重定向
+permament 永久重定向
+
+=============================================
+==================================
+https://github.com/redhatedu/course/blob/master/shell/if.pdf
+================================================
+https://github.com/redhatedu/course/tree/master/shell
+==========================================
+
+
+
+
+
+
+
+
+
+
+
+
+

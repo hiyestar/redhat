@@ -1,0 +1,694 @@
+				OSI参考模型(七层框架)
+              [5]  应用层         |<----------协议------->|	       应用层   (计算机)       APDU
+                HTTP  FTP  TFTP  SMTP  SNMP   DNS
+                      上层数据
+     6 接口      
+                表示层         |-----------协议-----------|          表示层          PPDU
+     5 接口
+ 	        会话层         |------------协议----------|          会话层          SPDU
+4  接口      
+      	      [4]  传输层         <--------协议------------->        传输层     (防火墙)   TPDU 数据段
+                TCP      UDP
+                  TCP头部     上层数据
+3  接口
+       	   [3] 网络层          <----------协议------------>       网络层   (路由器)   报文   数据包
+                ICMP    IGMP    IP    ARP  RARP
+                    IP头部   TCP头部     上层数据
+2  接口
+            [2] 数据链路层      <--------协议---------->         数据链路层   (交换机)  帧   数据帧
+            MAC头部  IP头部   TCP头部     上层数据
+1  接口   
+             [1] 物理层		<--------协议----------->	      物理层   (网卡)   比特bit  比特流
+
+   层            主机A                              主机B        数据单元
+---------------------------------------------------------------------------------------------------------------------------
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+D (16 ) 224-239.0.0.0  [1110  0000] -[1110 1111]
+E (15 ) 240-254.0.0.0  [1111  0000] -[1111 1110]
+        1 	 1 	 1 	 1 	 1 	 1 	 1 	 1 
+	0	0	0	0	0	0	0	0
+ 	128	64	32	16	8	4	2	1
+if [ $a -eq 1 -a $b -eq 1 ]----------# -a 并且      -o 或者  shell语言--------------]
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+rhce:       inet 172.25 .254.250 
+rhce:0:     inet 172.25 .0  .250
+virbr0:     inet 192.168.122.1 
+
+[root@client ~]# nginx
+[root@client ~]# ss -nptul |egrep ':80|:3306|:9000'
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("nginx",pid=1652,fd=6),("nginx",pid=1651,fd=6))
+tcp    LISTEN     0      128    127.0.0.1:9000                  *:*                   users:(("php-fpm",pid=1347,fd=0),("php-fpm",pid=1346,fd=0),("php-fpm",pid=1345,fd=0),("php-fpm",pid=1344,fd=0),("php-fpm",pid=1343,fd=0),("php-fpm",pid=1025,fd=6))
+tcp    LISTEN     0      50        *:3306                  *:*                   users:(("mysqld",pid=1291,fd=14))
+[root@client ~]# mysql -uroot -p123
+[root@client ~]# mysql -h 192.168.4.5 -ulisi  -p123
+MariaDB [(none)]> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+| web1               |
+MariaDB [(none)]> quit;
+Bye
+[root@client ~]# mysql -h 192.168.4.5 -ulisi  -p123
+MariaDB [(none)]> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+| web2               |
+MariaDB [(none)]> quit;
+Bye
+[root@client ~]# ls /usr/lib/systemd/system |wc -l
+397
+[root@client ~]# vim /usr/lib/systemd/system/memcached.service
+[Unit]
+Description=Memcached
+Before=httpd.service
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/memcached
+ExecStart=/usr/bin/memcached -u $USER -p $PORT -m $CACHESIZE -c $MAXCONN $OPTIONS
+
+[Install]
+WantedBy=multi-user.target
+~                                
+/****$MAXCONN 最大并发量  ***/
+
+[root@client ~]# vim /etc/sysconfig/memcached
+PORT="11211"
+USER="memcached"
+MAXCONN="1024"
+CACHESIZE="64"
+OPTIONS="" 
+[root@client ~]# systemctl start memcached.service 
+[root@client ~]# ss -nptul |egrep ':80|:11211'
+udp    UNCONN     0      0         *:11211                 *:*                   users:(("memcached",pid=2272,fd=28))
+udp    UNCONN     0      0        :::11211                :::*                   users:(("memcached",pid=2272,fd=29))
+tcp    LISTEN     0      128       *:11211                 *:*                   users:(("memcached",pid=2272,fd=26))
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("nginx",pid=1886,fd=6),("nginx",pid=1884,fd=6))
+tcp    LISTEN     0      128      :::11211                :::*                   users:(("memcached",pid=2272,fd=27))
+
+[root@client ~]# rpm -q telnet
+telnet-0.17-64.el7.x86_64
+
+[root@client ~]# telnet 192.168.4.100 11211
+Trying 192.168.4.100...
+Connected to 192.168.4.100.
+Escape character is '^]'.
+set bianl 0 180 4
+abcd
+STORED
+set bian  0  190  2
+ab
+STORED
+get bianl
+VALUE bianl 0 4
+abcd
+END
+get bian
+VALUE bian 0 2
+ab
+END
+/********telnet 古老的数据库
+  set  a 0  180  3
+ 变量a  0不压缩 缓存180秒 3个字符(必须在一行,中间不能回车
+get a
+add 不能覆盖,只能添加
+set 覆盖添加
+replace 只能覆盖,不能新建
+append 给变量追加数据
+flush_all 清空所有数据
+********/
+add myname 0 200 12
+abcd1234efgh    
+STORED
+set myname 0  220 10
+abcdefg123
+STORED
+get myname
+VALUE myname 0 10
+abcdefg123
+END
+replace myname 0 200  8
+abcd1234
+STORED
+get myname
+VALUE myname 0 8
+abcd1234
+END
+append myname 0 222  3
+abc
+STORED
+get myname
+VALUE myname 0 11
+abcd1234abc
+END
+delete myname
+DELETED
+get myname
+END
+add x 0 190 5
+12345
+STORED
+get x
+VALUE x 0 5
+12345
+END
+stats
+STAT pid 2272
+STAT uptime 1240
+STAT time 1537944020
+STAT version 1.4.15
+STAT reclaimed 0
+END
+flush_all
+OK
+stats
+STAT pid 2272
+STAT reclaimed 0
+END
+ quit
+Connection closed by foreign host.
+[root@client ~]# firefox http://192.168.4.5/mem.php
+[root@client ~]# elinks  -dump http://192.168.4.5/mem.php
+   test
+[root@client ~]# systemctl is-active php-fpm.service 
+active
+[root@client ~]# vim /usr/local/nginx/html/index.html
+[root@client ~]# sed  -rn '/(<title>|<h1>)/p' /usr/local/nginx/html/index.html
+<title>Welcome to clinet </title>
+<h1>Welcome to clinet 192.168.4.100 !</h1>
+
+
+sid [用户信息]  session id
+cookies : id
+/***********
+sed -i '65,71s/#//' /usr/local/nginx/conf/nginx.conf
+sed -i '69d' /usr/local/nginx/conf/nginx.conf
+sed -i '70s/fastcgi_params/fastcgi.conf/' /usr/local/nginx/conf/nignx.conf
+**********/
+[root@room9pc01 ~]# which google-chrome
+/usr/bin/google-chrome
+[root@room9pc01 ~]# yum provides /usr/bin/google-chrome
+
+google-chrome-stable-60.0.3112.113-1.x86_64 : Google Chrome
+源    ：installed
+匹配来源：
+文件名    ：/usr/bin/google-chrome
+[root@room9pc01 ~]# rpm -q  google-chrome-stable
+google-chrome-stable-60.0.3112.113-1.x86_64
+[root@room9pc01 ~]# google-chrome  http://192.168.4.5
+[root@client ~]# ls /var/lib/php/session/
+[root@client ~]# firefox http://192.168.4.5/
+
+http://192.168.4.5/home.php
+Welcome Web1web1: web2web2client
+Logged In : true
+Session ID: bs2tv56ntabb1krpkp9d2irav3 
+/***注意F5刷新之后 客户信息现在统一了,不再出现不同web服务器给出不同的页面
+Welcome WEB 2 : web2web2client
+Logged In : true
+Session ID: bs2tv56ntabb1krpkp9d2irav3 
+
+[root@client ~]# firefox http://192.168.4.5/
+http://192.168.4.5/
+ http://192.168.4.5/home.php
+Welcome   WEB 2     :  web1--client
+Logged In : true
+Session ID: 4arv93m8tidpdl79lcu8fbia56 
+/***注意F5刷新之后 客户信息现在统一了,不再出现不同web服务器给出不同的页面
+Welcome   Web1web1 :  web1--client
+Logged In : true
+Session ID: 4arv93m8tidpdl79lcu8fbia56 
+
+
+
+
+[root@proxy conf]# nginx -V
+nginx version: nginx/1.12.2
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module --with-stream --with-http_stub_status_module --without-http_autoindex_module --without-http_ssi_module
+[root@proxy conf]#
+[root@proxy nginx-1.12.2]# ./configure --help |grep 'with-http_stub_status_module'
+  --with-http_stub_status_module     enable ngx_http_stub_status_module
+[root@proxy nginx-1.12.2]# cd /usr/local/nginx/conf/;ls
+fastcgi.conf            koi-utf             nginx.conf           uwsgi_params
+fastcgi.conf.default    koi-win             nginx.conf.default   uwsgi_params.default
+fastcgi_params          mime.types          scgi_params          win-utf
+fastcgi_params.default  mime.types.default  scgi_params.default
+
+[root@proxy conf]# systemctl is-active mariadb ; systemctl is-enabled  mariadb
+unknown
+disabled
+[root@proxy conf]# vim nginx.conf
+ 11 events {
+ 12     worker_connections  1024;
+ 13 }
+ 14 stream {
+ 15   upstream mysqls {
+ 16     server 192.168.2.100:3306;
+ 17     server 192.168.2.200:3306;
+ 18   }
+ 19   server {
+ 20     listen  3306;
+ 21     proxy_pass  mysqls;
+ 22   }
+ 23 }
+ 24 
+ 25 http {
+
+ 43     server {
+ 44         listen       80;
+ 45         server_name  localhost;
+ 46 
+ 47         #charset koi8-r;
+ 48 
+ 49         #access_log  logs/host.access.log  main;
+ 50         location  /status  {
+ 51           stub_status on;
+ 52           allow  192.168.4.0/24;
+ 53           allow  192.168.2.0/24;
+ 54           deny all;
+ 55         }
+ 56         location / {
+ 57             root   html;
+ 58             index  index.html index.htm;
+ 59         }
+[root@proxy conf]# nginx -s reload
+[root@proxy conf]# firefox http://192.168.2.5/status
+http://192.168.2.5/status
+Active connections: 1     #当前活动的连接数量 1
+server accepts handled requests
+ 4 4 8 
+Reading: 0 Writing: 1 Waiting: 0 
+Reading: 0 Writing: 1 Waiting: 0 
+-------------------------------------------------------------------
+#Accepts：已经接受客户端的连接总数量 4
+#Handled：已经处理客户端的连接总数量 4
+#Requests：客户端发送的请求数量      8   
+#Reading：当前服务器正在读取客户端请求头的数量0
+#Writing：当前服务器正在写响应信息的数量   1
+#Waiting：当前多少客户端在等待服务器的响应 0
+
+[root@proxy ~]# systemctl start memcached.service 
+[root@proxy ~]# ss -nptul |egrep ':80|3306|:9000|:11211' |column -t
+udp  UNCONN  0  0    *:11211         *:*   users:(("memcached",pid=1983,fd=28))
+udp  UNCONN  0  0    :::11211        :::*  users:(("memcached",pid=1983,fd=29))
+tcp  LISTEN  0  128  *:11211         *:*   users:(("memcached",pid=1983,fd=26))
+tcp  LISTEN  0  128  *:80            *:*   users:(("nginx",pid=1817,fd=7),("nginx",pid=1816,fd=7))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*   users:(("php-fpm",pid=1063,fd=0),("php-fpm",pid=1062,fd=0),("php-fpm",pid=1061,fd=0),("php-fpm",pid=1060,fd=0),("php-fpm",pid=1059,fd=0),("php-fpm",pid=1011,fd=6))
+tcp  LISTEN  0  128  *:3306          *:*   users:(("nginx",pid=1817,fd=6),("nginx",pid=1816,fd=6))
+tcp  LISTEN  0  128  :::11211        :::*  users:(("memcached",pid=1983,fd=27))
+
+[root@proxy ~]# vim /usr/local/nginx/conf/nginx.conf
+
+ 11 events {
+ 12     worker_connections  1024;
+ 13 }
+ 14 stream {
+ 15   upstream mysqls {
+ 16     server 192.168.2.100:3306;
+ 17     server 192.168.2.200:3306;
+ 18   }
+ 19   server {
+ 20     listen  3306;
+ 21     proxy_pass  mysqls;
+ 22   }
+ 23 }
+ 24 
+ 25 http {
+
+ 43     server {
+ 44         listen       80;
+ 45         server_name  localhost;
+ 46 
+ 47         #charset koi8-r;
+ 48 
+ 49         #access_log  logs/host.access.log  main;
+ 50         location  /status  {
+ 51           stub_status on;
+ 52           allow  192.168.4.0/24;
+ 53           allow  192.168.2.0/24;
+ 54           deny all;
+ 55         }
+ 56         location / {
+ 57             root   html;
+ 58             index  index.html index.htm;
+ 59         }
+
+ 78         location ~ \.php$ {
+ 79             root           html;
+ 80             fastcgi_pass   127.0.0.1:9000;
+ 81             fastcgi_index  index.php;
+ 82         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 83             include        fastcgi.conf;
+ 84         }
+
+[root@proxy ~]# nginx -s reload
+
+
+test proxy[root@proxy html]# cd /root/lnmp_soft/php_scripts/;ls
+Discuz_X3.4_SC_UTF8.zip  mysql.php                  test.php
+mem.php                  php-memcached-demo.tar.gz  web_demo.tar.gz
+
+[root@proxy php_scripts]# cp mem.php /usr/local/nginx/html/
+[root@proxy php_scripts]# ls /usr/local/nginx/html/
+50x.html  index.html  mem.php  test.php
+[root@proxy php_scripts]# cd /usr/local/nginx/html/
+[root@proxy html]# vim /usr/local/nginx/html/test.php
+[root@proxy html]# cat /usr/local/nginx/html/test.php
+<?php
+echo "test proxy\n";
+?>
+[root@proxy html]# cat /usr/local/nginx/html/mem.php 
+<?php
+$memcache=new Memcache;
+$memcache->connect('localhost',11211) or die ('could not connect!! ');
+$memcache->set('key', 'test');
+$get_values=$memcache->get('key');
+echo $get_values;
+?>
+/***********die 执行php 程序********/
+[root@proxy html]# php /usr/local/nginx/html/mem.php
+test
+[root@proxy html]# php /usr/local/nginx/html/test.php 
+test proxy
+[root@proxy html]# firefox http://192.168.4.5/mem.php
+   test
+[root@proxy html]# elinks -dump http://192.168.4.5/mem.php
+   test
+[root@proxy html]# elinks -dump http://192.168.4.5/test.php
+   test proxy
+
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+ 11 events {
+ 12     worker_connections  1024;
+ 13 }
+ 14 stream {
+ 15   upstream mysqls {
+ 16     server 192.168.2.100:3306;
+ 17     server 192.168.2.200:3306;
+ 18   }
+ 19   server {
+ 20     listen  3306;
+ 21     proxy_pass  mysqls;
+ 22   }
+ 23 }
+ 24 
+ 25 http {
+
+ 41     #gzip  on;
+ 42     upstream webs  {
+ 43         server  192.168.2.100:80;
+ 44         server  192.168.2.200:80;
+ 45     }
+ 46     server {
+ 47         listen       80;
+ 48         server_name  localhost;
+ 49 
+ 50         #charset koi8-r;
+ 51 
+ 52         #access_log  logs/host.access.log  main;
+ 53         location  /status  {
+ 54           stub_status on;
+ 55           allow  192.168.4.0/24;
+ 56           allow  192.168.2.0/24;
+ 57           deny all;
+ 58         }
+ 59         location / {
+ 60             proxy_pass  http://webs;
+ 61             root   html;
+ 62             index  index.php  index.html index.htm;
+ 63         }
+ 82        # location ~ \.php$ {
+ 83        #     root           html;
+ 84        #     fastcgi_pass   127.0.0.1:9000;
+ 85        #     fastcgi_index  index.php;
+ 86         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 87         #    include        fastcgi.conf;
+ 88        # }
+[root@proxy html]# nginx -s reload
+
+[root@proxy html]# systemctl is-active php-fpm.service 
+active
+[root@proxy html]# vim /usr/local/nginx/html/index.html 
+[root@proxy html]# sed -rn '/<title>|<h1>/p' /usr/local/nginx/html/index.html
+<title>Welcome to proxy !</title>
+<h1>Welcome to proxy 192.168.4.5 !</h1>
+[root@proxy html]# systemctl is-active memcached.service 
+active
+[root@proxy html]# netstat -nptu |grep memcached
+[root@proxy html]# netstat -anptul |grep memcached |column -t
+tcp   0  0  0.0.0.0:11211  0.0.0.0:*  LISTEN          1983/memcached
+tcp6  0  0  :::11211       :::*       LISTEN          1983/memcached
+udp   0  0  0.0.0.0:11211  0.0.0.0:*  1983/memcached
+udp6  0  0  :::11211       :::*       1983/memcached
+[root@proxy html]# ls /var/lib/php/session/
+[root@proxy html]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@web1 html]# systemctl start mariadb && systemctl enable mariadb
+
+[root@web1 html]#  ss -ntul |grep -E ':80|:9000|:3306' |column -t
+tcp  LISTEN  0  128  *:80    *:*
+tcp  LISTEN  0  50   *:3306  *:*
+[root@web1 html]# 
+[root@web1 html]# mysqladmin -u root password '123';
+[root@web1 html]#  mysql -u root -p'123';
+ MariaDB [(none)]> create database web1;
+
+MariaDB [(none)]> grant select on *.* to lisi@'192.168.%' identified by '123';
+
+MariaDB [(none)]> show grants;
+| Grants for root@localhost    |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION  |
+
+MariaDB [(none)]> show grants for lisi@'192.168.%';
+| Grants for lisi@192.168.%     |
+| GRANT SELECT ON *.* TO 'lisi'@'192.168.%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+
+MariaDB [(none)]> quit;
+Bye
+[root@web1 ~]# systemctl start memcached
+[root@web1 ~]# ss -nptul |egrep ':80|3306|:9000|:11211' |column -t
+udp  UNCONN  0  0    *:11211         *:*   users:(("memcached",pid=2520,fd=28))
+udp  UNCONN  0  0    :::11211        :::*  users:(("memcached",pid=2520,fd=29))
+tcp  LISTEN  0  128  *:11211         *:*   users:(("memcached",pid=2520,fd=26))
+tcp  LISTEN  0  128  *:80            *:*   users:(("nginx",pid=2063,fd=6),("nginx",pid=2062,fd=6))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*   users:(("php-fpm",pid=1083,fd=0),("php-fpm",pid=1082,fd=0),("php-fpm",pid=1077,fd=0),("php-fpm",pid=1076,fd=0),("php-fpm",pid=1075,fd=0),("php-fpm",pid=1010,fd=6))
+tcp  LISTEN  0  50   *:3306          *:*   users:(("mysqld",pid=1430,fd=14))
+tcp  LISTEN  0  128  :::11211        :::*  users:(("memcached",pid=2520,fd=27))
+[root@web1 ~]# vim /usr/local/nginx/conf/nginx.conf
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+ 43         location / {
+ 44             root   html;
+ 45             index   index.php  index.html index.htm;
+ 46         }
+ 65         location ~ \.php$ {
+ 66             root           html;
+ 67             fastcgi_pass   127.0.0.1:9000;
+ 68             fastcgi_index  index.php;
+ 69         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 70             include        fastcgi.conf;
+ 71         }
+[root@web1 ~]# nginx -s reload
+[root@web1 ~]# systemctl is-active php-fpm.service 
+active
+[root@web1 ~]# vim /usr/local/nginx/html/index.html
+
+[root@web1 ~]# sed -rn '/<title>|<h1>/p' /usr/local/nginx/html/index.html
+<title>Welcome to web1!</title>
+<h1>Welcome to  web1 192.168.2.100 !</h1>
+
+[root@web1 ~]# nginx -s reload
+[root@web1 ~]# ls /var/lib/php/session/
+[root@web1 ~]# ls /root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz 
+/root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz
+[root@web1 ~]# cd /usr/local/nginx/html/;ls
+50x.html  index.html
+[root@web1 html]# tar -xzf /root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz 
+[root@web1 html]# ls
+50x.html  index.html  php-memcached-demo
+[root@web1 html]# mv php-memcached-demo/*  ./
+[root@web1 html]# ls
+50x.html  images      index.php  php-memcached-demo  style.css
+home.php  index.html  login.php  README.md
+[root@web1 html]# ls php-memcached-demo/
+[root@web1 html]# rm -rf php-memcached-demo/
+[root@web1 html]# ls
+50x.html  home.php  images  index.html  index.php  login.php  README.md  style.css
+[root@web1 html]# 
+[root@web1 html]# firefox http://192.168.2.100
+http://192.168.2.100/home.php
+Welcome : di yi ci
+Logged In : true
+Session ID: n0gjfmj1enjjll79vlsc1p1sh3 
+
+[root@web1 html]# vim home.php
+Welcome Web1web1:  <?php echo $_SESSION['login_user'] ?>
+
+[root@web1 html]# vim index.php
+<body bgcolor=gray>
+<h1>PHP Login Session Web1 web1</h1>
+
+[root@web1 html]# vim /etc/php-fpm.d/www.conf
+223 ; Set session path to a directory owned by process user
+224 php_value[session.save_handler] = memcache
+225 php_value[session.save_path] = "tcp://192.168.2.5:11211"
+
+[root@web1 html]# systemctl restart php-fpm.service
+
+
+
+
+
+
+
+
+
+
+[root@web2 ~]# nginx
+[root@web2 ~]# systemctl start memcached.service 
+[root@web2 ~]# ss -nptul |egrep ':80|3306|:9000|:11211' |column -t
+udp  UNCONN  0  0    *:11211         *:*   users:(("memcached",pid=2542,fd=28))
+udp  UNCONN  0  0    :::11211        :::*  users:(("memcached",pid=2542,fd=29))
+tcp  LISTEN  0  128  *:11211         *:*   users:(("memcached",pid=2542,fd=26))
+tcp  LISTEN  0  128  *:80            *:*   users:(("nginx",pid=2501,fd=6),("nginx",pid=2500,fd=6))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*   users:(("php-fpm",pid=1099,fd=0),("php-fpm",pid=1097,fd=0),("php-fpm",pid=1096,fd=0),("php-fpm",pid=1095,fd=0),("php-fpm",pid=1094,fd=0),("php-fpm",pid=1021,fd=6))
+tcp  LISTEN  0  50   *:3306          *:*   users:(("mysqld",pid=1433,fd=14))
+tcp  LISTEN  0  128  :::11211        :::*  users:(("memcached",pid=2542,fd=27))
+[root@web2 ~]# vim /usr/local/nginx/conf/nginx.conf
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+ 43         location / {
+ 44             root   html;
+ 45             index   index.php  index.html index.htm;
+ 46         }
+ 65         location ~ \.php$ {
+ 66             root           html;
+ 67             fastcgi_pass   127.0.0.1:9000;
+ 68             fastcgi_index  index.php;
+ 69         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 70             include        fastcgi.conf;
+ 71         }
+[root@web2 ~]# nginx -s reload
+[root@web2 ~]# systemctl is-active php-fpm.service 
+active
+[root@web2 ~]# vim /usr/local/nginx/html/index.html
+[root@web2 ~]# sed -rn '/<title>|<h1>/p' /usr/local/nginx/html/index.html
+<title>Welcome to web2!</title>
+<h1>Welcome to web2 192.168.2.200 !</h1>
+[root@web2 ~]# ls /root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz 
+/root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz
+[root@web2 ~]# cd /usr/local/nginx/html/;ls
+50x.html  index.html
+
+[root@web2 html]# tar -xzf /root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz 
+[root@web2 html]# ls
+50x.html  index.html  php-memcached-demo
+[root@web2 html]# mv php-memcached-demo/* ./
+[root@web2 html]# ls php-memcached-demo/
+[root@web2 html]# ls
+50x.html  images      index.php  php-memcached-demo  style.css
+home.php  index.html  login.php  README.md
+
+[root@web2 html]# firefox http://192.168.2.200
+http://192.168.2.200/
+
+http://192.168.2.200/home.php
+Welcome : di er ER ci
+Logged In : true
+Session ID: dqc8rfrs7pa3cep5pb7hv5uos3 
+
+[root@web2 html]# ls /var/lib/php/session/
+sess_dqc8rfrs7pa3cep5pb7hv5uos3
+
+[root@web2 html]# vim index.php
+<body bgcolor=purple>
+<h1>PHP Login Session Web 2 web2</h1>
+
+[root@web2 html]# vim  home.php
+Welcome  WEB 2 :  <?php echo $_SESSION['login_user'] ?>
+[root@web2 html]# ls /var/lib/php/session/
+sess_dqc8rfrs7pa3cep5pb7hv5uos3  sess_u5mt9a1k327panbstcbptq2re7
+[root@web2 html]# 
+[root@web2 html]# ll /var/lib/php/session/
+总用量 8
+-rw-------. 1 apache apache 88 9月  26 17:40 sess_dqc8rfrs7pa3cep5pb7hv5uos3
+-rw-------. 1 apache apache 91 9月  26 17:52 sess_u5mt9a1k327panbstcbptq2re7
+[root@web2 html]# cat /var/lib/php/session/sess_dqc8rfrs7pa3cep5pb7hv5uos3 
+login_user|s:11:"di er ER ci";logged_in|s:4:"true";id|s:26:"dqc8rfrs7pa3cep5pb7hv5uos3";[root[[[[root@web2 html]# cat /var/lib/php/session/sess_u5mt9a1k327panbstcbptq2re7 
+login_user|s:14:"client diyi ci";logged_in|s:4:"true";id|s:26:"u5mt9a1k327panbstcbptq2re7";
+
+[root@web2 html]# vim  /etc/php-fpm.d/www.conf 
+224 ;php_value[session.save_handler] = files
+225 ;php_value[session.save_path] = /var/lib/php/session
+226 php_value[session.save_handler] = memcache
+227 php_value[session.save_path] = "tcp://192.168.2.5:11211"
+
+[root@web2 html]# systemctl restart php-fpm.service
+
+
+
+
+
+
+https://db-engines.com/en/ranking
+排名中有345个系统，2018年9月
+        秩	          DBMS	               数据库模型	                   得分了
+2018年9 月  2018年8 月  2017年9 月	                2018年9 月       2018年8 月    2017年9 月
+1。	1。	1。	神谕    	关系DBMS	1309.12      -2.91   -49.97
+2。	2。	2。	MySQL的  	关系DBMS	1180.48	-26.33  -132.13
+3。	3。	3。	Microsoft SQL Server   	关系DBMS   1051.28  -21.37  -161.26
+4。	4。	4。	PostgreSQL的    关系DBMS	406.43	-11.07	34.07
+5。	5。	5。	MongoDB的   	   文件商店	    358.79	  7.81       26.06
+6。	6。	6。	DB2    	  关系DBMS	181.06	-0.78	   -17.28
+7。	8。	10。	Elasticsearch  搜索引擎	
+8。	7。	 9。	Redis的  	   键值存储	 
+9。	9。	 7。	Microsoft Access	关系DBMS 
+13。	13。	16。	Splunk的	搜索引擎
+14。	14。	18。	MariaDB的     关系DBMS	
+15。	15。	13。	Solr的	搜索引擎	
+16。	 18。   19。	蜂巢        关系DBMS	  
+20。	21。	 22。	亚马逊DynamoDB    多模式 	
+21。  20。   20。	SAP HANA  	关系DBMS	
+22。	22。   21。	Neo4j的  	图DBMS	
+24。	24。	24。	Memcached的	键值存储	31.54	-1.38	2.60
+82。	91。	 75。	Oracle NoSQL  	键值存储	2.58	0.66	-0.37
+
+
+

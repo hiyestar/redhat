@@ -1,0 +1,486 @@
+ expect是建立在tcl基础上的一个工具，它用来让一些需要交互的任务自动化地完成。
+因为expect是基于tcl的，所以需要你的系统中安装有tcl
+如何检查？
+[root@dev ~]# whereis tcl
+tcl: /usr/lib/tcl8.4 /usr/share/tcl8.4
+如果看不到结果，请先安装tcl
+解压tcl安装包后
+cd tcl8.4.11/unix/
+./configure --prefix=/usr/local/tcl/ --enable-shared
+make && make install
+> 安装expect
+解压expect安装包后
+cd expect-5.43
+./configure --prefix=/usr/local/expect/ --with-tcl=/usr/local/tcl/lib/ --with-tclinclude=/opt/tcl8.4.11/generic/ --enable-shared
+make && make install
+注意：指定的/opt/tcl8.4.11/generic/ 为我们上面解压的tcl目录
+> 创建连接符号
+ln -s /usr/local/expect/bin/expect /usr/bin/expect
+> 查看连接符号
+ls -l /usr/bin/expect
+lrwxrwxrwx. 1 root root 28 9月   8 11:21 /usr/bin/expect -> /usr/local/expect/bin/expect
+这个符号链接将在编写expect脚本文件时用到，例如在expect文件头部会指定用于执行该脚本的shell 
+#!/usr/bin/expect 
+
+> 测试
+[root@localhost opt]# expect
+expect1.1> exit
+[root@localhost opt]# 
+这样就可以开始运行expect脚本了。
+2. ［set timeout 30］ 
+基本上认识英文的都知道这是设置超时时间的，现在你只要记住他的计时单位是：秒。
+timeout -1 为永不超时，默认情况下，timeout是10秒；
+6. ［interact］ 
+执行完成后保持交互状态，把控制权交给控制台，这个时候就可以手工操作了。
+如果没有这一句登录完成后会退出，而不是留在远程终端上。如果你只是登录过去执行 
+
+8. send和send_user
+send会将expect脚本中需要的信息发送给spawn启动的那个进程，
+而send_user只是回显用户发出的信息，类似于shell中的echo而已。
+
+使用exp_continue后，会重新从当前expect块的开始重新执行，
+可以简单理解问while循环的continue
+      echo[OPTION]... [STRING]...
+       -n 不输出行尾的换行符.
+       -e 允许对下面列出的加反斜线转义的字符进行解释.
+        \n    换行符
+        \r    回车符
+        \t    水平制表符
+        \v    纵向制表符
+
+Linux expect介绍和用法
+expect中最关键的四个命令是send,expect,spawn,interact 
+send：用于向进程发送字符串 
+expect：从进程接收字符串 
+spawn：启动新的进程 
+interact：允许用户交互
+expect中没有小括号（）,所有的if/else, while, for的条件全部使用大括号{}, 并且{ 与左边要
+有空格，否则会报错。另，else 不能单独占一行，否则会报错。
+exp_send(等同于send) 
+在上面的介绍中，我们已经看到了exp_send命令的使用，exp_send命令是expect中的动作命令，
+它还有一个完成同样工作的同胞：send，exp_send命令可以发送一些特殊符号，
+我们看到了\r（回车），还有一些其他的比如：\n（换行）、\t（制表符）等等，
+这些都与TCL中的特殊符号相同。
+
+send命令有几个可用的参数： 
+-i 指定spawn_id，这个参数用来向不同spawn_id的进程发送命令，是进行多程序控制的关键参数。 
+-s s代表slowly，也就是控制发送的速度，这个参数使用的时候要与expect中的变量send_slow相关联
+
+[root@VM1 ~]# yum -y install expect
+[root@VM1 ~]# rpm -q expect
+expect-5.45-14.el7_1.x86_64
+[root@VM1 ~]# which expect
+/usr/bin/expect
+[root@VM1 ~]# vim ex2.sh
+     /****# . [空格】 /脚本绝对路径 即使脚本没有执行权,也可以运行
+[root@VM1 ~]# . ex2.sh 55 # .[空格]脚本相对路径
+spawn ssh -X root@192.168.4.55
+Are you sure you want to continue connecting (yes/no)? yes
+root@192.168.4.55's password: 
+[root@VM5 ~]# mkdir /expectvm3
+[root@VM5 ~]# [root@VM1 ~]# . ex2.sh 55
+spawn ssh -X root@192.168.4.55
+root@192.168.4.55's password: 
+[root@VM5 ~]# mkdir /expectvm3
+mkdir: 无法创建目录"/expectvm3": 文件已存在
+[root@VM5 ~]# [root@VM1 ~]# cat ex2.sh 
+
+#!/usr/bin/expect
+expect << EOF
+set timeout 30   #设置超时时间30秒
+spawn ssh -X root@192.168.4.$1
+expect  {
+    "(yes/no)?"  {
+    send "yes\n";
+    expect "password:"
+    send "123\r";
+   }
+   "password:"  {
+    send "123\r";
+   }
+}
+expect "#" {send "mkdir /expectvm3\r"}
+expect "#" {send "exit\n"}
+EOF
+========================================
+
+[root@VM1 ~]# vim expect.sh 
+[root@VM1 ~]# . expect.sh 56.
+Are you sure you want to continue connecting (yes/no)? yes
+root@192.168.4.56's password: 
+[root@VM6 ~]# mkdir /expectvm3
+[root@VM6 ~]# [root@VM1 ~]# . expect.sh 56
+root@192.168.4.56's password: 
+[root@VM6 ~]# mkdir /expectvm3
+mkdir: 无法创建目录"/expectvm3": 文件已存在
+[root@VM6 ~]# [root@VM1 ~]# cat expect.sh 
+==================================
+#!/usr/bin/expect
+expect << EOF
+set timeout 30
+spawn ssh -X root@192.168.4.$1
+expect {
+   "password:" {
+    send "123\r";
+   }
+    "(yes/no)?" {
+    send "yes\n";exp_continue
+   }
+}
+expect "#" {send "mkdir /expectvm3\r"}
+expect "#" {send "exit\n"}
+EOF
+[root@VM1 ~]# 
+
+=============================
+expect的转义符/逃逸符
+
+在命令send时，往往有写特殊字符需要进行转义：
+
+
+\ 需转义为 \\\
+} 需转义为 \}
+[ 需转义为 \[
+$ 需转义为 \\\$
+` 需转义为 \`
+" 需转义为 \\\"
+
+---------------------
+[root@room9pc01 ~]# clone-vm7
+Enter VM number: 1
+Creating Virtual Machine disk image......	[OK]
+Defining new virtual machine......		[OK]
+[root@room9pc01 ~]# clone-auto7
+number of vms: 8
+created rh7_node1					[Done]
+created rh7_node2					[Done]
+...........
+  416  cat /etc/yum.repos.d/rhel7.repo
+  417  yum clean all >/dev/null && yum repolist |tail -4
+  418  yum -y install expect
+  419  rpm -q expect
+  420  which expect
+
+[root@room9pc01 ~]# cat expect.sh
+#!/usr/bin/expect
+expect << eof
+set timeout -1
+spawn virsh console $1
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"  {send "root\r"}
+expect "密码："  {send "$2\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $1 >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$3/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$4/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send  "mkdir /expect/\r"}
+expect "#"  {send  "ifconfig | grep 'inet '\r"}
+expect "#"  {send "reboot\r"}
+interact
+eof
+
+[root@room9pc01 ~]# cat expect.sh
+#!/usr/bin/expect
+expect << eof
+set timeout -1
+spawn virsh console $1
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$2\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $1 >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$3/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$4/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "mkdir /expect/\r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]\nname=rhel7.4\nenabled=1\ngpgcheck=0\nbaseurl=ftp://192.168.4.254/rhel7\n\[rhel7-2\]\nname=rhel7.4\nbaseurl=ftp://192.168.2.254/rhel7\ngpgcheck=0\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4 \r"}
+expect "#"  {send "reboot\r"}
+interact
+eof
+[root@room9pc01 ~]# cat expect.sh 
+#!/usr/bin/expect
+expect << eof
+set timeout -1
+spawn virsh console $1
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$2\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $1 >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$3/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$4/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "mkdir /expect/\r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]\nname=rhel7.4\nenabled=1\ngpgcheck=0\nbaseurl=ftp://192.168.4.254/rhel7\n\[rhel7-2\]\nname=rhel7.4\nbaseurl=ftp://192.168.2.254/rhel7\ngpgcheck=0\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4 \r"}
+expect "#"  {send "reboot\r"}
+interact
+eof
+
+
+
+
+
+
+
+
+
+
+
+
+==========================================
+
+
+virsh console VM5
+root
+123456
+echo 123 |passwd --stdin root
+echo VM5 >/etc/hostname
+
+nmcli connection modify eth0 ipv4.method manual \
+ipv4.addresses 192.168.4.100/24 ipv4.gateway 192.168.4.254 \
+connection.autoconnect yes;nmcli connection up eth0;
+
+nmcli connection add con-name eth1 ifname eth1 \
+type ethernet autoconnect yes;
+
+nmcli connection modify eth1 ipv4.method manual \
+ipv4.addresses 192.168.2.55/24  ipv4.gateway 192.168.2.254 \
+connection.autoconnect yes;nmcli connection up eth1;
+echo '[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+' > /etc/yum.repos.d/rhel7.repo
+yum clean all >/dev/null;yum repolist |tail -4;
+
+======================================
+
+virsh console VM6
+
+echo 123 |passwd --stdin root
+echo VM6 >/etc/hostname
+
+nmcli connection modify eth0 ipv4.method manual \
+ipv4.addresses 192.168.4.5/24 ipv4.gateway 192.168.4.254 \
+connection.autoconnect yes;nmcli connection up eth0;
+
+nmcli connection add con-name eth1 ifname eth1 \
+type ethernet autoconnect yes;
+
+nmcli connection modify eth1 ipv4.method manual \
+ipv4.addresses 192.168.2.5/24  ipv4.gateway 192.168.2.254 \
+connection.autoconnect yes;nmcli connection up eth1;
+echo '[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+' > /etc/yum.repos.d/rhel7.repo
+yum clean all >/dev/null;yum repolist |tail -4;
+
+========================
+
+virsh console VM7
+
+echo 123 |passwd --stdin root
+echo VM7 >/etc/hostname
+
+nmcli connection modify eth0 ipv4.method manual \
+ipv4.addresses 192.168.4.57/24 ipv4.gateway 192.168.4.254 \
+connection.autoconnect yes;nmcli connection up eth0;
+
+nmcli connection add con-name eth1 ifname eth1 \
+type ethernet autoconnect yes;
+
+nmcli connection modify eth1 ipv4.method manual \
+ipv4.addresses 192.168.2.100/24  ipv4.gateway 192.168.2.254 \
+connection.autoconnect yes;nmcli connection up eth1;
+
+echo '[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+' > /etc/yum.repos.d/rhel7.repo
+yum clean all >/dev/null;yum repolist |tail -4;
+=========================
+
+virsh console VM8
+
+echo 123 |passwd --stdin root
+echo VM8 >/etc/hostname
+
+nmcli connection modify eth0 ipv4.method manual \
+ipv4.addresses 192.168.4.58/24 ipv4.gateway 192.168.4.254 \
+connection.autoconnect yes;nmcli connection up eth0;
+
+nmcli connection add con-name eth1 ifname eth1 \
+type ethernet autoconnect yes;
+
+nmcli connection modify eth1 ipv4.method manual \
+ipv4.addresses 192.168.2.200/24  ipv4.gateway 192.168.2.254 \
+connection.autoconnect yes;nmcli connection up eth1;
+
+echo '[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+' > /etc/yum.repos.d/rhel7.repo
+yum clean all >/dev/null;yum repolist |tail -4;
+
+[root@room2pc18 ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel7.4
+baseurl=file:///var/ftp/rhel7/
+enabled=1
+gpgcheck=0
+[root@room2pc18 ~]# tail -1 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso 
+  /var/ftp/rhel7 iso9660 defaults 0 0
+
+[root@VM1 ~]# cat a.txt
+1
+2
+3
+4
+5
+6
+7
+[root@VM1 ~]# sed '1,3H;$G' a.txt #大H大G  不覆盖空间
+1
+2
+3
+4
+5
+6
+7
+
+1
+2
+3
+[root@VM1 ~]# sed '1,3h;$G' a.txt #小h 小g  覆盖空间
+1
+2
+3
+4
+5
+6
+7
+3
+[root@VM1 ~]# sed '1h;2,3H;$G' a.txt #小h 小g  覆盖空间
+1
+2
+3
+4
+5
+6
+7
+1
+2
+3
+[root@VM1 ~]# sed '1h;2,3H;$g' a.txt #小h 小g  覆盖空间
+1
+2
+3
+4
+5
+6
+1
+2
+3
+[root@VM1 ~]# expect
+expect1.1> echo VM1 >/etc/hostname
+expect1.2> cat /etc/hostname
+VM1
+expect1.3> exit;
+[root@VM1 ~]#
+[root@DB70 ~]# vim /etc/profile  
+[root@DB70 ~]# tail -1 /etc/profile
+export  PATH=/usr/local/mysql/bin:$PATH
+
+[root@DB70 ~]# source /etc/profile
+[root@DB70 ~]# echo $PATH
+/usr/local/mysql/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+/***export -n 全局变量名x 取消指定的变量的全局属性
+
+[root@DB70 ~]# ll /usr/local/mysql/bin/mysqld_multi  
+-rwxr-xr-x. 1 7161 31415 26738 9月  14 2017 /usr/local/mysql/bin/mysqld_multi
+[root@DB70 ~]# mysqld_multi start 1
+[root@DB70 ~]# mysqld_multi start 2
+
+[root@VM1 nginx-1.10.3]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@VM1 nginx-1.10.3]# ln -s /usr/local/nginx/sbin/nginx  /sbin/
+[root@VM1 nginx-1.10.3]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 9月  20 11:20 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+[root@VM1 nginx-1.10.3]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+
+export PATH=/usr/local/nginx/sbin:$PATH
+[root@VM1 nginx-1.10.3]# export PATH=/usr/local/nginx/sbin:$PATH
+[root@VM1 nginx-1.10.3]# echo $PATH
+/usr/local/nginx/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@VM1 nginx-1.10.3]# reboot
+[root@room2pc18 ~]# ssh -X 192.168.4.7
+[root@VM1 ~]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+
+
+
+]# nginx -V
+nginx version: nginx/1.10.3
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module
+]# nginx -v
+nginx version: nginx/1.10.3
+
+
+[root@VM1 ~]# echo $$ 当前运行的进程PID号
+1354
+[root@VM2 ~]# echo $! # 表示最后一个进程的内置变量$!
+4024
+[root@VM1 ~]# echo $0 当前所在的进程或脚本名
+-bash
+
+https://www.baidu.com/index.html
+https://www.baidu.com/index.php
+
+
+

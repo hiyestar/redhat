@@ -1,0 +1,437 @@
+
+[root@client ~]# nginx
+[root@client ~]# ls /usr/local/nginx/html/
+50x.html  index.html
+[root@client ~]# ss -nptul |egrep ':80|:3306|:9000' |column -t
+tcp  LISTEN  0  128  *:80            *:*  users:(("nginx",pid=2037,fd=6),("nginx",pid=2036,fd=6))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*  users:(("php-fpm",pid=1350,fd=0),("php-fpm",pid=1349,fd=0),("php-fpm",pid=1348,fd=0),("php-fpm",pid=1347,fd=0),("php-fpm",pid=1346,fd=0),("php-fpm",pid=1034,fd=6))
+tcp  LISTEN  0  50   *:3306          *:*  users:(("mysqld",pid=1285,fd=14))
+[root@client ~]# mysql -h 192.168.4.5 -ulisi  -p123
+MariaDB [(none)]> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+| web1               |
+MariaDB [(none)]> quit;
+Bye
+[root@client ~]# mysql -h 192.168.4.5 -ulisi  -p123
+MariaDB [(none)]> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+| web2               |
+MariaDB [(none)]> quit;
+Bye
+[root@client ~]# ls /usr/lib/systemd/system |wc -l
+397
+[root@client ~]# vim /usr/lib/systemd/system/memcached.service
+[Unit]
+Description=Memcached
+Before=httpd.service
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/memcached
+ExecStart=/usr/bin/memcached -u $USER -p $PORT -m $CACHESIZE -c $MAXCONN $OPTIONS
+
+[Install]
+WantedBy=multi-user.target
+~                                
+/****$MAXCONN 最大并发量  ***/
+
+[root@client ~]# vim /etc/sysconfig/memcached
+PORT="11211"
+USER="memcached"
+MAXCONN="1024"
+CACHESIZE="64"
+OPTIONS="" 
+[root@client ~]# systemctl is-active memcached.service 
+unknown
+[root@client ~]# ls /var/lib/php/session/
+[root@client ~]# firefox http://192.168.4.5/
+[root@client ~]# firefox http://192.168.4.5/status
+[root@client ~]# firefox http://192.168.2.5/status
+
+
+
+
+
+
+[root@proxy ~]# vim /usr/local/nginx/conf/nginx.conf
+  3 worker_processes  1;
+ 10 
+ 11 events {
+ 12     worker_connections  1024;
+ 13 }
+ 14 stream {
+ 15   upstream mysqls {
+ 16     server 192.168.2.100:3306;
+ 17     server 192.168.2.200:3306;
+ 18   }
+ 19   server {
+ 20     listen  3306;
+ 21     proxy_pass  mysqls;
+ 22   }
+ 23 }
+ 25 http {
+ 26     include       mime.types;
+ 27     default_type  application/octet-stream;
+ 34 
+ 41     #gzip  on;
+ 42     upstream webs  {
+ 43         server  192.168.2.100:80;
+ 44         server  192.168.2.200:80;
+ 45     }
+ 46     server {
+ 47         listen       80;
+ 48         server_name  localhost;
+
+ 53         location  /status  {
+ 54           stub_status on;
+ 55           allow  192.168.4.0/24;
+ 56           allow  192.168.2.0/24;
+ 57           deny all;
+ 58         }
+ 59         location / {
+ 60             proxy_pass  http://webs;
+ 61             root   html;
+ 62             index  index.php  index.html index.htm;
+ 63         }
+[root@proxy ~]# nginx
+[root@proxy ~]# watch -n 2 -d 'pstree |grep nginx'
+[root@proxy ~]# watch -n  2  -d ls
+[root@proxy ~]# watch -n  2  ls
+
+[root@proxy ~]# watch -n  2  ss  -s
+
+[root@proxy ~]# rpm -q memcached
+memcached-1.4.15-10.el7_3.1.x86_64
+[root@proxy ~]# cat /etc/sysconfig/memcached 
+PORT="11211"
+USER="memcached"
+MAXCONN="1024"
+CACHESIZE="64"
+OPTIONS=""
+[root@proxy ~]# systemctl start memcached.service 
+[root@proxy ~]# systemctl is-active memcached
+active
+[root@proxy ~]# netstat -anptul |grep memcached
+tcp        0      0 0.0.0.0:11211           0.0.0.0:*               LISTEN      2300/memcached      
+tcp6       0      0 :::11211                :::*                    LISTEN      2300/memcached      
+udp        0      0 0.0.0.0:11211           0.0.0.0:*                           2300/memcached      
+udp6       0      0 :::11211                :::*                                2300/memcached      
+[root@proxy ~]# rpm -q telnet
+telnet-0.17-64.el7.x86_64
+[root@proxy ~]# telnet 192.168.4.5 11211
+Trying 192.168.4.5...
+Connected to 192.168.4.5.
+Escape character is '^]'.
+set name  0  180  4
+bian
+STORED
+get name
+VALUE name 0 4
+bian
+END
+add myname 0 120 9
+bianliang
+STORED
+get name
+VALUE name 0 4
+bian
+END
+get myname
+VALUE myname 0 9
+bianliang
+END
+##提示：0表示不压缩，180为数据缓存时间，10为需要存储的数据字节数量。
+replace name 0  180  10
+bianliangx
+STORED
+get name
+VALUE name 0 10
+bianliangx
+END
+append myname 0 180 3
+abc
+STORED
+get myname
+VALUE myname 0 12
+bianliangabc
+END
+get name
+VALUE name 0 10
+bianliangx
+END
+set name 0 180 5
+namex
+STORED
+get name
+VALUE name 0 5
+namex
+END
+delete myname
+NOT_FOUND
+delete name
+DELETED
+stats
+STAT pid 2300
+STAT uptime 410
+STAT cmd_get 7
+.........
+STAT reclaimed 1
+END
+flush_all
+OK
+quit
+/********telnet 古老的数据库
+  set  a 0  180  3
+ 变量a  0不压缩 缓存180秒 3个字符(必须在一行,中间不能回车
+get a
+add 不能覆盖,只能添加
+set 覆盖添加
+replace 只能覆盖,不能新建
+append 给变量追加数据
+flush_all 清空所有数据
+********/
+[root@proxy ~]# systemctl is-active php-fpm
+active
+[root@proxy ~]# systemctl is-active mariadb
+unknown
+[root@proxy ~]# rpm -q mariadb
+mariadb-5.5.56-2.el7.x86_64
+[root@proxy ~]# ls /root/lnmp_soft/php_scripts/
+Discuz_X3.4_SC_UTF8.zip  mysql.php                  test.php
+mem.php                  php-memcached-demo.tar.gz  web_demo.tar.gz
+
+[root@proxy ~]# ls /usr/local/nginx/html/
+50x.html  index.html  mem.php  test.php
+[root@proxy ~]# cat /usr/local/nginx/html/mem.php 
+<?php
+$memcache=new Memcache;
+$memcache->connect('localhost',11211) or die ('could not connect!! ');
+$memcache->set('key', 'test');
+$get_values=$memcache->get('key');
+echo $get_values;
+?> 
+/***********die 执行php 程序********/
+sid [用户信息]  session id
+cookies : id
+/***********
+sed -i '65,71s/#//' /usr/local/nginx/conf/nginx.conf
+sed -i '69d' /usr/local/nginx/conf/nginx.conf
+sed -i '70s/fastcgi_params/fastcgi.conf/' /usr/local/nginx/conf/nignx.conf
+**********/
+[root@room9pc01 ~]# which google-chrome
+/usr/bin/google-chrome
+[root@room9pc01 ~]# yum provides /usr/bin/google-chrome
+
+google-chrome-stable-60.0.3112.113-1.x86_64 : Google Chrome
+源    ：installed
+匹配来源：
+文件名    ：/usr/bin/google-chrome
+[root@room9pc01 ~]# rpm -q  google-chrome-stable
+google-chrome-stable-60.0.3112.113-1.x86_64
+[root@room9pc01 ~]# google-chrome  http://192.168.4.5
+
+[root@proxy ~]# ss -nptul |egrep ':80|3306|:9000|:11211' |column -t
+udp  UNCONN  0  0    *:11211         *:*   users:(("memcached",pid=2300,fd=28))
+udp  UNCONN  0  0    :::11211        :::*  users:(("memcached",pid=2300,fd=29))
+tcp  LISTEN  0  128  *:11211         *:*   users:(("memcached",pid=2300,fd=26))
+tcp  LISTEN  0  128  *:80            *:*   users:(("nginx",pid=1983,fd=7),("nginx",pid=1982,fd=7))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*   users:(("php-fpm",pid=1139,fd=0),("php-fpm",pid=1138,fd=0),("php-fpm",pid=1137,fd=0),("php-fpm",pid=1136,fd=0),("php-fpm",pid=1135,fd=0),("php-fpm",pid=1021,fd=6))
+tcp  LISTEN  0  128  *:3306          *:*   users:(("nginx",pid=1983,fd=6),("nginx",pid=1982,fd=6))
+tcp  LISTEN  0  128  :::11211        :::*  users:(("memcached",pid=2300,fd=27))
+[root@proxy ~]# ls /var/lib/php/session/
+[root@proxy ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@web1 ~]# vim /usr/local/nginx/conf/nginx.conf
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+ 43         location / {
+ 44             root   html;
+ 45             index   index.php  index.html index.htm;
+ 46         }
+
+ 65         location ~ \.php$ {
+ 66             root           html;
+ 67             fastcgi_pass   127.0.0.1:9000;
+ 68             fastcgi_index  index.php;
+ 69         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 70             include        fastcgi.conf;
+ 71         }
+[root@web1 ~]# nginx
+[root@web1 html]# tar -xzf /root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz 
+[root@web1 html]# ls
+50x.html  index.html  php-memcached-demo
+[root@web1 html]# mv php-memcached-demo/*  ./
+
+[root@web1 ~]# ls /usr/local/nginx/html/
+50x.html  images      index.php  README.md
+home.php  index.html  login.php  style.css
+
+[root@web1 ~]# systemctl is-active mariadb;systemctl is-enabled mariadb 
+active
+enabled
+[root@web1 html]# mysqladmin -u root password '123';
+[root@web1 html]#  mysql -u root -p'123';
+ MariaDB [(none)]> create database web1;
+
+MariaDB [(none)]> grant select on *.* to lisi@'192.168.%' identified by '123';
+
+MariaDB [(none)]> show grants;
+| Grants for root@localhost    |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION  |
+
+MariaDB [(none)]> show grants for lisi@'192.168.%';
+| Grants for lisi@192.168.%     |
+| GRANT SELECT ON *.* TO 'lisi'@'192.168.%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+
+MariaDB [(none)]> quit;
+Bye
+[root@web1 ~]# systemctl start memcached
+
+[root@web1 ~]# systemctl start php-fpm
+[root@web1 ~]# systemctl is-active php-fpm
+active
+[root@web1 ~]# sed -rn '/<title>|<h1>/p' /usr/local/nginx/html/index.html
+<title>Welcome to web1!</title>
+<h1>Welcome to  web1 192.168.2.100 !</h1>
+[root@web1 ~]# sed -rn '/<title>/{/web1/p}' /usr/local/nginx/html/index.html
+<title>Welcome to web1!</title>
+[root@web1 ~]# sed -rn '/<h1>/{/web/p}' /usr/local/nginx/html/index.html
+<h1>Welcome to  web1 192.168.2.100 !</h1>
+[root@web1 html]# firefox http://192.168.2.100
+http://192.168.2.100/home.php
+Welcome : di yi ci
+Logged In : true
+Session ID: n0gjfmj1enjjll79vlsc1p1sh3 
+
+[root@web1 ~]# tail -4 /etc/php-fpm.d/www.conf 
+; Set session path to a directory owned by process user
+php_value[session.save_handler] = memcache
+php_value[session.save_path] = "tcp://192.168.2.5:11211"
+
+[root@web1 ~]# ls /var/lib/php/session/
+sess_n0gjfmj1enjjll79vlsc1p1sh3  sess_u5mt9a1k327panbstcbptq2re7
+[root@web1 ~]# cat /var/lib/php/session/sess_u5mt9a1k327panbstcbptq2re7 
+login_user|s:12:"client di er";logged_in|s:4:"true";id|s:26:"u5mt9a1k327panbstcbptq2re7";[root@web1 ~]# 
+
+
+
+
+
+[root@web2 ~]# nginx
+[root@web2 ~]# vim /usr/local/nginx/conf/nginx.conf
+
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+
+ 43         location / {
+ 44             root   html;
+ 45             index  index.php  index.html index.htm;
+ 46         }
+ 65         location ~ \.php$ {
+ 66             root           html;
+ 67             fastcgi_pass   127.0.0.1:9000;
+ 68             fastcgi_index  index.php;
+ 69         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 70             include        fastcgi.conf;
+ 71         }
+[root@web2 ~]# ls /root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz 
+/root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz
+
+[root@web2 ~]# ls /usr/local/nginx/html/
+50x.html  images      index.php  php-memcached-demo  style.css
+home.php  index.html  login.php  README.md
+[root@web2 ~]# systemctl start memcached
+[root@web2 ~]# systemctl is-active memcached
+active
+[root@web2 ~]# systemctl is-active mariadb
+active
+[root@web2 ~]# systemctl is-active php-fpm.service 
+active
+
+[root@web2 ~]# tail -4 /etc/php-fpm.d/www.conf 
+;php_value[session.save_handler] = files
+;php_value[session.save_path] = /var/lib/php/session
+php_value[session.save_handler] = memcache
+php_value[session.save_path] = "tcp://192.168.2.5:11211"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,164 @@
+
+[root@auto ~]# rpm -q expect 
+expect-5.45-14.el7_1.x86_64
+[root@auto ~]# which expect 
+/usr/bin/expect
+[root@auto ~]# vim auto
+============================
+[root@auto ~]# cat auto 
+#!bin/bash
+password=123456;
+for i in `seq 3`
+do
+ hostn=rh7_node$i;
+ systn='';
+ eth0='';eth1='';
+ ipexp(){
+  case $i in
+  1)
+    let eth0=100,eth1=10;
+    systn=clinet;
+    echo -e "eth0=$eth0\teth1=$eth1 \nsystn=$systn";;
+  2)
+    let eth0=5,eth1=5;
+    systn=proxy;
+    echo -e "eth0=$eth0\teth1=$eth1 \nsystn=$systn";;
+  3)
+    let eth0=3,eth1=100;
+    systn=web1;
+    echo -e "eth0=$eth0\teth1=$eth1 \nsystn=$systn";;
+  esac
+  expect  /root/clone.sh
+  if [ $? -eq 0  -o  $? -eq 1 ];then
+    virsh start $hostn;
+  else 
+    echo "clone failed";
+    exit ;
+  fi
+  expect /root/console.sh $hostn $password $systn $eth0 $eth1  
+ }
+ ipexp &
+ wait % $i;
+done
+echo Amazing !
+[root@auto ~]# 
+[root@auto ~]# cat clone.sh 
+#!/usr/bin/expect -f
+set timeout -1
+spawn clone-auto7
+expect "vms:"  {send "1\r"}
+expect "#"  {send "echo Cloning success\r"}
+expect "#"  {send "exit\r"}
+[root@auto ~]# cat console.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  hostn     [lindex $argv 0]
+set  password  [lindex $argv 1]
+set  systn     [lindex $argv 2]
+set  eth0      [lindex $argv 3]
+set  eth1      [lindex $argv 4]
+spawn  virsh console $hostn
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$password\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $systn >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]
+\nname=rhel7.4
+\nenabled=1
+\ngpgcheck=0
+\nbaseurl=ftp://192.168.4.254/rhel7
+\n\[rhel7-2\]
+\nname=rhel7.4
+\nbaseurl=ftp://192.168.2.254/rhel7
+\ngpgcheck=0
+\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4\r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 5 && date\r"}
+expect "#"  {send "exit\r"}
+[root@auto ~]# 
+
+[root@auto ~]# [ 1 -eq 1 -o  2  -eq  3 ]
+[root@auto ~]# echo $?
+0
+[root@auto ~]# [ 1 -eq 1 -o  2  -eq  3 ] && echo true
+true
+[root@auto ~]# [ $? -eq 1 -o  $?  -eq  0 ] && echo true
+true
+[root@auto ~]# [ $? -eq 1 -o  $?  -eq  2 ] && echo true || echo false
+false
+[root@auto ~]# [ -f auto  -a  -f console.sh ] && echo $?
+0
+[root@auto ~]# [ -d auto  -a  -f console.sh ] ; echo $?
+1
+if [ -f /FileA  -a  -f /FileB ]; then 
+-a是and，左右条件两者都成立
+-o是or，左右条件任意一条成立
+
+[root@auto ~]# cat clone-vm7.sh 
+#!/bin/bash
+read -p "请输入要创建的虚拟机号码1~99：" host
+expect <<EOF
+spawn clone-vm7
+expect "Enter" {send "$host\r"}
+expect "#"     {send "exit\r"}
+EOF
+virsh start rh7_node$host
+sleep 5
+expect <<EOF
+spawn virsh console rh7_node$host
+expect "^]" 	   {send "\r"}
+expect "localhost" {send "root\r"}
+expect "密码："	   {send "123456\r"}
+expect "#" 	   {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$host/24 connection.autoconnect yes\r"}
+expect "#" 	   {send "nmcli connection up eth0\r"}
+expect "#" 	   {send "yum-config-manager --add http://192.168.4.254/rhel7\r"}
+expect "#"	   {send "echo gpgcheck=0  >>  /etc/yum.repos.d/192.168.4.254_rhel7.repo\r"}
+expect "#" 	   {send "yum repolist\r"}
+expect "#" 	   {send "hostnamectl set-hostname $host\r"}
+expect "#" 	   {send "exit\r"}
+EOF
+expect <<EOF
+spawn ssh-copy-id root@192.168.4.$host
+expect "yes"	   {send "yes"\r}
+expect "password"  {send "123456\r"}
+expect "#"	   {send "exit\r"}
+EOF
+echo "虚拟主机$host已创建，可通过"ssh"远程连接！"
+[root@auto ~]# seq 3
+1
+2
+3
+[root@auto ~]# x=`seq 3`;echo $x
+1 2 3
+[root@auto ~]# ifconfig rhce:0 |awk '/inet /{print $2}'
+172.25.0.250
+[root@auto ~]# rht-vmctl reset classroom
+[root@auto ~]# rht-vmctl reset server
+[root@server0 ~]# route -n |awk '{print $2}'|sed -n '3p'
+172.25.0.254
+[root@server0 ~]# ifconfig |awk '/inet /{print $2}'
+172.25.0.11
+[root@server0 ~]# tail -1 /etc/resolv.conf
+nameserver 172.25.254.254
+[root@server0 ~]# ping -c2 -i0.2 -w1 172.25.0.254 > /dev/null && echo $?
+0
+[root@server0 ~]# ping -c2 -i0.2 -w1 172.25.254.254 > /dev/null ; echo $?
+0
+[root@auto ~]# ls /root/.ssh/
+id_rsa  id_rsa.pub  known_hosts
+[root@auto ~]# vim /root/.ssh/known_hosts 
+[root@auto ~]# ll /root/.ssh/known_hosts
+-rw-r--r-- 1 root root 938 9月  24 14:02 /root/.ssh/known_hosts
+[root@auto ~]# scp  -o StrictHostKeyChecking=no /root/桌面/lnmp_soft.tar.gz root@192.168.4.3:/root/
+root@192.168.4.3's password: 
+lnmp_soft.tar.gz                           100%   75MB  75.2MB/s   00:01
+
+

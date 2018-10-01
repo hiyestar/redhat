@@ -1,0 +1,596 @@
+[root@VM1 ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.7  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.7  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@VM1 ~]# 
+
+[root@VM2 ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.252  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.252  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@VM2 ~]# 
+
+[root@VM3 ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.207  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.207  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@VM3 ~]#
+
+[root@VM4 ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.208  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@VM4 ~]# 
+
+
+-------------[root@client ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.100  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 127.0.0.1  netmask 255.0.0.0
+[root@client ~]# 
+
+
+
+
+-------------[root@proxy ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.5  netmask 255.255.255.0  broadcast 192.168.2.255
+
+[root@proxy ~]# yum -y install memcached.x86_64 
+
+[root@proxy ~]# rpm -q memcached 
+memcached-1.4.15-10.el7_3.1.x86_64
+
+[root@proxy ~]# systemctl start memcached
+[root@proxy ~]# systemctl enable memcached.service 
+[root@proxy ~]# netstat  -anptul  |  grep memcached ;
+[root@proxy ~]# netstat -anptul |grep memcached |column -t;
+tcp   0  0  0.0.0.0:11211  0.0.0.0:*  LISTEN          4218/memcached
+tcp6  0  0  :::11211       :::*       LISTEN          4218/memcached
+udp   0  0  0.0.0.0:11211  0.0.0.0:*                  4218/memcached
+udp6  0  0  :::11211       :::*                       4218/memcached
+[root@proxy ~]# cd  /usr/lib/systemd/system/
+[root@proxy system]# ls |wc -l;
+400
+[root@proxy system]# cp sshd.service xyz.service;echo $?
+0
+[root@proxy system]# rm -f xyz.service ;
+[root@proxy system]# ls *memcac*
+memcached.service
+
+[root@proxy system]# cat memcached.service 
+[Unit]
+Description=Memcached
+Before=httpd.service
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/memcached
+ExecStart=/usr/bin/memcached -u $USER -p $PORT -m $CACHESIZE -c $MAXCONN $OPTIONS
+
+[Install]
+WantedBy=multi-user.target
+----------------------------------------------------------------------------------------------------------------------------------
+-----/usr/bin/memcached -u $USER -p $PORT -m $CACHESIZE -c $MAXCONN $OPTIONS
+-----/usr/bin/memcached -u memcached -p 11211 -m 64 -c 1024
+ -p  指定memcached 监听的端口号默认11211号
+ -u  memcached程序运行时使用的用户身份必须是用户root 后台降级为用户memcached
+[root@proxy html]# grep memcached /etc/passwd
+memcached:x:991:986:Memcached daemon:/run/memcached:/sbin/nologin
+ -m  指定使用本机的物理内存数据大小，默认64M
+ -c  memcached服务的最大连接数 
+ -n chunk size 的最小空间大小，单位是字节
+ -f chunk size大小增长的倍数，默认是1.24倍---1*1.25*1.25---1.25^n次方
+  -d 在后台启动
+
+[root@proxy system]# ps -aux |grep memcached
+memcach+  4218  0.0  0.1 325564  1180 ?        Ssl  11:52   0:00 /usr/bin/memcached -u memcached -p 11211 -m 64 -c 1024
+root      5678  0.0  0.0 112676   984 pts/0    R+   14:09   0:00 grep --color=auto memcached
+
+[root@proxy system]# cat /etc/sysconfig/memcached 
+PORT="11211"
+USER="memcached"
+MAXCONN="1024"
+CACHESIZE="64"
+OPTIONS=""
+------------------------------------------------
+[root@proxy nginx]# cat /usr/local/nginx/conf/nginx.conf
+ 
+12 events {
+13    worker_connections  65535;  //每个worker最大并发连接数
+14    use epoll;
+15 }
+-----------------------------------------------------------
+[root@proxy html]# vim /etc/sysconfig/memcached 
+[root@proxy html]# cat /etc/sysconfig/memcached
+PORT="11211"
+USER="memcached"
+MAXCONN="2000"
+CACHESIZE="64"
+OPTIONS=""
+[root@proxy html]# systemctl restart memcached
+
+[root@proxy html]# ps -aux |grep memcached |column -t;
+memcach+  16289  0.0  0.1  325564  1184  ?      Ssl  20:48  0:00  /usr/bin/memcached  -u  memcached  -p 11211  -m  64 -c 2000
+root      16301  0.0  0.0  112676  980   pts/0  R+   20:48  0:00  grep 
+
+[root@proxy system]# yum -y install telnet |tail -3;
+  telnet.x86_64 1:0.17-64.el7 
+-----------------------------------------------------------
+add name 0 180 10	//变量不存在则添加
+set name 0 180 10	//添加或替换变量
+replace name 0 180 10	//替换
+get name	//读取变量
+append name 0 180 10	//向变量中追加数据
+delete name	//删除变量
+stats	//查看状态
+flush_all	//清空所有
+提示：0表示不压缩，180为数据缓存时间，10为需要存储的数据字节数量。
+----------------------------------------------------------------------------------------------------------
+[root@proxy system]# telnet 192.168.4.5 11211 && echo $?;
+Trying 192.168.4.5...
+Connected to 192.168.4.5.
+Escape character is '^]'.
+set vara 0 180 3  //添加或替换变量,0表示不压缩，180为数据缓存时间，3为需要存储的数据字节数量
+abc
+STORED
+set varb 0  180 6
+abc456
+STORED
+get vara   //读取变量vara
+VALUE vara 0 3
+abc
+END
+get varb
+VALUE varb 0 6
+abc456
+END
+------------------------------
+//添加或替换变量,0表示不压缩，180为数据缓存时间，4为需要存储的数据字节数量
+set abc 0  180  4
+ABCD
+STORED
+append abc 0  180  3  //向变量中追加数据
+efg
+STORED
+get abc
+VALUE abc 0 7
+ABCDefg
+END
+delete abc  //删除变量
+DELETED
+---------------------------------------
+//添加或替换变量,0表示不压缩，240为数据缓存时间，5为需要存储的数据字节数量
+set varc 0  240 5
+AbCdE
+STORED
+append varc 0 240 3
+xxx
+STORED
+get varc
+VALUE varc 0 8
+AbCdExxx
+END
+--------------------------------
+flush_all    //清空所有
+OK
+get varc
+END
+-----------------------------------
+stats
+STAT pid 4218
+STAT uptime 10681
+STAT time 1535007004
+STAT cmd_get 7
+STAT cmd_set 6
+STAT cmd_flush 1
+STAT reclaimed 0
+END
+quit
+Connection closed by foreign host.
+[root@proxy system]# rpm -q gcc pcre-devel openssl-devel httpd-tools elinks mariadb mariadb-server mariadb-devel php php-mysql  php-fpm memcached telnet ;
+
+[root@proxy system]# rpm -q gcc pcre-devel openssl-devel \
+>  httpd-tools elinks telnet memcached \
+> mariadb mariadb-server mariadb-devel php php-mysql  php-fpm ;
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+openssl-devel-1.0.2k-8.el7.x86_64
+
+httpd-tools-2.4.6-67.el7.x86_64
+elinks-0.12-0.36.pre6.el7.x86_64
+telnet-0.17-64.el7.x86_64
+memcached-1.4.15-10.el7_3.1.x86_64
+
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+[root@proxy system]# 
+[root@proxy nginx-1.12.2]# nginx -s stop;echo $?;
+0
+[root@proxy nginx-1.12.2]# rm -rf /usr/local/nginx/
+[root@proxy nginx-1.12.2]# ./configure --with-http_ssl_module --with-stream  --with-http_stub_status_module |tail -12;
+
+[root@proxy nginx-1.12.2]# make |tail -2 && make install |tail -3;
+
+[root@proxy nginx-1.12.2]# nginx
+[root@proxy nginx-1.12.2]# nginx -v
+nginx version: nginx/1.12.2
+[root@proxy nginx-1.12.2]# nginx -s reload
+
+[root@proxy nginx-1.12.2]# systemctl restart mariadb.service 
+[root@proxy nginx-1.12.2]# systemctl restart php-fpm.service 
+[root@proxy nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 65         location ~ \.php$ {
+ 66             root           html;
+ 67             fastcgi_pass   127.0.0.1:9000;
+ 68             fastcgi_index  index.php;
+ 69         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 70             include        fastcgi.conf;
+ 71         }
+[root@proxy nginx-1.12.2]# cd /usr/local/nginx/ ;ls
+client_body_temp  fastcgi_temp  logs        sbin       uwsgi_temp
+conf              html          proxy_temp  scgi_temp
+[root@proxy nginx]# cd html/
+[root@proxy html]# ls
+50x.html  index.html
+[root@proxy html]# vim test.php
+[root@proxy html]# cat test.php
+<?php
+$i=30;  echo  $i;  echo "\n";
+?>
+[root@proxy html]# nginx -s reload
+[root@proxy html]# firefox 127.0.0.1/test.php
+30
+[root@proxy html]# curl 127.0.0.1/test.php
+30
+[root@proxy html]# elinks -dump 127.0.0.1/test.php
+   30
+[root@proxy html]#  yum list |grep memcach
+memcached.x86_64                        1.4.15-10.el7_3.1          @rhel7       
+libmemcached.i686                       1.0.16-5.el7               rhel7        
+libmemcached.x86_64                     1.0.16-5.el7               rhel7        
+pcp-pmda-memcache.x86_64                3.11.8-7.el7               rhel7        
+php-pecl-memcache.x86_64                3.0.8-4.el7                rhel7        
+python-memcached.noarch                 1.48-4.el7                 rhel7        
+[root@proxy ~]# cd lnmp_soft/php_scripts/;ls
+mem.php  mysql.php  php-memcached-demo.tar.gz  test.php
+[root@proxy php_scripts]# cp mem.php /usr/local/nginx/html/
+[root@proxy php_scripts]# ls /usr/local/nginx/html/
+50x.html  index.html  mem.php  test.php
+
+[root@proxy html]# yum -y install php-pecl-memcache.x86_64  |tail -3
+  php-xml.x86_64 0:5.4.16-42.el7      
+完毕！
+[root@proxy html]# systemctl restart php-fpm.service 
+[root@proxy html]# firefox 192.168.4.5/mem.php
+[root@proxy html]# elinks -dump 192.168.4.5/mem.php
+   test
+[root@proxy html]# cat mem.php 
+<?php
+$memcache=new Memcache;
+$memcache->connect('localhost',11211) or die ('could not connect!! ');
+$memcache->set('key', 'test');
+$get_values=$memcache->get('key');
+echo $get_values;
+?>
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+       # location ~ \.php$ {
+       #     root           html;
+       #     fastcgi_pass   127.0.0.1:9000;
+       #     fastcgi_index  index.php;
+        #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+       #     include        fastcgi.conf;
+       # }
+[root@proxy html]# nginx -s reload;echo $?
+0
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+ 12 events {
+ 13     worker_connections  1024;
+ 14 }
+ 15 
+ 16 #stream {
+ 17 #  upstream webserver {
+ 18 #     server 192.168.2.100:80 weight=1 maxfails=1 fail-timeout=20;
+ 19 #     server 192.168.2.200:80 weight=2 maxfails=2 fail-timeout=20;
+ 20 #  }
+ 21 #}
+22 
+ 23 http {
+ 24     include       mime.types;
+ 25     default_type  application/octet-stream;
+
+ 39     #gzip  on;
+ 40     upstream webserver {
+ 41       server 192.168.2.100:80 ; # weight=1 maxfails=2  fail-timeout=20;
+ 42       server 192.168.2.200:80 ; # weight=2 maxfails=2  fail-timeout=20;
+ 43     }
+ 44 
+ 45     server {
+ 46         listen       80;
+ 47         server_name  localhost;
+ 48 
+ 49         #charset koi8-r;
+ 50 
+ 51         #access_log  logs/host.access.log  main;
+ 52    #通过proxy_pass将用户的请求转发给webserver集群
+ 53         location / {
+ 54             proxy_pass  http://webserver;
+ 55             root   html;
+ 56             index  index.html index.htm;
+ 57         }
+
+[root@proxy html]# nginx -s reload;echo $?
+0
+
+[root@client ~]# firefox 192.168.4.5
+192.168.4.5
+PHP Login Session Example web2
+
+http://192.168.4.5/home.php
+Welcome web2 : qqq
+Logged In : true
+Session ID: bn0nvjq8nrk92tvbuatfsifkq3
+-----------------------F5 刷新-------------------
+http://192.168.4.5/home.php
+web1 Welcome :
+Logged In : true
+Session ID: bn0nvjq8nrk92tvbuatfsifkq3 
+
+[root@client ~]# firefox 192.168.4.5
+192.168.4.5
+PHP Login Session Example web1
+
+http://192.168.4.5/home.php
+web1 Welcome : www
+Logged In : true
+Session ID: lckpm2oimpuluidutt3b34uq36 
+----------------------F5 刷新-------------------
+http://192.168.4.5/home.php
+Welcome web2 :
+Logged In : true
+Session ID: lckpm2oimpuluidutt3b34uq36 
+
+
+
+
+
+
+
+----------[root@web1 ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.2  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@web1 ~]# 
+Ctrl +v 向下\|/键 shift +i 输入# 按 ESC 批量加注释#
+
+[root@web1 html]#  history | tail -80
+  
+  201  rpm -q gcc pcre-devel openssl-devel httpd-tools elinks telnet memcached mariadb mariadb-server mariadb-devel php php-mysql php-fpm;
+  202  ls /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm 
+  203  yum -y install elinks telnet memcached mariadb mariadb-server  mariadb-devel php php-mysql /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm |tail -20;
+  204  grep nginx /etc/passwd
+  205   rpm -q gcc pcre-devel openssl-devel httpd-tools elinks mariadb mariadb-server mariadb-devel php php-mysql  php-fpm memcached telnet ;
+  206  cd nginx-1.12.2/
+  207  ls
+  208  ./configure --prefix=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module --with-stream --with-http_stub_status_module |tail -15;
+  209  netstat -anptul |grep :80
+  210  make |tail -3 && make install |tail -4;
+  211  id nginx
+  212  ll /sbin/nginx 
+  213  nginx
+  214  nginx -s reload
+  215   netstat -anptul |grep nginx |column -t;
+  216  systemctl restart mariadb && systemctl enable mariadb;
+  217  systemctl restart php-fpm.service && systemctl enable php-fpm;
+  218  systemctl restart memcached.service  && systemctl enable memcached.service ;
+  219  netstat -anptul |grep memcached |column -t;
+  220  netstat -anptul |grep nginx |column -t;
+  221  cd /usr/local/nginx/html/
+  222  ls
+  223  vim test.php
+  224  curl 127.0.0.1/test.php
+  225  vim /usr/local/nginx/conf/nginx.conf
+  226  nginx -s reload
+  227  curl 127.0.0.1/test.php
+  228  systemctl restart memcached.service  && systemctl enable memcached.service ;
+  229  curl 127.0.0.1/test.php
+  230  vim /usr/local/nginx/conf/nginx.conf
+  231  curl http://192.168.2.100/test.php
+  232  ss -anptul |grep nginx
+  233  ss -anptul |grep 3306
+  234  ss -anptul |grep 9000
+  235  ll /sbin/nginx 
+  236  firefox 192.168.2.100/test.php
+  237  netstat -anptul |grep :80
+  238   history | tail -80
+[root@web1 html]# tar -xPf /root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz
+[root@web1 html]# ls /root/lnmp_soft/php_scripts/php-m*
+/root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz
+[root@web1 html]# ls
+50x.html  index.html  php-memcached-demo  test.php
+
+[root@web1 html]# cp -a php-memcached-demo/*  ./
+[root@web1 html]# ls
+50x.html  images      index.php  php-memcached-demo  style.css
+home.php  index.html  login.php  README.md           test.php
+
+[root@web1 html]# firefox 127.0.0/1/index.php
+http://127.0.0.1/home.php
+Welcome : qq
+Logged In : true
+Session ID: pkaqqtrv4uohotic81p2attg45 
+
+[root@web1 html]# vim /usr/local/nginx/conf/nginx.conf
+    server {
+        listen       80;
+        server_name  localhost;
+        # auth_basic "INput Password"; # 取消密码用户登陆
+        # auth_basic_user_file "/usr/local/nginx/pass";
+[root@web1 html]# nginx -s reload
+
+[root@web1 html]# firefox 192.168.2.100/index.php
+http://192.168.2.100/index.php
+Welcome : qqqq
+Logged In : true
+Session ID: n9qenbismqs4n0qn3e9ktvgj84 
+
+[root@web1 html]# vim index.php
+<body bgcolor=purple>
+<div id="main">
+<h1>PHP Login Session Example web1</h1>
+
+[root@web1 html]# vim index.html
+<body bgcolor=pink>
+
+[root@web1 html]# vim /usr/local/nginx/conf/nginx.conf
+ 44         location / {
+ 45             root   html;
+ 46             index  index.php  index.html index.htm;
+ 47         }
+
+ 66         location ~ \.php$ {
+ 67             root           html;
+ 68             fastcgi_pass   127.0.0.1:9000;
+ 69             fastcgi_index  index.php;
+ 70         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 71             include        fastcgi.conf;
+ 72         }
+
+[root@web1 html]# vim home.php
+<body bgcolor=pink>
+web1 Welcome :  <?php echo $_SESSION['login_user'] ?>
+[root@web1 html]# nginx -s reload
+[root@web1 html]# firefox 192.168.2.100
+
+
+
+
+
+
+-----------[root@web2 ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.200  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.200  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@web2 ~]# tar -xzPf lnmp_soft.tar.gz 
+[root@web2 ~]# tar -xzPf nginx-1.12.2.tar.gz 
+[root@web2 ~]# ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     公共  图片  音乐
+initial-setup-ks.cfg  nginx-1.12.2         模板  文档  桌面
+lnmp_soft             nginx-1.12.2.tar.gz  视频  下载
+[root@web2 ~]# netstat -anptul |grep :80
+tcp6       0      0 :::80                   :::*                    LISTEN      1025/httpd          
+[root@web2 ~]# systemctl stop httpd.service 
+[root@web2 ~]# systemctl disable httpd.service 
+Removed symlink /etc/systemd/system/multi-user.target.wants/httpd.service.
+[root@web2 ~]# systemctl is-active httpd
+unknown
+[root@web2 ~]# netstat -anptul |grep :80
+ 
+[root@web2 html]#  history | tail -80
+  107   ab -c100 -n1000 http://192.168.4.252;
+  108   ab -c100 -n1000 http://192.168.4.252/;
+  109  ifconfig |grep 'net ' |head -2
+  110  history |tail -15
+  111    clear
+  112  ls
+  113  tar -xzPf lnmp_soft.tar.gz 
+  114  tar -xzPf nginx-1.12.2.tar.gz 
+  115  ls
+  116  netstat -anptul |grep :80
+  117  systemctl stop httpd.service 
+  118  systemctl disable httpd.service 
+  119  systemctl is-active httpd
+  120  netstat -anptul |grep :80
+  121  rpm -q gcc pcre-devel openssl-devel
+  122  yum -y install gcc pcre-devel openssl-devel |tail -5;
+  123  yum -y install elinks telnet memcached mariadb mariadb-server  mariadb-devel php php-mysql /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm |tail -20;
+  124  grep nginx /etc/passwd
+  125  useradd -s /sbin/nologin  nginx;
+  126   rpm -q gcc pcre-devel openssl-devel httpd-tools elinks mariadb mariadb-server mariadb-devel php php-mysql  php-fpm memcached telnet ;
+  127  cd nginx-1.12.2/
+  128  ls
+  129  ./configure --prefix=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module --with-stream --with-http_stub_status_module |tail -15;
+  130  netstat -anptul |grep :80
+  131  make |tail -3 && make install |tail -4;
+  132  ll /sbin/nginx
+  133  id nginx
+  134  ls /usr/local/nginx/
+  135  ls /usr/local/nginx/sbin/
+  136  ll /usr/local/nginx/sbin/sbin
+  137  ll /usr/local/nginx/sbin/nginx 
+  138  ln -s /usr/local/nginx/sbin/nginx /sbin/nginx
+  139  ll /sbin/nginx
+  140  nginx
+  141  nginx -s reload
+  142   netstat -anptul |grep nginx |column -t;
+  143  systemctl restart mariadb && systemctl enable mariadb;
+  144  systemctl restart php-fpm.service && systemctl enable php-fpm;
+  145  systemctl restart memcached.service  && systemctl enable memcached.service ;
+  146  netstat -anptul |grep memcached |column -t;
+  147  netstat -anptul |grep nginx |column -t;
+  148  cd /usr/local/nginx/html/
+  149  ls
+  150  vim test.php
+  151  nginx -s reload
+  152  curl 127.0.0.1/test.php
+  153  vim /usr/local/nginx/conf/nginx.conf
+  154  nginx -s reload
+  155  curl 127.0.0.1/test.php
+  156  netstat -anptul |grep :80
+  157  netstat -anptul |grep :3306
+  158  netstat -anptul |grep :9000
+  159  ls
+  160   history | tail -80
+[root@web2 html]# ls /root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz
+/root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz
+[root@web2 html]# tar -xPf /root/lnmp_soft/php_scripts/php-memcached-demo.tar.gz
+[root@web2 html]# ls
+50x.html  index.html  php-memcached-demo  test.php
+[root@web2 html]# cp -a php-memcached-demo/* ./
+[root@web2 html]# ls
+50x.html  images      index.php  php-memcached-demo  style.css
+home.php  index.html  login.php  README.md           test.php
+
+[root@web2 html]# firefox 127.0.0.1/index.php
+Welcome : qq
+Logged In : true
+Session ID: q9s6jep61nq2m5o8hd57iofu87 
+[root@web2 html]# cat /var/lib/php/session/sess_qbfvg671riuue54m8j1camoqb0
+login_user|s:2:"qq";logged_in|s:4:"true";id|s:26:"qbfvg671riuue54m8j1camoqb0";[r[r[root@web2 html]# 
+
+
+[root@web2 html]# firefox 192.168.2.200/index.php
+Welcome : qqq
+Logged In : true
+Session ID: 0dv5pits4pqshtmulr04qq3fl4 
+
+[root@web2 html]# vim index.php
+<body bgcolor=purple>
+<h1>PHP Login Session Example web2</h1>
+
+[root@web2 html]# vim home.php
+<body bgcolor=blue>
+Welcome web2 :  <?php echo $_SESSION['login_user'] ?>
+
+[root@web2 html]# vim /usr/local/nginx/conf/nginx.conf
+ 43         location / {
+ 44             root   html;
+ 45             index  index.php  index.html index.htm;
+ 46         }
+ 65         location ~ \.php$ {
+ 66             root           html;
+ 67             fastcgi_pass   127.0.0.1:9000;
+ 68             fastcgi_index  index.php;
+ 69         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 70             include        fastcgi.conf;
+ 71         }
+[root@web2 html]# nginx -s reload
+[root@web2 html]# firefox 192.168.2.200
+
+
+[root@room11pc06 ~]# ls  /var/ftp/centos7/Packages/ |grep google-c
+google-crosextra-caladea-fonts-1.002-0.4.20130214.el7.noarch.rpm
+google-crosextra-carlito-fonts-1.103-0.2.20130920.el7.noarch.rpm
+[root@room11pc06 ~]# ls  /var/ftp/rhel7/Packages/ |grep google-c
+google-crosextra-caladea-fonts-1.002-0.4.20130214.el7.noarch.rpm
+google-crosextra-carlito-fonts-1.103-0.2.20130920.el7.noarch.rpm
+
+

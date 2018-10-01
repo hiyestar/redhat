@@ -1,0 +1,561 @@
+if [ $a -eq 1 -a $b -eq 1]----------# -a 并且      -o 或者  shell语言--------------]
+open-jdk 第三方java,非官方java
+   libreoffice
+
+client (eth0 192.168.4.100    eth1               )
+proxy  (eth0 192.168.4.5      eth1 192.168.2.5   )
+web1   (eth0 192.168.4.2      eth1 192.168.2.100 )
+web2   (eth0 192.168.4.200    eth1 192.168.2.200 )
+
+
+--------------client (eth0 192.168.4.100    eth1               )------
+[root@client ~]# ifconfig |grep 'net '|head -2 |column -t;
+inet  192.168.4.100  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  127.0.0.1      netmask  255.0.0.0
+[root@client ~]# firefox 192.168.4.5
+[root@client ~]# systemctl is-active mariadb.service ;systemctl is-active php-fpm.service ; systemctl is-active memcached.service;
+active
+active
+unknown
+
+
+
+
+
+
+
+
+
+------------------proxy  (eth0 192.168.4.5      eth1 192.168.2.5   )------
+[root@proxy ~]# ifconfig |grep 'net '|head -2 |column -t
+inet  192.168.4.5  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.5  netmask  255.255.255.0  broadcast  192.168.2.255
+[root@proxy ~]# nginx
+[root@proxy ~]# ss -anptul |grep nginx
+tcp    LISTEN     0      128       *:80     *:*     users:(("nginx",pid=2531,fd=6),("nginx",pid=2530,fd=6))
+
+[root@proxy ~]# cd /usr/local/nginx/html;ls
+50x.html  index.html  mem.php  test.php
+[root@proxy html]# systemctl is-active mariadb.service ;\
+> systemctl is-active php-fpm.service ;\
+>  systemctl is-active memcached.service;
+active
+active
+active
+[root@proxy html]# yum -y install php-pecl-memcache.x86_64
+
+[root@proxy html]# rpm -q php-pecl-memcache 
+php-pecl-memcache-3.0.8-4.el7.x86_64
+
+[root@proxy html]# systemctl restart php-fpm.service
+---------------------------------------------------------------------------------------------
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+ 39     #gzip  on;
+ 40     upstream webserver {
+ 41       server 192.168.2.100:80 ; # weight=1 max_fails=2  fail_timeout=20;
+ 42       server 192.168.2.200:80 ; # weight=2 max_fails=2  fail_timeout=20;
+ 43     }
+ 44     upstream web2 {
+ 45        server 192.168.2.100:8080;
+ 46        server 192.168.2.200:8080;
+ 47     }
+ 48     server {
+ 49       listen 80;
+ 50       server_name www.aa.com;
+ 51       location / {
+ 52           proxy_pass   http://web2;
+ 53        }
+ 54     }
+[root@proxy html]# vim /etc/hosts
+[root@proxy html]# tail -1 /etc/hosts
+192.168.4.5 www.a.com www.b.com www.c.com www.aa.com
+
+[root@proxy html]# nginx -s reload
+[root@proxy html]# firefox www.aa.com
+
+
+[root@proxy html]# yum -y install httpd
+[root@proxy html]# netstat -anptul |grep :80
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      2530/nginx: master  
+[root@proxy html]# nginx -s stop
+[root@proxy html]# systemctl restart httpd
+[root@proxy html]#  netstat  -anptu  |  grep httpd
+tcp6       0      0 :::80                   :::*                    LISTEN      8808/httpd    
+[root@proxy html]# echo 192.168.2.5-proxy >/var/www/html/index.html
+[root@proxy html]# curl 192.168.2.5
+192.168.2.5-proxy
+
+[root@proxy html]# yum -y install /root/lnmp_soft/python-docutils-0.11-0.2.20130715svn7687.el7.noarch.rpm  |tail -6
+
+[root@proxy html]# yum -y install gcc readline-devel  ncurses-devel pcre-devel |tail -9
+[root@proxy html]# rpm -q gcc readline-devel  ncurses-devel pcre-devel python-docutils
+gcc-4.8.5-16.el7.x86_64
+readline-devel-6.2-10.el7.x86_64
+ncurses-devel-5.9-13.20130511.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+python-docutils-0.11-0.2.20130715svn7687.el7.noarch
+
+[root@proxy html]# cd ~;ls
+[root@proxy ~]# tar -xPf /root/lnmp_soft/varnish-5.2.1.tar.gz 
+[root@proxy ~]# ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     varnish-5.2.1  视频  下载
+initial-setup-ks.cfg  nginx-1.12.2         公共           图片  音乐
+lnmp_soft             nginx-1.12.2.tar.gz  模板           文档  桌面
+[root@proxy ~]# cd varnish-5.2.1/
+[root@proxy varnish-5.2.1]# useradd -s /sbin/nologin varnish
+[root@proxy varnish-5.2.1]# ./configure 
+[root@proxy varnish-5.2.1]# make |tail -3 && make install |tail -4
+[root@proxy varnish-5.2.1]# ls
+[root@proxy varnish-5.2.1]# ls etc/example.vcl 
+etc/example.vcl
+
+[root@proxy varnish-5.2.1]# cp etc/example.vcl /usr/local/etc/default.vcl
+[root@proxy varnish-5.2.1]# vim /usr/local/etc/default.vcl
+ 16 backend default {
+ 17     .host = "192.168.2.100";
+ 18     .port = "80";
+ 19 }
+ 20 
+ 21 sub vcl_recv {
+
+[root@proxy varnish-5.2.1]# ss -anptul |grep varni
+[root@proxy varnish-5.2.1]# ss -anptul |grep nginx
+[root@proxy varnish-5.2.1]# ss -anptul |grep :80
+tcp    LISTEN     0      128      :::80                   :::*  
+[root@proxy varnish-5.2.1]# systemctl stop httpd
+[root@proxy varnish-5.2.1]# ss -anptul |grep :80
+[root@proxy varnish-5.2.1]# varnishd  -f /usr/local/etc/default.vcl
+[root@proxy varnish-5.2.1]# firefox 192.168.4.5
+[root@proxy varnish-5.2.1]# elinks -dump 192.168.4.5
+   192.168.2.100-web1
+
+
+
+
+
+
+
+
+
+-------------------web1   (eth0 192.168.4.2      eth1 192.168.2.100 )------
+[root@web1 ~]# ifconfig |grep 'net '|head -2 |column -t
+inet  192.168.4.2    netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.100  netmask  255.255.255.0  broadcast  192.168.2.255
+[root@web1 ~]# nginx
+[root@web1 ~]# rpm -q mariadb
+mariadb-5.5.56-2.el7.x86_64
+[root@web1 ~]# rpm -q mariadb-server 
+mariadb-server-5.5.56-2.el7.x86_64
+[root@web1 ~]# systemctl is-active mariadb.service 
+active
+[root@web1 ~]# systemctl is-active php-fpm.service 
+active
+[root@web1 ~]# systemctl is-active memcached.service 
+active
+[root@web1 ~]# vim /etc/php-fpm.d/www.conf  #//修改该配置文件的两个参数
+ ----//定义Session信息存储在公共的memcached服务器上，主机参数中为memcache（没有d）
+224 php_value[session.save_handler] = memcache
+225 php_value[session.save_path] = "tcp://192.168.2.5:11211"
+  -----//通过path参数定义公共的memcached服务器在哪（服务器的IP和端口）
+[root@web1 session]# rm -rf /var/lib/php/session/
+                             ------#为PHP添加memcache扩展 php-pecl-memcache
+[root@web1 session]# yum -y install php-pecl-memcache.x86_64 
+
+[root@web1 session]# nginx -s reload
+[root@web1 session]#  systemctl restart php-fpm.service
+
+[root@web1 session]# rpm -qa |grep jdk
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64
+copy-jdk-configs-2.2-3.el7.noarch
+
+[root@web1 session]# ls /root/lnmp_soft/apache-tomcat-*
+/root/lnmp_soft/apache-tomcat-8.0.30.tar.gz
+/root/lnmp_soft/apache-tomcat-9.0.6-fulldocs.tar.gz
+/root/lnmp_soft/apache-tomcat-9.0.6.tar.gz
+
+[root@web1 local]# ls
+bin  etc  games  include  lib  lib64  libexec  nginx  sbin  share  src
+[root@web1 local]#  yum -y install java-1.8.0-openjdk  java-1.8.0-openjdk-headless 
+
+[root@web1 local]# java -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+[root@web1 local]# tar -xzPf /root/lnmp_soft/apache-tomcat-8.0.30.tar.gz
+[root@web1 local]# 
+[root@web1 local]# ls
+apache-tomcat-8.0.30  etc    include  lib64    nginx  share
+bin                   games  lib      libexec  sbin   src
+[root@web1 local]# mv apache-tomcat-8.0.30/ tomcat/
+[root@web1 local]# ls
+bin  games    lib    libexec  sbin   src
+etc  include  lib64  nginx    share  tomcat
+[root@web1 local]# ls /usr/local/tomcat/bin/
+
+[root@web1 local]# /usr/local/tomcat/bin/startup.sh
+
+[root@web1 local]# netstat -anptul |grep java
+tcp6       0      0 :::8080                 :::*                    LISTEN      4200/java           
+tcp6       0      0 127.0.0.1:8005          :::*                    LISTEN      4200/java           
+tcp6       0      0 :::8009                 :::*                    LISTEN      4200/java  
+[root@web1 local]#  firefox http://192.168.2.100:8080
+
+[root@web1 local]# vim /usr/local/tomcat/webapps/ROOT/test.jsp
+[root@web1 local]# /usr/local/tomcat/bin/shutdown.sh 
+[root@web1 local]# /usr/local/tomcat/bin/startup.sh
+
+[root@web1 local]# firefox http://192.168.2.100:8080/test.jsp
+[root@web1 local]# cat /usr/local/tomcat/webapps/ROOT/test.jsp
+<html>
+<body>
+<center>
+Now time is: <%=new java.util.Date()%>  /*# //显示服务器当前时间*/
+</center>
+</body>
+</html>
+[root@web1 local]# cat /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/bin/tcsh
+/bin/csh
+[root@web1 local]#  ln -s /usr/local/tomcat/bin/shutdown.sh  /bin/
+[root@web1 local]# ll /bin/shutdown.sh 
+lrwxrwxrwx. 1 root root 33 8月  25 14:04 /bin/shutdown.sh -> /usr/local/tomcat/bin/shutdown.sh
+[root@web1 local]# ln -s /usr/local/tomcat/bin/startup.sh  /bin/
+[root@web1 local]# ll /bin/startup.sh 
+lrwxrwxrwx. 1 root root 32 8月  25 14:09 /bin/startup.sh -> /usr/local/tomcat/bin/startup.sh
+
+[root@web1 local]# vim /usr/local/tomcat/conf/server.xml
+105       <Host name="www.a.com"  appBase="a"
+106             unpackWARs="true" autoDeploy="true">
+107       </Host>
+108       <Host name="www.b.com"  appBase="b"
+109             unpackWARs="true" autoDeploy="true">
+110       </Host>
+[root@web1 local]# mkdir -p /usr/local/tomcat/{a,b}/ROOT
+[root@web1 local]# echo "AAA"   > /usr/local/tomcat/a/ROOT/index.html
+[root@web1 local]#  echo "BBB" > /usr/local/tomcat/b/ROOT/index.html
+[root@web1 local]# cd /usr/local/tomcat/;ls
+a  bin   lib      logs    RELEASE-NOTES  temp     work
+b  conf  LICENSE  NOTICE  RUNNING.txt    webapps
+
+[root@web1 tomcat]# /bin/shutdown.sh 
+[root@web1 tomcat]# startup.sh
+
+[root@web1 tomcat]# vim /etc/hosts
+[root@web1 tomcat]# tail -1 /etc/hosts
+192.168.2.100      www.a.com  www.b.com
+[root@web1 tomcat]# firefox http://www.a.com:8080/
+[root@web1 tomcat]# curl http://www.a.com:8080/
+AAA
+[root@web1 tomcat]# curl http://www.b.com:8080/
+BBB
+
+---------------------------------------------------
+[root@web1 tomcat]# vim /usr/local/tomcat/conf/server.xml
+105       <Host name="www.a.com"  appBase="a"
+106             unpackWARs="true" autoDeploy="true">
+107       </Host>
+108       <Host name="www.b.com"  appBase="b"
+109             unpackWARs="true" autoDeploy="true">
+110       <Context path="" docBase="base" reloadable="true"/>
+111       </Host>
+112       <!--For clustering, please take a look at documentation at:
+
+[root@web1 tomcat]# mkdir  /usr/local/tomcat/b/base
+[root@web1 tomcat]# echo "BASE" > /usr/local/tomcat/b/base/index.html
+
+[root@web1 tomcat]# shutdown.sh 
+[root@web1 tomcat]# startup.sh 
+[root@web1 tomcat]#  firefox http://www.b.com:8080/ 
+[root@web1 tomcat]# curl http://www.b.com:8080/
+BASE
+[root@web1 tomcat]# vim /usr/local/tomcat/conf/server.xml
+103     <Engine name="Catalina" defaultHost="localhost">
+104 
+105       <Host name="www.a.com"  appBase="a"
+106             unpackWARs="true" autoDeploy="true">
+107         <Context path="/test" docBase="/var/www/html/" />
+108       </Host>
+109       <Host name="www.b.com"  appBase="b"
+110             unpackWARs="true" autoDeploy="true">
+111         <Context path="" docBase="base" reloadable="true"/>
+112       </Host>
+[root@web1 tomcat]# ls /usr/local/tomcat/
+a  bin   lib      logs    RELEASE-NOTES  temp     work
+b  conf  LICENSE  NOTICE  RUNNING.txt    webapps
+[root@web1 tomcat]# ls /usr/local/tomcat/webapps
+docs  examples  host-manager  manager  ROOT
+
+[root@web1 tomcat]# ls /usr/local/tomcat/webapps/ROOT/
+asf-logo.png       bg-nav.png    RELEASE-NOTES.txt  tomcat-power.gif
+asf-logo-wide.gif  bg-upper.png  test.jsp           tomcat.svg
+bg-button.png      build.xml     tomcat.css         WEB-INF
+bg-middle.png      favicon.ico   tomcat.gif
+bg-nav-item.png    index.jsp     tomcat.png
+[root@web1 tomcat]# echo "I am /test" > /var/www/html/index.html;
+[root@web1 tomcat]# shutdown.sh 
+[root@web1 tomcat]# startup.sh 
+[root@web1 tomcat]# firefox http://www.a.com:8080/test
+[root@web1 tomcat]# elinks -dump http://www.a.com:8080/test
+   I am /test
+[root@web1 tomcat]# rpm -qf /usr/local/tomcat/*
+文件 /usr/local/tomcat/a 不属于任何软件包
+文件 /usr/local/tomcat/b 不属于任何软件包
+文件 /usr/local/tomcat/bin 不属于任何软件包
+keytool -genkeypair [OPTION]...
+生成密钥对
+选项:
+ -alias <alias>                  要处理的条目的别名
+ -keyalg <keyalg>                密钥算法名称
+ -keysize <keysize>              密钥位大小
+ -sigalg <sigalg>                签名算法名称
+ -destalias <destalias>          目标别名
+ -dname <dname>                  唯一判别名
+ -startdate <startdate>          证书有效期开始日期/时间
+ -ext <value>                    X.509 扩展
+ -validity <valDays>             有效天数
+ -keypass <arg>                  密钥口令
+ -keystore <keystore>            密钥库名称
+ -storepass <arg>                密钥库口令
+ -storetype <storetype>          密钥库类型
+ -providername <providername>    提供方名称
+ -providerclass <providerclass>  提供方类名
+ -providerarg <arg>              提供方参数
+ -providerpath <pathlist>        提供方类路径
+ -v                              详细输出
+ -protected                      通过受保护的机制的口令
+使用 "keytool -help" 获取所有可用命令
+[root@web1 tomcat]# keytool -genkeypair -alias tomcat -keyalg RSA -keystore /usr/local/tomcat/keystore
+输入密钥库口令:  
+密钥库口令太短 - 至少必须为 6 个字符
+故障太多 - 请稍后再试
+[root@web1 tomcat]# keytool -genkeypair -alias tomcat -keyalg RSA -keystore /usr/local/tomcat/keystore
+输入密钥库口令:  123456
+再次输入新口令: 123456
+您的名字与姓氏是什么?
+  [Unknown]:  123
+...............
+  [Unknown]:  123
+该单位的双字母国家/地区代码是什么?
+  [Unknown]:  123
+CN=123, OU=123, O=123, L=123, ST=123, C=123是否正确?
+  [否]:  y
+
+输入 <tomcat> 的密钥口令
+	(如果和密钥库口令相同, 按回车):  123456
+再次输入新口令: 123456
+[root@web1 tomcat]# 
+[root@web1 tomcat]# ll /usr/local/tomcat/keystore 
+-rw-r--r--. 1 root root 2195 8月  25 15:25 /usr/local/tomcat/keystore
+[root@web1 tomcat]# vim /usr/local/tomcat/conf/server.xml
+ 85     <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+ 86                maxThreads="150" SSLEnabled="true" scheme="https" secure="true"
+ 87           keystoreFile="/usr/local/tomcat/keystore" keystorePass="123456" 
+ 88           clientAuth="false" sslProtocol="TLS" />
+ 89     
+ 90     <!-- Define an AJP 1.3 Connector on port 8009 -->
+ 91     <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" />
+[root@web1 tomcat]# shutdown.sh 
+[root@web1 tomcat]# startup.sh 
+[root@web1 tomcat]# firefox https://www.a.com:8443/
+https://www.a.com:8443/
+AAA 
+[root@web1 tomcat]# elinks -dump https://www.a.com:8443/
+ELinks: 拒绝连接
+
+[root@web1 tomcat]# firefox https://www.b.com:8443/
+https://www.b.com:8443/
+BASE 
+
+
+[root@web1 tomcat]# vim /usr/local/tomcat/conf/server.xml
+105       <Host name="www.a.com"  appBase="a"
+106             unpackWARs="true" autoDeploy="true">
+107         <Context path="/test" docBase="/var/www/html/" />
+108 
+109         <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+110                prefix="localhost_access_log_2018xx"  suffix=".txt"
+111                pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+112       </Host>
+[root@web1 tomcat]# shutdown.sh 
+
+[root@web1 tomcat]# startup.sh 
+[root@web1 tomcat]# ls /usr/local/tomcat/logs/
+catalina.2018-08-25.log      localhost_access_log.2018-08-25.txt
+catalina.out                 localhost_access_log_2018xx.2018-08-25.txt
+host-manager.2018-08-25.log  manager.2018-08-25.log
+localhost.2018-08-25.log
+
+[root@web1 tomcat]# ll /usr/local/tomcat/logs/localhost_access_log_2018xx.2018-08-25.txt 
+-rw-r--r--. 1 root root 0 8月  25 16:22 /usr/local/tomcat/logs/localhost_access_log_2018xx.2018-08-25.txt
+
+[root@web1 tomcat]# netstat -anptul |grep :80
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      2525/nginx: master  
+tcp6       0      0 :::8080                 :::*                    LISTEN      10925/java          
+tcp6       0      0 127.0.0.1:8005          :::*                    LISTEN      10925/java          
+tcp6       0      0 :::8009                 :::*                    LISTEN      10925/java          
+
+[root@web1 tomcat]# nginx -s stop
+[root@web1 tomcat]# netstat -anptul |grep :80
+tcp6       0      0 :::8080                 :::*                    LISTEN      10925/java          
+tcp6       0      0 127.0.0.1:8005          :::*                    LISTEN      10925/java          
+tcp6       0      0 :::8009                 :::*                    LISTEN      10925/java          
+[root@web1 tomcat]# 
+[root@web1 tomcat]# yum -y install httpd
+[root@web1 tomcat]# systemctl restart httpd
+[root@web1 tomcat]#  netstat  -anptu  |  grep httpd
+tcp6       0      0 :::80                   :::*                    LISTEN      11027/httpd     
+[root@web1 tomcat]# echo 192.168.2.100-web1 >/var/www/html/index.html
+[root@web1 tomcat]# curl 192.168.2.100
+192.168.2.100-web1
+[root@web1 tomcat]# vim webapps/ROOT/index.jsp
+[root@web1 logs]# firefox  http://localhost:8080
+[root@web1 logs]# vim /usr/local/tomcat/webapps/ROOT/index.jsp 
+[root@web1 logs]# elinks http://localhost:8080
+ If you're seeing this, you've successfully WEB1WEB1 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------web2   (eth0 192.168.4.200    eth1 192.168.2.200 )----------
+[root@web2 ~]# ifconfig |grep 'net '|head -2 |column -t
+inet  192.168.4.200  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.200  netmask  255.255.255.0  broadcast  192.168.2.255
+[root@web2 ~]# nginx 
+[root@web2 ~]# ss -antpul |grep nginx
+tcp    LISTEN     0      128       *:80       *:*      users:(("nginx",pid=2515,fd=6),("nginx",pid=2514,fd=6))
+[root@web2 ~]# systemctl is-active mariadb.service
+active
+[root@web2 ~]# systemctl is-active php-fpm.service 
+active
+[root@web2 ~]# systemctl is-active memcached.service 
+active
+
+[root@web2 ~]# vim /etc/php-fpm.d/www.conf  #//修改该配置文件的两个参数
+ ----//定义Session信息存储在公共的memcached服务器上，主机参数中为memcache（没有d）
+224 php_value[session.save_handler] = memcache
+225 php_value[session.save_path] = "tcp://192.168.2.5:11211"
+  -----//通过path参数定义公共的memcached服务器在哪（服务器的IP和端口）
+
+[root@web2 session]# rm -rf /var/lib/php/session/
+                  ---------------------#为PHP添加memcache扩展 php-pecl-memcache
+[root@web2 session]# yum -y install php-pecl-memcache.x86_64 
+
+[root@web2 session]# nginx -s reload
+[root@web2 session]# systemctl restart php-fpm.service
+------------------------------------------------------------------------------------------------------------------------------
+[root@web2 session]# rpm -qa |grep jdk
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64
+copy-jdk-configs-2.2-3.el7.noarch
+
+[root@web2 session]# ls /root/lnmp_soft |grep apache
+apache-tomcat-8.0.30.tar.gz
+apache-tomcat-9.0.6-fulldocs.tar.gz
+apache-tomcat-9.0.6.tar.gz
+
+[root@web2 session]# rm -f /usr/local/tomcat
+[root@web2 session]# cd /usr/local/;ls
+bin  etc  games  include  lib  lib64  libexec  nginx  sbin  share  src
+[root@web2 local]# yum -y install java-1.8.0-openjdk    //安装JDK
+
+java-1.8.0-openjdk-devel.i686     java-1.8.0-openjdk-headless.i686
+java-1.8.0-openjdk-devel.x86_64   java-1.8.0-openjdk.i686
+
+[root@web2 local]# rpm -qa |grep java-1.8.0-openjdk
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64
+
+[root@web2 local]# yum -y install java-1.8.0-openjdk-headless  //安装JDK
+
+[root@web2 local]# rpm -qa |grep java-1.8.0-openjdk-headless
+java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64
+
+[root@web2 local]# java -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+[root@web2 local]# ls /root/lnmp_soft/apache-tomcat-*
+/root/lnmp_soft/apache-tomcat-8.0.30.tar.gz
+/root/lnmp_soft/apache-tomcat-9.0.6-fulldocs.tar.gz
+/root/lnmp_soft/apache-tomcat-9.0.6.tar.gz
+
+[root@web2 local]# ls /root/lnmp_soft/apache-tomcat-*
+/root/lnmp_soft/apache-tomcat-8.0.30.tar.gz
+/root/lnmp_soft/apache-tomcat-9.0.6-fulldocs.tar.gz
+/root/lnmp_soft/apache-tomcat-9.0.6.tar.gz
+[root@web2 local]# tar -xzPf /root/lnmp_soft/apache-tomcat-8.0.30.tar.gz  
+
+[root@web2 local]# ls
+apache-tomcat-8.0.30  etc    include  lib64    nginx  share
+bin                   games  lib      libexec  sbin   src
+[root@web2 local]# mv apache-tomcat-8.0.30/ tomcat/
+[root@web2 local]# ls
+bin  games    lib    libexec  sbin   src
+etc  include  lib64  nginx    share  tomcat
+
+
+[root@web2 local]# ls tomcat/
+bin   lib      logs    RELEASE-NOTES  temp     work
+conf  LICENSE  NOTICE  RUNNING.txt    webapps
+[root@web2 local]# 
+[root@web2 local]# ls /usr/local/tomcat/bin/
+[root@web2 local]# /usr/local/tomcat/bin/startup.sh 
+
+[root@web2 local]# netstat -anptul |grep java
+tcp6       0      0 :::8080                 :::*                    LISTEN      4204/java           
+tcp6       0      0 127.0.0.1:8005          :::*                    LISTEN      4204/java           
+tcp6       0      0 :::8009                 :::*                    LISTEN      4204/java   
+[root@web2 local]#  firefox http://192.168.2.100:8080
+
+[root@web2 local]# vim /usr/local/tomcat/conf/server.xml
+103     <Engine name="Catalina" defaultHost="localhost">
+104 
+105       <Host name="www.a.com"  appBase="a"
+106             unpackWARs="true" autoDeploy="true">
+107       </Host>
+108       <Host name="www.b.com"  appBase="b"
+109             unpackWARs="true" autoDeploy="true">
+110       </Host>
+
+[root@web2 local]# mkdir -p /usr/local/tomcat/{a,b}/ROOT
+[root@web2 local]#  echo "AAA"   > /usr/local/tomcat/a/ROOT/index.html
+[root@web2 local]# echo "BBB" > /usr/local/tomcat/b/ROOT/index.html
+
+[root@web2 local]# cd /usr/local/tomcat/;ls
+a  bin   lib      logs    RELEASE-NOTES  temp     work
+b  conf  LICENSE  NOTICE  RUNNING.txt    webapps
+[root@web2 tomcat]# ls webapps/
+docs  examples  host-manager  manager  ROOT
+
+
+
+
+
+
+

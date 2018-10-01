@@ -1,0 +1,676 @@
+
+VM1(eth0:192.168.4.7    eth1:192.168.2.7  )
+VM2(eth0:192.168.4.252  eth1:192.168.2.252)
+VM3(eth0:192.168.4.207  eth1:192.168.2.207)
+VM4(eth0:192.168.4.208  eth1:192.168.2.208)
+
+--------a4--VM1(eth0:192.168.4.7    eth1:192.168.2.7  )-----------
+[root@a4 ~]# ifconfig |grep 'inet ';
+        inet 192.168.4.7  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.7  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@a4 ~]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  20 19:41 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+
+[root@a4 ~]# yum -y install gcc pcre-devel openssl-devel
+[root@a4 ~]# rpm -q gcc pcre-devel openssl-devel
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+openssl-devel-1.0.2k-8.el7.x86_64
+
+[root@a4 ~]# useradd -s/sbin/nologin nginx
+[root@a4 ~]# tar -xzPf lnmp_soft.tar.gz
+[root@a4 ~]# cd lnmp_soft/
+[root@a4 lnmp_soft]# ls nginx-1.10.3.tar.gz 
+nginx-1.10.3.tar.gz
+[root@a4 lnmp_soft]# tar -xzPf nginx-1.10.3.tar.gz
+[root@a4 lnmp_soft]# cd nginx-1.10.3/
+[root@a4 nginx-1.10.3]# pwd
+/root/lnmp_soft/nginx-1.10.3
+[root@a4 nginx-1.10.3]# ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+[root@a4 nginx-1.10.3]# ./configure --prefix=/usr/local/nginx \
+> --user=nginx --group=nginx --with-http_ssl_module;
+
+[root@a4 nginx-1.10.3]# make |tail -3 && make install |tail -4;
+
+[root@a4 nginx-1.10.3]# ll /usr/local/nginx/sbin/nginx 
+-rwxr-xr-x. 1 root root 5409032 8月  21 20:29 /usr/local/nginx/sbin/nginx
+-------------# ln -s /usr/local/nginx/sbin/nginx  /sbin/  #方便后期使用,建立软连接
+[root@a4 nginx-1.10.3]# ll /sbin/nginx  #建立软连接ln -s /source  /lianjie/dian
+lrwxrwxrwx. 1 root root 27 8月  20 19:41 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+[root@a4 nginx-1.10.3]# netstat -anptul |grep :80
+[root@a4 nginx-1.10.3]# nginx 
+[root@a4 nginx-1.10.3]# netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      4795/nginx: master  
+[root@a4 nginx-1.10.3]# nginx -v    //查看软件信息
+nginx version: nginx/1.10.3
+netstat命令可以查看系统中启动的端口信息，该命令常用选项如下：
+-a显示所有端口的信息
+-n以数字格式显示端口号
+-t显示TCP连接的端口
+-u显示UDP连接的端口
+-l显示服务正在监听的端口信息，如httpd启动后，会一直监听80端口
+-p显示监听端口的服务名称是什么（也就是程序名称）
+nginx服务默认通过TCP 80端口监听客户端请求：
+[root@a4 nginx-1.10.3]# firefox 192.168.4.7
+[root@a4 nginx-1.10.3]# cd ~;ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     模板  文档  桌面
+initial-setup-ks.cfg  nginx-1.12.2.tar.gz  视频  下载
+lnmp_soft             公共                 图片  音乐
+[root@a4 ~]# tar -xPf nginx-1.12.2.tar.gz  #升级软件版本号
+[root@a4 ~]# cd nginx-1.12.2/
+[root@a4 nginx-1.12.2]# ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+[root@a4 nginx-1.12.2]# ./configure --prefix=/usr/local/nginx \
+> --user=nginx --group=nginx --with-http_ssl_module |tail -5;
+
+[root@a4 nginx-1.12.2]# make |tail -3;
+	
+make[1]: 离开目录“/root/nginx-1.12.2”
+-------------------------------------------------#升级软件版本号-----------------
+[root@a4 nginx-1.12.2]# mv /usr/local/nginx/sbin/nginx{,old}
+
+[root@a4 nginx-1.12.2]# ls /usr/local/nginx/sbin/
+nginxold
+[root@a4 nginx-1.12.2]# ls 
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+[root@a4 nginx-1.12.2]# ls objs
+autoconf.err  nginx    ngx_auto_config.h   ngx_modules.c  src
+Makefile      nginx.8  ngx_auto_headers.h  ngx_modules.o
+[root@a4 nginx-1.12.2]# 
+[root@a4 nginx-1.12.2]# cp objs/nginx /usr/local/nginx/sbin/
+[root@a4 nginx-1.12.2]# ls /usr/local/nginx/sbin/
+nginx  nginxold
+[root@a4 nginx-1.12.2]# /sbin/nginx -s stop
+[root@a4 nginx-1.12.2]# netstat -anptul |grep :80
+[root@a4 nginx-1.12.2]# nginx
+[root@a4 nginx-1.12.2]# netstat -anptul |grep :80
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      7703/nginx: master  
+[root@a4 nginx-1.12.2]# nginx -v
+nginx version: nginx/1.12.2
+root@a4 nginx-1.12.2]# firefox 192.168.4.7
+[root@VM1 ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.7  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.7  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@VM1 ~]# 
+
+====================================
+[root@VM1 ~]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@VM1 ~]# vim /etc/profile
+[root@VM1 ~]# tail -1 /etc/profile
+export PATH=/usr/local/nginx/sbin/:$PATH
+[root@VM1 ~]# source /etc/profile
+[root@VM1 ~]# echo $PATH
+/usr/local/nginx/sbin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@VM1 ~]# vim test.sh
+[root@VM1 ~]# cat test.sh
+#!/bin/bash
+netstat -ntpul |grep nginx >/dev/null
+case $1 in
+start)
+  if [ $? -eq 0 ];then
+     echo nginx is running
+  else
+     nginx
+  fi;;
+stop)
+   if [ $? -eq 0 ];then
+    nginx -s stop;
+   else
+     echo nginx is not running
+   fi;;
+restart)
+   if [ $? -eq 0 ];then
+      nginx -s  stop;
+   fi;
+      nginx;;
+status)
+   if [ $? -ne 0 ];then 
+     echo nginx is not running
+   else
+      echo nginx is running
+   fi;;
+*)  echo Error;
+esac
+================
+]# . test.sh status
+not running
+]# . test.sh start
+]# . test.sh start
+is-running
+]# . test.sh stop
+]# . test.sh stop
+nginx is not running
+]# . test.sh restart
+]# . test.sh restart
+]# . test.sh status
+running
+]# . test.sh statu
+Error
+===================
+[root@VM6 nginx-1.12.2]# ls  /usr/local/nginx/
+client_body_temp  fastcgi_temp  logs        sbin       uwsgi_temp
+conf              html          proxy_temp  scgi_temp
+[root@VM1 ~]# ls /usr/local/nginx/logs/
+access.log  error.log
+[root@VM6 nginx-1.12.2]# ls  /usr/local/nginx/html/
+50x.html  index.html
+
+[root@VM6 nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+
+  5 #error_log  logs/error.log;
+
+
+
+[root@VM6 nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+
+ 35     server {
+ 36         listen       80;
+ 37         server_name  www.a.com;
+ 38         auth_basic "INput Password";
+ 39         auth_basic_user_file  "/usr/local/nginx/pass";
+ 40         #charset koi8-r;
+ 41 
+ 42         #access_log  logs/host.access.log  main;
+ 43 
+ 44         location / {
+ 45             root   html;
+ 46             index  index.html index.htm;
+ 47         }
+
+ 85    server {
+ 86         listen       80;
+ 87         server_name  www.b.com;
+ 88 
+ 89         location / {
+ 90             root   www;
+ 91             index  index.html index.htm;
+ 92          }
+ 93     }
+
+:85,94s/#//
+
+[root@VM6 nginx-1.12.2]# mkdir /usr/local/nginx/www/
+[root@VM6 nginx-1.12.2]# ls /usr/local/nginx/
+client_body_temp  fastcgi_temp  logs  proxy_temp  scgi_temp   www
+conf              html          pass  sbin        uwsgi_temp
+
+[root@VM2 ~]# vim tex.txt
+[root@VM2 ~]# cat tex.txt
+babababa123
+[root@VM2 ~]# md5sum tex.txt 
+c99228b407b77c2bd77440e5d4bbe6fc  tex.txt
+[root@VM2 ~]# echo a >> tex.txt
+[root@VM2 ~]# md5sum tex.txt 
+ff580def3220d8fc0b97a237880176c0  tex.txt
+[root@VM2 ~]# cat tex.txt
+babababa123
+a
+[root@VM6 conf]# history |tail -30
+   66  cd /usr/local/nginx/conf/;ls
+   67  openssl genrsa > cert.key
+   68  openssl req -new -x509 -key cert.key  > cert.pem
+[root@VM6 conf]# vim /usr/local/nginx/conf/nginx.conf
+ 99     server {
+100         listen       443 ssl;
+101         server_name  localhost;
+102 
+103         ssl_certificate      cert.pem;
+104         ssl_certificate_key  cert.key;
+105 
+106         ssl_session_cache    shared:SSL:1m;
+107         ssl_session_timeout  5m;
+108 
+109         ssl_ciphers  HIGH:!aNULL:!MD5;
+110         ssl_prefer_server_ciphers  on;
+111 
+112         location / {
+113             root   html;
+114             index  index.html index.htm;
+115         }
+116     }
+]#  nginx -s reload
+   71  firefox http://localhost
+   72  firefox https://localhost
+   73  firefox https://192.168.4.5
+
+
+
+
+
+----------------VM2(eth0:192.168.4.252  eth1:192.168.2.252)  --------
+[root@VM2 ~]# yum repolist |awk '/repolist/{print $2}' |sed  's/,//'
+9972
+[root@VM2 ~]# ifconfig |grep 'net '
+        inet 192.168.4.252  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.252  netmask 255.255.255.0  broadcast 192.168.2.255
+
+[root@VM2 ~]# tar -xzPf lnmp_soft.tar.gz
+[root@VM2 ~]# tar -xzPf nginx-1.12.2.tar.gz
+[root@VM2 ~]# ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     公共  图片  音乐
+initial-setup-ks.cfg  nginx-1.12.2         模板  文档  桌面
+lnmp_soft             nginx-1.12.2.tar.gz  视频  下载
+[root@VM2 ~]# cd lnmp_soft/
+[root@VM2 lnmp_soft]# ls |grep php-fpm-5.4.16-42.el7.x86_64.rpm 
+php-fpm-5.4.16-42.el7.x86_64.rpm
+                                    //安装依赖包gcc pcre-devel openssl-devel
+[root@VM2 lnmp_soft]# yum -y install gcc pcre-devel openssl-devel |tail -5;
+  libsepol-devel.x86_64 0:2.5-6.el7                                             
+  libverto-devel.x86_64 0:0.2.5-4.el7                                           
+  zlib-devel.x86_64 0:1.2.7-17.el7                                              
+
+完毕！
+[root@VM2 nginx-1.12.2]# grep nginx /etc/passwd
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+                     ## --prefix=/usr/local/nginx \     //指定安装路径
+[root@VM2 nginx-1.12.2]# ./configure --prefix=/usr/local/nginx \
+> --user=nginx --group=nginx --with-http_ssl_module \
+> --with-stream |tail -12;
+ ###--with-stream ;    //开启TCP/UDP代理模块//开启4层反向代理功能     
+## --with-http_ssl_module//开启SSL加密功能
+-----------------------------------------------------
+[root@VM2 nginx-1.12.2]# ./configure --prefix=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module --with-stream;
+---------------------------------------------------------------------------------
+[root@VM2 nginx-1.12.2]# ls /usr/local/nginx
+ls: 无法访问/usr/local/nginx: 没有那个文件或目录
+
+[root@VM2 nginx-1.12.2]# make |tail -4 && make install |tail -5;
+
+	-e "s|%%CONF_PATH%%|/usr/local/nginx/conf/nginx.conf|" \
+	-e "s|%%ERROR_LOG_PATH%%|/usr/local/nginx/logs/error.log|" \
+	< man/nginx.8 > objs/nginx.8
+make[1]: 离开目录“/root/nginx-1.12.2”
+test -d '/usr/local/nginx/html' \
+	|| cp -R html '/usr/local/nginx'
+test -d '/usr/local/nginx/logs' \
+	|| mkdir -p '/usr/local/nginx/logs'
+make[1]: 离开目录“/root/nginx-1.12.2”
+
+[root@VM2 nginx-1.12.2]# ls /usr/local/nginx
+conf  html  logs  sbin
+[root@VM2 nginx-1.12.2]# ll /usr/local/nginx/sbin/nginx 
+-rwxr-xr-x. 1 root root 6526760 8月  23 08:37 /usr/local/nginx/sbin/nginx
+[root@VM2 nginx-1.12.2]# netstat -anptul |grep nginx
+[root@VM2 nginx-1.12.2]# /usr/local/nginx/sbin/nginx 
+[root@VM2 nginx-1.12.2]# netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      4732/nginx: master 
+                                   ---------------------------------- #方便后期使用,建立软连接
+[root@VM2 nginx-1.12.2]# ln -s /usr/local/nginx/sbin/nginx /sbin/nginx
+[root@VM2 nginx-1.12.2]# ls /sbin/ |tail -3
+zdump
+zic
+zramctl
+[root@VM2 nginx-1.12.2]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  23 08:51 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+[root@VM2 nginx-1.12.2]# ls objs/
+autoconf.err  nginx    ngx_auto_config.h   ngx_modules.c  src
+Makefile      nginx.8  ngx_auto_headers.h  ngx_modules.o
+          ------使用htpasswd命令创建账户文件，需要确保系统中已经安装了httpd-tools。
+[root@VM2 nginx-1.12.2]# yum -y install httpd-tools |tail -3
+  apr.x86_64 0:1.4.8-3.el7             apr-util.x86_64 0:1.5.2-6.el7            
+完毕！
+[root@VM2 nginx-1.12.2]# yum -y install elinks |tail -3
+  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 
+
+[root@VM2 nginx-1.12.2]# yum -y install mariadb mariadb-server mariadb-devel php php-mysql /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm | tail -15;
+
+已安装:
+  mariadb.x86_64 1:5.5.56-2.el7           mariadb-devel.x86_64 1:5.5.56-2.el7   
+  mariadb-server.x86_64 1:5.5.56-2.el7    php.x86_64 0:5.4.16-42.el7            
+  php-fpm.x86_64 0:5.4.16-42.el7          php-mysql.x86_64 0:5.4.16-42.el7      
+
+作为依赖被安装:
+  httpd.x86_64 0:2.4.6-67.el7          libzip.x86_64 0:0.10.1-8.el7             
+  mailcap.noarch 0:2.1.41-2.el7        perl-DBD-MySQL.x86_64 0:4.023-5.el7      
+  php-cli.x86_64 0:5.4.16-42.el7       php-common.x86_64 0:5.4.16-42.el7        
+  php-pdo.x86_64 0:5.4.16-42.el7      
+
+完毕！
+[root@VM2 nginx-1.12.2]#  rpm -q mariadb mariadb-server mariadb-devel php php-mysql php-fpm ;
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+[root@VM2 nginx-1.12.2]# rpm -q httpd-tools elinks
+httpd-tools-2.4.6-67.el7.x86_64
+elinks-0.12-0.36.pre6.el7.x86_64
+----# grant all on *.* to tom@%'192.168.2.2'---client ~]# mysql -h 192.168.4.5 -utom -p123;----
+
+[root@VM2 nginx-1.12.2]# cd ~;ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     公共  图片  音乐
+initial-setup-ks.cfg  nginx-1.12.2         模板  文档  桌面
+lnmp_soft             nginx-1.12.2.tar.gz  视频  下载
+[root@VM2 ~]# 
+[root@VM2 ~]# ls /usr/local/nginx/
+client_body_temp  fastcgi_temp  logs        sbin       uwsgi_temp
+conf              html          proxy_temp  scgi_temp
+
+------------# /sbin/nginx -s stop -----必须先停止nginx服务，再重新配置configure
+[root@VM2 ~]# rm -rf /usr/local/nginx/
+[root@VM2 ~]# cd nginx-1.12.2/
+[root@VM2 nginx-1.12.2]# ls
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+
+------------# --with-http_ssl_module        //开启SSL加密功能
+-----------# --with-stream         //开启TCP/UDP代理模块
+----------# --with-http_stub_status_module  //开启status状态页面
+
+[root@VM2 nginx-1.12.2]# ./configure --with-http_ssl_module \
+> --with-stream  --with-http_stub_status_module | tail -15;
+
+[root@VM2 nginx-1.12.2]# make |tail -3 && make install |tail -4; //编译并安装
+---------------------------------------修改Nginx配置文件，定义状态页面
+[root@VM2 nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+ 38 
+ 39         #charset koi8-r;
+ 40 
+ 41         #access_log  logs/host.access.log  main;
+ 42 
+ 43         location / {
+ 44             root   html;
+ 45             index  index.html index.htm;
+ 46         }
+ 47         location /status {
+ 48             stub_status on; //开启status状态页面
+ 49         }
+[root@VM2 nginx-1.12.2]# nginx -s reload  #失败原因：未先停止nginx服务，再重新配置
+nginx: [error] open() "/usr/local/nginx/logs/nginx.pid" failed (2: No such file or directory)
+[root@VM2 nginx-1.12.2]# killall nginx  #解决办法，杀死旧的nginx进程，
+[root@VM2 nginx-1.12.2]# nginx         # 再重新启动
+[root@VM2 nginx-1.12.2]#  netstat -anptul |grep nginx
+tcp    0    0 0.0.0.0:80    0.0.0.0:*    LISTEN   12157/nginx: master 
+
+[root@VM2 nginx-1.12.2]# firefox 192.168.4.252/status
+Active connections: 1 
+server accepts handled requests
+ 1 1 1 
+Reading: 0 Writing: 1 Waiting: 0 
+----------------------------------------[root@VM3 ~]# firefox 127.0.0.1
+Active connections: 2   #Active connections：当前活动的连接数量。
+server accepts handled requests
+ 3 3 7   #Accepts：已经接受客户端的连接总数量 3 
+#Handled：已经处理客户端的连接总数量 3 [一般与accepts一致，除非服务器限制了连接数量]
+#Requests：客户端发送的请求数量 7
+Reading: 0 Writing: 1 Waiting: 1 
+#Reading：当前服务器正在读取客户端请求头的数量0
+#Writing：当前服务器正在写响应信息的数量   1
+#Waiting：当前多少客户端在等待服务器的响应 1
+----------------------------------------------------------- 
+----[root@web2 ~]# ab -c100 -n1000 http://192.168.4.252/;注意斜杠/必须有252【/】
+Active connections: 1 
+server accepts handled requests
+ 1013 1013 1361 
+#Accepts：已经接受客户端的连接总数量 1013
+#Handled：已经处理客户端的连接总数量 1013
+#Requests：客户端发送的请求数量      1361
+Reading: 0 Writing: 1 Waiting: 0 
+
+------------jpg,mp3,mp4,png,gif 多媒体文件不要压缩
+#cat /usr/local/nginx/conf/mime.types
+types {
+    application/javascript                js;
+    application/rss+xml                   rss;
+    application/vnd.ms-excel              xls;
+-----------------------------------------------------------------------------------------
+------------------nginx 配置open_cache_file 静态文件的缓存----------
+[root@VM2 nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 17 http {
+
+ 30     #keepalive_timeout  0;
+ 31     keepalive_timeout  65;
+ 32 
+ 33     gzip  on;      //开启压缩
+ 34     gzip_min_length 1000;   //小文件不压缩
+ 35     gzip_comp_level 4;    //压缩比率1最快，效果最差；9压缩最慢，效果最好
+  ##//对特定文件压缩，类型参考/usr/local/nginx/conf/mime.types
+ 36     gzip_types text/plain text/css application/json;
+
+ 37              #最多缓存多少2000个文件，缓存多少时间20s
+ 38     open_file_cache  max=2000   inactive=20s;
+ 39     open_file_cache_valid    60s;
+   #多少时间60s检查一次，如果发现60s内没有用过一次的删除
+ 40     open_file_cache_min_uses   5;#在20s中没有使用到这个配置的次数5的话就删除
+ 41     open_file_cache_errors   off;
+ 42 
+ 43     server {
+ 44         listen       80;
+
+[root@VM2 nginx-1.12.2]# nginx -s reload;echo $?
+0
+[root@VM2 nginx-1.12.2]# ps -aux |grep nginx |column -t;
+root    12157  0.0  0.1  46100   1932  ?      Ss  10:27  0:00  nginx:  master        process  nginx
+nobody  14273  0.0  0.2  48616   2112  ?      S   13:38  0:00  nginx:  worker        process
+root    14457  0.0  0.0  112676  980   pts/0  R+  13:57  0:00  grep    --color=auto  nginx
+
+[root@VM2 nginx-1.12.2]# netstat -anptul |grep nginx |column -t;
+tcp  0  0  0.0.0.0:80  0.0.0.0:*  LISTEN  12157/nginx:  master
+
+[root@VM2 nginx-1.12.2]# ss -anptul |grep nginx |column -t;
+tcp  LISTEN  0  128  *:80  *:*  users:(("nginx",pid=14273,fd=6),("nginx",pid=12157,fd=6))
+
+[root@VM2 nginx-1.12.2]# yum -y install php-pecl-memcache.x86_64 |tail -4;
+  php-pear.noarch 1:1.9.4-21.el7       php-process.x86_64 0:5.4.16-42.el7      
+  php-xml.x86_64 0:5.4.16-42.el7      
+
+完毕！
+[root@VM2 nginx-1.12.2]# rpm -q php-pecl-memcache.x86_64
+php-pecl-memcache-3.0.8-4.el7.x86_64
+[root@VM2 nginx-1.12.2]# systemctl restart php-fpm.service 
+[root@VM2 nginx-1.12.2]# systemctl enable php-fpm.service 
+
+
+
+
+
+
+
+
+-------------pc207---VM3(eth0:192.168.4.207  eth1:192.168.2.207)-------
+[root@pc207 ~]# ifconfig |grep 'inet ';
+        inet 192.168.4.207  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.207  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@pc207 ~]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  20 19:39 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+[root@pc207 ~]# rpm -q gcc pcre-devel openssl-devel
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+openssl-devel-1.0.2k-8.el7.x86_64
+[root@pc207 ~]# useradd -s/sbin/nologin nginx
+[root@pc207 ~]# tar -xzPf lnmp_soft.tar.gz 
+[root@pc207 ~]# cd lnmp_soft/
+[root@pc207 lnmp_soft]# ls nginx-1.10.3.tar.gz 
+nginx-1.10.3.tar.gz
+[root@pc207 lnmp_soft]# tar -xzPf nginx-1.10.3.tar.gz
+[root@pc207 lnmp_soft]# cd nginx-1.10.3/
+[root@pc207 nginx-1.10.3]# pwd
+/root/lnmp_soft/nginx-1.10.3
+[root@pc207 nginx-1.10.3]# ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+[root@pc207 nginx-1.10.3]# ./configure  --prefix=/usr/local/nginx \
+> --user=nginx --group=nginx --with-http_ssl_module;
+
+[root@pc207 nginx-1.10.3]# make |tail -3 && make install |tail -4;
+
+[root@pc207 nginx-1.10.3]# ll /usr/local/nginx/sbin/nginx 
+-rwxr-xr-x. 1 root root 5409032 8月  21 20:32 /usr/local/nginx/sbin/nginx
+------# ln -s /usr/local/nginx/sbin/nginx  /sbin/  #方便后期使用,建立软连接
+[root@pc207 nginx-1.10.3]# ll /sbin/nginx  #建立软连接ln -s /source  /lianjie/dian
+lrwxrwxrwx. 1 root root 27 8月  20 19:39 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+[root@pc207 nginx-1.10.3]# netstat -anptul |grep :80
+[root@pc207 nginx-1.10.3]# nginx 
+[root@pc207 nginx-1.10.3]# netstat -anptul |grep nginx |column -t;
+tcp  0  0  0.0.0.0:80  0.0.0.0:*  LISTEN  9059/nginx:  master
+[root@pc207 nginx-1.10.3]# nginx -v    //查看软件信息
+nginx version: nginx/1.10.3
+[root@pc207 nginx-1.10.3]# firefox 192.168.4.207
+[root@pc207 nginx-1.10.3]# cd ~;ls
+anaconda-ks.cfg       lnmp_soft            shel6  模板  文档  桌面
+initial-setup-ks.cfg  lnmp_soft.tar.gz     x.sh   视频  下载
+ks.cfg                nginx-1.12.2.tar.gz  公共   图片  音乐
+[root@pc207 ~]# tar -xPf nginx-1.12.2.tar.gz   #升级软件版本号
+[root@pc207 ~]# cd nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+[root@pc207 nginx-1.12.2]# ./configure  --prefix=/usr/local/nginx \
+> --user=nginx --group=nginx --with-http_ssl_module |tail -3;
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+
+[root@pc207 nginx-1.12.2]# 
+[root@pc207 nginx-1.12.2]# make |tail -3;
+	-e "s|%%ERROR_LOG_PATH%%|/usr/local/nginx/logs/error.log|" \
+	< man/nginx.8 > objs/nginx.8
+make[1]: 离开目录“/root/nginx-1.12.2”
+
+[root@pc207 nginx-1.12.2]# mv /usr/local/nginx/sbin/nginx{,old}
+[root@pc207 nginx-1.12.2]# ls objs
+autoconf.err  nginx    ngx_auto_config.h   ngx_modules.c  src
+Makefile      nginx.8  ngx_auto_headers.h  ngx_modules.o
+
+[root@pc207 nginx-1.12.2]# cp objs/nginx /usr/local/nginx/sbin/
+[root@pc207 nginx-1.12.2]# ls /usr/local/nginx/sbin/
+nginx  nginxold
+[root@pc207 nginx-1.12.2]# /sbin/nginx -s stop
+[root@pc207 nginx-1.12.2]# netstat -anptul |grep :80
+[root@pc207 nginx-1.12.2]# nginx 
+[root@pc207 nginx-1.12.2]# netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      13896/nginx: master 
+[root@pc207 nginx-1.12.2]# nginx -v
+nginx version: nginx/1.12.2
+[root@pc207 nginx-1.12.2]# firefox 192.168.4.207
+[root@VM3 ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.207  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.207  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@VM3 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+============c4---VM4(eth0:192.168.4.208  eth1:192.168.2.208)--------------
+[root@c4 ~]# ifconfig |sed -n '/inet /p'
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.208  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@c4 ~]# ll /sbin/nginx
+lrwxrwxrwx. 1 root root 27 8月  20 19:57 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+
+[root@c4 ~]# rpm -q gcc pcre-devel openssl-devel
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+openssl-devel-1.0.2k-8.el7.x86_64
+
+[root@c4 ~]# useradd -s/sbin/nologin nginx
+
+[root@c4 ~]# tar -xzPf lnmp_soft.tar.gz 
+[root@c4 ~]# cd lnmp_soft/
+[root@c4 lnmp_soft]# ls nginx-1.10.3.tar.gz 
+nginx-1.10.3.tar.gz
+[root@c4 lnmp_soft]# tar -xzPf nginx-1.10.3.tar.gz
+
+[root@c4 lnmp_soft]# cd nginx-1.10.3/
+[root@c4 nginx-1.10.3]# pwd
+/root/lnmp_soft/nginx-1.10.3
+[root@c4 nginx-1.10.3]# ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+[root@c4 nginx-1.10.3]# ./configure --prefix=/usr/local/nginx \
+> --user=nginx --group=nginx --with-http_ssl_module;
+
+[root@c4 nginx-1.10.3]# make |tail -3 && make install |tail -4;
+
+[root@c4 nginx-1.10.3]# ll /usr/local/nginx/sbin/nginx 
+-rwxr-xr-x. 1 root root 5409032 8月  21 20:32 /usr/local/nginx/sbin/nginx
+---# ln -s /usr/local/nginx/sbin/nginx  /sbin/  #方便后期使用,建立软连接
+[root@c4 nginx-1.10.3]# ll /sbin/nginx  #建立软连接ln -s /source  /lianjie/dian
+lrwxrwxrwx. 1 root root 27 8月  20 19:57 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+
+[root@c4 nginx-1.10.3]# netstat -anptul |grep nginx |column -t;
+[root@c4 nginx-1.10.3]# nginx
+[root@c4 nginx-1.10.3]# netstat -anptul |grep nginx |column -t;
+tcp  0  0  0.0.0.0:80  0.0.0.0:*  LISTEN  4853/nginx:  master
+[root@c4 nginx-1.10.3]# nginx -v    //查看软件信息
+nginx version: nginx/1.10.3
+[root@c4 nginx-1.10.3]# firefox 192.168.4.208
+[root@c4 nginx-1.10.3]# cd ~;ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     模板  文档  桌面
+initial-setup-ks.cfg  nginx-1.12.2.tar.gz  视频  下载
+lnmp_soft             公共                 图片  音乐
+[root@c4 ~]# tar -xPf nginx-1.12.2.tar.gz     #升级软件版本号
+[root@c4 ~]# cd nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+[root@c4 nginx-1.12.2]# ./configure --prefix=/usr/local/nginx \
+> --user=nginx --group=nginx --with-http_ssl_module |tail -3;
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+
+[root@c4 nginx-1.12.2]# 
+[root@c4 nginx-1.12.2]# make |tail -3;
+	-e "s|%%ERROR_LOG_PATH%%|/usr/local/nginx/logs/error.log|" \
+	< man/nginx.8 > objs/nginx.8
+make[1]: 离开目录“/root/nginx-1.12.2”
+
+[root@c4 nginx-1.12.2]# mv /usr/local/nginx/sbin/nginx{,old}
+[root@c4 nginx-1.12.2]# ls objs
+autoconf.err  nginx    ngx_auto_config.h   ngx_modules.c  src
+Makefile      nginx.8  ngx_auto_headers.h  ngx_modules.o
+
+[root@c4 nginx-1.12.2]# cp objs/nginx /usr/local/nginx/sbin/
+[root@c4 nginx-1.12.2]# ls
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+[root@c4 nginx-1.12.2]# ls /usr/local/nginx/sbin/
+nginx  nginxold
+[root@c4 nginx-1.12.2]# nginx -s stop
+[root@c4 nginx-1.12.2]# netstat -anptul |grep nginx
+[root@c4 nginx-1.12.2]# nginx
+[root@c4 nginx-1.12.2]# netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      7897/nginx: master  
+[root@c4 nginx-1.12.2]# nginx -v
+nginx version: nginx/1.12.2
+[root@c4 nginx-1.12.2]# firefox 192.168.4.208
+[root@VM4 ~]# ifconfig |grep 'net ' |head -2
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.208  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@VM4 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+200  一切正常	；	301	永久重定向；	302	临时重定向；
+401  用户名/密码错误；	403 禁止访问（客户端IP地址被拒绝） ； 404  文件不存在；
+404  请求URI 头部过长 ；	500 服务器内部错误；	502  Bad Gateway
+========================
