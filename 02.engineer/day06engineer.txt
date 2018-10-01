@@ -1,0 +1,491 @@
+[root@room9pc01 ~]# scp /root/桌面/hai.jpg  /root/桌面/a1.jpg root@176.121.209.142:/root/桌面/
+The authenticity of host '176.121.209.142 (176.121.209.142)' can't be established.
+ECDSA key fingerprint is SHA256:E4pKql4PrarRjU+nQGmXxNZtpruubgMFRMVTr7Lvh3U.
+ECDSA key fingerprint is MD5:bc:3d:0e:d0:5e:aa:98:82:5d:fd:20:ff:fb:37:ab:3f.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '176.121.209.142' (ECDSA) to the list of known hosts.
+root@176.121.209.142's password: 
+hai.jpg                                                         100%   98KB  30.0MB/s   00:00    
+a1.jpg                                                          100%   14KB  10.8MB/s   00:00    
+[root@room9pc01 ~]# ifconfig | head -2
+enp1s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.209.129  netmask 255.255.255.0  broadcast 176.121.209.255
+[root@room9pc01 ~]# scp /root/桌面/hai.jpg /root/桌面/a1.jpg root@176.121.209.134:/root/桌面/
+root@176.121.209.134's password: 
+hai.jpg                                                         100%   98KB  32.9MB/s   00:00    
+a1.jpg                                                          100%   14KB  10.8MB/s   00:00    
+[root@room9pc01 ~]# 
+[root@server0 ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@server0 ~]# firewall-cmd --get-default-zone
+trusted
+[root@desktop0 ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@desktop0 ~]# firewall-cmd --get-default-zone
+trusted
+
+
+
+[root@desktop0 ~]# yum -y install httpd
+
+已安装:
+  httpd.x86_64 0:2.4.6-17.el7                                                                  
+
+作为依赖被安装:
+  apr.x86_64 0:1.4.8-3.el7                         apr-util.x86_64 0:1.5.2-6.el7               
+  httpd-tools.x86_64 0:2.4.6-17.el7                mailcap.noarch 0:2.1.41-2.el7               
+
+完毕！
+[root@desktop0 ~]# rpm -q httpd
+httpd-2.4.6-17.el7.x86_64
+
+[root@server0 ~]# yum -y httpd
+
+已安装:
+  httpd.x86_64 0:2.4.6-17.el7                                                                  
+
+作为依赖被安装:
+  apr.x86_64 0:1.4.8-3.el7                         apr-util.x86_64 0:1.5.2-6.el7               
+  httpd-tools.x86_64 0:2.4.6-17.el7                mailcap.noarch 0:2.1.41-2.el7               
+
+完毕！
+[root@server0 ~]# rpm -q httpd
+httpd-2.4.6-17.el7.x86_64
+
+[root@server0 ~]# echo '<h1 color=red>NSD1805' > /var/www/index.html
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firefox 172.25.0.10
+
+(process:2126): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# echo '<h1>NSD1805' > /var/www/index.html
+[root@server0 ~]# firefox 172.25.0.10
+
+(process:2208): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# rpm -q httpd
+httpd-2.4.6-17.el7.x86_64
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# echo '<h1>NSD1805' > /var/www/html/index.html
+[root@server0 ~]# firefox 172.25.0.10
+
+(process:2352): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+
+[root@server0 ~]# vim /etc/httpd/conf/httpd.conf
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# cat /etc/httpd/conf/httpd.conf | grep server0.example.com
+ServerName server0.example.com:80
+- - - - -- - - - -   - - -- - -- - - - - - -- -- - - -- - - -- - -- - -- - - - - -
+[root@server0 ~]# nslookup server0.example.com
+Server:		172.25.254.254
+Address:	172.25.254.254#53
+
+Name:	server0.example.com
+Address: 172.25.0.11
+[root@desktop0 ~]# firefox server0.example.com
+[root@server0 ~]# cat -n /etc/httpd/conf/httpd.conf | grep server0.example.com
+    97	ServerName server0.example.com:80
+[root@server0 ~]# cat -n /etc/httpd/conf/httpd.conf | grep 'server0.example.com'
+    97	ServerName server0.example.com:80
+
+[root@server0 ~]# echo '<h1>wo shi myweb' > /var/www/myweb
+-bash: /var/www/myweb: 是一个目录
+[root@server0 ~]# echo '<h1>wo shi myweb' > /var/www/myweb/index.html
+[root@server0 ~]# vim /etc/httpd/conf/httpd.conf
+[root@server0 ~]# cat -n /etc/httpd/conf/httpd.conf | grep DocumentRoot
+   116	# DocumentRoot: The directory out of which you will serve your
+   120	#DocumentRoot "/var/www/html"
+   121	DocumentRoot "/var/www/myweb"
+   232	    # access content that does not live under the DocumentRoot.
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firefox server0.example.com
+
+(process:30188): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# 
+[root@server0 ~]# ls /
+bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
+boot  etc  lib   media  opt  root  sbin  sys  usr
+[root@server0 ~]# ls /var/www/
+cgi-bin  html  index.html  myweb
+
+[root@server0 ~]# echo '<h1><marquee><font color=pink> wo shi shui?' >> /var/www/myweb/index.html
+root@server0 ~]# ls /var/www/
+cgi-bin  html  index.html  myweb
+[root@server0 ~]# elinks -dump server0.example.com
+bash: elinks: 未找到命令...
+[root@server0 ~]# elinks -dump server0.example.com
+bash: elinks: 未找到命令...
+[root@server0 ~]# elinks -dump desktop0.example.com
+bash: elinks: 未找到命令...
+[root@server0 ~]# elinks dump desktop0.example.com
+bash: elinks: 未找到命令...
+[root@server0 ~]# vim /etc/httpd/conf.d/*.conf
+还有 3 个文件等待编辑
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# mkdir /var/www/qq /var/www/sina
+[root@server0 ~]# echo '<h1><marquee><font color=yellow>企鹅' > /var/www/qq/index.html
+[root@server0 ~]# echo '<h1><marquee><font color=pink>新郎' > /var/www/sina/index.html
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/qq
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  wabapp0.example.com
+  DocumentRoot /var/www/sina   
+</VirtualHost>
+
+[root@server0 ~]# firefox www0.example.com
+
+(process:31294): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# firefox wabapp0.example.com
+
+(process:31348): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# firefox webapp0.example.com
+
+(process:31426): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# firefox www0.example.com
+
+(process:31489): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firfox webapp0.example.com
+bash: firfox: 未找到命令...
+[root@server0 ~]# firefox webapp0.example.com
+
+(process:31610): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+
+(process:31610): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+[root@server0 ~]# firefox webapp0.example.com
+
+(process:31674): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/qq
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  webapp0.example.com
+  DocumentRoot /var/www/sina   
+</VirtualHost>
+
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/qq
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  webapp0.example.com
+  DocumentRoot /var/www/sina   
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  server0.example.com
+  DocumentRoot /var/www/myweb
+</VirtualHost>
+
+
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firefox server0.example.com
+
+(process:32083): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+
+(process:32083): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+[root@server0 ~]# firefox server0.example.com
+
+(process:32139): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+
+[root@server0 ~]# mkdir /var/www/myweb/private
+[root@server0 ~]# echo '<h1>woshiccc' > /var/www/myweb/private/index.html
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd02.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd02.conf
+<Directory "/var/www/myweb/private">
+ Require ip 172.25.0.11
+</Directory>
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firefox server0.example.com/private
+[root@server0 ~]# firefox http://server0.example.com/private
+
+(process:1630): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+[root@server0 ~]# firefox http://server0.example.com/private/index.html
+
+[root@server0 ~]# mkdir /webroot
+[root@server0 ~]# echo '<h1>wo shi webroot' > /webroot/index.html
+[root@server0 ~]# ls /webroot
+index.html
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/qq
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  webapp0.example.com
+  DocumentRoot /var/www/sina   
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  server0.example.com
+  DocumentRoot /var/www/myweb
+</VirtualHost>
+
+
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd02.conf
+<Directory "/var/www/myweb/private">
+ Require ip 172.25.0.11
+</Directory>
+
+
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd02.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd02.conf
+<Directory "/var/www/myweb/private">
+ Require ip 172.25.0.11
+</Directory>
+<Directory "/webroot">
+ Require all granted
+</Directory>
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/qq
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  webapp0.example.com
+  DocumentRoot /var/www/sina   
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  server0.example.com
+  DocumentRoot /webroot 
+# DocumentRoot /var/www/myweb
+</VirtualHost>
+
+
+[root@server0 ~]# systemctl restart httpd
+
+[root@server0 ~]# grep apache /etc/passwd
+apache:x:48:48:Apache:/usr/share/httpd:/sbin/nologin
+[root@server0 ~]# id apache
+uid=48(apache) gid=48(apache) 组=48(apache)
+[root@server0 ~]# getenforce
+Enforcing
+[root@server0 ~]# setenforce 0
+[root@server0 ~]# getenforce
+Permissive
+[root@server0 ~]# firefox server0.example.com
+[root@server0 ~]# semanage fcontext -
+usage: semanage fcontext [-h] [-n] [-N] [-s STORE] [ --add ( -t TYPE -f FTYPE -r RANGE -s SEUSER | -e EQUAL ) FILE_SPEC ) | --delete ( -t TYPE -f FTYPE | -e EQUAL ) FILE_SPEC ) | --deleteall  | --extract  | --list -C | --modify ( -t TYPE -f FTYPE -r RANGE -s SEUSER | -e EQUAL ) FILE_SPEC ) ]
+[root@server0 ~]# ls -Zd /var/www/
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 /var/www/
+[root@server0 ~]# ls -Zd /webroot
+drwxr-xr-x. root root unconfined_u:object_r:default_t:s0 /webroot
+
+[root@server0 ~]# chcon  --reference=/var/www  /webroot/
+[root@server0 ~]# chcon -R  --reference=/var/www  /webroot/
+[root@server0 ~]# getenforce
+Permissive
+[root@server0 ~]# ls -Zd /webroot/
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 /webroot/
+[root@server0 ~]# ls -Zd /var/www/
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 /var/www/
+
+
+[root@server0 ~]# semanage fcontext -l | grep /var/www/  | head -8
+/var/www/[^/]*/cgi-bin(/.*)?                       all files          
+/var/www/cgi-bin/apcgui(/.*)?                      all files          system_u:object_r:httpd_apcupsd_cgi_script_exec_t:s0 
+[root@server0 ~]#
+[root@server0 ~]# semanage fcontext -l | grep httpd_sys_content_t  | head -7
+
+
+http://classroom.example.com/pub/materials/webinfo.wsgi
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# cd /var/www/sina
+[root@server0 sina]# wget http://classroom.example.com/pub/materials/webinfo.wsgi
+[root@server0 sina]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/qq
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  webapp0.example.com
+  DocumentRoot /var/www/sina   
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  server0.example.com
+  DocumentRoot /webroot 
+# DocumentRoot /var/www/myweb
+</VirtualHost>
+
+[root@server0 sina]# firefox webapp0.example.com/webinfo.wsgi
+
+(process:3767): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 sina]# 
+[root@server0 sina]# pwd
+/var/www/sina
+[root@server0 sina]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 sina]# systemctl restart httpd
+[root@server0 sina]# firefox webapp0.example.com
+
+(process:3900): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+
+(process:3900): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+[root@server0 sina]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/qq
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  webapp0.example.com
+  DocumentRoot /var/www/sina   
+ Alias / /var/www/sina/webinfo.wsgi
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  server0.example.com
+  DocumentRoot /webroot 
+# DocumentRoot /var/www/myweb
+</VirtualHost>
+
+
+[root@server0 ~]# yum -y install mod_wsgi
+
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/qq
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  webapp0.example.com
+  DocumentRoot /var/www/sina   
+  WsgiScriptAlias /  /var/www/sina/webinfo.wsgi
+  
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  server0.example.com
+  DocumentRoot /webroot 
+# DocumentRoot /var/www/myweb
+</VirtualHost>
+[root@server0 ~]# firefox webapp0.example.com
+
+
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+
+[root@server0 ~]# semanage port -l | grep http
+http_cache_port_t              tcp      8080, 8118, 8123, 10001-10010
+http_cache_port_t              udp      3130
+http_port_t                    tcp      80, 81, 443, 488, 8008, 8009, 8443, 9000
+pegasus_http_port_t            tcp      5988
+pegasus_https_port_t           tcp      5989
+[root@server0 ~]# 
+
+[root@server0 ~]# systemctl -a  -t http_port_t  -p  tcp 8909
+Unknown unit type or load state 'http_port_t'.
+Use -t help to see a list of allowed values.
+[root@server0 ~]# semanage port -a -t http_port_t  -p tcp 8909
+[root@server0 ~]# semanage port -l | grep http
+http_cache_port_t              tcp      8080, 8118, 8123, 10001-10010
+http_cache_port_t              udp      3130
+http_port_t                    tcp      8909, 80, 81, 443, 488, 8008, 8009, 8443, 9000
+pegasus_http_port_t            tcp      5988
+pegasus_https_port_t           tcp      5989
+[root@server0 ~]# systemctl restart httpd
+
+[root@server0 ~]# firefox  webapp0.example.com:8909
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/qq
+</VirtualHost>
+Listen 8909
+<VirtualHost *:8909>
+  ServerName  webapp0.example.com
+  DocumentRoot /var/www/sina   
+  WsgiScriptAlias /  /var/www/sina/webinfo.wsgi
+  
+</VirtualHost>
+
+<VirtualHost *:80>
+  ServerName  server0.example.com
+  DocumentRoot /webroot 
+# DocumentRoot /var/www/myweb
+</VirtualHost>
+
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firefox  webapp0.example.com:8909
+
+
+[root@server0 ~]# vim /etc/httpd/conf/httpd.conf 
+ 30 #
+ 31 ServerRoot "/etc/httpd"
+ 32 
+ 33 #
+
+
+103 <Directory />
+104     AllowOverride none
+105     Require all denied
+106 </Directory>
+107 
+
+119 #
+120 #DocumentRoot "/var/www/html"
+121 DocumentRoot "/var/www/myweb"
+122 
+123 #
+124 # Relax access to content within /var/www.
+125 #
+126 <Directory "/var/www">
+127     AllowOverride None
+128     # Allow open access:
+129     Require all granted
+130 </Directory>
+131 
+132 # Further relax access to the default document root:
+133 <Directory "/var/www/html">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

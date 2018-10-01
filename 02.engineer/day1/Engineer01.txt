@@ -1,0 +1,311 @@
+真机：还原三台虚拟机
+[root@room9pc13 ~]# rht-vmctl reset classroom  
+[root@room9pc13 ~]# rht-vmctl reset server
+[root@room9pc13 ~]# rht-vmctl reset desktop   
+
+########################################################
+
+统计文件有多少行
+[root@server0 ~]# wc -l /etc/passwd
+[root@server0 ~]# wc -l /etc/redhat-release 
+
+ 请计算Linux系统中一共有多少个用户？
+[root@server0 ~]# wc -l /etc/passwd
+ 
+ 请计算Linux系统/etc/以tab结尾的文件有多少个？
+[root@server0 ~]# find /etc/ -name "*tab" | wc -l
+
+[root@server0 ~]# find /etc/ -name "*.conf" | wc -l
+
+###################################################
+扇区:512字节
+
+• 识别硬盘 => 分区规划 => 格式化 => 挂载使用
+
+   毛坯楼层=>打隔断=>装修 => 入驻
+
+
+格式化：赋予一种规则，数据在空间存放的规则（文件系统）
+
+###################################################
+ 分区规划 
+
+分区模式：施工方案
+
+    MBR/msdos：最大支持到2TB
+       – 分区的类型：主分区   扩展分区   逻辑分区
+       – 4个主分区,或者 3个主分区+1个扩展分区(n个逻辑分区)
+       – 扩展分区空间不能直接使用
+
+
+一、进行分区
+1.查看当前系统识别的磁盘
+[root@server0 ~]# lsblk 
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda     253:0    0  10G  0 disk 
+└─vda1 253:1    0  10G  0 part /
+vdb     253:16   0  10G  0 disk
+ 
+[root@server0 ~]# ls /dev/vdb
+
+2.划分分区
+[root@server0 ~]# fdisk  /dev/vdb
+   n 创建新的分区----->回车----->回车---->回车----->在last结束时 +2G
+   p 查看分区表
+   n 创建新的分区----->回车----->回车---->回车----->在last结束时 +2G
+   d 删除分区
+   w 保存并退出
+
+[root@server0 ~]# lsblk 
+[root@server0 ~]# ls /dev/vdb[1-2]
+
+
+二、格式化
+[root@server0 ~]# mkfs.ext4 /dev/vdb1   #格式化文件系统为ext4
+[root@server0 ~]# blkid /dev/vdb1       #查看文件系统类型
+
+[root@server0 ~]# blkid /dev/vdb2      
+[root@server0 ~]# mkfs.xfs /dev/vdb2   #格式化文件系统为xfs
+[root@server0 ~]# blkid /dev/vdb2
+
+  重复格式化
+[root@server0 ~]# mkfs.xfs -f /dev/vdb1
+
+三、挂载使用
+[root@server0 ~]# mount /dev/vdb1 /part1
+mount: 挂载点 /part1 不存在
+[root@server0 ~]# mkdir /part1
+[root@server0 ~]# mount /dev/vdb1 /part1
+
+[root@server0 ~]# mkdir /part2
+[root@server0 ~]# mount /dev/vdb2 /part2
+
+查看当前正在挂载设备的使用情况
+
+[root@server0 ~]# df -h
+
+四、开机自动挂载 /etc/fstab
+     
+     – 设备路径        挂载点       类型      参数          备份标记      检测顺序
+  
+ 补充：vim 命令模式 按 o 可以另起一行 进入插入模式
+
+[root@server0 ~]# vim  /etc/fstab
+ /dev/vdb1   /part1    ext4    defaults 0 0
+ /dev/vdb2   /part2    xfs     defaults 0 0
+
+[root@server0 ~]# df -h
+[root@server0 ~]# umount /part1
+[root@server0 ~]# umount /part2
+[root@server0 ~]# df -h
+[root@server0 ~]# mount -a
+[root@server0 ~]# df -h
+   检测/etc/fstab开机自动挂载配置文件,格式是否正确
+   检测/etc/fstab中,书写完成,但当前没有挂载的设备,进行挂载
+
+五、综合分区
+  最终有3个主分区，分别为2G、2G、1G
+  创建扩展分区
+  两个逻辑分区，分别为1G、1G
+[root@server0 ~]# fdisk  /dev/vdb
+   p 查看分区表
+   n 创建主分区----->回车----->回车---->回车----->在last结束时 +1G
+   p 查看分区表
+   n 创建扩展分区 
+                   ----->回车---->起始回车----->结束回车  将所有空间给扩展分区
+   p 查看分区表
+   n 创建逻辑分区----->起始回车------>结束+1G
+   n 创建逻辑分区----->起始回车------>结束+1G
+   p 查看分区表
+   w 保存并退出
+[root@server0 ~]# partprobe  刷新所有分区 
+[root@server0 ~]# lsblk
+[root@server0 ~]# ls /dev/vdb[1-6]
+
+   /dev/sda5: SCSI接口的第一块硬盘的第一个逻辑分区
+
+####################################################
+总结：
+   1.查看所有的硬盘设备   lsblk
+   2.进行分区        fdisk
+   3.刷新分区        partprobe
+   4.进行格式化     mkfs.ext4  mkfs.xfs
+   5.查看是否有文件系统    blkid
+   6.完成挂载        mount   
+   7.书写/etc/fstab完成开机自动挂载
+   8.进行mount -a测试
+   9.查看是否挂载成功  df  -h
+
+###################################################
+添加一个80G新虚拟磁盘
+
+[root@room9pc01 ~]# gos
+
+[root@server0 ~]# lsblk
+ 
+ vdc    253:32   0  80G  0 disk
+ 
+综合分区：
+   三个主分区，分别10G
+   创建扩展分区
+   两个逻辑分区，分别10G
+[root@server0 ~]# fdisk  /dev/vdc  
+   p 查看分区表
+   n 创建主分区----->回车----->回车---->回车----->在last结束时 +10G
+         连续创建3个10G主分区
+      ......
+   n 创建扩展分区 
+                   ----->回车---->起始回车----->结束回车  将所有空间给扩展分区
+   p 查看分区表
+   n 创建逻辑分区----->起始回车------>结束+10G
+   n 创建逻辑分区----->起始回车------>结束+10G
+   p 查看分区表
+   w 保存并退出
+[root@server0 ~]# lsblk 
+
+#######################################################
+LVM逻辑卷的管理
+
+   作用： 1.可以整合分散的空间   2.空间可以扩大
+
+创建思路：
+
+     零散空闲存储 ---->整合的虚拟磁盘 ---->虚拟的分区
+
+     物理卷（PV）     卷组（VG）     逻辑卷（LV）
+
+  将众多的 物理卷(PV)组成卷组(VG)，再从卷组(VG)划分出逻辑卷(LV）
+
+   蒸馒头：
+      面粉--------->大面团-------->小面团------->蒸------->吃
+
+   房子：
+      砖--------->大房子-------->打隔断-------->装修------->入住
+
+####################################################
+  
+一、创建逻辑卷
+
+1.直接创建卷组
+  格式：vgcreate 卷组名   分区路径
+
+[root@server0 ~]# vgcreate nsd /dev/vdc[1-2]
+[root@server0 ~]# pvs   #显示物理卷信息
+[root@server0 ~]# vgs   # 显示卷组信息
+
+2.创建逻辑卷
+  格式：lvcreate -L 大小    -n  逻辑卷名称     基于的卷组名
+
+[root@server0 ~]# lvcreate -L 16G -n mylv  nsd
+[root@server0 ~]# vgs
+[root@server0 ~]# lvs
+
+3.逻辑卷的使用
+[root@server0 ~]# ls /dev/nsd/mylv         #查看逻辑卷设备
+[root@server0 ~]# ls -l /dev/nsd/mylv
+[root@server0 ~]# mkfs.ext4 /dev/nsd/mylv   #格式化
+[root@server0 ~]# blkid  /dev/nsd/mylv
+
+[root@server0 ~]# vim  /etc/fstab 
+/dev/nsd/mylv  /lvm   ext4   defaults   0  0
+
+[root@server0 ~]# mkdir /lvm
+[root@server0 ~]# mount -a
+[root@server0 ~]# df -h
+
+####################################################
+逻辑卷的扩展,支持线上操作
+
+一、卷组有足够的剩余空间
+
+1.直接扩展逻辑卷空间
+[root@server0 ~]# vgs
+[root@server0 ~]# lvs
+[root@server0 ~]# lvextend -L 18G /dev/nsd/mylv 
+[root@server0 ~]# lvs
+
+2.扩展文件系统的大小（刷新文件系统的大小）
+    扩展ext4文件系统：resize2fs
+    扩展xfs文件系统：xfs_growfs
+
+[root@server0 ~]# df -h
+[root@server0 ~]# resize2fs /dev/nsd/mylv 
+[root@server0 ~]# df -h
+
+二、卷组没有足够的剩余空间
+
+1.扩展卷组空间
+[root@server0 ~]# vgextend nsd /dev/vdc3
+[root@server0 ~]# vgs
+
+2.直接扩展逻辑卷空间
+[root@server0 ~]# lvs
+[root@server0 ~]# lvextend -L 25G /dev/nsd/mylv 
+[root@server0 ~]# lvs
+
+3.扩展文件系统的大小（刷新文件系统的大小）
+
+[root@server0 ~]# df -h
+[root@server0 ~]# resize2fs /dev/nsd/mylv 
+[root@server0 ~]# df -h
+
+#######################################################
+逻辑卷补充内容：
+  ext4：支持缩减
+   xfs：不支持缩减
+
+一、逻辑卷的缩减，不支持线上操作
+  1.文件系统的缩减
+[root@server0 ~]# resize2fs /dev/nsd/mylv 10G
+[root@server0 ~]# umount /lvm
+[root@server0 ~]# resize2fs /dev/nsd/mylv 10G
+resize2fs 1.42.9 (28-Dec-2013)
+请先运行 'e2fsck -f /dev/nsd/mylv'.
+
+[root@server0 ~]# e2fsck -f /dev/nsd/mylv
+[root@server0 ~]# resize2fs /dev/nsd/mylv 10G
+
+  2.空间的缩减
+[root@server0 ~]# lvreduce -L 10G /dev/nsd/mylv 
+  WARNING: Reducing active logical volume to 10.00 GiB
+  THIS MAY DESTROY YOUR DATA (filesystem etc.)
+Do you really want to reduce mylv? [y/n]: y
+  Reducing logical volume mylv to 10.00 GiB
+  Logical volume mylv successfully resized
+[root@server0 ~]# lvs
+
+###################################################
+  PE：卷组划分空间的单位
+
+[root@server0 ~]# vgdisplay nsd   #显示nsd卷组详细信息
+
+  PE Size               4.00 MiB
+
+
+  请创建一个大小为250M逻辑卷为lvtest01
+
+[root@server0 ~]# vgchange -s 1M nsd
+
+[root@server0 ~]# vgdisplay 
+
+[root@server0 ~]# lvcreate -L 250M -n lvtest01 nsd
+
+[root@server0 ~]# lvs
+
+[root@server0 ~]# vgchange -s 16M nsd
+
+[root@server0 ~]# lvcreate -l 50 -n lvtest02 nsd
+
+  -l :指定PE个数
+
+##################################################
+  逻辑卷的删除
+    删除的顺序：向删除逻辑卷,在删除卷组，最后删除物理卷
+   
+
+[root@server0 ~]# lvremove /dev/nsd/mylv 
+  Logical volume nsd/mylv contains a filesystem in use.
+[root@server0 ~]# umount /lvm
+
+[root@server0 ~]# lvremove /dev/nsd/mylv 
+Do you really want to remove active logical volume m

@@ -1,0 +1,192 @@
+案例练习,准备:
+            rht-vmctl  reset  classroom
+            rht-vmctl  reset  server
+	       rht-vmctl  reset  desktop
+######################################################
+
+案例1:为虚拟机 server 配置以下虚拟Web主机
+- 实现三个网站的部署
+- 实现客户端访问server0.example.com网页内容为  复仇者联盟4
+- 实现客户端访问www0.example.com网页内容为 琅琊榜30
+- 实现客户端访问webapp0.example.com网页内容为 38里春风不如你
+[root@server0 ~]# yum -y install httpd
+[root@server0 ~]# rpm -q httpd
+httpd-2.4.6-17.el7.x86_64
+[root@server0 ~]# ifconfig | head -3
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.25.0.11  netmask 255.255.255.0  broadcast 172.25.0.255
+        inet6 fe80::5054:ff:fe00:b  prefixlen 64  scopeid 0x20<link>
+[root@server0 ~]# ifconfig | grep inet | head -3
+        inet 172.25.0.11  netmask 255.255.255.0  broadcast 172.25.0.255
+        inet6 fe80::5054:ff:fe00:b  prefixlen 64  scopeid 0x20<link>
+        inet 127.0.0.1  netmask 255.0.0.0
+[root@server0 ~]# mkdir /var/www/qq /var/www/sina /var/www/myweb
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+ ServerName  server0.example.com
+ DocumentRoot /var/www/myweb
+</VirtualHost>
+
+<VirtualHost *:80>
+ ServerName www0.example.com
+ DocumentRoot /var/www/qq
+</VirtualHost>
+<VirtualHost *:80>
+ ServerName webapp0.example.com
+ DocumentRoot /var/www/sina
+</VirtualHost>
+[root@server0 ~]# echo '<h1><font color=pink><marquee> 复仇者联盟4' > /var/www/myweb/index.html
+[root@server0 ~]# echo '<h1><font color=yellow><marquee>琅邪榜30' > /var/www/qq/index.html
+[root@server0 ~]# echo '<h1><h1>38里春风不如你' > /var/www/sina/index.html
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firefox server0.example.com
+[root@server0 ~]# firefox www0.example.com
+[root@server0 ~]# firefox webapp0.example.com
+[root@server0 ~]# getenforce
+Permissive
+[root@server0 ~]# firewall-cmd  --set-default-zone=trusted
+success
+[root@server0 ~]# firewall-cmd  --get-default-zone
+trusted
+[root@desktop0 ~]# firefox webapp0.example.com
+[root@desktop0 ~]# firefox server0.example.com
+[root@desktop0 ~]# firefox www0.example.com
+
+
+案例2:为虚拟机 server 配置Web访问控制
+在 Web 网站 http://server0.example.com 的 DocumentRoot 目录下创建一个名为 private 的子目录，要求如下：
+1）在server0.example.com的DocumentRoot目录下，private的子目录里书写网页文件index.html内容为  不许偷看丫
+2）此页面只能在本机浏览，但是从其他系统不能访问这个目录的内容
+[root@server0 ~]# mkdir /var/www/myweb/private
+[root@server0 ~]# echo '<h1><font color=purple><marquee>不许偷看丫' > /var/www/myweb/private/index.html
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd02.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd02.conf
+<Directory "/var/www/myweb/private">
+  Require IP 172.25.0.11
+</Directory>
+[root@server0 ~]# firefox http://server0.example.com/private
+
+[root@desktop0 ~]# firefox  server0.example.com/private
+403Forbidden  You don't have permission to access /private on this server.
+
+案例3:为虚拟机 server 使用自定Web根目录
+
+调整 Web 站点 http://server0.example.com 的网页目录，要求如下：
+1）新建目录 /webroot，作为此站点新的网页目录
+2）确保站点 http://server0.example.com  仍然可访问
+[root@server0 ~]# mkdir /webroot
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf | head -5
+<VirtualHost *:80>
+ ServerName  server0.example.com
+# DocumentRoot /var/www/myweb
+  DocumentRoot /webroot
+</VirtualHost>
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd02.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd02.conf
+<Directory "/var/www/myweb/private">
+  Require ip 172.25.0.11
+</Directory>
+<Directory "/webroot">
+ Require  all granted
+</Directory>
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# getenforce
+Enforcing
+[root@server0 ~]# echo '<h1><font color=blue><marquee>All is right!' > /webroot/index.html
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firefox server0.example.com
+[root@desktop0 ~]# firefox server0.example.com
+[root@server0 ~]# ls -Zd /var/www/
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 /var/www/
+[root@server0 ~]# ls -Zd /webroot
+drwxr-xr-x. root root unconfined_u:object_r:default_t:s0 /webroot
+[root@server0 ~]# chcon  -R  --reference=/var/www  /webroot
+[root@server0 ~]# ls -Zd /webroot
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 /webroot
+[root@desktop0 ~]# firefox server0.example.com
+
+
+案例4：为虚拟机 server 部署动态WSGI站点
+为站点 webapp0.example.com 配置提供动态Web内容，要求如下：
+1）此虚拟主机侦听在端口8909
+2）测试网页从以下地址下载，不要作任何更改http://classroom/pub/materials/webinfo.wsgi 
+3）从浏览器访问 http://webapp0.example.com:8909 可接收到动态生成的 Web 页面
+<VirtualHost *:80>
+ ServerName webapp0.example.com
+ DocumentRoot /var/www/sina
+
+
+[root@server0 ~]# ls /var/www/sina
+index.html
+[root@server0 ~]# cd /var/www/sina
+[root@server0 sina]# wget http://classroom/pub/materials/webinfo.wsgi
+[root@server0 sina]# ls
+index.html  webinfo.wsgi
+[root@server0 ~]# yum  -y install mod_wsgi
+[root@server0 ~]# rpm -q mod_wsgi
+mod_wsgi-3.4-11.el7.x86_64
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+ ServerName  server0.example.com
+# DocumentRoot /var/www/myweb
+  DocumentRoot /webroot
+</VirtualHost>
+<VirtualHost *:80>
+ ServerName www0.example.com
+ DocumentRoot /var/www/qq
+</VirtualHost>
+Listen  8909
+<VirtualHost *:8909>
+ ServerName webapp0.example.com
+ DocumentRoot /var/www/sina
+ WsgiScriptAlias /  /var/www/sina/webinfo.wsgi
+</VirtualHost>
+[root@server0 ~]# semanage  port -a -t http_port_t  -p tcp 8909
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firefox webapp0.example.com
+[root@server0 ~]# firefox webapp0.example.com:8909
+[root@desktop0 ~]# firefox webapp0.example.com
+[root@desktop0 ~]# firefox webapp0.example.com:8909
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

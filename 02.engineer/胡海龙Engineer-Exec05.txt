@@ -1,0 +1,249 @@
+案例练习,准备:
+            rht-vmctl  reset  classroom
+            rht-vmctl  reset  server
+	    rht-vmctl  reset  desktop
+######################################################
+案例1:在在 server0、desktop0 上操作
+– 将防火墙默认区域设置为trusted
+[root@server0 ~]# getenforce
+Enforcing
+[root@server0 ~]# setenforce 0
+[root@server0 ~]# vim /etc/selinux/config
+[root@server0 ~]# getenforce
+Permissive
+[root@server0 ~]# cat -n /etc/selinux/config | head -9 | tail -3
+     7	#SELINUX=enforcing
+     8	SELINUX=permissive
+     9	# SELINUXTYPE= can take one of these two values:
+[root@server0 ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@server0 ~]# firewall-cmd --get-default-zone
+trusted
+
+
+
+案例2:在server上操作，搭建mariadb数据库系统
+1. 在 server0 上安装 MariaDB 数据库系统
+1)安装 mariadb-server软件包
+2)启动 mariadb 服务
+[root@server0 ~]# yum -y install mariadb-server
+[root@server0 ~]# rpm -q mariadb-server
+mariadb-server-5.5.35-3.el7.x86_64
+[root@server0 ~]# systemctl restart mariadb
+[root@server0 ~]# systemctl enable mariadb
+
+案例3:在server上操作，配置一个数据库
+– 为mariadb数据库root设置登陆密码为 haxi
+  [root@server0 ~]# mysqladmin -u root password '1234'
+[root@server0 ~]# mysql -u root -p1234
+[root@server0 ~]# mysqladmin -u  root -p1234 password 'haxi'
+[root@server0 ~]# mysql -u root -phaxi
+
+– 新建一个数据库名为 nsd
+MariaDB [(none)]> create database nsd;
+Query OK, 1 row affected (0.00 sec)
+
+MariaDB [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| nsd                |
+| performance_schema |
+| test               |
++--------------------+
+5 rows in set (0.00 sec)
+
+– 除了 root 用户,此数据库只能被用户 lisi 查询,此用户的密码为 123(用户的授权)
+MariaDB [(none)]> grant select on nsd.* to lisi@localhost identified by '123';
+[root@server0 ~]# mysql -u lisi -p123
+
+– 数据库 nsd 中应该包含来自数据库复制的内容,
+数据库文件的 URL为:http://classroom/pub/materials/users.sql
+[root@server0 ~]# wget http://classroom/pub/materials/users.sql
+[root@server0 ~]# mysql -u root -phaxi nsd <users.sql
+
+案例4:在server上操作，使用数据库查询
+[root@server0 ~]# mysql -u root -phaxi
+MariaDB [(none)]> show databases;
+MariaDB [(none)]> use nsd;
+MariaDB [nsd]> show tables;
+MariaDB [nsd]> desc base;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| id       | int(11)     | YES  |     | NULL    |       |
+| name     | varchar(20) | YES  |     | NULL    |       |
+| password | varchar(24) | YES  |     | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+
+MariaDB [nsd]> desc location;
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| id    | int(11)     | YES  |     | NULL    |       |
+| city  | varchar(20) | YES  |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+
+
+1)密码是 solicitous 的人的名字?
+MariaDB [nsd]> select name from nsd.base where password='solicitous';
++-------+
+| name  |
++-------+
+| James |
++-------+
+
+2)有多少人的姓名是 Barbara 同时居住在 Sunnyvale?
+MariaDB [nsd]> select count(*),name,city from nsd.base,nsd.location where base.name='Barbara' and location.city='Sunnyvale';
++----------+---------+-----------+
+| count(*) | name    | city      |
++----------+---------+-----------+
+|        4 | Barbara | Sunnyvale |
++----------+---------+-----------+
+
+3)在base表中追加记录  id为6，name为Barbara，password为900
+MariaDB [nsd]> insert into base values('6','Barbara','900');
+
+4)在location表中追加记录  id为6，city为Sunnyvale
+MariaDB [nsd]> insert into location values('6','Sunnyvale');
+
+5)再次查询有多少人的姓名是 Barbara 同时居住在 Sunnyvale?
+MariaDB [nsd]> select count(*),name,city from base,location where base.name='Barbara' and location.city='Sunnyvale';
++----------+---------+-----------+
+| count(*) | name    | city      |
++----------+---------+-----------+
+|        9 | Barbara | Sunnyvale |
++----------+---------+-----------+
+
+案例5:虚拟机 server0操作， /dev/vdb 上按以下要求建立分区：
+
+采用默认的 msdos 分区模式 
+– 第1个分区 /dev/vdb1 的大小为 3G
+– 第2个分区 /dev/vdb2 的大小为 200M
+– 第3个分区 /dev/vdb3 的大小为 100M
+– 第4个分区 /dev/vdb4为扩展分区
+– 在划分三个分区逻辑分区/dev/vdb[5-6]，
+– 分区大小依次为500M、2000M
+[root@server0 ~]# fdisk /dev/vdb
+命令(输入 m 获取帮助)：n
+Select (default p): p
+分区号 (1-4，默认 1)：1
+
+命令(输入 m 获取帮助)：w
+
+[root@server0 ~]# lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda    253:0    0   10G  0 disk 
+└─vda1 253:1    0   10G  0 part /
+vdb    253:16   0   10G  0 disk 
+├─vdb1 253:17   0    3G  0 part 
+├─vdb2 253:18   0  100M  0 part 
+├─vdb3 253:19   0  100M  0 part 
+├─vdb4 253:20   0    1K  0 part 
+├─vdb5 253:21   0  500M  0 part 
+└─vdb6 253:22   0    2G  0 part 
+
+案例6：发布iSCSI网络磁盘
+
+ 1）配置 server0 提供 iSCSI 服务，要求如下：
+ 2）磁盘名为iqn.2016-02.com.example:server0
+ 3）服务端口为 3260
+ 4）使用 iscsi_store（后端存储的名称） 作其后端卷，其大小为 3GiB
+ 5）此磁盘服务只能被 desktop0.example.com 访问，在Server0上配置客户端ACL为iqn.2016-02.com.example:desktop0
+ 6）配置 desktop0 使用 server0 提供 iSCSI 服务
+[root@server0 ~]# yum -y install targetcli
+[root@server0 ~]# rpm -q targetcli
+targetcli-2.1.fb34-1.el7.noarch
+[root@server0 ~]# targetcli
+/> backstores/block create name=nsd18 dev=/dev/vdb1
+/> backstores/block delete nsd18
+/> backstores/block create name=iscsi_store dev=/dev/vdb1
+/> iscsi/ create iqn.2016-02.com.example:server0
+/> iscsi/iqn.2016-02.com.example:server0/tpg1/luns create /backstores/block/iscsi_store 
+Created LUN 0.
+/> ls
+/> iscsi/iqn.2016-02.com.example:server0/tpg1/portals create 172.25.0.11
+Using default IP port 3260
+Created network portal 172.25.0.11:3260.
+/> iscsi/iqn.2016-02.com.example:server0/tpg1/acls create iqn.2016-02.com.example:desktop0
+Created Node ACL for iqn.2016-02.com.example:desktop0
+Created mapped LUN 0.
+/> ls
+o- / ....................................................................................... [...]
+  o- backstores ............................................................................ [...]
+  | o- block ................................................................ [Storage Objects: 1]
+  | | o- iscsi_store ................................... [/dev/vdb1 (3.0GiB) write-thru activated]
+  | o- fileio ............................................................... [Storage Objects: 0]
+  | o- pscsi ................................................................ [Storage Objects: 0]
+  | o- ramdisk .............................................................. [Storage Objects: 0]
+  o- iscsi .......................................................................... [Targets: 1]
+  | o- iqn.2016-02.com.example:server0 ................................................. [TPGs: 1]
+  |   o- tpg1 ............................................................. [no-gen-acls, no-auth]
+  |     o- acls ........................................................................ [ACLs: 1]
+  |     | o- iqn.2016-02.com.example:desktop0 ................................... [Mapped LUNs: 1]
+  |     |   o- mapped_lun0 ......................................... [lun0 block/iscsi_store (rw)]
+  |     o- luns ........................................................................ [LUNs: 1]
+  |     | o- lun0 ................................................ [block/iscsi_store (/dev/vdb1)]
+  |     o- portals .................................................................. [Portals: 1]
+  |       o- 172.25.0.11:3260 ............................................................... [OK]
+  o- loopback ....................................................................... [Targets: 0]
+/> exit
+[root@server0 ~]# systemctl restart target
+[root@server0 ~]# systemctl enable target
+[root@server0 ~]# firewall-cmd --get-default-zone
+trusted
+--------------------------------------------------------------------------------------
+[root@desktop0 ~]# yum repolist
+已加载插件：langpacks
+[root@desktop0 ~]# yum -y install iscsi-initiator-utils.i686
+[root@desktop0 ~]# rpm -q iscsi-initiator-utils.i686
+iscsi-initiator-utils-6.2.0.873-21.el7.i686
+[root@desktop0 ~]# vim /etc/iscsi/initiatorname.iscsi 
+[root@desktop0 ~]# cat /etc/iscsi/initiatorname.iscsi
+#InitiatorName=iqn.1994-05.com.redhat:9e96ff23da37
+InitiatorName=iqn.2016-02.com.example:desktop0
+[root@desktop0 ~]# systemctl daemon-reload
+[root@desktop0 ~]# systemctl restart iscsid
+[root@desktop0 ~]# iscsiadm --mode discoverydb --type sendtargets --portal 172.25.0.11 --discover
+172.25.0.11:3260,1 iqn.2016-02.com.example:server0
+
+[root@desktop0 ~]# systemctl restart iscsi
+[root@desktop0 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+sda      8:0    0   3G  0 disk 
+vda    253:0    0  10G  0 disk 
+└─vda1 253:1    0  10G  0 part /
+vdb    253:16   0  10G  0 disk 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

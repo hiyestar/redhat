@@ -1,0 +1,372 @@
+[root@desktop0 ~]# getenforce
+Enforcing
+[root@desktop0 ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@desktop0 ~]# firewall-cmd --get-default-zone
+trusted
+
+[root@server0 ~]# getenforce
+Enforcing
+[root@server0 ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@server0 ~]# firewall-cmd --get-default-zone
+trusted
+[root@server0 ~]# yum -y install httpd
+[root@server0 ~]# rpm -q httpd
+httpd-2.4.6-17.el7.x86_64
+[root@server0 ~]# vim /etc/httpd/conf.d/nsd01.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/nsd01.conf
+<VirtualHost *:80>
+  ServerName   www0.example.com
+  DocumentRoot /var/www/html
+</VirtualHost> 
+[root@server0 ~]# echo '<h1><font color=purple><marquee> NSD test' > /var/www/html/index.html
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# yum -y install mod_ssl
+[root@server0 ~]# rpm -q mod_ssl
+mod_ssl-2.4.6-17.el7.x86_64
+[root@server0 ~]# ls /etc/pki/
+CA  ca-trust  consumer  entitlement  java  nssdb  product  rpm-gpg  rsyslog  tls
+
+[root@server0 ~]# ls /etc/pki/CA
+certs  crl  newcerts  private
+
+[root@server0 ~]# ls /etc/pki/tls
+cert.pem  certs  misc  openssl.cnf  private
+
+[root@server0 ~]# cd /etc/pki/CA/certs
+[root@server0 certs]# wget http://classroom.example.com/pub/tls/certs/server0.crt
+
+[root@server0 certs]# wget http://classroom.example.com/pub/example-ca.crt
+[root@server0 certs]# ls 
+example-ca.crt  server0.crt
+[root@server0 certs]# cd /etc/pki/CA/private
+[root@server0 private]# wget http://classroom.example.com/pub/tls/private/server0.key
+[root@server0 private]# ls
+server0.key
+
+[root@server0 private]# vim /etc/httpd/conf.d/ssl.conf
+
+ 59 DocumentRoot "/var/www/html"
+60 #ServerName www.example.com:443
+ 61 ServerName www0.example.com:443
+101 #SSLCertificateFile /etc/pki/tls/certs/localhost.crt
+102 SSLCertificateFile /etc/pki/CA/certs/server0.crt
+108 #SSLCertificateKeyFile /etc/pki/tls/private/localhost.key
+109 SSLCertificateKeyFile /etc/pki/CA/private/server0.key
+
+123 #SSLCACertificateFile /etc/pki/tls/certs/ca-bundle.crt
+124 SSLCACertificateFile /etc/pki/CA/certs/example-ca.crt
+
+
+[root@server0 /]# yum  -y install postfix
+[root@server0 /]# rpm -q  postfix
+postfix-2.10.1-6.el7.x86_64
+[root@server0 /]# systemctl restart httpd
+[root@server0 /]# firefox https://www0.example.com
+[root@server0 /]# vim /etc/postfix/main.cf
+
+ 99 #myorigin = $mydomain
+100 myorigin = server0.example.com
+
+116 #inet_interfaces = localhost
+117 inet_interfaces = all
+
+164 #mydestination = $myhostname, localhost.$mydomain, localhost
+165 mydestination = server0.example.com
+
+[root@server0 /]# systemctl restart postfix
+
+
+[root@server0 /]# useradd yangg
+[root@server0 /]# useradd xln
+[root@server0 /]# echo haha | mail -s 'testx3' -r yangg xln
+[root@server0 /]# mail -s 'testx1' -r yangg  xln
+aaaa
+dddd
+ggg
+fd.
+.
+EOT
+
+[root@server0 /]# echo '中文萨阿阿阿阿阿阿阿阿' | mail -s 'testx2' -r yangg  xln
+[root@server0 /]# mail -u xln
+Heirloom Mail version 12.5 7/5/10.  Type ? for help.
+"/var/mail/xln": 2 messages 1 new
+    1 yangg@server0.exampl  Fri Jun 15 14:50  22/606   "testx1"
+>N  2 yangg@server0.exampl  Fri Jun 15 14:52  18/608   "testx2"
+& 1
+Message  1:
+From yangg@server0.example.com  Fri Jun 15 14:50:32 2018
+Return-Path: <yangg@server0.example.com>
+X-Original-To: xln
+Delivered-To: xln@server0.example.com
+Date: Fri, 15 Jun 2018 14:50:31 +0800
+From: yangg@server0.example.com
+To: xln@server0.example.com
+Subject: testx1
+User-Agent: Heirloom mailx 12.5 7/5/10
+Content-Type: text/plain; charset=us-ascii
+Status: RO
+
+aaaa
+dddd
+ggg
+fd.
+
+& 2
+Message  2:
+From yangg@server0.example.com  Fri Jun 15 14:52:29 2018
+Return-Path: <yangg@server0.example.com>
+X-Original-To: xln
+Delivered-To: xln@server0.example.com
+Date: Fri, 15 Jun 2018 14:52:29 +0800
+From: yangg@server0.example.com
+To: xln@server0.example.com
+Subject: testx2
+User-Agent: Heirloom mailx 12.5 7/5/10
+Content-Type: text/plain; charset=utf-8
+Status: R
+
+中文萨阿阿阿阿阿阿阿阿
+
+& quit
+Held 2 messages in /var/mail/xln
+[root@server0 /]# 
+
+====================================================================
+[root@server0 /]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  10G  0 disk 
+└─vda1 253:1    0  10G  0 part /
+vdb    253:16   0  10G  0 disk 
+[root@server0 /]# parted /dev/vdb
+GNU Parted 3.1
+使用 /dev/vdb
+Welcome to GNU Parted! Type 'help' to view a list of commands.
+(parted) mktable gpt                                                      
+(parted) print                                                            
+Model: Virtio Block Device (virtblk)
+Disk /dev/vdb: 10.7GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start  End  Size  File system  Name  标志
+
+(parted) mkpart                                                           
+分区名称？  []?  lvm                                                      
+文件系统类型？  [ext2]? ext4 
+起始点？ 0                                                                
+结束点？ 1G                                                               
+警告: The resulting partition is not properly aligned for best performance.
+忽略/Ignore/放弃/Cancel?    
+忽略/Ignore/放弃/Cancel? Ignore 
+(parted) print                                                            
+Model: Virtio Block Device (virtblk)
+Disk /dev/vdb: 10.7GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start   End     Size    File system  Name  标志
+ 1      17.4kB  1000MB  1000MB               
+
+(parted) unit                                                             
+align-check  help         mktable      quit         select       unit         
+disk_set     mklabel      name         rescue       set          version      
+disk_toggle  mkpart       print        rm           toggle       
+ =========================================================
+[root@server0 /]# parted                                                  
+GNU Parted 3.1
+使用 /dev/vda
+Welcome to GNU Parted! Type 'help' to view a list of commands.
+(parted) rm                                                               
+分区编号？ 1                                                              
+错误: Partition /dev/vda1 is being used. You must unmount it before you modify it with Parted.
+(parted) quit                                                             
+[root@server0 /]# parted /dev/vdb
+GNU Parted 3.1
+使用 /dev/vdb
+Welcome to GNU Parted! Type 'help' to view a list of commands.
+(parted) mktable gpt                                                      
+警告: The existing disk label on /dev/vdb will be destroyed and all data on this disk will be lost. Do you
+want to continue?
+是/Yes/否/No? yes                                                         
+(parted) print                                                            
+Model: Virtio Block Device (virtblk)
+Disk /dev/vdb: 10.7GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start  End  Size  File system  Name  标志
+
+(parted) mkpart                                                           
+分区名称？  []? haha                                                      
+文件系统类型？  [ext2]? ext4                                              
+起始点？ 0                                                                
+结束点？ 2G                                                               
+警告: The resulting partition is not properly aligned for best performance.
+忽略/Ignore/放弃/Cancel? i                                                
+(parted) unit GB                                                          
+(parted) mkpart                                                           
+分区名称？  []? haha                                                      
+文件系统类型？  [ext2]? ext4                                              
+起始点？ 2G                                                               
+结束点？ 4G                                                               
+(parted) quit                                                             
+信息: You may need to update /etc/fstab.
+
+[root@server0 /]# lsblk                                                   
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda    253:0    0   10G  0 disk 
+└─vda1 253:1    0   10G  0 part /
+vdb    253:16   0   10G  0 disk 
+├─vdb1 253:17   0  1.9G  0 part 
+└─vdb2 253:18   0  1.9G  0 part 
+[root@server0 /]# 
+[root@server0 /]# mkfs.swap /dev/vdb1
+bash: mkfs.swap: 未找到命令...
+[root@server0 /]# mkswap /dev/vdb1
+正在设置交换空间版本 1，大小 = 1953104 KiB
+无标签，UUID=e09ba40d-68d4-45e1-92a6-2b44fa66cf51
+[root@server0 /]# swapon /dev/vdb1
+[root@server0 /]# swapon -s
+文件名				类型		大小	已用	权限
+/dev/vdb1                              	partition	1953104	0	-1
+[root@server0 /]# mkswap /dev/vdb2
+正在设置交换空间版本 1，大小 = 1952764 KiB
+无标签，UUID=d843637c-fa51-40b0-9f54-762518c241e4
+[root@server0 /]# swapon  /dev/vdb2
+[root@server0 /]# swapon -s
+文件名				类型		大小	已用	权限
+/dev/vdb1                              	partition	1953104	0	-1
+/dev/vdb2                              	partition	1952764	0	-2
+[root@server0 /]# swapoff /dev/vdb2
+[root@server0 /]# swapon -s
+文件名				类型		大小	已用	权限
+/dev/vdb1                              	partition	1953104	0	-1
+[root@server0 /]# 
+[root@server0 /]# vim /etc/fstab
+[root@server0 /]# vim /etc/fstab
+[root@server0 /]# cat /etc/fstab | tail -3
+UUID=9bf6b9f7-92ad-441b-848e-0257cbb883d1 /                       xfs     defaults        1 1
+/dev/vdb1 swap defaults 0 0
+/dev/vdb2 swap defaults 0 0
+[root@server0 /]# swapoff /dev/bdb2
+swapoff: /dev/bdb2：swapoff 失败: 没有那个文件或目录
+[root@server0 /]# swapon -s
+文件名				类型		大小	已用	权限
+/dev/vdb1                              	partition	1953104	0	-1
+[root@server0 /]# swapon -a
+[root@server0 /]# swapon -s
+文件名				类型		大小	已用	权限
+/dev/vdb1                              	partition	1953104	0	-1
+[root@server0 /]# swapoff /dev/vdb2
+swapoff: /dev/vdb2：swapoff 失败: 无效的参数
+[root@server0 /]# lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda    253:0    0   10G  0 disk 
+└─vda1 253:1    0   10G  0 part /
+vdb    253:16   0   10G  0 disk 
+├─vdb1 253:17   0  1.9G  0 part [SWAP]
+└─vdb2 253:18   0  1.9G  0 part 
+
+
+================================
+============================================
+====================================================
+[root@server0 /]# yum -y install nfs-utils
+已加载插件：langpacks
+软件包 1:nfs-utils-1.3.0-0.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@server0 /]# vim  /etc/exports
+[root@server0 /]# cat /etc/exports
+/test  *(ro)
+[root@server0 /]# mkdir /test
+[root@server0 /]# echo hahaha > /test/x1.txt
+[root@server0 /]# systemctl restart nfs-server
+
+[root@desktop0 ~]# showmount -e 172.25.0.11
+Export list for 172.25.0.11:
+/test *
+
+[root@desktop0 ~]# mkdir /mnt/nfs
+[root@desktop0 ~]# mount 172.25.0.11:/test /mnt/nfs
+[root@desktop0 ~]# df -h
+文件系统           容量  已用  可用 已用% 挂载点
+/dev/vda1           10G  3.0G  7.1G   30% /
+devtmpfs           906M     0  906M    0% /dev
+tmpfs              921M   80K  921M    1% /dev/shm
+tmpfs              921M   17M  904M    2% /run
+tmpfs              921M     0  921M    0% /sys/fs/cgroup
+172.25.0.11:/test   10G  3.1G  7.0G   31% /mnt/nfs
+[root@desktop0 ~]# vim /etc/fstab
+[root@desktop0 ~]# umount /mnt/nfs
+[root@desktop0 ~]# mount -a
+[root@desktop0 ~]# umount /mnt/nfs
+[root@desktop0 ~]# df -h
+文件系统        容量  已用  可用 已用% 挂载点
+/dev/vda1        10G  3.0G  7.1G   30% /
+devtmpfs        906M     0  906M    0% /dev
+tmpfs           921M   80K  921M    1% /dev/shm
+tmpfs           921M   17M  904M    2% /run
+tmpfs           921M     0  921M    0% /sys/fs/cgroup
+[root@desktop0 ~]# mount -a
+[root@desktop0 ~]# df -h
+文件系统           容量  已用  可用 已用% 挂载点
+/dev/vda1           10G  3.0G  7.1G   30% /
+devtmpfs           906M     0  906M    0% /dev
+tmpfs              921M   80K  921M    1% /dev/shm
+tmpfs              921M   17M  904M    2% /run
+tmpfs              921M     0  921M    0% /sys/fs/cgroup
+172.25.0.11:/test   10G  3.1G  7.0G   31% /mnt/nfs
+[root@desktop0 ~]# 
+[root@desktop0 ~]# cat /etc/fstab
+
+#
+# /etc/fstab
+# Created by anaconda on Wed May  7 01:22:57 2014
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+UUID=9bf6b9f7-92ad-441b-848e-0257cbb883d1 /                       xfs     defaults        1 1
+172.25.0.11:/test  /mnt/nfs  nfs defaults,_netdev  0  0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=======================================================
+

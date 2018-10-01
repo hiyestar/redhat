@@ -1,0 +1,519 @@
+真机：还原三台虚拟机
+[root@room9pc13 ~]# rht-vmctl reset classroom  
+[root@room9pc13 ~]# rht-vmctl reset server
+[root@room9pc13 ~]# rht-vmctl reset desktop   
+
+########################################################
+
+案例4:编写一个判断脚本
+在 server0 上创建 /root/foo.sh 脚本
+1)当运行/root/foo.sh redhat,输出为fedora
+2)当运行/root/foo.sh fedora,输出为redhat
+3)当没有任何参数或者参数不是 redhat 或者
+fedora时,其错误输出产生以下信息:   /root/foo.sh redhat|fedora
+
+[root@server0 ~]# vim /root/foo.sh 
+ #!/bin/bash
+ if [  $#  -eq  0  ];then
+   echo  '/root/foo.sh  redhat|fedora'  >&2 
+     #将正确输出变成错误输出
+     exit  3
+ elif [  $1  ==  redhat  ];then
+   echo fedora
+
+ elif  [  $1  ==  fedora  ];then
+   echo redhat
+
+ else
+   echo  '/root/foo.sh  redhat|fedora'  >&2
+     exit 4
+ fi
+
+###################################################
+案例5:编写一个批量添加用户脚本
+
+在 server0 上创建 /root/batchusers 脚本
+1)此脚本要求提供用户名列表文件作为参数
+2)如果没有提供参数,此脚本应该给出提示 
+Usage: /root/batchusers,退出并返回相应值
+3)如果提供一个不存在的文件,此脚本应该给出提
+示 Input file not found,退出并返回相应值
+4)新用户的登录Shell为 /bin/false,无需设置密码
+5)用户列表测试文件:
+ http://classroom.example.com/pub/materials/userlist
+
+
+[root@server0 /]# vim  /root/userlist 
+zhangsan
+lisi
+wangwu 
+dc
+tc
+
+[root@server0 /]# vim  /root/batchusers
+ #!/bin/bash
+ for i  in  `cat  /root/userlist`
+ do
+  useradd $i
+  echo $i创建成功
+ done
+
+
+[root@server0 /]# vim  /root/batchusers
+#!/bin/bash
+if  [ -f $1 ];then
+for i  in  `cat  $1`
+do
+ useradd $i 2> /dev/null
+ echo $i创建成功
+done
+else
+   echo Input file not found  >&2
+   exit 2
+fi
+
+
+
+[root@server0 /]# vim  /root/batchusers
+	#!/bin/bash
+	if [ $# -eq 0 ];then        #判断是否输入参数
+		 echo 'Usage: /root/batchusers' >&2
+		 exit 3
+
+	elif  [ -f $1 ];then        #判断文件是否存在
+
+		for i  in  `cat  $1`
+		do
+		 useradd -s /bin/false $i 2> /dev/null
+		 echo $i创建成功
+		done
+
+	else
+		   echo Input file not found   >&2
+		   exit 2
+	fi
+
+######################################################
+
+系统安全保护
+
+SELinux安全机制
+
+• Security-Enhanced Linux
+– 美国NSA国家安全局主导开发,一套增强Linux系统安
+全的强制访问控制体系
+
+
+• SELinux的运行模式
+– enforcing(强制)、permissive(宽松)
+– disabled(彻底禁用)
+
+–  变成disabled(彻底禁用)状态，都需要重起机器
+
+
+• 切换运行模式
+– 临时切换:setenforce 1|0
+– 固定配置:/etc/selinux/config 文件
+
+
+虚拟机Server
+[root@server0 /]# getenforce       #查看当前的状态
+Enforcing
+[root@server0 /]# setenforce 0     #当前修改为Permissive
+[root@server0 /]# getenforce 
+Permissive
+[root@server0 /]# vim /etc/selinux/config#每次开机状态配置文件
+SELINUX=permissive
+
+虚拟机Desktop
+[root@desktop0 /]# getenforce 
+Enforcing
+[root@desktop0 /]# setenforce 0
+[root@desktop0 /]# getenforce 
+Permissive
+[root@desktop0 /]# vim /etc/selinux/config
+SELINUX=permissive
+#####################################################
+
+配置用户环境,永久别名的设置
+
+• 影响指定用户的 bash 解释环境
+– ~/.bashrc,每次开启 bash 终端时生效
+
+
+• 影响所有用户的 bash 解释环境
+– /etc/bashrc,每次开启 bash 终端时生效
+
+虚拟机server：
+
+[root@server0 /]# vim /root/.bashrc   #针对于root生效
+alias hello='echo hello'
+
+[root@server0 /]# vim /home/student/.bashrc  #针对于student
+alias hi='echo hi'
+
+[root@server0 /]# vim /etc/bashrc   #针对于所有用户
+alias haxi='echo hahaxixi'
+
+再开一个新的终端验证
+root用户能够执行：hello、haxi
+
+student用户能够执行：hi、haxi
+
+######################################################
+配置IPv6地址
+
+     IP地址：唯一标识网络中一台主机
+
+ IPv4地址:  32个二进制组成   以点分隔4部分  最终用4个十进制数表示
+
+
+ IPv6地址:  128个二进制组成  以 冒号 分隔8部分  最终用4个16进制数表示
+
+   每段内连续的前置 0 可省略、连续的多个 : 可简化为 ::
+
+
+
+
+为两个虚拟机的接口 eth0 配置下列 IPv6 地址
+– server0 上的地址应该是 2003:ac18::305/64
+
+虚拟机Server0
+[root@server0 ~]# nmcli connection modify 'System eth0' ipv6.method manual ipv6.addresses 2003:ac18::305/64 connection.autoconnect yes
+
+[root@server0 ~]# nmcli connection up 'System eth0'
+
+[root@server0 ~]# ifconfig | less
+
+[root@server0 ~]# ping6 2003:ac18::305
+
+######################################################
+配置聚合连接(链路聚合  网卡绑定)
+
+      网卡设备热备份       
+
+• team,聚合连接(也称为链路聚合)
+– 由多块网卡(team-slave)一起组建而成的虚拟网卡,即“组队”
+
+– 作用:热备份(activebackup)连接冗余
+
+  
+1.创建虚拟网卡,参考 man teamd.conf  # /example  全文搜索example
+
+# nmcli  connection  add  type  team     
+ con-name  team0  ifname  team0  autoconnect  yes          
+ config  '{"runner": {"name": "activebackup"}}'
+
+# nmcli  connection 添加    类型    组队
+  配置文件的名字为  team0  ifconfig显示名字为  team0  每次开机自启动
+  工作模式配置  热备份方式
+
+# ifconfig  查看team0网卡
+
+#  nmcli connection delete team0   #删除
+
+2.添加成员
+
+# nmcli connection add type team-slave 
+con-name team0-1 ifname  eth1   master team0
+
+# nmcli connection add  type team-slave 
+con-name team0-2 ifname  eth2  master team0
+
+# nmcli connection 添加   类型    组队-奴隶
+  配置文件名 team0-1  网卡名为 eth2  主设备为  team0
+
+删除的配置
+# nmcli connection delete team0-1  
+# nmcli connection delete team0-2
+
+
+3.配置IP地址
+# nmcli connection modify team0          
+  ipv4.method manual ipv4.addresses 192.168.1.1/24     
+  connection.autoconnect  yes
+
+4.激活所有配置
+
+[root@server0 ~]# nmcli connection up team0
+[root@server0 ~]# nmcli connection up team0-1
+[root@server0 ~]# nmcli connection up team0-2
+
+[root@server0 ~]# teamdctl team0 state   #查看team0信息
+ 
+#####################################################
+
+[root@server0 ~]# ifconfig  eth1   down    #禁用网卡
+[root@server0 ~]# teamdctl  team0  state
+
+####################################################
+搭建基本Web服务
+
+服务端虚拟机Server0：
+
+1.安装一个httpd软件    Apache(httpd)  
+[root@server0 ~]# yum  -y  install  httpd
+
+2.重起服务即可
+[root@server0 ~]# systemctl  restart httpd     
+
+3.书写一个页面文件
+   默认存放文件文件的路径：/var/www/html
+   默认文件文件的名字： index.html
+  html网页语言
+
+[root@server0 ~]# vim /var/www/html/index.html
+<h1><font color=red><marquee>NSD1805
+最大字体   字体颜色          滚动
+
+
+客户端：虚拟机Server0
+[root@server0 ~]# firefox   172.25.0.11
+
+#################################################
+
+虚拟机Server0：搭建基本FTP服务
+1.安装一个vsftpd软件
+[root@server0 ~]# yum -y install vsftpd
+
+2.重起服务
+[root@server0 ~]# systemctl  restart  vsftpd
+
+3.测试：
+[root@server0 ~]# firefox ftp://172.25.0.11
+
+ 默认vsftpd共享数据的路径：/var/ftp
+
+#####################################################
+防火墙
+    作用：隔离  过滤所有入站请求，允许出站
+
+    硬件防火墙
+
+    软件防火墙
+
+RHEL7的防火墙体系
+• 系统服务:firewalld
+• 管理工具:firewall-cmd（命令）、firewall-config（图形）
+
+• 根据所在的网络场所区分,预设保护规则集 zone 区域
+  – public:仅允许访问本机的sshd、ping、dhcp服务
+  – trusted:允许任何访问
+  – block:阻塞任何来访请求，明确拒绝
+  – drop:丢弃任何来访的数据包，直接丢弃，节省资源
+
+• 配置规则的位置
+  – 运行时(runtime)
+  – 永久(permanent
+
+
+######################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,612 @@
+真机：还原三台虚拟机
+[root@room9pc13 ~]# rht-vmctl reset classroom  
+[root@room9pc13 ~]# rht-vmctl reset server
+[root@room9pc13 ~]# rht-vmctl reset desktop   
+
+####################################################
+搭建基本Web服务
+
+服务端虚拟机Server0：
+1.安装一个httpd软件    Apache(httpd)  
+[root@server0 ~]# yum  -y  install  httpd
+2.重起服务即可
+[root@server0 ~]# systemctl  restart httpd     
+
+3.书写一个页面文件
+   默认存放文件文件的路径：/var/www/html
+   默认文件文件的名字： index.html
+
+# echo '<h1>My First Web' > /var/www/html/index.html
+# firefox 172.25.0.11
+
+#################################################
+虚拟机Server0：搭建基本FTP服务
+1.安装一个vsftpd软件
+[root@server0 ~]# yum -y install vsftpd
+
+2.重起服务
+[root@server0 ~]# systemctl  restart  vsftpd
+
+3.测试：
+[root@server0 ~]# firefox ftp://172.25.0.11
+
+ 默认vsftpd共享数据的路径：/var/ftp
+
+#####################################################
+防火墙
+    作用：隔离  过滤所有入站请求，允许出站
+
+    硬件防火墙
+
+    软件防火墙
+
+RHEL7的防火墙体系
+• 系统服务:firewalld
+• 管理工具:firewall-cmd（命令）、firewall-config（图形）
+
+• 根据所在的网络场所区分,预设保护规则集 zone 区域
+  – public:仅允许访问本机的sshd、ping、dhcp服务
+  – trusted:允许任何访问
+  – block:阻塞任何来访请求，明确拒绝
+  – drop:丢弃任何来访的数据包，直接丢弃，节省资源
+
+防火墙判断的规则： 匹配及停止
+1.首先看客户端请求中源IP地址,查阅自己所有的区域，那个区域中有对此源IP地址的规则，则进入该区域
+
+2.进入默认区域（public）
+
+######################################################
+默认区域的应用
+
+虚拟机server0
+# firewall-cmd --get-default-zone   #查看默认区域
+虚拟机desktop0
+# ping  172.25.0.11  #可以通信
+
+虚拟机server0
+# firewall-cmd --set-default-zone=block   #修改默认区域
+# firewall-cmd --get-default-zone 
+虚拟机desktop0
+# ping  172.25.0.11  #不可以通信，有回应
+
+虚拟机server0
+# firewall-cmd --set-default-zone=drop    #修改默认区域
+# firewall-cmd --get-default-zone 
+虚拟机desktop0
+# ping  172.25.0.11  #不可以通信，没有回应
+####################################################
+服务的添加
+虚拟机server0：
+# firewall-cmd --set-default-zone=public 
+# firewall-cmd --zone=public --list-all
+# firewall-cmd --zone=public --add-service=http
+# firewall-cmd --zone=public --list-all
+虚拟机desktop0:
+#  firefox 172.25.0.11        #可以访问
+#  firefox ftp://172.25.0.11  #不可以访问
+
+虚拟机server0：
+# firewall-cmd --zone=public --add-service=ftp
+# firewall-cmd --zone=public --list-all
+虚拟机desktop0:
+#  firefox 172.25.0.11        #可以访问
+#  firefox ftp://172.25.0.11  #可以访问
+
+######################################################
+实现永久设置规则
+
+ – 永久(permanent)
+# firewall-cmd --reload        #重新加载防火墙配置
+# firewall-cmd --zone=public --list-all 
+
+# firewall-cmd --permanent --zone=public --add-service=http
+# firewall-cmd --reload 
+# firewall-cmd --zone=public --list-all 
+
+# firewall-cmd --permanent --zone=public --add-service=ftp
+# firewall-cmd --reload 
+# firewall-cmd --zone=public --list-all 
+#####################################################
+ 常见服务：
+         http:超文本传输协议           默认的端口号：80
+         https:安全超文本传输协议   默认的端口号：443
+         DNS:域名解析                     默认的端口号：53
+         telnet：远程管理               默认的端口号：23
+         FTP：文件传输协议              默认的端口号：21
+         tftp：简单文件传输协议       默认的端口号：69
+         SMTP：邮件协议，发邮件      默认的端口号：25
+         pop3：邮件协议，收邮件      默认的端口号：110
+         SNMP：简单网络管理协议      默认的端口号：161
+
+
+  端口号：标识服务，标识程序
+
+###################################################
+
+实现本机的端口映射
+• 本地应用的端口重定向(端口1 --> 端口2)
+– 从客户机访问 端口1 的请求,自动映射到本机 端口2
+– 比如,访问以下两个地址可以看到相同的页面:
+ http://172.25.0.11:5423/--> http://172.25.0.11:80/
+
+虚拟机server0：
+# firewall-cmd --permanent --zone=public 
+--add-forward-port=port=5423:proto=tcp:toport=80
+
+# firewall-cmd  --reload 
+# firewall-cmd  --zone=public --list-all 
+
+虚拟机desktop0：
+# firefox  172.25.0.11:5423
+
+######################################################
+删除：
+
+# firewall-cmd --permanent --zone=public 
+--remove-forward-port=port=5423:proto=tcp:toport=80
+# firewall-cmd  --reload
+
+#####################################################
+首先修改防火墙默认区域
+
+虚拟机server0
+[root@server0 ~]# firewall-cmd --set-default-zone=trusted 
+
+虚拟机desktop0
+[root@desktop0 ~]# firewall-cmd --set-default-zone=trusted 
+
+######################################################
+Samba服务基础
+
+– 用途:为客户机提供共享使用的文件夹 (跨平台的共享,Windows与Linux）
+
+• 所需软件包:samba
+• 系统服务:smb
+– 协议:SMB(TCP 139)、CIFS(TCP 445)
+
+管理共享账号
+• Samba用户 —— 专用来访问共享文件夹的验证用户
+– 采用独立设置的密码
+– 但需要提前建立同名的系统用户(可以不设密码)
+
+• 使用 pdbedit 管理工具
+– 添加用户:pdbedit -a 用户名
+– 查询用户:pdbedit -L [用户名]
+– 删除用户:pdbedit -x 用户名
+
+配置文件及参数
+• 修改 /etc/samba/smb.conf
+[global]
+//全局设置
+workgroup = 工作组名
+
+[自定共享名]
+path = 文件夹绝对路径
+
+
+
+
+
+服务端：虚拟机Server0：
+1.安装samba软件
+[root@server0 ~]# yum -y install samba
+
+2.建立Samba共享帐号
+[root@server0 ~]# useradd -s /sbin/nologin harry
+[root@server0 ~]# useradd -s /sbin/nologin kenji
+[root@server0 ~]# useradd -s /sbin/nologin chihiro
+
+[root@server0 ~]# pdbedit -a harry    #添加harry为共享帐号
+[root@server0 ~]# pdbedit -a kenji    #根据提示设置2次密码
+[root@server0 ~]# pdbedit -a chihiro
+
+[root@server0 ~]# pdbedit -L    #查看所有共享帐号
+
+3.修改 /etc/samba/smb.conf主配置文件
+
+  -发布目录  /common ,共享名为 common
+
+[root@server0 ~]# mkdir  /common
+[root@server0 ~]# echo 123  > /common/1.txt
+[root@server0 ~]# ls  /common/
+
+补充：vim 命令模式下   按G（大写）到全文的最后一行
+[root@server0 ~]# vim  /etc/samba/smb.conf 
+
+        workgroup = STAFF
+
+[common]
+path = /common
+
+4.重起smb服务
+[root@server0 ~]# systemctl restart smb
+[root@server0 ~]# systemctl enable smb   #设置为开机自启动
+
+5.SELinux策略修改，布尔值功能的开关
+   – 需要加 -P 选项才能实现永久设置(需要内存支持)
+
+ # getsebool -a | grep samba   #查看所有布尔值
+
+ # setsebool samba_export_all_ro on  #允许所有人只读访问samba
+ # getsebool -a | grep samba
+
+
+客户端：虚拟机desktop0
+1. 所需软件包:samba-client(客户端软件)
+
+2.利用smbclient 访问
+[root@desktop0 ~]# smbclient -L  //172.25.0.11/  #列出共享
+
+[root@desktop0 ~]# smbclient -U harry //172.25.0.11/common
+Enter harry's password: 
+smb: \> 
+
+#######################################################
+客户端访问服务端：
+   1.服务端 服务本身的访问控制
+   2.服务端 防火墙的配置
+   3.服务端 SELinux策略 
+   4.服务端 本地目录权限
+
+
+
+#################################################
+通过挂载，更加科学方便的访问Samba共享
+
+虚拟机desktop0
+1.安装cifs-utils软件包（支持cifs协议）
+[root@desktop0 ~]# yum -y install cifs-utils
+
+2.进行挂载
+[root@desktop0 ~]# mkdir /mnt/nsd01
+
+# mount -o user=harry,pass=123 //172.25.0.11/common  /mnt/nsd01/ 
+
+[root@desktop0 ~]# df -h
+[root@desktop0 ~]# ls /mnt/nsd01
+
+3.开机自动挂载samba共享/etc/fstab
+
+   _netdev:声明网络设备
+     在开机启动时，该设备为网络设备，请先部署网络所有服务，具备网络参数后，在挂载此设备
+
+ //172.25.0.11/common   /mnt/nsd01  cifs
+ defaults,user=harry,pass=123,_netdev  0  0
+
+[root@desktop0 ~]# umount /mnt/nsd01
+[root@desktop0 ~]# df -h
+[root@desktop0 ~]# mount  -a
+[root@desktop0 ~]# df -h
+
+######################################################
+搭建读写的Samba共享
+
+服务端：虚拟机Server0
+
+1.修改配置文件/etc/samba/smb.conf
+[root@server0 ~]# mkdir /devops
+[root@server0 ~]# echo haha > /devops/2.txt
+[root@server0 ~]# ls /devops/
+
+[root@server0 ~]# vim  /etc/samba/smb.conf   #追加写入
+......
+[devops]                  #共享名
+path = /devops            #共享实际路径
+write list = chihiro      #允许chihiro可以写
+
+2.重起smb服务
+[root@server0 ~]# systemctl restart smb
+
+3.修改SELinux策略
+[root@server0 ~]# getsebool -a | grep samba
+[root@server0 ~]# setsebool samba_export_all_rw on
+[root@server0 ~]# getsebool -a | grep samba
+
+4.赋予chihiro本地目录权限
+
+[root@server0 ~]# setfacl -m u:chihiro:rwx /devops
+[root@server0 ~]# getfacl /devops
+
+客户端：虚拟机Desktop0
+1.实现开机自动挂载
+[root@desktop0 ~]# vim /etc/fstab 
+
+ //172.25.0.11/devops  /mnt/nsd02   cifs 
+ defaults,user=chihiro,pass=123,_netdev 0 0
+
+[root@desktop0 ~]# mount  -a 
+[root@desktop0 ~]# df  -h
+
+#####################################################
+multiuser机制,主要为普通用户设计
+
+多用户Samba挂载
+   客户端以权限较小的用户验证samba共享
+   在必要的时候普通用户，可以通过命令更改验证用户身份，获得写入权限
+
+
+• mount.cifs 的挂载参数
+– multiuser,提供对客户端多个用户身份的区分支持
+– sec=ntlmssp,提供NT局域网管理安全支持
+
+[root@desktop0 ~]# vim /etc/fstab 
+
+//172.25.0.11/devops /mnt/nsd02 cifs defaults,user=kenji,pass=123,_netdev,multiuser,sec=ntlmssp  
+  0 0
+
+[root@desktop0 ~]# umount /mnt/nsd02
+
+[root@desktop0 ~]# mount -a
+[root@desktop0 ~]# df -h
+[root@desktop0 ~]# su - student
+[student@desktop0 ~]$ cd /mnt/nsd02
+
+$ cifscreds  add  -u  chihiro    172.25.0.11
+Password: 
+
+[student@desktop0 nsd02]$ touch 66.txt
+[student@desktop0 nsd02]$ exit
+
+#####################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
