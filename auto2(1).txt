@@ -1,0 +1,280 @@
+﻿
+====================auto--------------------
+[root@auto ~]# cat auto
+#!bin/bash
+password=123456;
+for i in `seq 3`
+do
+ hostn=rh7_node$i;
+ systn='';
+ eth0='';eth1='';
+ case $i in
+  1)
+    let eth0=100,eth1=10;
+    systn=clinet;;
+  2)
+    let eth0=5,eth1=5;
+    systn=proxy;;
+  3)
+    let eth0=3,eth1=100;
+    systn=web1;;
+ esac
+ ipexp(){
+  expect  /root/clone.sh
+  if [ $? -eq 0  -o  $? -eq 1 ];then
+    virsh start $hostn;
+  else 
+    echo "clone failed";
+    exit ;
+  fi
+  expect /root/console.sh $hostn $password $systn $eth0 $eth1  
+ }
+ case $1 in
+ clone)
+   ipexp &
+   wait % $i;;
+ start)
+   virsh start $hostn;;
+ stop)
+   virsh shutdown $hostn;;
+ scp)
+   expect /root/autoscp.sh  $eth0 
+   if [ $? -eq 0  -o  $? -eq 1 ];then
+     echo "scp is over";
+   else
+     echo "scp failed";
+   fi;;
+ *)
+   echo Error;;
+ esac
+done
+echo Amazing !
+[root@auto ~]# 
+===============clone.sh=====----------=====
+[root@auto ~]# cat clone.sh 
+#!/usr/bin/expect -f
+set timeout -1
+spawn clone-auto7
+expect "vms:"  {send "1\r"}
+expect "#"  {send "echo Cloning success\r"}
+expect "#"  {send "exit\r"}
+
+===================console.sh============------
+[root@auto ~]# cat console.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  hostn     [lindex $argv 0]
+set  password  [lindex $argv 1]
+set  systn     [lindex $argv 2]
+set  eth0      [lindex $argv 3]
+set  eth1      [lindex $argv 4]
+spawn  virsh console $hostn
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$password\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $systn >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]
+\nname=rhel7.4
+\nenabled=1
+\ngpgcheck=0
+\nbaseurl=ftp://192.168.4.254/rhel7
+\n\[rhel7-2\]
+\nname=rhel7.4
+\nbaseurl=ftp://192.168.2.254/rhel7
+\ngpgcheck=0
+\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4\r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 5 && date\r"}
+expect "#"  {send "exit\r"}
+
+===================autoscp.sh---------------------
+[root@auto ~]# cat autoscp.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  eth0        [lindex $argv 0]
+spawn  scp -o StrictHostKeyChecking=no /root/桌面/lnmp_soft.tar.gz  root@192.168.4.$eth0:/root/
+expect "password:" {send "123\r" }
+expect "#"  {send "sleep 5 && date\r"}
+[root@auto ~]# 
+
+
+
+
+
+[root@auto ~]# cat auto
+#!bin/bash
+password=123456;
+for i in `seq 3`
+do
+ hostn=rh7_node$i;
+ systn='';
+ eth0='';eth1='';
+ case $i in
+  1)
+    let eth0=100,eth1=10;
+    systn=clinet;;
+  2)
+    let eth0=5,eth1=5;
+    systn=proxy;;
+  3)
+    let eth0=3,eth1=100;
+    systn=web1;;
+ esac
+ ipexp(){
+  expect  /root/clone.sh
+  if [ $? -eq 0  -o  $? -eq 1 ];then
+    virsh start $hostn;
+  else 
+    echo "clone failed";
+    exit ;
+  fi
+  expect /root/console.sh $hostn $password $systn $eth0 $eth1  
+ }
+ case $1 in
+ clone)
+   ipexp &
+   wait % $i;;
+ start)
+   virsh start $hostn;;
+ stop)
+   virsh shutdown $hostn;;
+ scp)
+   expect /root/autoscp.sh  $eth0 
+   if [ $? -eq 0  -o  $? -eq 1 ];then
+     echo "scp is over";
+   else
+     echo "scp failed";
+   fi;;
+ setnginx)
+   expect /root/setnginx.sh $eth0
+   echo "setting up nginx";;
+ *)
+   echo Error;;
+ esac
+done
+echo Amazing !
+[root@auto ~]# cat setnginx.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  eth0        [lindex $argv 0]
+spawn ssh -o StrictHostKeyChecking=no  -X  root@192.168.4.$eth0:/root/
+expect "password:" {send "123\r" }
+expect "#" {send "tar -xf /root/lnmp_soft.tar.gz\r"}
+expect "#" {send "yum -y install  elinks telnet httpd-tools  gcc pcre-devel openssl-devel mariadb-devel   mariadb mariadb-server memcached php-pecl-memcache  php php-mysql zlib-devel /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm \r"}
+expect "#" {send "sleep 5 && date\r"}
+expect "#" {send "rpm -q q elinks telnet httpd-tools gcc  pcre-devel openssl-devel mariadb-devel mariadb mariadb-server memcached php-pecl-memcache  php php-mysql php-fpm zlib-devel \r"}
+expect "#" {send "nginx -s stop\r"}
+expect "#" {send "rm  -rf /usr/local/nginx\r"}
+expect "#" {send "useradd -s /sbin/nologin nginx\r"}
+expect "#" {send "tar -xzf /root/lnmp_soft/nginx-1.12.2.tar.gz\r"}
+expect "#" {send "cd nginx-1.12.2/;ls\r"}
+expect "#" {send "./configure  --prefix=/usr/local/nginx  --user=nginx  --group=nginx --with-http_ssl_module  --with-stream  --with-http_stub_status_module  --without-http_autoindex_module  --without-http_ssi_module\r"}
+expect "#" {send "sleep 5 && date\r"}
+expect "#" {send "make && make install\r"}
+expect "#" {send "ls\r"}
+expect "#" {send "echo 'export PATH=/usr/local/nginx/sbin/:$PATH' >/etc/profile\r"}
+expect "#" {send "source /etc/profile\r"}
+expect "#" {send "which nginx\r"}
+expect "#" {send "nginx\r"}
+expect "#" {send "systemctl start mariadb && systemctl enable mariadb\r"}
+expect "#" {send "systemctl start php-fpm && systemctl enable php-fpm\r"}
+expect "#" {send "nginx -V\r"}
+expect "#" {send "hello world\r"}
+[root@auto ~]# cat clone.sh 
+#!/usr/bin/expect -f
+set timeout -1
+spawn clone-auto7
+expect "vms:"  {send "1\r"}
+expect "#"  {send "echo Cloning success\r"}
+expect "#"  {send "exit\r"}
+[root@auto ~]# cat console.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  hostn     [lindex $argv 0]
+set  password  [lindex $argv 1]
+set  systn     [lindex $argv 2]
+set  eth0      [lindex $argv 3]
+set  eth1      [lindex $argv 4]
+spawn  virsh console $hostn
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$password\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $systn >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]
+\nname=rhel7.4
+\nenabled=1
+\ngpgcheck=0
+\nbaseurl=ftp://192.168.4.254/rhel7
+\n\[rhel7-2\]
+\nname=rhel7.4
+\nbaseurl=ftp://192.168.2.254/rhel7
+\ngpgcheck=0
+\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4\r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 5 && date\r"}
+expect "#"  {send "exit\r"}
+[root@auto ~]# cat autoscp.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  eth0        [lindex $argv 0]
+spawn  scp -o StrictHostKeyChecking=no /root/桌面/lnmp_soft.tar.gz  root@192.168.4.$eth0:/root/
+expect "password:" {send "123\r" }
+expect "#"  {send "sleep 5 && date\r"}
+[root@auto ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
