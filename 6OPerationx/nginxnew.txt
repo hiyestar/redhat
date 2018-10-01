@@ -1,0 +1,1035 @@
+
+[root@VM5 ~]# ifconfig |awk '/inet /{print $2}' | sed -n "1,2p"
+192.168.4.100
+192.168.2.55
+[root@VM5 nginx-1.12.2]# route -n |awk 'NR>2&&NR<=4{print $2}'
+192.168.4.254
+192.168.2.254
+
+[root@VM5 ~]# ll lnmp_soft.tar.gz 
+-rw-r--r--. 1 root root 78844240 9月  20 19:04 lnmp_soft.tar.gz
+[root@VM5 ~]# tar -xzf lnmp_soft.tar.gz
+[root@VM5 ~]# ls /root/lnmp_soft/ |wc -l
+24
+[root@VM5 ~]# ls /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm 
+/root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@VM5 ~]# ls /root/lnmp_soft/nginx*
+/root/lnmp_soft/nginx-1.10.3.tar.gz  /root/lnmp_soft/nginx.conf
+/root/lnmp_soft/nginx-1.12.2.tar.gz  /root/lnmp_soft/nginx.spec
+
+[root@VM5 ~]# yum  -y install elinks telnet httpd-tools \
+> gcc pcre-devel openssl-devel mariadb-devel  \
+> mariadb mariadb-server memcached php-pecl-memcache \
+> php php-mysql /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm 
+
+[root@VM5 ~]# rpm -q elinks telnet httpd-tools gcc \
+ pcre-devel openssl-devel mariadb-devel \
+ mariadb mariadb-server memcached php-pecl-memcache \
+ php php-mysql php-fpm ;
+
+elinks-0.12-0.36.pre6.el7.x86_64
+telnet-0.17-64.el7.x86_64
+httpd-tools-2.4.6-67.el7.x86_64
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+
+openssl-devel-1.0.2k-8.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+memcached-1.4.15-10.el7_3.1.x86_64
+
+php-pecl-memcache-3.0.8-4.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+
+[root@VM5 ~]# rpm -q zlib-devel
+zlib-devel-1.2.7-17.el7.x86_64
+
+[root@VM5 ~]# useradd -s /sbin/nologin nginx
+[root@VM5 ~]# nginx -s stop
+bash: nginx: 未找到命令...
+[root@VM5 ~]# rm -rf /usr/local/nginx/
+
+[root@VM5 ~]# tar -xzf /root/lnmp_soft/nginx-1.10.3.tar.gz;  \
+ tar -xzf /root/lnmp_soft/nginx-1.12.2.tar.gz 
+
+[root@VM5 ~]# ls
+anaconda-ks.cfg       lnmp_soft         nginx-1.10.3  公共  视频  文档  音乐
+initial-setup-ks.cfg  lnmp_soft.tar.gz  nginx-1.12.2  模板  图片  下载  桌面
+
+[root@VM5 ~]# cd nginx-1.10.3/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+[root@VM5 nginx-1.10.3]# ./configure  --prefix=/usr/local/nginx  \
+> --user=nginx  --group=nginx  --with-http_ssl_module  \
+> --with-stream  --with-http_stub_status_module  \
+> --without-http_autoindex_module  \
+> --without-http_ssi_module 
+
+[root@VM5 nginx-1.10.3]# make && make install
+
+[root@VM5 nginx-1.10.3]# tail -1 /etc/profile
+unset -f pathmunge
+[root@VM5 nginx-1.10.3]# ln -s /usr/local/nginx/sbin/nginx  /sbin/
+
+[root@VM5 nginx-1.10.3]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 9月  20 20:16 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+
+[root@VM5 nginx-1.10.3]# nginx -V
+nginx version: nginx/1.10.3
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --user=nginx 
+--group=nginx --with-http_ssl_module --with-stream 
+--with-http_stub_status_module 
+--without-http_autoindex_module --without-http_ssi_module
+
+[root@VM5 nginx-1.10.3]# ss -nptul |grep nginx
+[root@VM5 nginx-1.10.3]# nginx
+[root@VM5 nginx-1.10.3]# ss -nptul |grep nginx |column -t;
+tcp  LISTEN  0  128  *:80  *:*  users:(("nginx",pid=4942,fd=6),("nginx",pid=4941,fd=6))
+
+[root@VM5 nginx-1.10.3]# vim /usr/local/nginx/html/index.html
+<title>Welcome to 192.168.4.100 !</title>
+<body>
+<h1>Welcome to 192.168.4.100  !</h1>
+[root@VM5 nginx-1.10.3]# firefox http://192.168.4.100
+http://192.168.4.100/
+Welcome to 192.168.4.100 !
+
+[root@VM5 nginx-1.10.3]# cd /root/nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+[root@VM5 nginx-1.12.2]# ./configure  --prefix=/usr/local/nginx \
+> --user=nginx  --group=nginx  --with-http_ssl_module  \
+> --with-stream  --with-http_stub_status_module \
+> --without-http_autoindex_module  \
+> --without-http_ssi_module
+
+[root@VM5 nginx-1.12.2]# make
+
+-------------------------------------------------#升级软件版本号--不需要 make install---------------
+-===如果想要保留以前的注册信息等客户数据，-更换模块例如 --with-stream  也不需要 make install ----
+[root@VM5 nginx-1.12.2]# mv /usr/local/nginx/sbin/nginx{,old}
+[root@VM5 nginx-1.12.2]# ls /usr/local/nginx/sbin/nginx{,old}
+ls: 无法访问/usr/local/nginx/sbin/nginx: 没有那个文件或目录
+/usr/local/nginx/sbin/nginxold
+
+[root@VM5 nginx-1.12.2]# ls
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+[root@VM5 nginx-1.12.2]# ls objs/
+autoconf.err  nginx    ngx_auto_config.h   ngx_modules.c  src
+Makefile      nginx.8  ngx_auto_headers.h  ngx_modules.o
+
+  /***保留以前的注册信息等客户数据 objs/nginx
+[root@VM5 nginx-1.12.2]# cp objs/nginx  /usr/local/nginx/sbin/
+
+[root@VM5 nginx-1.12.2]# ls /usr/local/nginx/sbin/
+nginx  nginxold
+[root@VM5 nginx-1.12.2]# nginx -v
+nginx version: nginx/1.12.2
+
+/****这一步 nginx -s stop 可以替换成 make upgrade  && killall nginx
+
+[root@VM5 nginx-1.12.2]# nginx -s stop
+
+[root@VM5 nginx-1.12.2]# netstat -nptul |grep nginx
+[root@VM5 nginx-1.12.2]# nginx 
+[root@VM5 nginx-1.12.2]# netstat -nptul |grep nginx |column -t
+tcp  0  0  0.0.0.0:80  0.0.0.0:*  LISTEN  8031/nginx:  master
+
+[root@VM5 nginx-1.12.2]# firefox http://192.168.4.100
+
+Welcome to 192.168.4.100 !
+/**sed命令的常用选项如下：
+-n（屏蔽默认输出，默认sed会输出读取文档的全部内容）
+-r（让sed支持扩展正则）
+-i（sed直接修改源文件，默认sed只是通过内存临时修改文件，源文件无影响）
+**/
+[root@VM5 nginx-1.12.2]# sed -n '/<title>/p' /usr/local/nginx/html/index.html 
+<title>Welcome to 192.168.4.100 !</title>
+
+[root@VM5 nginx-1.12.2]# sed -rn '/<title>|<h1>/p' /usr/local/nginx/html/index.html 
+<title>Welcome to 192.168.4.100 !</title>
+<h1>Welcome to 192.168.4.100  !</h1>
+/****vim:85,94s/#//*****/
+[root@VM5 nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 35     server {
+ 36         listen       80;
+ 37         server_name  www.a.com;
+[root@VM5 nginx-1.12.2]# vim /etc/hosts
+[root@VM5 nginx-1.12.2]# tail -1 /etc/hosts
+192.168.4.100 www.a.com
+[root@VM5 nginx-1.12.2]# nginx -s reload
+[root@VM5 nginx-1.12.2]# firefox http://www.a.com
+[root@VM5 ~]# elinks -dump http://www.a.com |head -1
+                    Welcome to 192.168.4.100 !
+
+[root@VM5 nginx-1.12.2]# vim /etc/profile
+[root@VM5 nginx-1.12.2]# source /etc/profile
+[root@VM5 nginx-1.12.2]# echo $PATH
+/usr/local/nginx/sbin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@VM5 ~]# tail -1 /etc/profile
+export PATH=/usr/local/nginx/sbin/:$PATH
+
+[root@VM5 html]# ls
+50x.html  index.html
+[root@VM5 html]# ss -ntul |grep -E ':80|:9000|:3306' |column -t
+tcp  LISTEN  0  128  *:80  *:*
+
+[root@VM5 html]# vim index.html
+<title>Welcome to VM5 !</title>
+<h1>Welcome to VM5 192.168.4.100 !</h1>
+
+[root@VM5 html]# vim /etc/hosts
+[root@VM5 html]# tail -1 /etc/hosts
+192.168.4.5 www.a.com
+[root@VM5 html]# firefox http://www.a.com/
+http://www.a.com/
+Welcome to VM8 192.168.2.200!
+[root@VM5 html]# elinks -dump http://www.a.com/ |head -1
+                         Welcome to VM7 192.168.2.100 !
+[root@VM5 html]# elinks -dump http://www.a.com/ |head -1
+                         Welcome to VM8 192.168.2.200!
+/**********weight=2 #weight设置服务器权重值，默认值为1,值越大，被访问的概率越大
+[root@VM5 html]# elinks -dump http://www.a.com/ |head -1
+                         Welcome to VM8 192.168.2.200!
+[root@VM5 html]# elinks -dump http://www.a.com/ |head -1
+                         Welcome to VM8 192.168.2.200!
+[root@VM5 html]# elinks -dump http://www.a.com/ |head -1
+                         Welcome to VM7 192.168.2.100 !
+
+[root@VM5 html]# ssh 192.168.4.5 -p 12345
+root@192.168.4.5's password: 
+Last login: Tue Sep 25 14:27:16 2018 from 192.168.2.5
+[root@VM7 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.57
+192.168.2.100
+127.0.0.1
+192.168.122.1
+[root@VM7 ~]# exit
+登出
+Connection to 192.168.4.5 closed.
+[root@VM5 html]# ssh 192.168.4.5 -p 12345
+root@192.168.4.5's password: 
+Last login: Tue Sep 25 14:27:26 2018 from 192.168.2.5
+[root@VM8 ~]# ifconfig |awk '/inet /{print $2}' |sed -n '1,3p';
+192.168.4.58
+192.168.2.200
+127.0.0.1
+[root@VM8 ~]# exit
+登出
+Connection to 192.168.4.5 closed.
+[root@VM5 html]# 
+[root@VM5 html]# mysql -h 192.168.4.5 -ulisi  -p123
+MariaDB [(none)]> show databases;
+| Database           |
+| information_schema |
+| VM7                |
+| mysql              |
+| performance_schema |
+| test               |
+MariaDB [(none)]> quit;
+Bye
+[root@VM5 html]# mysql -h 192.168.4.5 -ulisi  -p123
+MariaDB [(none)]> show databases;
+| Database           |
+| information_schema |
+| VM8                |
+| mysql              |
+| performance_schema |
+| test               |
+
+MariaDB [(none)]> quit;
+Bye
+[root@VM5 html]# firefox http://192.168.4.5/xx.jpg
+......
+[root@VM5 html]# elinks -dump http://192.168.4.5/xx.jpg
+   VM8 2.200 404 not found
+[root@VM5 html]# firefox about:cache
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------192.168.4.5,192.168.2.5--------------------------------------
+[root@room2pc18 ~]# ssh -X 192.168.4.5
+[root@VM6 nginx-1.12.2]# route -n |awk 'NR>2&&NR<=4{print $2}'
+192.168.4.254
+192.168.2.254
+[root@VM6 nginx-1.12.2]# ifconfig |awk '/inet /{print $2}' | sed -n "1,2p"
+192.168.4.5
+192.168.2.5
+
+[root@VM6 ~]# ls
+anaconda-ks.cfg       lnmp_soft.tar.gz  模板  图片  下载  桌面
+initial-setup-ks.cfg  公共              视频  文档  音乐
+[root@VM6 ~]# ls /usr/local/nginx
+ls: 无法访问/usr/local/nginx: 没有那个文件或目录
+[root@VM6 ~]# grep nginx /etc/passwd
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+[root@VM6 ~]# ll lnmp_soft.tar.gz 
+-rw-r--r--. 1 root root 78844240 9月  20 19:03 lnmp_soft.tar.gz
+[root@VM6 ~]# tar -xzf lnmp_soft.tar.gz
+
+[root@VM6 ~]# ls /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm 
+/root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@VM6 ~]# ls /root/lnmp_soft/nginx-1.1*
+/root/lnmp_soft/nginx-1.10.3.tar.gz  /root/lnmp_soft/nginx-1.12.2.tar.gz
+
+[root@VM6 ~]# yum -y install elinks telnet httpd-tools \
+> gcc pcre-devel openssl-devel  mariadb-devel  \
+> mariadb  mariadb-server memcached php-pecl-memcache \
+> php php-mysql  /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm ;
+
+[root@VM6 ~]# rpm -q elinks telnet httpd-tools gcc \
+> pcre-devel openssl-devel mariadb-devel \
+> mariadb mariadb-server memcached php-pecl-memcache \
+> php php-mysql php-fpm
+
+elinks-0.12-0.36.pre6.el7.x86_64
+telnet-0.17-64.el7.x86_64
+httpd-tools-2.4.6-67.el7.x86_64
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+
+openssl-devel-1.0.2k-8.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+memcached-1.4.15-10.el7_3.1.x86_64
+
+php-pecl-memcache-3.0.8-4.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+
+[root@VM6 nginx]# yum -y install zlib-devel
+
+[root@VM6 nginx]# rpm -q zlib-devel
+zlib-devel-1.2.7-17.el7.x86_64
+
+[root@VM6 ~]# rm -rf /usr/local/nginx
+[root@VM6 ~]# ls /usr/local/nginx
+ls: 无法访问/usr/local/nginx: 没有那个文件或目录         
+[root@VM6 ~]# tar -xzf /root/lnmp_soft/nginx-1.10.3.tar.gz 
+[root@VM6 ~]# tar -xzf /root/lnmp_soft/nginx-1.12.2.tar.gz 
+[root@VM6 ~]# cd nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+[root@VM6 nginx-1.12.2]# ./configure  --prefix=/usr/local/nginx \
+> --user=nginx  --group=nginx --with-http_ssl_module \
+ --with-stream  --with-http_stub_status_module  \
+ --without-http_autoindex_module \
+ --without-http_ssi_module
+
+[root@VM6 nginx-1.12.2]# make && make install
+
+[root@VM6 nginx-1.12.2]# ls
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+
+[root@VM6 nginx-1.12.2]# vim /etc/profile
+[root@VM6 nginx-1.12.2]# tail -1 /etc/profile
+export PATH=/usr/local/nginx/sbin/:$PATH
+
+[root@VM6 nginx-1.12.2]# source /etc/profile
+
+[root@VM6 nginx-1.12.2]# echo $PATH
+/usr/local/nginx/sbin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@VM6 nginx-1.12.2]# which nginx
+/usr/local/nginx/sbin/nginx
+
+[root@VM6 nginx-1.12.2]# nginx
+
+[root@VM6 nginx-1.12.2]# cd /usr/local/nginx/;ls
+client_body_temp  fastcgi_temp  logs        sbin       uwsgi_temp
+conf              html          proxy_temp  scgi_temp
+
+[root@VM6 nginx]# nginx -V
+nginx version: nginx/1.12.2
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --user=nginx
+ --group=nginx --with-http_ssl_module --with-stream 
+--with-http_stub_status_module 
+--without-http_autoindex_module --without-http_ssi_module
+
+[root@VM6 nginx]# vim /etc/php-fpm.d/www.conf
+ 12 listen = 127.0.0.1:9000  #php端口号
+ 60 pm = dynamic
+ 70 pm.max_children = 50   #最大进程数
+ 75 pm.start_servers = 15   #最少进程
+ 80 pm.min_spare_servers = 5  #最少需要空闲进程
+ 85 pm.max_spare_servers = 35  #最多允许进程
+
+[root@VM6 nginx]# systemctl is-active mariadb ; systemctl is-active php-fpm;
+unknown
+[root@VM6 nginx]# systemctl start mariadb && systemctl enable mariadb
+
+[root@VM6 nginx]# systemctl start php-fpm && systemctl enable php-fpm
+/**netstat命令可以查看系统中启动的端口信息，该命令常用选项如下：
+-a显示所有端口的信息
+-n以数字格式显示端口号
+-t显示TCP连接的端口
+-u显示UDP连接的端口
+-l显示服务正在监听的端口信息，如httpd启动后，会一直监听80端口
+-p显示监听端口的服务名称是什么（也就是程序名称）
+nginx服务默认通过TCP 80端口监听客户端请求：
+**/
+[root@VM6 nginx]# ss -ntul |grep -E ':80|:9000|:3306' |column -t
+tcp  LISTEN  0  128  *:80            *:*
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*
+tcp  LISTEN  0  50   *:3306          *:*
+
+[root@VM6 conf]# ls /usr/local/nginx/conf/nginx*  #【还原nginx配置文件备份】
+/usr/local/nginx/conf/nginx.conf  /usr/local/nginx/conf/nginx.conf.default
+
+[root@VM6 nginx]# cd html/;ls
+50x.html  index.html
+[root@VM6 html]# vim test.php
+[root@VM6 html]# php test.php
+333
+[root@VM6 html]# cat test.php
+<?php
+$i=333;echo "$i\n";
+?>
+[root@VM6 html]#  rpm -q mariadb mariadb-server mariadb-devel php php-mysql php-fpm 
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+[root@VM6 html]# vim /usr/local/nginx/conf/nginx.conf
+ 48         #error_page  404              /404.html;
+ 65         location ~ \.php$ {
+ 66             root           html;
+ 67             fastcgi_pass   127.0.0.1:9000; #将请求转发给本机9000端口，PHP解释器
+ 68             fastcgi_index  index.php;
+ 69         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 70             include        fastcgi.conf;
+ 71         }
+/** vim:65,71s/#//  替换#号为空符号 或 ctrl + v -> x 取消 #注释**/
+[root@VM6 html]# ls /usr/local/nginx/conf/
+fastcgi.conf            koi-utf             nginx.conf           uwsgi_params
+fastcgi.conf.default    koi-win             nginx.conf.default   uwsgi_params.default
+fastcgi_params          mime.types          scgi_params          win-utf
+fastcgi_params.default  mime.types.default  scgi_params.default
+[root@VM6 html]# nginx -s reload
+[root@VM6 html]# ls
+50x.html  index.html  test.php
+[root@VM6 html]# firefox http://192.168.4.5/test.php
+[root@VM6 html]# elinks -dump http://192.168.4.5/test.php
+   333
+[root@VM6 html]# ls /root/lnmp_soft/php_scripts/
+Discuz_X3.4_SC_UTF8.zip  mysql.php                  test.php
+mem.php                  php-memcached-demo.tar.gz  web_demo.tar.gz
+
+[root@VM6 html]# unzip /root/lnmp_soft/php_scripts/Discuz_X3.4_SC_UTF8.zip 
+Archive:  /root/lnmp_soft/php_scripts/Discuz_X3.4_SC_UTF8.zip
+   creating: readme/
+  inflating: readme/changelog.txt    
+  inflating: readme/convert.txt 
+.......................... 
+[root@VM6 html]# ls
+50x.html  index.html  readme  test.php  upload  utility
+
+[root@VM6 html]# cp /root/lnmp_soft/php_scripts/mysql.php  .
+[root@VM6 html]# ls
+50x.html  index.html  mysql.php  readme  test.php  upload  utility
+
+[root@VM6 html]# vim mysql.php 
+[root@VM6 html]# cat mysql.php
+<?php
+$mysqli = new mysqli('localhost','root','123','mysql');
+if (mysqli_connect_errno()){
+	die('Unable to connect!'). mysqli_connect_error();
+}
+$sql = "select * from user";
+$result = $mysqli->query($sql);
+while($row = $result->fetch_array()){
+	printf("Host:%s",$row[0]);
+	printf("</br>");
+	printf("Name:%s",$row[1]);
+	printf("</br>");
+}
+?>
+[root@VM6 html]# mysqladmin -uroot  password '123'
+[root@VM6 html]# mysql -uroot -p123
+MariaDB [(none)]> use mysql;
+MariaDB [mysql]> grant select on *.* to tom@localhost identified by'123';
+MariaDB [mysql]> quit;
+Bye
+[root@VM6 html]# useradd tom;
+[root@VM6 html]# nginx -s reload
+
+[root@VM6 html]# ls upload/
+admin.php  connect.php      group.php  member.php  search.php  uc_server
+api        crossdomain.xml  home.php   misc.php    source
+api.php    data             index.php  plugin.php  static
+archiver   favicon.ico      install    portal.php  template
+config     forum.php        m          robots.txt  uc_client
+[root@VM6 html]# ls utility/
+clearcloud.php  convert  oldprg  restore.php  update.php
+[root@VM6 html]# chmod -R 777 ./   #注意实际情况不能这样操作，实验是为了省事
+
+[root@VM6 html]# firefox http://192.168.4.5/mysql.php
+http://192.168.4.5/mysql.php
+Host:localhost
+Name:root
+Host:vm6
+Name:
+Host:localhost
+Name:tom
+[root@VM6 html]# ll /usr/local/nginx/logs/access.log 
+-rw-r--r--. 1 root root 1050 9月  21 15:32 /usr/local/nginx/logs/access.log
+
+[root@VM6 html]# ll /usr/local/nginx/logs/error.log 
+-rw-r--r--. 1 root root 996 9月  21 15:32 /usr/local/nginx/logs/error.log
+
+[root@VM6 html]# ll /var/log/php-fpm/error.log 
+-rw-------. 1 root root 186 9月  21 13:51 /var/log/php-fpm/error.log
+
+[root@VM6 html]# vim /usr/local/nginx/conf/nginx.conf
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+ 38 
+ 39         #charset koi8-r;
+ 40 
+ 41         #access_log  logs/host.access.log  main;
+ 42 
+ 43         location / {
+ 44             root   html;
+ 45             index  index.html index.htm;
+ 46             rewrite /a.html  /b.html  last;
+ 47             rewrite /b.html  /c.html  last;
+ 48         }
+[root@VM6 html]# echo BB > /usr/local/nginx/html/b.html;
+[root@VM6 html]# echo CCC  > /usr/local/nginx/html/c.html;
+[root@VM6 html]# echo aaa  > /usr/local/nginx/html/a.html;
+[root@VM6 html]# nginx -s reload
+[root@VM6 html]# elinks  -dump http://192.168.4.5/a.html
+   CCC
+[root@VM6 html]# vim /usr/local/nginx/conf/nginx.conf
+ 35     server {
+ 36         listen       80;
+ 37         server_name  www.a.com;
+
+[root@VM6 html]# vim /etc/hosts
+[root@VM6 html]# tail -1 /etc/hosts
+192.168.4.5  www.a.com
+[root@VM6 html]# elinks  -dump http://www.a.com/a.html
+   CCC
+[root@VM6 html]# ls
+50x.html  b.html  index.html  readme    upload
+a.html    c.html  mysql.php   test.php  utility
+[root@VM6 html]# ss -ntul |grep -E ':80|:9000|:3306' |column -t
+tcp  LISTEN  0  128  *:80            *:*
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*
+tcp  LISTEN  0  50   *:3306          *:*
+/*****
+rewrite  ^/(.*x)(.*##$)  http://www.tmooc.cn/\1\2; #shell规则
+rewrite  ^/(.*x)(.*##$)  http://www.tmooc.cn/$1$2; #nginx规则
+
+curl -A "firefox" http://www.a.com/index.html 伪装浏览器firfox
+
+rewrite 旧地址（支持正则表达式） 新地址
+redirect
+permanent
+蜘蛛spider
+permanent永久的, 不变的, 固定的, 持久的
+*****/
+
+[root@VM6 html]# vim /usr/local/nginx/conf/nginx.conf
+ 33     #gzip  on;
+ 34     upstream  webserver  {
+ 35        server  192.168.2.100:80;
+ 36        server  192.168.2.200:80;
+ 37     }
+ 38     server {
+ 39         listen       80;
+ 40         server_name  www.a.com;
+ 41 
+ 42         #charset koi8-r;
+ 43 
+ 44         #access_log  logs/host.access.log  main;
+ 45 
+ 46         location / {
+ 47             proxy_pass  http://webserver;
+ 48             root   html;
+ 49             index  index.html index.htm;
+ 50             rewrite /a.html  /b.html  last;
+ 51             rewrite /b.html  /c.html  last;
+ 52         }
+[root@VM6 html]# nginx -s reload
+[root@VM6 html]# vim index.html
+<title>Welcome to VM6!</title>
+<h1>Welcome to VM6 192.168.4.5 !</h1>
+
+[root@VM6 html]# sed -n "/<title>/p" index.html 
+<title>Welcome to VM6!</title>
+
+[root@VM6 html]# vim /usr/local/nginx/conf/nginx.conf
+/**#weight设置服务器权重值，默认值为1
+*weight=2 默认值为1,值越大，被访问的概率越大
+#max_fails设置最大失败次数
+#fail_timeout设置失败超时时间，单位为秒
+#down标记服务器已关机，不参与集群调度  **/
+    #gzip  on;
+    upstream  webserver  {
+       ip_hash;
+       server  192.168.2.100:80 weight=1  max_fails=1  fail_timeout=15;
+       server  192.168.2.200:80 max_fails=2  weight=2  fail_timeout=10;
+       server  192.168.2.101 down;
+    }
+    server {
+        listen       80;
+        server_name  www.a.com;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+        location / {
+            proxy_pass  http://webserver;
+            root   html;
+            index  index.html index.htm;
+[root@VM6 html]# nginx -s reload
+
+[root@VM6 html]# md5sum index.html 
+165299b320531362f1a23bf1abf6bb4f  index.html
+[root@VM6 html]# echo 123 |md5sum 
+ba1f2511fc30423bdbb183fe33f3dd0f  -
+/***用IP地址作计算参数
+/****ip_hash -->16进制数%2 [ 0 1 ]----后端服务器 web0  web1
+/****ip_hash -->16进制数%3 [ 0 1  2 ]--后端服务器 web0  web1  web2
+ip_hash 只看ip地址前三位例如192.168.4.100 只看192这前三个数字
+***************/
+[root@VM6 html]# vim /usr/local/nginx/conf/nginx.conf
+ 12 events {
+ 13     worker_connections  1024;
+ 14 }
+ 15 stream {
+ 16   upstream sshs {
+ 17     server 192.168.2.100:22;
+ 18     server 192.168.2.200:22;
+ 19   }
+ 20   upstream ftpd {
+ 21     server 192.168.2.100:21;
+ 22     server 192.168.2.200:21;
+ 23   }
+ 24   server {
+ 25     listen  12345;
+ 26     proxy_connect_timeout 10s;
+ 27     proxy_timeout 30s;
+ 28     proxy_pass  sshs;
+ 29   }
+ 30 }
+ 31 http {
+ 32     include       mime.types;
+ 33     default_type  application/octet-stream;
+ 34 
+ 35     #log_format  main  '$remote_addr - $remote_user [$time_local] "$request"     '
+ 36     #                  '$status $body_bytes_sent "$http_referer" '
+ 37     #                  '"$http_user_agent" "$http_x_forwarded_for"';
+ 38 
+ 39     #access_log  logs/access.log  main;
+ 40 
+ 41     sendfile        on;
+ 42     #tcp_nopush     on;
+ 43 
+ 44     #keepalive_timeout  0;
+ 45     keepalive_timeout  65;
+ 46 
+ 47     #gzip  on;
+ 48     upstream  webserver  {
+ 49        ip_hash;
+ 50        server  192.168.2.100:80 weight=1  max_fails=1  fail_timeout=15;
+ 51        server  192.168.2.200:80 max_fails=2  weight=2  fail_timeout=10;
+ 52        server  192.168.2.101 down;
+ 53     }
+ 54     server {
+ 55         listen       80;
+ 56         server_name  www.a.com;
+ 57 
+ 58         #charset koi8-r;
+ 59 
+ 60         #access_log  logs/host.access.log  main;
+ 61 
+ 62         location / {
+ 63             proxy_pass  http://webserver;
+ 64             root   html;
+ 65             index  index.html index.htm;
+ 66             rewrite /a.html  /b.html  last;
+ 67             rewrite /b.html  /c.html  last;
+ 68         }
+[root@VM6 html]# nginx -s reload
+[root@VM6 html]# vim /usr/local/nginx/conf/nginx.conf
+ 12 events {
+ 13     worker_connections  1024;
+ 14 }
+ 15 stream {
+ 16   upstream sshs {
+ 17     server 192.168.2.100:22;
+ 18     server 192.168.2.200:22;
+ 19   }
+ 20   upstream ftpd {
+ 21     server 192.168.2.100:21;
+ 22     server 192.168.2.200:21;
+ 23   }
+ 24   upstream mysqls {
+ 25     server 192.168.2.100:3306;
+ 26     server 192.168.2.200:3306;
+ 27   }
+ 28   server {
+ 29     listen  12345;
+ 30     proxy_connect_timeout 10s;
+ 31     proxy_timeout 30s;
+ 32     proxy_pass  sshs;
+ 33   }
+ 34   server {
+ 35     listen 3306;
+ 36     proxy_pass mysqls;
+ 37   }
+ 38 }
+[root@VM6 html]# nginx -s reload
+[root@VM6 html]# systemctl stop mariadb
+[root@VM6 html]# nginx -s reload
+[root@VM6 html]# ss -ntul  |grep -E ':80|:3306|:9000'
+tcp    LISTEN     0      128       *:80                    *:*                  
+tcp    LISTEN     0      128    127.0.0.1:9000                  *:*                  
+tcp    LISTEN     0      128       *:3306                  *:*                  
+[root@VM6 html]# systemctl is-active mariadb
+inactive
+[root@VM6 html]# systemctl is-enabled mariadb.service 
+enabled
+[root@VM6 html]# systemctl disable mariadb
+[root@VM6 html]# systemctl is-enabled mariadb
+disabled
+[root@VM6 html]# ss -nptul  |grep -E ':80|:3306' |column -t
+tcp  LISTEN  0  128  *:80    *:*  users:(("nginx",pid=9045,fd=6),("nginx",pid=1815,fd=6))
+tcp  LISTEN  0  128  *:3306  *:*  users:(("nginx",pid=9045,fd=11),("nginx",pid=1815,fd=11))
+/***********注意这里的数据库服务3306是后端 2.100 和2.200的数据库
+
+[root@VM6 html]# vim /usr/local/nginx/conf/nginx.conf
+
+#user  nobody;
+worker_processes  1;
+
+events {
+    worker_connections  65535;
+    use epoll;
+}
+stream {
+  upstream sshs {
+[root@VM6 html]# nginx -s reload
+
+[root@VM6 html]# vim /etc/security/limits.conf
+[root@VM6 html]# tail -3 /etc/security/limits.conf 
+#用户或组  硬限制或软限制  需要限制的项目   限制的值
+*	  soft	  nofile	  100000
+*       hard      nofile         100000
+# End of file
+/***#必须先设置硬限制，默认软限制小于硬限制
+[root@VM6 html]# ulimit -Hn 100000
+[root@VM6 html]# ulimit -Sn 100000
+
+[root@VM6 ~]# ss -nptul |grep -E ':80|:3306|:9000'
+...................
+[root@VM6 ~]# ab -c 1000 -n 80000 http://192.168.4.5/
+Completed 32000 requests
+apr_socket_recv: Connection reset by peer (104)
+Total of 32153 requests completed
+#注意VM6 是代理服务功能开启状态,由于VM7 和VM8 没有修改ulimit -Hn和-Sn
+#所以会有不能完全回应80000个请求的结果
+[root@VM6 html]# cat /root/lnmp_soft/buffer.sh
+#!/bin/bash
+URL=http://192.168.4.5/index.html?
+for i in {1..5000}
+do
+	URL=${URL}v$i=$i
+done
+curl $URL
+[root@VM6 html]# bash  /root/lnmp_soft/buffer.sh
+<html>
+<head><title>414 Request-URI Too Large</title></head>
+<body bgcolor="white">
+<center><h1>414 Request-URI Too Large</h1></center>
+<hr><center>nginx/1.12.2</center>
+</body>
+</html>
+[root@VM6 ~]# vim /usr/local/nginx/conf/nginx.conf
+ 40 http {
+ 41     include       mime.types;
+ 42     default_type  application/octet-stream;
+                             //默认请求包头信息的缓存 1k
+ 43     client_header_buffer_size      1k;
+                    //大请求包头部信息的缓存个数4与容量4M
+ 44     large_client_header_buffers 4  4m;
+
+[root@VM6 ~]# nginx -s reload  #注意VM6 是代理服务功能开启状态
+ #需要修改后端服务器web VM7 VM8 的 client_header_buffer_size      1k;
+ 44     large_client_header_buffers 4  4m;
+[root@VM6 ~]# sh  /root/lnmp_soft/buffer.sh
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to VM8!</title>
+................
+</head>
+<body>
+<h1>Welcome to VM8 192.168.2.200!</h1>
+</body>
+</html>
+[root@VM6 ~]# 
+[root@VM6 ~]# curl http://192.168.4.5/index.html?x=的风俗=xsfd==dfg
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to VM8!</title>
+.......................
+
+[root@VM6 ~]# vim /usr/local/nginx/conf/nginx.conf
+
+ 64     server {
+ 65         listen       80;
+ 66         server_name  www.a.com;
+
+ 71         location ~* \.(jpb|png|gif)$ {
+ 72            expires 20d;
+ 73         }
+ 74         location / {
+ 75             proxy_pass  http://webserver;
+ 76             root   html;
+[root@VM6 ~]# nginx -s reload
+[root@VM6 ~]#  cp /usr/share/backgrounds/day.jpg /usr/local/nginx/html/
+[root@VM6 ~]# ls /usr/local/nginx/html/
+50x.html  b.html  day.jpg     mysql.php  test.php  utility
+a.html    c.html  index.html  readme     upload
+[root@VM6 ~]# firefox http://192.168.4.5/day.jpg
+[root@VM6 ~]# firefox about:cache
+disk
+Number of entries: 	6    -------访问记录6条
+Maximum storage size: 	358400 KiB
+Storage in use: 	68 KiB      -------访问数据占用空间68kib
+Storage disk location: 	/root/.cache/mozilla/firefox/gumh703n.default/cache2
+
+[root@proxy nginx-1.12.2]# ./configure --help |grep 'with-http_stub_status_module'
+  --with-http_stub_status_module     enable ngx_http_stub_status_module
+
+
+
+
+
+
+
+
+[root@VM7 nginx-1.12.2]# route -n |awk 'NR>2&&NR<=4{print $2}'
+192.168.4.254
+192.168.2.254
+[root@VM7 nginx-1.12.2]# ifconfig |awk '/inet /{print $2}' | sed -n "1,2p"
+192.168.4.57
+192.168.2.100
+[root@VM7 nginx-1.12.2]# vim /etc/profile
+[root@VM7 nginx-1.12.2]# source /etc/profile
+[root@VM7 nginx-1.12.2]# echo $PATH
+/usr/local/nginx/sbin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@VM7 nginx-1.12.2]# ls
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+[root@VM7 nginx-1.12.2]# which nginx
+/usr/local/nginx/sbin/nginx
+[root@VM7 nginx-1.12.2]# nginx -V
+nginx version: nginx/1.12.2
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --user=nginx --group=nginx 
+--with-http_ssl_module --with-stream --with-http_stub_status_module 
+--without-http_autoindex_module --without-http_ssi_module
+[root@VM7 nginx-1.12.2]# nginx
+
+[root@VM7 html]# ls
+50x.html  index.html
+[root@VM7 html]# cat /etc/hostname 
+VM7
+[root@VM7 html]# ss -ntul |grep -E ':80|:9000|:3306' |column -t
+tcp  LISTEN  0  128  *:80  *:*
+
+[root@VM7 html]# vim index.html
+<title>Welcome to VM7  !</title>
+
+<h1>Welcome to VM7 192.168.2.100 !</h1>
+[root@VM7 html]# systemctl start mariadb && systemctl enable mariadb
+Created symlink from /etc/systemd/system/multi-user.target.wants/mariadb.service to /usr/lib/systemd/system/mariadb.service.
+[root@VM7 html]#  ss -ntul |grep -E ':80|:9000|:3306' |column -t
+tcp  LISTEN  0  128  *:80    *:*
+tcp  LISTEN  0  50   *:3306  *:*
+[root@VM7 html]# 
+[root@VM7 html]# mysqladmin -u root password '123';
+[root@VM7 html]#  mysql -u root -p'123';
+ MariaDB [(none)]> create database VM7;
+MariaDB [(none)]> grant select on *.* to lisi@'192.168.%' identified by '123';
+
+MariaDB [(none)]> show grants;
+| Grants for root@localhost    |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION  |
+
+MariaDB [(none)]> show grants for lisi@'192.168.%';
+| Grants for lisi@192.168.%     |
+| GRANT SELECT ON *.* TO 'lisi'@'192.168.%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+
+MariaDB [(none)]> quit;
+Bye
+[root@VM7 html]# 
+[root@VM7 html]# vim /usr/local/nginx/conf/nginx.conf
+ 17 http {
+ 18     include       mime.types;
+ 19     default_type  application/octet-stream;
+ 20     client_header_buffer_size      1k;
+ 21     large_client_header_buffers 4  4m;
+[root@VM7 html]# nginx -s reload
+[root@VM7 html]# cp /usr/share/backgrounds/day.jpg /usr/local/nginx/html/
+[root@VM7 html]# ls /usr/share/backgrounds/day.jpg 
+/usr/share/backgrounds/day.jpg
+[root@VM7 html]# ls /usr/local/nginx/html/
+50x.html  day.jpg  index.html
+[root@VM7 html]# vim /usr/local/nginx/conf/nginx.conf
+ 36     server {
+ 37         listen       80;
+ 38         server_name  localhost;
+ 39 
+ 40         #charset koi8-r;
+ 41 
+ 42         #access_log  logs/host.access.log  main;
+ 43        location ~*  \.(jpg|png|gif)$  {
+ 44           expires   20d;
+ 45         }
+ 46         location / {
+ 47             root   html;
+ 48             index  index.html index.htm;
+ 49         }
+ 51         error_page  404              /404.html;
+[root@VM7 html]# echo "VM7 404 not found" >/usr/local/nginx/html/404.html
+[root@VM7 html]# nginx -s reload
+
+
+
+
+
+
+
+
+
+
+
+
+[root@VM8 nginx-1.12.2]# route -n |awk 'NR>2&&NR<=4{print $2}'
+192.168.4.254
+192.168.2.254
+[root@VM8 nginx-1.12.2]# ifconfig |awk '/inet /{print $2}' | sed -n "1,2p"
+192.168.4.58
+192.168.2.200
+[root@VM8 nginx-1.12.2]# vim /etc/profile
+[root@VM8 nginx-1.12.2]# source /etc/profile
+[root@VM8 nginx-1.12.2]# echo $PATH
+/usr/local/nginx/sbin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@VM8 nginx-1.12.2]# ls
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+[root@VM8 nginx-1.12.2]# which nginx
+/usr/local/nginx/sbin/nginx
+[root@VM8 nginx-1.12.2]# nginx -V
+nginx version: nginx/1.12.2
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --user=nginx --group=nginx 
+--with-http_ssl_module --with-stream --with-http_stub_status_module 
+--without-http_autoindex_module --without-http_ssi_module
+[root@VM8 nginx-1.12.2]# nginx
+
+[root@VM8 html]# ls
+50x.html  index.html
+[root@VM8 html]# cat /etc/hostname 
+VM8
+[root@VM8 html]# ss -ntul |grep -E ':80|:9000|:3306' |column -t
+tcp  LISTEN  0  128  *:80  *:*
+
+[root@VM8 html]# vim index.html
+<title>Welcome to VM8!</title>
+<h1>Welcome to VM8 192.168.2.200!</h1>
+[root@VM8 html]# systemctl start mariadb && systemctl enable mariadb
+
+[root@VM8 html]# ss -ntul |grep -E ':80|:9000|:3306' |column -t
+tcp  LISTEN  0  128  *:80    *:*
+tcp  LISTEN  0  50   *:3306  *:*
+[root@VM8 html]# mysqladmin -u root password '123';
+[root@VM8 html]# mysql -uroot -p123
+ MariaDB [(none)]> create database VM8;
+MariaDB [(none)]> grant select on *.* to lisi@'192.168.%' identified by '123';
+MariaDB [(none)]> quit;
+Bye
+[root@VM8 html]# 
+[root@VM8 html]# vim /usr/local/nginx/conf/nginx.conf
+ 17 http {
+ 18     include       mime.types;
+ 19     default_type  application/octet-stream;
+ 20     client_header_buffer_size      1k;
+ 21     large_client_header_buffers 4  4m;
+[root@VM8 html]# nginx -s reload
+[root@VM8 html]# cp /usr/share/backgrounds/day.jpg /usr/local/nginx/html/
+[root@VM8 html]# ls /usr/local/nginx/html/
+50x.html  day.jpg  index.html
+
+[root@VM8 html]# vim /usr/local/nginx/conf/nginx.conf
+ 43         location ~*  \.(jpg|png|gif)$  {
+ 44             expires   20d;
+ 45           }
+ 46         location / {
+ 47             root   html;
+ 48             index  index.html index.htm;
+ 49         }
+ 50 
+ 51         error_page  404              /404.html;
+[root@VM8 html]# nginx -s reload
+[root@VM8 html]# echo "VM8 2.200 404 not found" >/usr/local/nginx/html/404.html
+
+
+
+
+
+
+
+[root@room9pc01 ~]# cat /etc/resolv.conf 
+# Generated by NetworkManager
+search tedu.cn
+nameserver 176.121.0.100
+[root@room9pc01 ~]# route -n |awk 'NR==3{print $2}'
+176.121.202.1
+[root@room9pc01 ~]# ifconfig |awk '/inet /&&NR==2{print $2}'
+176.121.202.40
+
+
+
+
+

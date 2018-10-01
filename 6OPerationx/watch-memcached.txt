@@ -1,0 +1,171 @@
+1. 克隆 4 台新虚拟机,IP 配置如下:
+虚拟机 VM1 eth0 : 192.168.4.11
+虚拟机 VM2 eth0 : 192.168.4.12
+          eth1 : 192.168.2.12
+
+虚拟机 VM3  eth1 : 192.168.2.13
+虚拟机 VM4  eth1 : 192.168.2.14
+a) 在虚拟机 VM1 上源码安装 Nginx 软件,要求如下:
+b) 通过./configure --help 查看该软件支持的模块(--with
+开头)
+c) 要求安装 ssl 模块、stream 模块以及 stub_status 模块
+d) 安装前创建用户 nginx,安装时指定安装用户为 nginx
+e) 百度搜索 nginx 的 stub_status 模块的作用,以及如何修
+改配置文件,通过 stub_status 查看 nginx 服务器的状态
+
+
+2. 在虚拟机 VM1 上修改 nginx 配置文件,实现基于域名的虚拟主机:
+a) 域名分别为 www.tarena.com 和 www.tedu.cn
+b) 注意客户端验证需要修改/etc/hosts
+c) 访问 www.tedu.cn 时会提示输入用户名与密码,输入正确才可以流量页面
+d) 页面内容任意
+
+
+3. 虚拟机 VM2,VM3,VM4 均安装 nginx 软件作为服务器
+a) 虚拟机 VM1 作为客户端
+b) 虚拟机 VM2 的 nginx 配置为集群调度器,算法为轮询算法,集群池为 192.168.2.13 和 192.168.2.14,配置最大失
+败次数为 1,失败超时时间为 30 秒,192.168.2.14 的权重为 2
+c)
+虚拟机 VM3 和虚拟机 VM4 配置为 LNMP 环境,支
+持 PHP 动态页面
+d)
+在虚拟机 VM3 上创建测试页面(静态页面至少一
+个,连接数据库的动态页面至少一个,参考
+lnmp_soft/php_scripts/mysql.php)
+e)
+配置 rsync 自动将虚拟机 9 上的网页文件自动同
+步到虚拟机 VM4,确保两台主机的网页文件一致
+
+
+4. 延续前面的实验,优化所有的 nginx 软件,要求如下:
+a) 所有 nignx 均不要显示版本号(百度搜索)
+b) 并发连接数调整为 65536
+c) 调整后使用 ab 软件测试并发量
+d) 使用“watch -n 1 ss -s”命令观察服务器连接数
+变化(每秒执行一次 ss 命令)
+e)
+百度搜索 ss -s 命令的用法
+
+
+5. 附加题目:优化 Linux 内核参数,要求如下:
+a) 百度搜索:tcp_syncookies 参数、用法、如果调整值
+b) 百度搜索:tcp_fin_timeout 参数、用法、如果调整值
+c) 百度搜索:tcp_retries 参数、用法、如果调整值
+
+
+
+6. 在虚拟机 VM3 和 VM4 上部署 PHP 登陆环境:
+a) 部署 lnmp 环境(支持动静分离)
+b) 部署测试性页面(参考 lnmp_soft/php_scripts/php-memcached-demo.tar.gz)
+c) 测试登陆页面的效果
+d) 查看/etc/php-fpm.d/www.conf 配置文件,确认 session 会话信息保存位置
+e) 到/var/lib/php/session 目录下查看 session 文件
+
+
+
+7. 使用 memcached 实现会话信息共享
+a) 虚拟机 VM2 安装部署 memcached 缓存数据库
+b) 修改虚拟机 VM3 和 VM4 的配置,让 PHP 保存会话信息到 memcached
+c) 默认 PHP 无法连接 memcached,需要安装对应的扩展模块
+d) 完成后再次通过集群调度器访问登陆页面,测试登陆效果(为了查看效果,可用将后台页面的背景颜色适当
+调整)
+
+
+[root@VM1 ~]# tail -2 /var/log/yum.log 
+Sep 26 20:49:25 Installed: memcached-1.4.15-10.el7_3.1.x86_64
+Sep 26 20:49:26 Installed: 1:telnet-0.17-64.el7.x86_64
+[root@VM1 ~]# tail -n  2 /var/log/yum.log 
+Sep 26 20:49:25 Installed: memcached-1.4.15-10.el7_3.1.x86_64
+Sep 26 20:49:26 Installed: 1:telnet-0.17-64.el7.x86_64
+/****tail -f /var/.. 命令能实时查看日志，并自动刷新日志，让我们看到最新的日志文件，
+[root@VM1 ~]# tail -f /var/log/yum.log |head -3
+Sep 26 20:49:13 Installed: 1:mariadb-devel-5.5.56-2.el7.x86_64
+Sep 26 20:49:14 Installed: elinks-0.12-0.36.pre6.el7.x86_64
+Sep 26 20:49:14 Installed: php-5.4.16-42.el7.x86_64
+^C
+[root@VM1 ~]#
+
+21.
+(单选题)kickarstart 应答文件的包名是（ ）
+ A.system-config-kickstart
+ B.kickstart
+ C.system-config
+ D.system-kickstart
+正确答案：A
+生成自动应答文件为system-config-kickstart，其它均无此包
+9.
+(单选题)使用命令（ ）可以查看后台所有的进程，并且输出进程的PID
+ A.jobs -l
+ B.jobs
+ C.fg
+ D.bg
+正确答案：A
+B选项缺少-l选项，无法显示PID，C选项fg将后台进程回复到
+前台，D选项bg激活后台暂停的进程
+
+(单选题)以下哪个选项（ ）可以删除文件test.txt中每一行里的所有数字。
+ A.sed -i 's/[0-9]//' test.txt
+ B.sed -ri 's/[0-9]+//g' test.txt
+ C.sed -i 's/[0-9]+//g' test.txt
+ D.sed -ri 's/[0-9]+//' test.txt
+正确答案：B
+不使用g默认仅替换第1个数字，不使用-r选项默认不支持扩展正则，+符号输入扩展正则，代表前面的内容至少出现了一次
+
+(单选题)在pxe一键装机中客户端由网卡pxe启动完毕后，主机引导权交给（ ）
+ A.syslinux
+ B.pxelinux.0
+ C.tftp
+ D.http
+正确答案：B
+A选项与PXE装机无关，C选项tftp服务主要负责传输引导文件，
+所以启动引导权由具体引导文件pxelinux.0负责，D选项http服务主要
+传输操作系统数据
+
+47.
+(多选题)Shell脚本中使用如下哪些语句可以实现循环功能（ ）？
+ A.if
+ B.while
+ C.for
+ D.case
+正确答案：BC
+在shell脚本中可以使用for或while执行循环
+
+42.
+(单选题)在Linux 系统中，执行 tail –n 5 /var/log/messages 后得到的其中一行信息如下： 
+Oct 29 13:19:48 web5 dhclient: DHCPACK from 192.168.8.254 (xid=0x7c.. ..)，其中的dhclient指的是（ ）
+ A.消息内容
+ B.程序名
+ C.主机名
+ D.时间标签
+正确答案：B
+本题考查日志记录的格式，按照时间、地点、人物、发生的事件
+进行记录，在计算机中人物会写具体用户名或服务名、程序名，所以dhclinet为程序名
+
+36.
+(单选题)通过执行tail -n 5 /var/log/messages后，得到的其中一行信息如下： 
+Oct 29 13:19:48 web5 dhclient: DHCPACK from 192.168.8.254 (xid=0x7c.. ..)，其中web5表示的是（ ）
+ A.消息内容
+ B.程序名
+ C.主机名
+ D.时间标签
+正确答案：C
+本题考查日志记录的格式，按照时间、地点、人物、发生的事件
+进行记录，在计算机中地点会写主机名，所以Web5为主机名
+
+(单选题)在常见的Linux日志文件中，以下哪个文件（ ）的作用是记录与系统启动
+相关的消息
+ A./var/log/dmesg
+ B./var/log/messages
+ C./var/log/secure
+ D./var/log/maillog
+正确答案：A
+B选项记录各种服务公共消息，C选项记录用户登录安全相关，
+D选项邮件收发相关信息
+
+
+
+
+
+
+
+

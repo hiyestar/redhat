@@ -1,0 +1,160 @@
+$# ----传递给程序的总的参数数目
+$? ----上一个代码或者shell程序在shell中退出的情况，如果正常退出则返回0，反之为非0值。
+$* ----传递给程序的所有参数组成的字符串。
+    $- ----在Shell启动或使用set命令时提供选项
+    $? ----上一条命令执行后返回的值
+    $$ ----当前shell的进程号
+    $! ----上一个子进程的进程号
+    $@ ----所有的参数，每个都用双括号括起
+    $n ----位置参数值，n表示位置
+    $0 ----当前shell名
+[root@room9pc01 ~]# tail -1 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+[root@room9pc01 ~]# ls /var/ftp/rhel7/ |wc -l
+14
+[root@room9pc01 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@room9pc01 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+baseurl=file:///var/ftp/rhel7/
+gpgcheck=0
+enabled=1
+[root@room9pc01 ~]# yum clean all >/dev/null && yum repolist |tail -4
+[root@room9pc01 ~]# ls /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz  packagekit-media.repo  repo  rhel7.repo
+[root@room9pc01 ~]# yum -y install expect
+[root@room9pc01 ~]# rpm -q expect 
+expect-5.45-14.el7_1.x86_64
+[root@room9pc01 ~]# which expect
+/usr/bin/expect
+/*********Linux下（使用的gcc的库），sleep()函数是以秒为单位的，sleep(1);就是休眠1秒。
+语法
+sleep  number[smhd]
+参数说明：
+number : 时间长度，后面可接 s、m、h 或 d
+其中 s 为秒，m 为 分钟，h 为小时，d 为日数
+[root@room9pc01 ~]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+[root@room9pc01 ~]# date;sleep 3 && date
+2018年 09月 23日 星期日 10:24:29 CST
+2018年 09月 23日 星期日 10:24:32 CST
+
+[root@room9pc01 ~]# date;sleep 1m;date;
+2018年 09月 23日 星期日 09:58:40 CST
+2018年 09月 23日 星期日 09:59:40 CST
+
+[root@room9pc01 ~]# clone-auto7
+number of vms: 2
+created rh7_node1					[Done]
+created rh7_node2					[Done]
+[root@room9pc01 ~]# virsh shutdown rh7_node1
+域 rh7_node1 被关闭
+[root@room9pc01 ~]# virsh start rh7_node1 && virsh start rh7_node2
+域 rh7_node1 已开始
+域 rh7_node2 已开始
+[root@room9pc01 ~]# sleep 3;
+
+[root@room9pc01 ~]# cat autofu.sh 
+#!/bin/bash
+for i in {1..4}
+do
+hostn=rh7_node$i;
+mima=123456;
+systn='';
+eth0='';eth1='';
+ipexp(){
+ case $i in
+  1)
+   let eth0=100,eth1=10;systn=client;
+   echo -e "eth0=$eth0\teth1=$eth1";
+   echo this is option $i;;   
+  2)
+   let eth0=5,eth1=5;systn=proxy;
+   echo -e "eth0=$eth0\teth1=$eth1";
+   echo this is option $i;;
+  3)
+   let eth0=3,eth1=100;systn=web1;
+   echo -e "eth0=$eth0\teth1=$eth1";;
+  4)
+   let eth0=4,eth1=200;systn=web2;
+   echo -e "eth0=$eth0\teth1=$eth1";;
+  *)
+   echo over;;
+ esac
+ expect  /root/clone.sh  
+ expect  /root/start.sh  $hostn
+ expect  /root/expect.sh $hostn $mima $systn $eth0 $eth1
+}
+ipexp &
+wait % $i;
+done
+echo gameOver!
+[root@room9pc01 ~]# ll autofu.sh
+-rwxr-xr-x 1 root root 663 9月  23 17:36 autofu.sh
+
+[root@room9pc01 ~]# cat clone.sh 
+#!/usr/bin/expect -f
+set timeout -1
+spawn clone-auto7
+expect "vms:"  {send "1\r"}
+expect "#"  {send "echo hello clone\r"}
+[root@room9pc01 ~]# ll clone.sh
+-rw-r--r-- 1 root root 122 9月  23 17:45 clone.sh
+
+[root@room9pc01 ~]# cat start.sh 
+#!/usr/bin/expect -f
+set timeout -1
+set hostn  [lindex $argv 0]
+spawn virsh start $hostn
+expect "#"  {send "sleep 15 && date\r"}
+expect "#"  {send "echo hell start\r"}
+[root@room9pc01 ~]# ll start.sh
+-rw-r--r-- 1 root root 168 9月  23 17:31 start.sh
+
+[root@room9pc01 ~]# cat expect.sh 
+#!/usr/bin/expect -f
+set timeout -1
+set hostn  [lindex $argv 0]
+set mima   [lindex $argv 1]
+set systn  [lindex $argv 2]
+set eth0   [lindex $argv 3]
+set eth1   [lindex $argv 4]
+spawn  virsh console $hostn
+
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$mima\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $systn >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "mkdir /expect/\r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]\nname=rhel7.4\nenabled=1\ngpgcheck=0\nbaseurl=ftp://192.168.4.254/rhel7\n\[rhel7-2\]\nname=rhel7.4\nbaseurl=ftp://192.168.2.254/rhel7\ngpgcheck=0\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4 \r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 10 && date\r"}
+expect "#"  {send "echo hello world\r"}
+[root@room9pc01 ~]# ll expect.sh
+-rw-r--r-- 1 root root 1458 9月  23 17:08 expect.sh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

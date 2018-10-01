@@ -1,0 +1,423 @@
+[root@client nginx-1.12.2]# ls /etc/httpd/
+conf  conf.d  conf.modules.d  logs  modules  run
+
+[root@client nginx-1.12.2]# ls /etc/httpd/conf/
+httpd.conf  magic
+[root@client nginx-1.12.2]# ls /etc/httpd/conf.d/
+autoindex.conf  README  userdir.conf  welcome.conf
+========================================
+[root@server0 ~]# cat /etc/httpd/conf.d/virt.conf 
+<VirtualHost *:80>
+  ServerName    server0.example.com
+  DocumentRoot  /var/www/html/
+</VirtualHost>
+
+[root@server0 ~]# vim /etc/httpd/conf.d/dir.conf
+[root@server0 ~]# cat /etc/httpd/conf.d/dir.conf
+<Directory /var/www/html/>
+#  Deny  from  172.34.0.0/24
+#  Deny  from  172.34.0.0/255.255.255.0
+#  Allow from all
+ <RequireAll>
+   Require all granted
+   Require not ip 172.34.0
+ </RequireAll>
+</Directory>
+========================================
+
+[root@room11pc06 ~]# scp  /root/桌面/lnmp_soft.tar.gz root@192.168.4.100:/root/
+root@192.168.4.100's password: 
+lnmp_soft.tar.gz                      100%   60MB 107.9MB/s   00:00    
+[root@room11pc06 ~]# scp /root/桌面/nginx-1.12.2.tar.gz root@192.168.4.100:/root/
+
+[root@client ~]#  ls
+anaconda-ks.cfg       nginx-1.12.2.tar.gz  视频  下载
+initial-setup-ks.cfg  公共                 图片  音乐
+lnmp_soft.tar.gz      模板                 文档  桌面
+[root@client ~]# yum -y install gcc pcre-devel openssl-devel  #*-devel依赖包
+
+ #useradd -s /sbin/nologin nginx;
+   44  cd nginx-1.12.2/
+   45  ./configure --prefix=/usr/local/nginx  --user=nginx --group=nginx  --with-http_ssl_module;
+   47  make && make install;
+
+[root@proxy nginx-1.10.3]# ./configure --help | grep  ssl
+  --with-http_ssl_module             enable ngx_http_ssl_module
+  --with-mail_ssl_module             enable ngx_mail_ssl_module
+  --with-stream_ssl_module           enable ngx_stream_ssl_module
+  --with-openssl=DIR                 set path to OpenSSL library sources
+  --with-openssl-opt=OPTIONS         set additional build options for OpenSSL
+[root@proxy nginx-1.10.3]# /root/lnmp_soft/nginx-1.10.3/configure  --help |grep http_ssl
+  --with-http_ssl_module             enable ngx_http_ssl_module
+[root@proxy nginx-1.10.3]# 
+
+   80  tar -xPf nginx-1.10.3.tar.gz &>/dev/null 
+   81  ls
+   82  cd nginx-1.10.3/
+   83   ./configure --prefix=/usr/local/nginx  --user=nginx --group=nginx  --with-http_ssl_module;
+   84  make && make install &>/dev/null;
+   85  ls
+   86  ls /usr/local/nginx/sbin/nginx 
+   87  /usr/local/nginx/sbin/nginx
+   88  firefox 192.168.4.5
+   89  netstat -ntulp | grep :80
+[root@proxy nginx-1.10.3]# ls /usr/local/
+bin  etc  games  include  lib  lib64  libexec  nginx  sbin  share  src
+
+==============================================================
+[root@web1 ~]# tail -1 /etc/fstab
+/dev/sr0             /mnt            iso9660       defaults   0   0 
+[root@web1 ~]# mount -a;df -hT /mnt;
+文件系统       类型     容量  已用  可用 已用% 挂载点
+/dev/sr0       iso9660  4.3G  4.3G     0  100% /mnt
+[root@web1 ~]# vim /etc/yum.repos.d/rhel7.repo 
+[root@web1 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+enabled=1
+[centos7]
+name=centos7
+gpgcheck=0
+baseurl=file:///mnt
+enabled=1
+[root@web1 ~]# yum clean all &>/dev/null;yum repolist | tail -4;
+源标识                               源名称                                状态
+centos7                              centos7                               3,894
+rhel7                                rhel7.4                               4,986
+repolist: 8,880
+[root@web2 ~]# yum clean all >/dev/null;yum repolist |tail -5;
+This system is not registered with an entitlement server. 
+You can use subscription-manager to register.
+源标识                               源名称                                状态
+centos7                      centos7                       3,894
+rhel7                        rhel7.4                       4,986
+repolist: 8,880
+[root@proxy ~]# scp lnmp_soft.tar.gz root@192.168.4.200:/root
+[root@proxy ~]# scp lnmp_soft.tar.gz root@192.168.4.2:/root/
+
+[root@proxy ~]# scp nginx-1.12.2.tar.gz  root@192.168.4.200:/root
+root@192.168.4.200's password: 
+nginx-1.12.2.tar.gz                     100%  959KB  91.2MB/s   00:00    
+[root@proxy ~]# scp nginx-1.12.2.tar.gz  root@192.168.4.2:/root
+
+[root@proxy ~]# ls /root/lnmp_soft | grep nginx-1.10.3
+nginx-1.10.3
+nginx-1.10.3.tar.gz
+[root@web1 ~]# ls /root
+anaconda-ks.cfg       lnmp_soft.tar.gz     公共  视频  文档  音乐
+initial-setup-ks.cfg  nginx-1.12.2.tar.gz  模板  图片  下载  桌面
+[root@web1 ~]# yum -y install gcc pcre-devel openssl-devel |tail -15;
+......
+完毕！
+[root@web1 ~]# useradd -s /sbin/nologin nginx;
+[root@web1 ~]# tar -xPf lnmp_soft.tar.gz 
+[root@web1 ~]# ls
+anaconda-ks.cfg       nginx-1.12.2.tar.gz  图片  桌面
+initial-setup-ks.cfg  公共                 文档
+lnmp_soft             模板                 下载
+lnmp_soft.tar.gz      视频                 音乐
+[root@web1 lnmp_soft]# ls | grep nginx-1.10.3
+nginx-1.10.3.tar.gz
+[root@web1 lnmp_soft]# tar -xPf nginx-1.10.3.tar.gz >/dev/null;
+[root@web1 lnmp_soft]# ls | grep nginx-1.10.3
+nginx-1.10.3
+nginx-1.10.3.tar.gz
+[root@web1 lnmp_soft]# cd nginx-1.10.3/
+
+[root@web1 nginx-1.10.3]# ls /usr/local/
+bin  games    lib    libexec  share
+etc  include  lib64  sbin     src
+-------------------------------------------------
+[root@c4 nginx-1.10.3]# id nginx
+uid=1001(nginx) gid=1001(nginx) 组=1001(nginx)
+---------------------------------------------------------------------------------------
+[root@web1 nginx-1.10.3]# ./configure \
+> --prefix=/usr/local/nginx \     //指定安装路径
+> --user=nginx --group=nginx  --with-http_ssl_module;//开启SSL加密功能
+
+[root@web1 nginx-1.10.3]# make >/dev/null ;
+[root@web1 nginx-1.10.3]# make install > /dev/null; //编译并安装
+------------------------------------------
+[root@a4 nginx-1.10.3]# make |tail -5 && make install |tail -5;
+	-e "s|%%PID_PATH%%|/usr/local/nginx/logs/nginx.pid|" \
+	-e "s|%%CONF_PATH%%|/usr/local/nginx/conf/nginx.conf|" \
+	-e "s|%%ERROR_LOG_PATH%%|/usr/local/nginx/logs/error.log|" \
+	< man/nginx.8 > objs/nginx.8
+make[1]: 离开目录“/root/lnmp_soft/nginx-1.10.3”
+test -d '/usr/local/nginx/html' \
+	|| cp -R html '/usr/local/nginx'
+test -d '/usr/local/nginx/logs' \
+	|| mkdir -p '/usr/local/nginx/logs'
+make[1]: 离开目录“/root/lnmp_soft/nginx-1.10.3”
+
+---------------------------------------------
+[root@web1 nginx-1.10.3]# ls /usr/local/
+bin  games    lib    libexec  sbin   src
+etc  include  lib64  nginx    share
+[root@c4 nginx-1.10.3]# ls /usr/local/nginx/
+conf  html  logs  sbin
+
+[root@web1 nginx-1.10.3]# /usr/local/nginx/sbin/nginx ; //启动服务
+[root@web1 nginx-1.10.3]# netstat -ntulp | grep :80
+tcp  0  0  0.0.0.0:80  0.0.0.0:*  LISTEN   9102/nginx: master  
+[root@c4 nginx-1.10.3]# netstat -antpul |grep nginx |column -t;
+tcp  0  0  0.0.0.0:80  0.0.0.0:*  LISTEN  11008/nginx:  master
+[root@c4 nginx-1.10.3]# netstat -tpul |grep nginx |column -t;
+tcp  0  0  0.0.0.0:http  0.0.0.0:*  LISTEN  11008/nginx:  master
+netstat命令可以查看系统中启动的端口信息，该命令常用选项如下：
+-a显示所有端口的信息
+-n以数字格式显示端口号
+-t显示TCP连接的端口
+-u显示UDP连接的端口
+-l显示服务正在监听的端口信息，如httpd启动后，会一直监听80端口
+-p显示监听端口的服务名称是什么（也就是程序名称）
+nginx服务默认通过TCP 80端口监听客户端请求：
+[root@web1 nginx-1.10.3]# ln -s /usr/local/nginx/sbin/nginx  /sbin/  #方便后期使用,建立软连接
+[root@c4 nginx-1.10.3]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  20 19:57 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+
+[root@web1 nginx-1.10.3]# ls /sbin/ |grep nginx
+nginx
+[root@web1 nginx-1.10.3]# ls -l /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  20 13:25 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+
+[root@web1 nginx-1.10.3]# /sbin/nginx -s stop   //关闭服务
+[root@web1 nginx-1.10.3]# netstat -anptul |grep :80
+[root@web1 nginx-1.10.3]# /sbin/nginx 
+[root@web1 nginx-1.10.3]# netstat -anptul |grep  :80
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      9263/nginx: master 
+[root@web1 nginx-1.10.3]# /sbin/nginx -s reload //重新加载配置文件
+[root@web1 nginx-1.10.3]# echo $?
+0
+[root@web1 nginx-1.10.3]# /usr/local/nginx/sbin/nginx -v  //查看软件信息
+nginx version: nginx/1.10.3
+[root@web1 nginx-1.10.3]# 
+=========================
+[root@client ~]# tar -xPf nginx-1.12.2.tar.gz ;
+[root@client ~]# cd nginx-1.12.2/ 
+[root@client nginx-1.12.2]# ls    #注意objs
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+[root@client nginx-1.12.2]# cd src/
+[root@client src]# ls
+core  event  http  mail  misc  os  stream
+--------------kill id    ------   killall jinchengming-------
+
+[root@proxy nginx-1.12.2]# ./configure --prefix=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module |tail -5;
+
+[root@proxy nginx-1.12.2]# make |tail -3;
+	-e "s|%%ERROR_LOG_PATH%%|/usr/local/nginx/logs/error.log|" \
+	< man/nginx.8 > objs/nginx.8
+make[1]: 离开目录“/root/nginx-1.12.2”
+[root@proxy nginx-1.12.2]# mv /usr/local/nginx/sbin/nginx{,old}
+[root@proxy nginx-1.12.2]# ls /usr/local/nginx/sbin/nginxold
+[root@proxy nginx-1.12.2]# ls             #注意objs
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+[root@proxy nginx-1.12.2]# ls objs
+autoconf.err  nginx    ngx_auto_config.h   ngx_modules.c  src
+Makefile      nginx.8  ngx_auto_headers.h  ngx_modules.o
+
+[root@proxy nginx-1.12.2]# cp objs/nginx /usr/local/nginx/sbin/
+[root@proxy nginx-1.12.2]# ls /usr/local/nginx/sbin/
+nginx  nginxold
+[root@proxy nginx-1.12.2]# ls /sbin/nginx 
+/sbin/nginx
+[root@proxy nginx-1.12.2]# /sbin/nginx -s stop
+[root@proxy nginx-1.12.2]# /sbin/nginx
+[root@proxy nginx-1.12.2]# /sbin/nginx -v
+nginx version: nginx/1.12.2
+[root@proxy nginx-1.12.2]# netstat -anptul | grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      16993/nginx: master 
+[root@proxy nginx-1.12.2]# firefox 192.168.4.5
+[root@proxy nginx-1.12.2]# /sbin/nginx -s reload
+[root@proxy nginx-1.12.2]# firefox 192.168.4.5
+[root@proxy nginx-1.12.2]# curl http://192.168.4.5
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+[root@proxy nginx-1.12.2]# 
+
+===================================
+[root@client nginx-1.12.2]# netstat -anptul |grep :80
+tcp6       0      0 :::80         :::*        LISTEN      3968/httpd          
+[root@client nginx-1.12.2]# rpm -q httpd
+httpd-2.4.6-67.el7.x86_64
+[root@client nginx-1.12.2]# systemctl is-active httpd
+active
+[root@client nginx-1.12.2]# systemctl disable httpd  #注意端口冲突httpd<--80-->nginx
+[root@client nginx-1.12.2]# systemctl stop httpd
+[root@client nginx-1.12.2]# netstat -anptul |grep :80
+[root@client nginx-1.12.2]# /sbin/nginx
+[root@client nginx-1.12.2]# netstat -anptul |grep :80
+tcp        0      0 0.0.0.0:80    0.0.0.0:*      LISTEN      13938/nginx: master 
+[root@client nginx-1.12.2]# /sbin/nginx -v
+nginx version: nginx/1.12.2
+[root@client nginx-1.12.2]# netstat -anputl |grep nginx
+tcp        0      0 0.0.0.0:80     0.0.0.0:*         LISTEN      13938/nginx: master 
+[root@client nginx-1.12.2]# firefox 192.168.4.100
+[root@client nginx-1.12.2]# nginx -v
+nginx version: nginx/1.12.2
+[root@client nginx-1.12.2]# ls /usr/local/nginx/html/
+50x.html  index.html
+============================================
+ 37         server_name  localhost;
+ 38         auth_basic "Input Password";   #认证提示信息
+ 39         auth_basic_user_file "/usr/local/nginx/pass";
+[root@proxy nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+[root@proxy nginx-1.12.2]# head -39 /usr/local/nginx/conf/nginx.conf |tail -3;
+        server_name  localhost;
+	auth_basic "Input Password";
+	auth_basic_user_file "/usr/local/nginx/pass";
+[root@client nginx-1.12.2]# cat -n /usr/local/nginx/conf/nginx.conf |head -39 |tail -3;
+    37	        server_name  localhost;
+    38	auth_basic "INput Password";    //认证提示符
+    39	auth_basic_user_file "/usr/local/nginx/pass";  //认证密码文件
+   -------使用htpasswd命令创建账户文件，需要确保系统中已经安装了httpd-tools。
+[root@client nginx-1.12.2]# yum -y install httpd-tools |tail -5;
+[root@client nginx-1.12.2]# htpasswd -c /usr/local/nginx/pass tom
+New password: 
+Re-type new password: 
+Adding password for user tom
+[root@client nginx-1.12.2]# htpasswd /usr/local/nginx/pass jerry //追加用户，不使用-c选项
+New password: 
+Re-type new password: 
+Adding password for user jerry
+[root@client nginx-1.12.2]#  cat /usr/local/nginx/pass
+tom:$apr1$S8Gs16sG$VY7njsCEF74pCVZA7/tIy/
+jerry:$apr1$Y72jfjJ9$S7QdbUgKNH4EJaQdXfSdY0
+
+[root@client nginx-1.12.2]# nginx -s reload  //重新加载配置文件 
+[root@client nginx-1.12.2]# echo $?
+0
+[root@a4 nginx-1.12.2]# nginx -s reload && echo $?;
+0
+[root@client nginx-1.12.2]# ifconfig eth0 |head -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.100  netmask 255.255.255.0  broadcast 192.168.4.255
+[root@client nginx-1.12.2]# firefox 192.168.4.100
+
+ctrl+v ----x  #注意 光标必须停留在[ # ] 上
+[root@proxy nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+
+ 35     server {
+ 36         listen       80;
+ 37         server_name  www.a.com;      //域名
+ 38         auth_basic "Input Password";
+ 39         auth_basic_user_file "/usr/local/nginx/pass";
+ 40         #charset koi8-r;
+ 41 
+ 42         #access_log  logs/host.access.log  main;
+ 43 
+ 44         location / {
+ 45             root   html;     //指定网站根路径
+ 46             index  index.html index.htm;
+ 47         }
+
+
+ 85     server {
+ 86         listen       80;
+ 87 #        listen       somename:8080;
+ 88         server_name  www.b.com;
+ 89         location / {
+ 90             root   www;
+ 91             index  index.html index.htm;
+ 92         }   
+ 93     }
+
+
+[root@proxy nginx-1.12.2]#  ls /usr/local/nginx/
+client_body_temp  fastcgi_temp  logs  proxy_temp  scgi_temp
+conf              html          pass  sbin        uwsgi_temp
+[root@proxy nginx-1.12.2]# mkdir /usr/local/nginx/www
+[root@proxy nginx-1.12.2]# echo www.b.com > /usr/local/nginx/www/index.html
+[root@proxy nginx-1.12.2]# nginx -s reload
+
+[root@proxy nginx-1.12.2]# vim /etc/hosts
+[root@proxy nginx-1.12.2]# tail -1 /etc/hosts
+192.168.4.5 www.a.com www.b.com
+[root@proxy nginx-1.12.2]# ping -c2 -i0.2 -w1 www.a.com
+PING www.a.com (192.168.4.5) 56(84) bytes of data.
+64 bytes from www.a.com (192.168.4.5): icmp_seq=1 ttl=64 time=0.057 ms
+64 bytes from www.a.com (192.168.4.5): icmp_seq=2 ttl=64 time=0.051 ms
+--- www.a.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.051/0.054/0.057/0.003 ms
+[root@proxy nginx-1.12.2]# ping -c2 -i0.2 -w1 www.b.com
+==================
+ctrl+v ----x  #注意 光标必须停留在[ # ] 上
+===============================================
+ 85     server {
+ 86         listen       80;
+ 87         server_name  www.tedu.cn;
+ 88         auth_basic "Input Password";
+ 89         auth_basic_user_file "/usr/local/nginx/pass";
+ 90         location / {
+ 91             root   /usr/local/nginx/tedu/;
+ 92             index  index.html index.htm;
+ 93         }
+ 94     }
+ 95     server {
+ 96         listen          80;
+ 97         server_name  www.tarena.com;
+ 98         auth_basic "INput password";
+ 99         auth_basic_user_file  "/usr/local/nginx/pass";
+100         location / {
+101                 root  /usr/local/nginx/tarena/;
+102                 index index.html index.htm;
+103         }
+104     }
+[root@a4 nginx-1.12.2]# htpasswd -c /usr/local/nginx/pass tom
+New password: 
+Re-type new password: 
+Adding password for user tom
+[root@a4 nginx-1.12.2]# htpasswd /usr/local/nginx/pass jerry
+New password: 
+Re-type new password: 
+Adding password for user jerry
+
+[root@a4 nginx-1.12.2]# echo www.tarena.com--/usr/local/nginx/tarena > /usr/local/nginx/tarena/index.html;
+[root@a4 nginx-1.12.2]# echo www.tedu.com > /usr/local/nginx/tedu/index.html;
+[root@a4 nginx-1.12.2]# echo "192.168.4.7 www.tarena.com www.tedu.cn" >>/etc/hosts;
+[root@a4 nginx-1.12.2]# nginx -s reload && echo $?;
+0
+
+==================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+

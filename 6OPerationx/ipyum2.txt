@@ -1,0 +1,253 @@
+
+
+[root@VM1 ~]# yum -y install expect
+[root@VM1 ~]# rpm -q expect
+expect-5.45-14.el7_1.x86_64
+[root@VM1 ~]# which expect
+/usr/bin/expect
+[root@VM1 ~]# vim ex2.sh
+     /****# . [空格】 /脚本绝对路径 即使脚本没有执行权,也可以运行
+
+[root@VM1 ~]# . ex2.sh 55      # .[空格]脚本相对路径
+spawn ssh -X root@192.168.4.55
+Are you sure you want to continue connecting (yes/no)? yes
+root@192.168.4.55's password: 
+[root@VM5 ~]# mkdir /expectvm3
+[root@VM5 ~]# [root@VM1 ~]# . ex2.sh 55
+spawn ssh -X root@192.168.4.55
+root@192.168.4.55's password: 
+[root@VM5 ~]# mkdir /expectvm3
+mkdir: 无法创建目录"/expectvm3": 文件已存在
+[root@VM5 ~]# [root@VM1 ~]# cat ex2.sh 
+
+#!/usr/bin/expect
+expect << EOF
+set timeout 30   #设置超时时间30秒
+spawn ssh -X root@192.168.4.$1
+expect  {
+    "(yes/no)?"  {
+    send "yes\n";
+    expect "password:"
+    send "123\r";
+   }
+   "password:"  {
+    send "123\r";
+   }
+}
+expect "#" {send "mkdir /expectvm3\r"}
+expect "#" {send "exit\n"}
+EOF
+==============expect ssh 远程 密码登陆 ==========================
+
+[root@VM1 ~]# vim expect.sh 
+[root@VM1 ~]# . expect.sh 56.
+Are you sure you want to continue connecting (yes/no)? yes
+root@192.168.4.56's password: 
+[root@VM6 ~]# mkdir /expectvm3
+[root@VM6 ~]# [root@VM1 ~]# . expect.sh 56
+root@192.168.4.56's password: 
+[root@VM6 ~]# mkdir /expectvm3
+mkdir: 无法创建目录"/expectvm3": 文件已存在
+[root@VM6 ~]# [root@VM1 ~]# cat expect.sh 
+
+#!/usr/bin/expect
+expect << EOF
+set timeout 30
+spawn ssh -X root@192.168.4.$1
+expect {
+   "password:" {
+    send "123\r";
+   }
+    "(yes/no)?" {
+    send "yes\n";exp_continue
+   }
+}
+expect "#" {send "mkdir /expectvm3\r"}
+expect "#" {send "exit\n"}
+EOF
+[root@VM1 ~]# 
+=======================================
+
+expect的转义符/逃逸符
+在命令send时，往往有写特殊字符需要进行转义：
+\ 需转义为 \\\
+} 需转义为 \}
+[ 需转义为 \[
+$ 需转义为 \\\$
+` 需转义为 \`
+" 需转义为 \\\"
+
+[root@room9pc01 ~]# yum -y install expect
+软件包 expect-5.45-14.el7_1.x86_64 已安装并且是最新版本
+[root@room9pc01 ~]# rpm  -q expect
+expect-5.45-14.el7_1.x86_64
+[root@room9pc01 ~]# which expect
+/usr/bin/expect
+-------------------------------------------只配IP------------
+[root@room9pc01 ~]# cat expect.sh
+#!/usr/bin/expect
+expect << eof
+set timeout -1
+spawn virsh console $1
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"  {send "root\r"}
+expect "密码："  {send "$2\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $1 >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$3/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$4/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send  "mkdir /expect/\r"}
+expect "#"  {send  "ifconfig | grep 'inet '\r"}
+expect "#"  {send "reboot\r"}
+interact
+eof
+---------------------------配 ip 和 yum ---------------------------
+[root@room9pc01 ~]# cat expect.sh 
+#!/usr/bin/expect
+expect << eof
+set timeout -1
+spawn virsh console $1
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$2\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $1 >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$3/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$4/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "mkdir /expect/\r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]\nname=rhel7.4\nenabled=1\ngpgcheck=0\nbaseurl=ftp://192.168.4.254/rhel7\n\[rhel7-2\]\nname=rhel7.4\nbaseurl=ftp://192.168.2.254/rhel7\ngpgcheck=0\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4 \r"}
+expect "#"  {send "reboot\r"}
+interact
+eof
+
+============================
+
+------------------------------scp----------------------
+[root@room9pc01 ~]# scp  /root/桌面/lnmp_soft.tar.gz root@192.168.4.5:/root/
+Are you sure you want to continue connecting (yes/no)? yes
+root@192.168.4.5's password: 
+[root@room9pc01 ~]# scp  /root/桌面/lnmp_soft.tar.gz root@192.168.4.5:/test/
+root@192.168.4.5's password: 
+
+/**拷贝远程服务器的文件到本地：
+scp -r -P  端口号   用户名@IP地址:/usr/local/webapps/   /tmp/kyj/
+
+拷贝本地文件到远程服务器：
+scp -r  /tmp/kyj/sys.war    用户名@IP地址:/usr/local/webapps/
+ **/
+[root@room9pc01 ~]# cat scp.sh
+#!/usr/bin/expect
+expect << EOF
+set timeout 30
+spawn scp  /root/桌面/lnmp_soft.tar.gz root@192.168.4.$1:/expect/
+expect {
+   "password:" {
+    send "123\r";
+   }
+    "(yes/no)?" {
+    send "yes\n";exp_continue
+   }
+}
+expect "#" {send "mkdir /expectvm3\r"}
+EOF
+[root@room9pc01 ~]# . scp.sh 3
+spawn scp /root/桌面/lnmp_soft.tar.gz root@192.168.4.3:/expect/
+root@192.168.4.3's password: 
+lnmp_soft.tar.gz                                100%   75MB 153.4MB/s   00:00    
+[root@room9pc01 ~]# 
+
+------------------------------ip  yum  scp ----------------
+
+[root@room9pc01 ~]# cat expect.sh
+#!/usr/bin/expect
+expect << eof
+set timeout -1
+spawn virsh console $1
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$2\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $1 >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$3/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$4/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "mkdir /expectipyum/\r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]\nname=rhel7.4\nenabled=1\ngpgcheck=0\nbaseurl=ftp://192.168.4.254/rhel7\n\[rhel7-2\]\nname=rhel7.4\nbaseurl=ftp://192.168.2.254/rhel7\ngpgcheck=0\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4 \r"}
+expect "#"  {send "scp root@192.168.4.254:/root/桌面/lnmp_soft.tar.gz  /root/\r"}
+expect {      ##################?????????????
+   "password:" {
+    send "Taren1\r";
+   }
+    "(yes/no)?" {
+    send "yes\n";exp_continue
+   }
+}            ###########???????????????
+expect "#" {send "mkdir /expectscp\r"}
+
+expect "#"  {send "reboot\r"}
+interact
+eof
+[root@room9pc01 ~]# 
+--------------------------------------ip  yum  scp -----------------
+[root@room9pc01 ~]# cat expect.sh
+#!/usr/bin/expect
+expect << eof
+set timeout -1
+spawn virsh console $1
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$2\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $1 >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$3/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$4/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "mkdir /expectipyum/\r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]\nname=rhel7.4\nenabled=1\ngpgcheck=0\nbaseurl=ftp://192.168.4.254/rhel7\n\[rhel7-2\]\nname=rhel7.4\nbaseurl=ftp://192.168.2.254/rhel7\ngpgcheck=0\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4 \r"}
+expect "#"  {send "scp root@192.168.4.254:/root/桌面/lnmp_soft.tar.gz  /root/\r"}
+expect "(yes/no)?" {send "yes\n"}
+expect "password:" {send "Taren1\r" }
+expect "#" {send "mkdir /expectscp\r"}
+
+expect "#"  {send "reboot\r"}
+interact
+eof
+[root@room9pc01 ~]# . expect.sh  VM7 123456 7 7
+spawn virsh console VM7
+连接到域 VM7
+
+lnmp_soft.tar.gz                              100%   75MB 101.4MB/s   00:00    
+[root@localhost ~]# mkdir /expectscp
+[root@localhost ~]# [root@room9pc01 ~]# ssh -X 192.168.4.7
+
+[root@VM7 ~]# ls
+anaconda-ks.cfg       lnmp_soft.tar.gz  模板  图片  下载  桌面
+initial-setup-ks.cfg  公共              视频  文档  音乐
+[root@VM7 ~]# ls /expect
+expectipyum/ expectscp/  
+
+
+
+
+
+
+
+
+
+

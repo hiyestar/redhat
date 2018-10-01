@@ -1,0 +1,789 @@
+				OSI参考模型(七层框架)
+              [5]  应用层         |<----------协议------->|	       应用层   (计算机)       APDU
+                HTTP  FTP  TFTP  SMTP  SNMP   DNS
+                      上层数据
+     6 接口      
+                表示层         |-----------协议-----------|          表示层          PPDU
+     5 接口
+ 	        会话层         |------------协议----------|          会话层          SPDU
+4  接口      
+      	      [4]  传输层         <--------协议------------->        传输层     (防火墙)   TPDU 数据段
+                TCP      UDP
+                  TCP头部     上层数据
+3  接口
+       	   [3] 网络层          <----------协议------------>       网络层   (路由器)   报文   数据包
+                ICMP    IGMP    IP    ARP  RARP
+                    IP头部   TCP头部     上层数据
+2  接口
+            [2] 数据链路层      <--------协议---------->         数据链路层   (交换机)  帧   数据帧
+            MAC头部  IP头部   TCP头部     上层数据
+1  接口   
+             [1] 物理层		<--------协议----------->	      物理层   (网卡)   比特bit  比特流
+
+   层            主机A                              主机B        数据单元
+---------------------------------------------------------------------------------------------------------------------------
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+D (16 ) 224-239.0.0.0  [1110  0000] -[1110 1111]
+E (15 ) 240-254.0.0.0  [1111  0000] -[1111 1110]
+        1 	 1 	 1 	 1 	 1 	 1 	 1 	 1 
+	0	0	0	0	0	0	0	0
+ 	128	64	32	16	8	4	2	1
+if [ $a -eq 1 -a $b -eq 1 ]----------# -a 并且      -o 或者  shell语言--------------]
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+rhce:       inet 172.25 .254.250 
+rhce:0:     inet 172.25 .0  .250
+virbr0:     inet 192.168.122.1 
+
+X1(eth0:192.168.4.7    eth1:192.168.2.7  )
+X2(eth0:192.168.4.252  eth1:192.168.2.252)
+X3(eth0:192.168.4.207  eth1:192.168.2.207)
+X4(eth0:192.168.4.208  eth1:192.168.2.208)
+X5(eth0:192.168.4.209  eth1:192.168.2.209)
+
+# clone-auto7
+number of vms: 5
+# virsh console X1
+[root@X1 ~]# nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.7/24 ipv4.gateway 192.168.4.254 connection.autoconnect yes
+[root@X1 ~]# nmcli connection up eth0 
+[root@X1 ~]# nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes;
+
+[root@X1 ~]# nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.7/24 ipv4.gateway 192.168.2.254 connection.autoconnect yes
+[root@X1 ~]# nmcli connection up eth1
+[root@room12pc62 ~]# systemctl is-active vsftpd
+active
+[root@room12pc62 ~]# tail -1 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+[root@room12pc62 ~]# df -hT /var/ftp/rhel7/
+文件系统       类型     容量  已用  可用 已用% 挂载点
+/dev/loop0     iso9660  3.8G  3.8G     0  100% /var/ftp/rhel7
+[root@X1 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@X1 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[root@X1 ~]# yum clean all >/dev/null;yum repolist |tail -3;
+源标识                               源名称                                状态
+rhel7                        rhel7.4                       4,986
+repolist: 4,986
+########### mv /usr/local/nginx/sbin/nginx{,old}备份，替换文件----------------
+---------------------------X1(eth0:192.168.4.7    eth1:192.168.2.7  )--------
+
+[root@X1 ~]# ifconfig eth0 |grep 'inet ';ifconfig eth1 |grep 'inet ';
+        inet 192.168.4.7  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.7  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@X1 ~]# route -n | awk 'NR>=2&&NR<5{print $2}'
+Gateway
+192.168.4.254
+192.168.2.254
+[root@room12pc62 ~]# scp '/root/桌面/lnmp_soft.tar.gz' root@192.168.4.7:/root/
+[root@room12pc62 ~]# scp /root/桌面/nginx-1.12.2.tar.gz  root@192.168.4.7:/root/
+[root@X1 ~]#  tar -xzPf lnmp_soft.tar.gz ;tar -xzPf nginx-1.12.2.tar.gz ;
+[root@X1 ~]# ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     公共  图片  音乐
+initial-setup-ks.cfg  nginx-1.12.2         模板  文档  桌面
+lnmp_soft             nginx-1.12.2.tar.gz  视频  下载
+[root@X1 ~]# ls /root/lnmp_soft/php_scripts/
+mem.php  mysql.php  php-memcached-demo.tar.gz  test.php
+[root@X1 ~]# ls /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm 
+/root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@X1 ~]# yum -y install elinks  telnet  httpd-tools  gcc \
+> pcre-devel  openssl-devel  mariadb-devel  mariadb \
+> mariadb-server  memcached  php-pecl-memcache   php   php-mysql \
+> /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm |tail -12 ;
+
+[root@X1 ~]# rpm -q   elinks  telnet  httpd-tools  gcc  pcre-devel \
+> openssl-devel  mariadb-devel   mariadb  mariadb-server  memcached \
+> php-pecl-memcache  php   php-mysql   php-fpm ;
+
+elinks-0.12-0.36.pre6.el7.x86_64
+telnet-0.17-64.el7.x86_64
+httpd-tools-2.4.6-67.el7.x86_64
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64 
+
+openssl-devel-1.0.2k-8.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+memcached-1.4.15-10.el7_3.1.x86_64
+
+php-pecl-memcache-3.0.8-4.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+[root@X1 ~]# useradd -s /sbin/nologin nginx
+[root@X1 ~]# grep nginx /etc/passwd
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+[root@X1 ~]# rm -rf /usr/local/nginx ;ls /usr/local/nginx ;
+
+--------安装部署Nginx、MariaDB、PHP环境---------安装部署Nginx、MariaDB、PHP、PHP-FPM；
+============编译安装必须要使用--with-stream参数开启4层代理模块。=======
+注意必须要为PHP安装memcache扩展（php-pecl-memcache），否则PHP无法解析连接memcached的指令
+------------# --with-http_ssl_module        //开启SSL加密功能
+-----------# --with-stream         //开启TCP/UDP代理模块,4层反向代理功能 
+----------# --with-http_stub_status_module  //开启status状态页面
+[root@X1 ~]# cd nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+[root@X1 nginx-1.12.2]# ./configure --prefix=/usr/local/nginx \
+> --user=nginx   --group=nginx   --with-http_ssl_module  \
+> --with-stream   --with-http_stub_status_module |tail -5 ;
+
+[root@X1 nginx-1.12.2]#  make |tail -3 && make install | tail -3 ;
+[root@X1 nginx-1.12.2]# cat /etc/shells
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/bin/tcsh
+/bin/csh
+[root@X1 nginx-1.12.2]# ll /usr/local/nginx/sbin/nginx 
+-rwxr-xr-x. 1 root root 6574808 8月  26 14:54 /usr/local/nginx/sbin/nginx
+[root@X1 nginx-1.12.2]# ln -s /usr/local/nginx/sbin/nginx /sbin/
+[root@X1 nginx-1.12.2]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  26 15:04 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+------------ss命令可以查看系统中启动的端口信息，该命令常用选项如下：
+-a显示所有端口的信息
+-n以数字格式显示端口号
+-t显示TCP连接的端口
+-u显示UDP连接的端口
+-l显示服务正在监听的端口信息，如httpd启动后，会一直监听80端口
+-p显示监听端口的服务名称是什么（也就是程序名称）
+
+[root@X1 nginx-1.12.2]# nginx
+[root@X1 nginx-1.12.2]# nginx -s reload;netstat -anptul |grep nginx ;
+tcp        0      0 0.0.0.0:80       0.0.0.0:*        LISTEN      6353/nginx: master  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------X2(eth0:192.168.4.252  eth1:192.168.2.252)--------------
+
+[root@X2 ~]# ifconfig eth0 |grep 'inet ';ifconfig eth1 |grep 'inet ';
+        inet 192.168.4.252  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.252  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@X2 ~]# route -n |awk 'NR>=2&&NR<5{print $2}';
+Gateway
+192.168.4.254
+192.168.2.254
+[root@X2 ~]# ls /root/lnmp_soft/php_scripts/
+mem.php  mysql.php  php-memcached-demo.tar.gz  test.php
+[root@X2 ~]# ls /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+/root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@X2 ~]# yum -y install elinks telnet httpd-tools gcc \
+> pcre-devel openssl-devel mariadb-devel mariadb  \
+> mariadb-server  memcached php-pecl-memcache  php php-mysql \
+> /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm |tail -15 ;
+
+[root@X2 ~]# rpm -q elinks  telnet httpd-tools gcc pcre-devel \
+> openssl-devel mariadb-devel mariadb mariadb-server memcached \
+> php-pecl-memcache php php-mysql php-fpm ;
+
+[root@X2 ~]# useradd -s /sbin/nologin nginx;grep nginx /etc/passwd;
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+[root@X2 ~]# rm -rf /usr/local/nginx ;ls /usr/local/nginx
+ls: 无法访问/usr/local/nginx: 没有那个文件或目录
+--------安装部署Nginx、MariaDB、PHP环境---------安装部署Nginx、MariaDB、PHP、PHP-FPM；
+============编译安装必须要使用--with-stream参数开启4层代理模块。=======
+注意必须要为PHP安装memcache扩展（php-pecl-memcache），否则PHP无法解析连接memcached的指令
+------------# --with-http_ssl_module        //开启SSL加密功能
+-----------# --with-stream         //开启TCP/UDP代理模块,4层反向代理功能 
+----------# --with-http_stub_status_module  //开启status状态页面
+[root@X2 ~]# cd nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+[root@X2 nginx-1.12.2]# ./configure --prefix=/usr/local/nginx \
+> --user=nginx  --group=nginx  --with-http_ssl_module  \
+> --with-stream  --with-http_stub_status_module  |tail -5 ;
+
+[root@X2 nginx-1.12.2]#  make |tail -3 && make install | tail -3 ;
+
+[root@X2 nginx-1.12.2]# ll /usr/local/nginx/sbin/nginx 
+-rwxr-xr-x. 1 root root 6574808 8月  26 14:54 /usr/local/nginx/sbin/nginx
+[root@X2 nginx-1.12.2]# ln -s /usr/local/nginx/sbin/nginx /sbin/
+[root@X2 nginx-1.12.2]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  26 15:03 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+------------ss命令可以查看系统中启动的端口信息，该命令常用选项如下：
+-a显示所有端口的信息
+-n以数字格式显示端口号
+-t显示TCP连接的端口
+-u显示UDP连接的端口
+-l显示服务正在监听的端口信息，如httpd启动后，会一直监听80端口
+-p显示监听端口的服务名称是什么（也就是程序名称）
+[root@X2 nginx-1.12.2]# nginx -s reload;netstat -anptul |grep nginx ;
+tcp        0      0 0.0.0.0:80         0.0.0.0:*         LISTEN      7250/nginx: master  
+[root@X2 nginx-1.12.2]# ls      #多了1个文件夹objs  #多了一个文件Makefile
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+[root@X2 nginx-1.12.2]# ll Makefile  ;ls -ld objs/
+-rw-r--r--. 1 root root 376 8月  26 14:39 Makefile
+drwxr-xr-x. 3 root root 174 8月  26 14:54 objs/
+
+[root@X2 nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+[root@X2 nginx-1.12.2]# head -48 /usr/local/nginx/conf/nginx.conf |tail -1;
+        error_page  404              /404.html;         //自定义错误页面
+[root@X2 nginx-1.12.2]# cd /usr/local/nginx/html/;ls
+50x.html  index.html
+[root@X2 html]# vim /usr/local/nginx/html/404.html
+[root@X2 html]# cat /usr/local/nginx/html/404.html
+<h1><font color=blue><marquee>This is a bad page Oh no</marquee></font></h1>
+[root@X2 html]# nginx -s reload ;
+
+[root@X2 html]# firefox http://192.168.2.252/xxx
+http://192.168.2.252/xxx
+This is a bad page Oh no
+[root@X2 html]# elinks -dump http://192.168.2.252/404.html
+                            This is a bad page Oh no
+
+###编译安装时使用--with-http_stub_status_module开启状态页面模块----------
+
+[root@X2 html]# vim /usr/local/nginx/conf/nginx.conf
+[root@X2 html]# head -50 /usr/local/nginx/conf/nginx.conf |tail -4;
+        location  /status  {
+            stub_status  on;         //开启status状态页面
+        }
+        error_page  404           /404.html;  //自定义错误页面
+[root@X2 html]# nginx -s reload
+[root@X2 html]# firefox  192.168.2.252/status
+http://192.168.2.252/status
+Active connections: 1     #当前活动的连接数量 1
+server accepts handled requests
+ 4 4 8 
+Reading: 0 Writing: 1 Waiting: 0 
+Reading: 0 Writing: 1 Waiting: 0 
+-------------------------------------------------------------------
+#Accepts：已经接受客户端的连接总数量 4
+#Handled：已经处理客户端的连接总数量 4
+#Requests：客户端发送的请求数量      8   
+#Reading：当前服务器正在读取客户端请求头的数量0
+#Writing：当前服务器正在写响应信息的数量   1
+#Waiting：当前多少客户端在等待服务器的响应 0
+
+[root@X1 nginx-1.12.2]#  ab -c100 -n1000 http://192.168.2.252/ ;注意斜杠/必须有252【/】
+ 100%      8 (longest request)
+[root@X3 nginx-1.12.2]#  ab -c100 -n1000 http://192.168.2.252/ ;注意斜杠/必须有252【/】
+ 100%     10 (longest request)
+[root@X2 html]# firefox  192.168.2.252/status
+Active connections: 1 
+server accepts handled requests
+ 2070 2070 2014 
+Reading: 0 Writing: 1 Waiting: 0 
+
+
+[root@X2 html]# vim /usr/local/nginx/conf/nginx.conf
+[root@X2 html]# head -36 /usr/local/nginx/conf/nginx.conf |tail -4 ;
+    gzip  on;               //开启压缩
+    gzip_min_length 1000;    //小文件不压缩
+    gzip_comp_level 4;     //压缩比率1最快，效果最差；9压缩最慢，效果最好
+    gzip_types  text/plain  text/css  application/json;
+      ##//对特定文件压缩，类型参考/usr/local/nginx/conf/mime.types##
+[root@X2 html]# nginx -s reload
+
+[root@X2 html]#  head -3 /usr/local/nginx/conf/nginx.conf |tail -1; \
+> head -15 /usr/local/nginx/conf/nginx.conf |tail -4 ;
+worker_processes  1;   //与CPU核心数量一致
+events {    //修改每个worker最大并发连接数65535，默认【1024】
+    worker_connections  65535;
+    use epoll;
+}
+
+[root@X2 html]# vim /etc/security/limits.conf
+[root@X2 html]# tail -3  /etc/security/limits.conf 
+#用户或组  硬限制或软限制  需要限制的项目   限制的值
+*            soft       nofile        12000  //设置软限制【永久设置】
+*            hard       nofile        12000  //设置硬限制【永久设置】
+# End of file
+[root@X2 html]# ab -c 2000 -n 10000 http://192.168.2.252/ ;
+Benchmarking 192.168.2.252 (be patient)   #-#报错信息
+socket: Too many open files (24)
+[root@X2 html]# reboot
+
+[root@X2 ~]# nginx
+[root@X2 ~]# ss -anptul |grep nginx |column -t ;
+tcp  LISTEN  0  128  *:80  *:*  users:(("nginx",pid=1345,fd=6),("nginx",pid=1344,fd=6))
+
+[root@X2 ~]# ab -c 2000 -n 10000 http://192.168.2.252/ 
+.....................
+ 100%    958 (longest request)   ----#执行成功
+[root@X2 ~]# man limits.conf
+    nofile
+          maximum number of open file descriptors
+    nproc
+         maximum number of processes
+  *               hard    nofile          512
+   @500:           soft    cpu             10000
+
+[root@X2 ~]# ulimit -Sn 24000   #必须先设置硬限制，默认软限制小于硬限制
+-bash: ulimit: open files: 无法修改 limit 值: 无效的参数
+[root@X2 ~]# ulimit -Hn 24000    #临时设置硬限制24000，必须大于等于软限制
+[root@X2 ~]# ulimit -Sn 24000    #临时设置软限制24000
+[root@X2 ~]# ab -c2400  -n22000 http://192.168.2.252/ ;#访问量22000次，同时有2400人访问
+
+[root@X2 ~]# vim /usr/local/nginx/conf/nginx.conf
+[root@X2 ~]# head -21 /usr/local/nginx/conf/nginx.conf |tail -5 ;
+
+http {                 //默认请求包头信息的缓存 1k
+    client_header_buffer_size   1k;
+    large_client_header_buffers  4  2M; //大请求包头部信息的缓存个数4与容量2M
+    include       mime.types;
+[root@X2 ~]# nginx -s reload ;   #重新加载配置文件
+---------------------------------------------优化后，使用脚本测试长头部请求是否能获得响应
+[root@X2 ~]# cd /usr/local/nginx/html ;ls
+404.html  50x.html  index.html
+[root@X2 html]# vim buf.sh
+[root@X2 html]# sh buf.sh 
+http://192.168.2.252/index.html?v1=1v2=2v3=3v4=4v5=5
+[root@X2 html]# cat buf.sh
+#!/bin/bash
+URL=http://192.168.2.252/index.html?
+for i in {1..5}
+do
+	URL=${URL}v$i=$i
+done
+echo $URL;
+[root@X2 html]# ls
+404.html  50x.html  buf.sh  index.html
+[root@X2 html]# vim buf.sh
+[root@X2 html]# cat buf.sh
+#!/bin/bash
+URL=http://192.168.2.252/index.html?
+for i in {1..5}
+do
+	URL=${URL}v$i=$i
+done
+curl $URL;
+[root@X2 html]# vim index.html
+
+[root@X2 html]# sh buf.sh     #........执行成功。。。。
+<title>Welcome to nginx!X2X2</title>
+<h1>Welcome to nginx! X2</h1>
+<p>If you see this page, the nginx web server X2X2 is ok.</p>
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+[root@X2 html]# vim  buf.sh
+[root@X2 html]# cat buf.sh
+#!/bin/bash
+URL=http://192.168.2.252/index.html?
+for i in {1..5}
+do
+	URL=${URL}v$i=$i
+done
+elinks -dump $URL;
+[root@X2 html]# sh buf.sh    #........执行成功。。。。
+                              Welcome to nginx! X2
+   If you see this page, the nginx web server X2X2 is ok.
+   Thank you for using nginx.
+
+[root@X2 html]# vim /usr/local/nginx/conf/nginx.conf
+[root@X2 html]# head -59 /usr/local/nginx/conf/nginx.conf |tail -6 ;
+            stub_status  on;
+        }
+        location  ~  \.(jpg|png|jpeg|gif)$  {
+            expires  20d;         //定义客户端缓存时间为20天
+        }
+        error_page  404              /404.html;
+[root@X2 html]# nginx -s reload ;
+[root@X2 html]# ls
+404.html  50x.html  a2.jpg  b.JPEG  buf.sh  index.html
+
+
+[root@X1 html]# firefox http://192.168.2.252/a2.jpg
+http://192.168.2.252/a2.jpg
+[root@X1 html]# firefox http://192.168.2.252/b.JPEG
+http://192.168.2.252/b.JPEG
+历史记录
+a2.jpg(JPEG图像。。。
+b.JPEG(JPEG图像。。。
+[root@X2 html]# firefox about:cache
+disk
+Number of entries: 	6    -------访问记录6条
+Maximum storage size: 	358400 KiB
+Storage in use: 	68 KiB      -------访问数据占用空间68kib
+Storage disk location: 	/root/.cache/mozilla/firefox/gumh703n.default/cache2
+List Cache Entries
+===============--nginx 配置open_cache_file 静态文件的缓存--===========
+======如果需要处理大量静态文件，可以将文件缓存在内存，下次访问会更快==========
+
+[root@X2 html]# vim /usr/local/nginx/conf/nginx.conf
+
+[root@X2 html]# head -19 /usr/local/nginx/conf/nginx.conf |tail -2; \
+> head -46 /usr/local/nginx/conf/nginx.conf |tail -6 ;
+http {
+    client_header_buffer_size   1k;
+----------------------------------------------- #最多缓存2000个文件，缓存时间20s
+    open_file_cache  max=2000   inactive=20s;  
+    open_file_cache_valid   60s;    ##60s检查一次，如果发现60s内没有用过一次的删除 
+    open_file_cache_min_uses  5;    #在20s中没有使用到这个配置5次 的话就删除
+    open_file_cache_errors  off;
+
+    server {
+[root@X2 html]# nginx -s reload
+
+-------使用htpasswd命令创建账户文件，需要确保系统中已经安装了httpd-tools。
+[root@X2 html]# rpm -q httpd-tools
+httpd-tools-2.4.6-67.el7.x86_64
+[root@X2 html]# vim /usr/local/nginx/conf/nginx.conf
+    open_file_cache_errors  off;
+
+    server {
+        listen       80;
+        server_name  www.a.com;   //域名
+        auth_basic  "Input Password tishi";  //认证提示符
+        auth_basic_user_file "/usr/local/nginx/pass";  //认证密码文件
+[root@X2 html]# htpasswd -c /usr/local/nginx/pass tom
+New password: 123
+Re-type new password: 123
+Adding password for user tom
+[root@X2 html]# htpasswd /usr/local/nginx/pass tom2
+New password: 123
+Re-type new password: 123
+Adding password for user tom2
+[root@X2 html]# cat /usr/local/nginx/pass   //认证密码文件
+tom:$apr1$jLKW7GWS$wz9lrqOnX38g/tKlaSa2U/
+tom2:$apr1$Zsn5Xy1s$C/BSl9aHLSzR5YZYsF3Iy/
+[root@X2 html]# nginx -s reload
+
+[root@X2 html]# vim /etc/hosts
+[root@X2 html]# tail -1 /etc/hosts
+192.168.2.252 www.a.com
+[root@X2 html]# ping -c2 -i0.2 -w1 www.a.com
+[root@X2 html]# firefox http://www.a.com    #需要输入tom|tom2/123
+该网站说：“Input Password tishi"
+tom
+123
+Welcome to nginx! X2
+
+--------------------------------------------------------------
+扩展其他虚拟主机：
+1.基于端口的虚拟主机（参考模板）
+server {
+        listen       8080;              //端口
+        server_name  web1.example.com;          //域名
+        ......
+}
+server {
+        listen       8000;
+        server_name  web1.example.com;
+      .......
+}
+2.基于IP的虚拟主机（参考模板）
+server {
+        listen       192.168.0.1:80;          //端口
+        server_name  web1.example.com;          //域名
+  ... ...
+}
+server {
+        listen       192.168.0.2:80;
+        server_name  web1.example.com;
+... ...
+}
+-----------------------------------------------------------------
+[root@X2 html]# nginx -s reload
+[root@X2 html]# vim /usr/local/nginx/conf/nginx.conf
+
+113     # HTTPS server
+114     #
+115     server {
+116         listen       443 ssl;
+117         server_name  www.c.com;
+118 
+119         ssl_certificate      cert.pem;
+120         ssl_certificate_key  cert.key;
+121 
+122         ssl_session_cache    shared:SSL:1m;
+123         ssl_session_timeout  5m;
+124 
+125         ssl_ciphers  HIGH:!aNULL:!MD5;
+126         ssl_prefer_server_ciphers  on;
+127 
+128         location / {
+129             root   html;
+130             index  index.html index.htm;
+131         }
+132     }
+[root@X2 html]# openssl genrsa > cert.key;
+Generating RSA private key, 2048 bit long modulus
+................+++
+..........................................................................+++
+e is 65537 (0x10001)
+[root@X2 html]# openssl req -new -x509 -key cert.key > cert.pem 
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [XX]:CA
+State or Province Name (full name) []:CA
+Locality Name (eg, city) [Default City]:CA
+Organization Name (eg, company) [Default Company Ltd]:CA
+Organizational Unit Name (eg, section) []:CA
+Common Name (eg, your name or your server's hostname) []:CA
+Email Address []:CA
+
+[root@X2 html]# nginx -s reload
+
+
+
+
+
+
+
+
+
+
+
+--------------------------X3(eth0:192.168.4.207  eth1:192.168.2.207)----------------
+
+[root@X3 ~]# ifconfig eth0 |grep 'net ';ifconfig eth1 |grep 'net ';
+        inet 192.168.4.207  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.207  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@X3 ~]# route -n |awk 'NR>=2&&NR<5{print $2}'
+Gateway
+192.168.4.254
+192.168.2.254
+[root@X3 ~]# ls /root/lnmp_soft/php_scripts/
+mem.php  mysql.php  php-memcached-demo.tar.gz  test.php
+[root@X3 ~]# ls /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+/root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@X3 ~]# yum -y install elinks telnet httpd-tools gcc \
+> pcre-devel openssl-devel mariadb-devel  mariadb  \
+> mariadb-server memcached php-pecl-memcache php php-mysql \
+> /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm |tail -15;
+
+[root@X3 ~]# rpm -q elinks telnet httpd-tools gcc pcre-devel \
+> openssl-devel mariadb-devel mariadb mariadb-server memcached \
+> php-pecl-memcache php php-mysql php-fpm ;
+
+[root@X3 ~]# useradd -s /sbin/nologin nginx;grep nginx /etc/passwd;
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+[root@X3 ~]# rm -rf /usr/local/nginx ;ls /usr/local/nginx
+ls: 无法访问/usr/local/nginx: 没有那个文件或目录
+--------安装部署Nginx、MariaDB、PHP环境---------安装部署Nginx、MariaDB、PHP、PHP-FPM；
+============编译安装必须要使用--with-stream参数开启4层代理模块。=======
+注意必须要为PHP安装memcache扩展（php-pecl-memcache），否则PHP无法解析连接memcached的指令
+------------# --with-http_ssl_module        //开启SSL加密功能
+-----------# --with-stream         //开启TCP/UDP代理模块,4层反向代理功能 
+----------# --with-http_stub_status_module  //开启status状态页面
+[root@X3 ~]# cd nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+[root@X3 nginx-1.12.2]# ./configure  --prefix=/usr/local/nginx \
+> --user=nginx  --group=nginx  --with-http_ssl_module   \
+> --with-stream  --with-http_stub_status_module  |tail -5 ;
+
+[root@X3 nginx-1.12.2]#  make |tail -3 && make install | tail -3 ;
+
+[root@X3 nginx-1.12.2]# ll /usr/local/nginx/sbin/nginx 
+-rwxr-xr-x. 1 root root 6574808 8月  26 14:54 /usr/local/nginx/sbin/nginx
+[root@X3 nginx-1.12.2]# ln -s /usr/local/nginx/sbin/nginx /sbin/
+[root@X3 nginx-1.12.2]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  26 15:02 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+------------ss命令可以查看系统中启动的端口信息，该命令常用选项如下：
+-a显示所有端口的信息
+-n以数字格式显示端口号
+-t显示TCP连接的端口
+-u显示UDP连接的端口
+-l显示服务正在监听的端口信息，如httpd启动后，会一直监听80端口
+-p显示监听端口的服务名称是什么（也就是程序名称）
+[root@X3 nginx-1.12.2]# nginx ;netstat -anptul |grep nginx ;
+tcp        0      0 0.0.0.0:80       0.0.0.0:*        LISTEN      7191/nginx: master  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------X4(eth0:192.168.4.208  eth1:192.168.2.208)-----
+
+[root@X4 ~]# ifconfig eth0 |grep 'inet ';ifconfig eth1 |grep 'inet ';
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.208  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@X4 ~]# route -n |awk 'NR>=2&&NR<5{print $2}'
+Gateway
+192.168.4.254
+192.168.2.254
+[root@X4 ~]# ls /root/lnmp_soft/php_scripts/
+mem.php  mysql.php  php-memcached-demo.tar.gz  test.php
+[root@X4 ~]# ls /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+/root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@X4 ~]# yum -y install elinks telnet httpd-tools gcc \
+> pcre-devel openssl-devel mariadb-devel mariadb \
+> mariadb-server memcached php-pecl-memcache php php-mysql \
+> /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm |tail -12 ;
+
+[root@X4 ~]# rpm -q elinks telnet httpd-tools gcc pcre-devel \
+> openssl-devel mariadb-devel mariadb mariadb-server memcached \
+> php-pecl-memcache php php-mysql php-fpm ;
+[root@X4 ~]# useradd -s /sbin/nologin nginx;grep nginx /etc/passwd;
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+[root@X4 ~]# rm -rf /usr/local/nginx ;ls /usr/local/nginx
+ls: 无法访问/usr/local/nginx: 没有那个文件或目
+--------安装部署Nginx、MariaDB、PHP环境---------安装部署Nginx、MariaDB、PHP、PHP-FPM；
+============编译安装必须要使用--with-stream参数开启4层代理模块。=======
+注意必须要为PHP安装memcache扩展（php-pecl-memcache），否则PHP无法解析连接memcached的指令
+------------# --with-http_ssl_module        //开启SSL加密功能
+-----------# --with-stream         //开启TCP/UDP代理模块,4层反向代理功能 
+----------# --with-http_stub_status_module  //开启status状态页面
+
+[root@X4 ~]# cd nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+[root@X4 nginx-1.12.2]# ./configure  --prefix=/usr/local/nginx  \
+> --user=nginx  --group=nginx  --with-http_ssl_module  \
+> --with-stream  --with-http_stub_status_module |tail -5 ;
+
+[root@X4 nginx-1.12.2]#  make |tail -3 && make install | tail -3 ;
+
+[root@X4 nginx-1.12.2]# ll /usr/local/nginx/sbin/nginx 
+-rwxr-xr-x. 1 root root 6574808 8月  26 14:54 /usr/local/nginx/sbin/nginx
+[root@X4 nginx-1.12.2]# ln -s /usr/local/nginx/sbin/nginx /sbin/
+[root@X4 nginx-1.12.2]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  26 15:01 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+------------ss命令可以查看系统中启动的端口信息，该命令常用选项如下：
+-a显示所有端口的信息
+-n以数字格式显示端口号
+-t显示TCP连接的端口
+-u显示UDP连接的端口
+-l显示服务正在监听的端口信息，如httpd启动后，会一直监听80端口
+-p显示监听端口的服务名称是什么（也就是程序名称）
+[root@X4 nginx-1.12.2]# nginx ;netstat -anptul |grep nginx ;
+tcp        0      0 0.0.0.0:80      0.0.0.0:*        LISTEN      7165/nginx: master  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------X5(eth0:192.168.4.209  eth1:192.168.2.209)------------
+
+[root@X5 ~]# ifconfig eth0 |grep 'inet ';ifconfig eth1 |grep 'inet ';
+        inet 192.168.4.209  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.209  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@X5 ~]# route -n |awk 'NR>=2&&NR<5{print $2}'
+Gateway
+192.168.4.254
+192.168.2.254
+[root@X5 ~]# ls /root/lnmp_soft/php_scripts/
+mem.php  mysql.php  php-memcached-demo.tar.gz  test.php
+[root@X5 ~]# ls /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+/root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@X5 ~]# yum -y install elinks telnet httpd-tools  gcc \
+> pcre-devel openssl-devel  mariadb-devel mariadb \
+> mariadb-server memcached php-pecl-memcache php php-mysql \
+> /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm |tail -12;
+
+[root@X5 ~]# rpm -q elinks telnet httpd-tools gcc pcre-devel \
+> openssl-devel mariadb-devel mariadb mariadb-server memcached \
+> php-pecl-memcache php php-mysql php-fpm ;
+[root@X5 ~]# useradd -s /sbin/nologin nginx;grep nginx /etc/passwd;
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+
+[root@X5 ~]# rm -rf /usr/local/nginx ;ls /usr/local/nginx
+ls: 无法访问/usr/local/nginx: 没有那个文件或目录
+--------安装部署Nginx、MariaDB、PHP环境---------安装部署Nginx、MariaDB、PHP、PHP-FPM；
+============编译安装必须要使用--with-stream参数开启4层代理模块。=======
+注意必须要为PHP安装memcache扩展（php-pecl-memcache），否则PHP无法解析连接memcached的指令
+------------# --with-http_ssl_module        //开启SSL加密功能
+-----------# --with-stream         //开启TCP/UDP代理模块,4层反向代理功能 
+----------# --with-http_stub_status_module  //开启status状态页面
+
+[root@X5 ~]# cd nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+[root@X5 nginx-1.12.2]# ./configure --prefix=/usr/local/nginx  \
+> --user=nginx --group=nginx  --with-stream  \
+> --with-http_ssl_module  --with-http_stub_status_module |tail -5 ;
+
+[root@X5 nginx-1.12.2]# make |tail -3 && make install | tail -3 ;
+
+[root@X5 nginx-1.12.2]# ll /usr/local/nginx/sbin/nginx
+-rwxr-xr-x. 1 root root 6574808 8月  26 14:53 /usr/local/nginx/sbin/nginx
+[root@X5 nginx-1.12.2]# cat /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/bin/tcsh
+/bin/csh
+[root@X5 nginx-1.12.2]# ln -s /usr/local/nginx/sbin/nginx /sbin/
+[root@X5 nginx-1.12.2]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  26 14:58 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+------------ss命令可以查看系统中启动的端口信息，该命令常用选项如下：
+-a显示所有端口的信息
+-n以数字格式显示端口号
+-t显示TCP连接的端口
+-u显示UDP连接的端口
+-l显示服务正在监听的端口信息，如httpd启动后，会一直监听80端口
+-p显示监听端口的服务名称是什么（也就是程序名称）
+[root@X5 nginx-1.12.2]# nginx ;netstat -anptul |grep nginx ;
+tcp        0      0 0.0.0.0:80        0.0.0.0:*         LISTEN      5769/nginx: master  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

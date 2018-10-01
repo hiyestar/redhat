@@ -1,0 +1,414 @@
+
+====================auto--------------------
+[root@auto ~]# cat auto
+#!bin/bash
+password=123456;
+for i in `seq 3`
+do
+ hostn=rh7_node$i;
+ systn='';
+ eth0='';eth1='';
+ case $i in
+  1)
+    let eth0=100,eth1=10;
+    systn=clinet;;
+  2)
+    let eth0=5,eth1=5;
+    systn=proxy;;
+  3)
+    let eth0=3,eth1=100;
+    systn=web1;;
+ esac
+ ipexp(){
+  expect  /root/clone.sh
+  if [ $? -eq 0  -o  $? -eq 1 ];then
+    virsh start $hostn;
+  else 
+    echo "clone failed";
+    exit ;
+  fi
+  expect /root/console.sh $hostn $password $systn $eth0 $eth1  
+ }
+ case $1 in
+ clone)
+   ipexp &
+   wait % $i;;
+ start)
+   virsh start $hostn;;
+ stop)
+   virsh shutdown $hostn;;
+ scp)
+   expect /root/autoscp.sh  $eth0 
+   if [ $? -eq 0  -o  $? -eq 1 ];then
+     echo "scp is over";
+   else
+     echo "scp failed";
+   fi;;
+ *)
+   echo Error;;
+ esac
+done
+echo Amazing !
+[root@auto ~]# 
+===============clone.sh=====----------=====
+[root@auto ~]# cat clone.sh 
+#!/usr/bin/expect -f
+set timeout -1
+spawn clone-auto7
+expect "vms:"  {send "1\r"}
+expect "#"  {send "echo Cloning success\r"}
+expect "#"  {send "exit\r"}
+
+===================console.sh============------
+[root@auto ~]# cat console.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  hostn     [lindex $argv 0]
+set  password  [lindex $argv 1]
+set  systn     [lindex $argv 2]
+set  eth0      [lindex $argv 3]
+set  eth1      [lindex $argv 4]
+spawn  virsh console $hostn
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$password\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $systn >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]
+\nname=rhel7.4
+\nenabled=1
+\ngpgcheck=0
+\nbaseurl=ftp://192.168.4.254/rhel7
+\n\[rhel7-2\]
+\nname=rhel7.4
+\nbaseurl=ftp://192.168.2.254/rhel7
+\ngpgcheck=0
+\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4\r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 5 && date\r"}
+expect "#"  {send "exit\r"}
+
+===================autoscp.sh---------------------
+[root@auto ~]# cat autoscp.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  eth0        [lindex $argv 0]
+spawn  scp -o StrictHostKeyChecking=no /root/桌面/lnmp_soft.tar.gz  root@192.168.4.$eth0:/root/
+expect "password:" {send "123\r" }
+expect "#"  {send "sleep 5 && date\r"}
+[root@auto ~]# 
+
+
+
+
+
+[root@auto ~]# cat auto
+#!bin/bash
+password=123456;
+for i in `seq 3`
+do
+ hostn=rh7_node$i;
+ systn='';
+ eth0='';eth1='';
+ case $i in
+  1)
+    let eth0=100,eth1=10;
+    systn=clinet;;
+  2)
+    let eth0=5,eth1=5;
+    systn=proxy;;
+  3)
+    let eth0=3,eth1=100;
+    systn=web1;;
+ esac
+ ipexp(){
+  expect  /root/clone.sh
+  if [ $? -eq 0  -o  $? -eq 1 ];then
+    virsh start $hostn;
+  else 
+    echo "clone failed";
+    exit ;
+  fi
+  expect /root/console.sh $hostn $password $systn $eth0 $eth1  
+ }
+ case $1 in
+ clone)
+   ipexp &
+   wait % $i;;
+ start)
+   virsh start $hostn;;
+ stop)
+   virsh shutdown $hostn;;
+ scp)
+   expect /root/autoscp.sh  $eth0 
+   if [ $? -eq 0  -o  $? -eq 1 ];then
+     echo "scp is over";
+   else
+     echo "scp failed";
+   fi;;
+ setnginx)
+   expect /root/setnginx.sh $eth0
+   echo "setting up nginx";;
+ *)
+   echo Error;;
+ esac
+done
+echo Amazing !
+[root@auto ~]# cat setnginx.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  eth0        [lindex $argv 0]
+spawn ssh -o StrictHostKeyChecking=no  -X  root@192.168.4.$eth0:/root/
+expect "password:" {send "123\r" }
+expect "#" {send "tar -xzf /root/lnmp_soft.tar.gz\r"}
+expect "#" {send "yum -y install elinks telnet httpd-tools  gcc pcre-devel openssl-devel mariadb-devel mariadb-server  mariadb memcached php-pecl-memcache php php-mysql zlib-devel /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm  \r"}
+expect "#" {send "sleep 5 && date\r"}
+expect "#" {send "rpm -q  elinks telnet httpd-tools gcc  pcre-devel openssl-devel mariadb-devel mariadb mariadb-server memcached php-pecl-memcache  php php-mysql php-fpm zlib-devel \r"}
+expect "#" {send "nginx -s stop\r"}
+expect "#" {send "rm  -rf /usr/local/nginx\r"}
+expect "#" {send "useradd -s /sbin/nologin nginx\r"}
+expect "#" {send "tar -xzf /root/lnmp_soft/nginx-1.12.2.tar.gz\r"}
+expect "#" {send "cd nginx-1.12.2/;ls\r"}
+expect "#" {send "./configure  --prefix=/usr/local/nginx  --user=nginx  --group=nginx --with-http_ssl_module  --with-stream  --with-http_stub_status_module  --without-http_autoindex_module  --without-http_ssi_module\r"}
+expect "#" {send "sleep 5 && date\r"}
+expect "#" {send "make && make install\r"}
+expect "#" {send "ls\r"}
+expect "#" {send "echo 'export PATH=/usr/local/nginx/sbin/:$PATH' >>/etc/profile\r"}
+expect "#" {send "source /etc/profile\r"}
+expect "#" {send "which nginx\r"}
+expect "#" {send "nginx\r"}
+expect "#" {send "systemctl start mariadb && systemctl enable mariadb\r"}
+expect "#" {send "systemctl start php-fpm && systemctl enable php-fpm\r"}
+expect "#" {send "nginx -V\r"}
+expect "#" {send "hello world\r"}
+
+/***
+[root@VM7 html]# mysqladmin -u root password '123';
+[root@VM7 html]#  mysql -u root -p'123';
+ MariaDB [(none)]> create database VM7;
+MariaDB [(none)]> grant select on *.* to lisi@'192.168.%' identified by '123';
+MariaDB [(none)]> quit;
+Bye
+[root@VM7 html]# 
+**/
+[root@auto ~]# cat clone.sh 
+#!/usr/bin/expect -f
+set timeout -1
+spawn clone-auto7
+expect "vms:"  {send "1\r"}
+expect "#"  {send "echo Cloning success\r"}
+expect "#"  {send "exit\r"}
+[root@auto ~]# cat console.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  hostn     [lindex $argv 0]
+set  password  [lindex $argv 1]
+set  systn     [lindex $argv 2]
+set  eth0      [lindex $argv 3]
+set  eth1      [lindex $argv 4]
+spawn  virsh console $hostn
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$password\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $systn >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]
+\nname=rhel7.4
+\nenabled=1
+\ngpgcheck=0
+\nbaseurl=ftp://192.168.4.254/rhel7
+\n\[rhel7-2\]
+\nname=rhel7.4
+\nbaseurl=ftp://192.168.2.254/rhel7
+\ngpgcheck=0
+\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4\r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 5 && date\r"}
+expect "#"  {send "exit\r"}
+[root@auto ~]# cat autoscp.sh 
+#!/usr/bin/expect -f
+set  timeout  -1
+set  eth0        [lindex $argv 0]
+spawn  scp -o StrictHostKeyChecking=no /root/桌面/lnmp_soft.tar.gz  root@192.168.4.$eth0:/root/
+expect "password:" {send "123\r" }
+expect "#"  {send "sleep 5 && date\r"}
+[root@auto ~]# 
+
+
+
+worker_processes auto;
+
+error_log /var/log/nginx/error.log info;
+
+events {
+    worker_connections  1024;
+}
+
+stream {
+    upstream backend {
+        hash $remote_addr consistent;
+
+        server backend1.example.com:12345 weight=5;
+        server 127.0.0.1:12345            max_fails=3 fail_timeout=30s;
+        server unix:/tmp/backend3;
+    }
+
+    upstream dns {
+       server 192.168.0.1:53535;
+       server dns.example.com:53;
+    }
+
+    server {
+        listen 12345;
+        proxy_connect_timeout 1s;
+        proxy_timeout 3s;
+        proxy_pass backend;
+    }
+
+    server {
+        listen 127.0.0.1:53 udp;
+        proxy_responses 1;
+        proxy_timeout 20s;
+        proxy_pass dns;
+    }
+
+    server {
+        listen [::1]:12345;
+        proxy_pass unix:/tmp/stream.socket;
+    }
+}
+listen
+
+语法：listen address:port [ssl] [udp] [backlog=number] [bind] [ipv6only=on|off] [reuseport] [so_keepalive=on|off|[keepidle]:[keepintvl]:[keepcnt]]
+默认：—
+上下文：server
+设置服务器接受连接的socket的地址和端口号。可以只指定端口号。地址可以是一个主机名，例如：
+
+listen 127.0.0.1:12345;
+listen *:12345;
+listen 12345;     #同 *:12345
+listen localhost:12345;
+IPv6地址指定在方括号中：
+
+listen [::1]:12345;
+listen [::]:12345;
+UNIX-domain socket指定以“unix:”前缀开头：
+listen unix:/var/run/nginx.sock;
+ssl参数允许指定此端口上所有接受的连接都工作在SSL模式。
+udp参数配置了监听数据报的socket（1.9.13+）。
+listen指令可以由多个附加参数指定socket相关的系统调用。
+backlog=number
+设置listen调用的backlog参数，会限制等待连接的队列的最大长度（1.9.2+）。默认情况下，在FreeBSD、DragonFly BSD、Mac OS X上backlog设置为-1，其他平台上为511.
+
+bind
+该参数指明了为给定的地址端口对进行单独的bind调用。实际上，如果有很多相同端口但地址不同的listen指令，其中有一个listen指令监听给定端口的所有地址（*:port），nginx会只绑定*:port。注意getsocketname()系统调用会在这时决定接受连接的地址。如果使用了ipv6only或so_keepalive参数，那么对于给定的地址端口对，总会有单独的bind调用。
+
+
+ 
+ipv6only=on|off
+这个参数决定了通过通配符[::]监听的ipv6socket是只接受IPv6连接还是IPv6和IPv4都接受。这个参数默认是开启的。它只能在启动时设置一次。
+
+reuseport
+这个参数（1.9.1+）指示为每一个工作进程创建独立的监听socket（使用SO_REUSEPORT socket选项），允许内核在工作进程之间分配进来的连接。这个目前只能工作在Linux3.9及更高版本和DragonFly BSD上。
+不当的使用这个选项会有安全问题。
+
+so_keepalive=on|off|[keepidle]:[keepintvl]:[keepcnt]
+该参数为监听的socket配置“TCP keepalive”行为。如果这个参数忽略，则操作系统将影响socket。如果它设为on，SO_KEEPALIVE选项会打开。如果它设为off，SO_KEEPALIVE选项会关闭。一些操作系统支持为每一个socket设置TCP keepalive参数，通过TCP_KEEPIDLE、TCP_KEEPINTVL和TCP_KEEPCNT socket选项。在这些系统上（目前是，Linux2.4+、NetBSD 5+以及FreeBSD9.0-STABLE），它们可以通过keepidle、keepintvl以及keepcnt参数设置。一个或两个参数可以被省略，这时操作系统的默认设置会起作用，例如：
+so_keepalive=30m::10
+将设置空闲超时（TCP_KEEPIDLE）为30分钟，让探测间隔（TCP_KEEPINTVL）使用系统默认，设置探测数（TCP_KEEPCNT）为10。
+不同的服务器必须监听不同的地址端口对。
+
+resolver
+
+语法：resolver address … [valid=time] [ipv6=on|off]
+默认：—
+上下文：stream, server
+配置名称服务器用于解析上游服务器的名称到地址，例如：
+resolver 127.0.0.1 [::1]:5353;
+地址可以指定为一个域名或IP地址和一个可选的端口号。如果端口号没有指定，则使用53端口。名称服务器会通过轮询的方法查询。
+默认情况下，nginx会在解析的时候查询IPv4和IPv6地址。如果不希望查询IPv6地址可以指定ipv6=off参数。
+默认情况下，nginx会使用响应的TTL值缓存应答。可选参数valid允许重写它：
+resolver 127.0.0.1 [::1]:5353 valid=30s;
+这个指令是商业版本的一部分。
+
+resolver_timeout
+
+语法：resolver_timeout time
+默认：resolver_timeout 30s
+上下文：stream, server
+设置名称解析的超时时间，例如：
+resolver_timeout 5s;
+该指令是商业版本的一部分。
+
+server
+
+语法：server { … }
+默认：—
+上下文：stream
+为一个服务器设置配置信息。
+
+stream
+
+语法：stream { … }
+默认：—
+上下文：main
+为stream server指令提供配置文件上下文。
+
+tcp_nodelay
+
+语法：tcp_nodelay on | off
+默认：tcp_nodelay on
+上下文：stream, server
+版本：1.9.4+
+启用或禁用使用TCP_NODELAY选项。该选项同时为客户端和被代理服务器连接启用。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,112 @@
+
+
+[root@room9pc01 ~]# ls
+anaconda-ks.cfg  clone.sh              ipyum            模板  文档  桌面
+autoscp.sh       console.sh            original-ks.cfg  视频  下载
+bin              initial-setup-ks.cfg  公共             图片  音乐
+[root@room9pc01 ~]# cat ipyum ;cat autoscp.sh; cat clone.sh;cat console.sh;
+#!/bin/bash
+password=123456;
+for i in `seq 8`
+do 
+  hostn=rh7_node$i;
+  systn=VM$i;
+  let eth0=10+$i;
+  eth1=$eth0;
+  case $i in
+   5)
+    systn=client;
+    let eth0=100;;
+   6)
+    systn=proxy;
+    let eth0=5,eth1=5;;
+   7)
+    systn=web1;
+    let eth1=100;;
+   8)
+    systn=web2;
+    let eth1=200;;
+  esac
+  ipexp(){
+    expect  /root/clone.sh
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      virsh start $hostn;
+    else
+      echo "clone failed";
+      exit;
+    fi
+    expect /root/console.sh $hostn $password  $systn $eth0 $eth1
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      echo "ipyum well done";
+    else
+      echo  "ipyum failed";
+    fi
+  }
+  case $1 in
+  clone)
+    ipexp  &
+    wait  %  $i;;
+  start)
+    virsh start  $hostn;;
+  stop)
+    virsh shutdown $hostn;;
+  scp)
+    expect /root/autoscp.sh  $eth0
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      echo "scp is over";
+    else
+      echo  "scp failed";
+    fi;;
+  *)
+    echo input-Error;;
+  esac
+done
+echo Amazing !
+#!/usr/bin/expect  -f
+set timeout  -1
+set eth0    [lindex $argv 0]
+spawn  scp  -o  StrictHostKeyChecking=no  /root/桌面/lnmp_soft.tar.gz  root@192.168.4.$eth0:/root/
+expect "password:"  {send  "123\r"}
+expect "#"  {send  "send date\r"}
+expect "#"  {send  "\r"}
+#!/usr/bin/expect  -f
+set timeout  -1
+spawn clone-auto7
+expect "vms:"   {send "1\r"}
+expect "#"  {send "echo Clone successfully\r"}
+expect "#"  {send "\r"}
+#!/usr/bin/expect  -f
+set  timeout  -1
+set hostn     [lindex  $argv  0]
+set password  [lindex  $argv  1]
+set systn     [lindex  $argv  2]
+set eth0      [lindex  $argv  3]
+set eth1      [lindex  $argv  4]
+spawn  virsh  console  $hostn
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$password\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $systn >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]
+\nname=rhel7.4
+\nenabled=1
+\ngpgcheck=0
+\nbaseurl=ftp://192.168.4.254/rhel7
+\n\[rhel7-2\]
+\nname=rhel7.4
+\nbaseurl=ftp://192.168.2.254/rhel7
+\ngpgcheck=0
+\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4\r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 5 && date\r"}
+expect "#"  {send "\r"}
+[root@room9pc01 ~]# 
+

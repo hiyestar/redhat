@@ -1,0 +1,974 @@
+
+
+
+[root@client ~]# netstat -anputl |egrep ":80|:8080|:3306|:3690|:9000|:11211" |column -t
+tcp  0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN  1027/php-fpm:  maste
+tcp  0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN  1329/mysqld
+
+[root@client ~]# yum -y install rpm-build
+已安装:
+  rpm-build.x86_64 0:4.11.3-25.el7                                           
+作为依赖被安装:
+  dwz.x86_64 0:0.11-3.el7                  patch.x86_64 0:2.7.1-8.el7        
+  perl-Thread-Queue.noarch 0:3.02-2.el7    perl-srpm-macros.noarch 0:1-8.el7 
+  redhat-rpm-config.noarch 0:9.1.0-76.el7 
+完毕！
+[root@client ~]# which rpmbuild 
+/usr/bin/rpmbuild                ##）生成rpmbuild目录结构
+[root@client ~]# rpmbuild -ba abc.spec
+错误：stat /root/abc.spec 失败：没有那个文件或目录
+[root@client ~]# ls /root/rpmbuild/    #/自动生成的目录结构
+BUILD  BUILDROOT  RPMS  SOURCES  SPECS  SRPMS
+
+[root@client ~]# ls /root/rpmbuild/RPMS/
+[root@client ~]# ls /root/rpmbuild/SOURCES/
+[root@client ~]# ls /root/rpmbuild/SPECS/
+
+[root@client ~]# cp lnmp_soft/nginx-1.12.2.tar.gz  /root/rpmbuild/SOURCES/
+
+[root@client ~]# ls /root/rpmbuild/SOURCES/
+nginx-1.12.2.tar.gz
+
+[root@client ~]# cd /root/rpmbuild/SPECS/
+[root@client SPECS]# vim nginx.spec
+[root@client ~]# cat /root/rpmbuild/SPECS/nginx.spec 
+Name:nginx		
+Version:1.12.2	
+Release:10
+Summary:This is a webserver.
+License:GPL
+URL:www.xyz.com
+Source0:nginx-1.12.2.tar.gz	
+BuildRequires:gcc pcre-devel
+%description
+This is a web Server too
+%post
+useradd -s /sbin/nologin nginx2
+echo nginx2 added
+%prep
+%setup -q
+
+%build
+./configure  --prefix=/usr/local/nginx2 --user=nginx2  --group=nginx2  --with-stream  --with-http_ssl_module  --with-http_stub_status_module 
+make %{?_smp_mflags}
+
+%install
+make install DESTDIR=%{buildroot}
+
+%files
+%doc
+/usr/local/nginx2/*
+%changelog
+[root@client ~]# 
+[root@client ~]# yum -y install  gcc  pcre-devel zlib-devel openssl-devel
+软件包 gcc-4.8.5-16.el7.x86_64 已安装并且是最新版本
+软件包 pcre-devel-8.32-17.el7.x86_64 已安装并且是最新版本
+软件包 zlib-devel-1.2.7-17.el7.x86_64 已安装并且是最新版本
+软件包 1:openssl-devel-1.0.2k-8.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@client ~]# netstat -natpul |grep -E ':80|3306'
+tcp    0    0 0.0.0.0:3306     0.0.0.0:*     LISTEN      1329/mysqld 
+        
+[root@client ~]# vim /root/rpmbuild/SPECS/nginx.spec 
+
+[root@client ~]# rpmbuild -ba /root/rpmbuild/SPECS/nginx.spec
+
+执行(%prep): /bin/sh -e /var/tmp/rpm-tmp.YTb7zb
++ rm -rf nginx-1.12.2
++ ./configure --prefix=/usr/local/nginx2 --user=nginx2 --group=nginx2 --with-stream --with-http_ssl_module --with-http_stub_status_module
++ cd /root/rpmbuild/BUILD
++ cd nginx-1.12.2
++ /usr/bin/rm -rf /root/rpmbuild/BUILDROOT/nginx-1.12.2-10.x86_64
++ exit 0
+[root@client ~]# ls /root/rpmbuild/RPMS/x86_64/
+nginx-1.12.2-10.x86_64.rpm  nginx-debuginfo-1.12.2-10.x86_64.rpm
+[root@client ~]# id nginx
+uid=1001(nginx) gid=1001(nginx) 组=1001(nginx)
+[root@client ~]# id nginx2
+id: nginx2: no such user
+[root@client ~]# rpm -qpi /root/rpmbuild/RPMS/x86_64/nginx-1.12.2-10.x86_64.rpm 
+Name        : nginx
+Version     : 1.12.2
+Release     : 10
+Architecture: x86_64
+Install Date: (not installed)
+Group       : Unspecified
+Size        : 909821
+License     : GPL
+Signature   : (none)
+Source RPM  : nginx-1.12.2-10.src.rpm
+Build Date  : 2018年09月29日 星期六 17时38分09秒
+Build Host  : client
+Relocations : (not relocatable)
+URL         : www.xyz.com
+Summary     : This is a webserver.
+Description :
+This is a web Server too
+[root@client ~]# ls /root/rpmbuild/SRPMS/
+nginx-1.12.2-10.src.rpm
+[root@client ~]# rpm -qpl /root/rpmbuild/RPMS/x86_64/nginx-1.12.2-10.x86_64.rpm 
+/usr/local/nginx2/conf
+/usr/local/nginx2/conf/fastcgi.conf
+/usr/local/nginx2/conf/fastcgi.conf.default
+/usr/local/nginx2/conf/fastcgi_params
+/usr/local/nginx2/conf/fastcgi_params.default
+/usr/local/nginx2/conf/koi-utf
+/usr/local/nginx2/conf/koi-win
+/usr/local/nginx2/conf/mime.types
+/usr/local/nginx2/conf/mime.types.default
+/usr/local/nginx2/conf/nginx.conf
+/usr/local/nginx2/conf/nginx.conf.default
+/usr/local/nginx2/conf/scgi_params
+/usr/local/nginx2/conf/scgi_params.default
+/usr/local/nginx2/conf/uwsgi_params
+/usr/local/nginx2/conf/uwsgi_params.default
+/usr/local/nginx2/conf/win-utf
+/usr/local/nginx2/html
+/usr/local/nginx2/html/50x.html
+/usr/local/nginx2/html/index.html
+/usr/local/nginx2/logs
+/usr/local/nginx2/sbin
+/usr/local/nginx2/sbin/nginx
+[root@client ~]# 
+[root@client ~]# rpm  -ivh /root/rpmbuild/RPMS/x86_64/nginx-1.12.2-10.x86_64.rpm
+
+[root@client ~]# id nginx2
+uid=1002(nginx2) gid=1002(nginx2) 组=1002(nginx2)
+[root@client ~]# netstat -anputl |grep nginx
+[root@client ~]# ll /usr/local/nginx2/sbin/nginx
+-rwxr-xr-x. 1 root root 880008 9月  29 17:38 /usr/local/nginx2/sbin/nginx
+[root@client ~]# /usr/local/nginx2/sbin/nginx  #开启服务
+[root@client ~]# netstat -anputl |grep nginx
+tcp    0   0  0.0.0.0:80   0.0.0.0:*    LISTEN      10388/nginx: master 
+[root@client ~]# /usr/local/nginx2/sbin/nginx -V
+nginx version: nginx/1.12.2
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx2 --user=nginx2 --group=nginx2 --with-stream --with-http_ssl_module --with-http_stub_status_module
+[root@client ~]# /usr/local/nginx2/sbin/nginx -s stop  #关闭服务
+[root@client ~]# netstat -anputl |grep nginx
+[root@client ~]# which nginx
+/usr/local/nginx/sbin/nginx
+[root@client ~]# tail -1 /etc/profile
+export PATH=/usr/local/nginx/sbin/:$PATH
+
+
+
+
+
+/***********GPL开源协议,任意复制,修改,再发布
+[root@client ~]# cd /root/rpmbuild/SPECS/
+[root@client SPECS]# vim nginx.spec
+
+
+[root@proxy ~]#  ss -anputl |egrep ':80|:9000|:3306|:11211|:8080'
+tcp    LISTEN     0      128    127.0.0.1:9000       *:*     users:(("php-fpm",pid=1155,fd=0),("php-fpm",pid=1154,fd=0),("php-fpm",pid=1153,fd=0),("php-fpm",pid=1152,fd=0),("php-fpm",pid=1151,fd=0),("php-fpm",pid=1025,fd=6))
+[root@proxy ~]# netstat -anputl |egrep ":80|:8080|:3306|:3690|:9000|:11211" |column -t
+tcp  0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN  1025/php-fpm:  maste
+[root@proxy ~]# 
+[root@proxy ~]# yum -y install gcc  readline-devel  ncurses-devel  pcre-devel \
+>  /root/lnmp_soft/python-docutils-0.11-0.2.20130715svn7687.el7.noarch.rpm ;
+
+软件包 gcc-4.8.5-16.el7.x86_64 已安装并且是最新版本
+软件包 pcre-devel-8.32-17.el7.x86_64 已安装并且是最新版本
+已安装:
+  ncurses-devel.x86_64 0:5.9-13.20130511.el7                                  
+  python-docutils.noarch 0:0.11-0.2.20130715svn7687.el7                       
+  readline-devel.x86_64 0:6.2-10.el7                                          
+作为依赖被安装:
+  python-pillow.x86_64 0:2.0.0-19.gitd1c6db8.el7                              
+完毕！
+[root@proxy ~]# tar -xzf lnmp_soft/varnish-5.2.1.tar.gz
+
+[root@proxy ~]# cd varnish-5.2.1/;ls
+aclocal.m4   configure     lib          README.Packaging
+autogen.sh   configure.ac  LICENSE      README.rst
+bin          doc           m4           varnishapi.pc.in
+build-aux    etc           Makefile.am  varnishapi-uninstalled.pc.in
+ChangeLog    include       Makefile.in  varnish-legacy.m4
+config.h.in  INSTALL       man          varnish.m4
+[root@proxy varnish-5.2.1]# useradd -s /sbin/nologin varnish
+[root@proxy varnish-5.2.1]# ./configure 
+[root@proxy varnish-5.2.1]# make  && make install
+
+[root@proxy varnish-5.2.1]# ls etc/
+builtin.vcl       example.vcl  Makefile.am
+devicedetect.vcl  Makefile     Makefile.in
+[root@proxy varnish-5.2.1]# cp  etc/example.vcl  /usr/local/etc/default.vcl
+
+[root@proxy varnish-5.2.1]# vim /usr/local/etc/default.vcl 
+ 16 #backend default {
+ 17 #    .host = "127.0.0.1";
+ 18 #    .port = "8080";
+ 19 #}
+ 20 backend  default  {
+ 21    .host = "192.168.2.100";
+ 22    .port = "80";
+ 23 }
+ 24 sub vcl_recv {
+
+注意：1、varnish服务本身，启动默认端口80；如果需要重新指定启动的端口使用 -a选项 ,如-a 0.0.0.0:8080
+   2、-T 选项指定了varnish服务本身的管理端口，正是利用这个端口完成一些不关闭varnish服务而使新配置生效。
+//varnishd –s malloc,128M        定义varnish使用内存作为缓存，空间为128M
+//varnishd –s file,/var/lib/varnish_storage.bin,1G 定义varnish使用文件作为缓存
+
+[root@proxy ~]# varnishd  -f /usr/local/etc/default.vcl  -s \
+> malloc,200M  -T 127.0.0.1:3456;
+Debug: Platform: Linux,3.10.0-693.el7.x86_64,x86_64,-junix,-smalloc,-smalloc,-hcritbit
+Debug: Child (14248) Started
+[root@proxy ~]# netstat -anputl |grep varnishd
+tcp     0    0 0.0.0.0:80      0.0.0.0:*   LISTEN    14238/varnishd      
+tcp     0    0 127.0.0.1:3456  0.0.0.0:*   LISTEN    14238/varnishd      
+tcp6    0    0 :::80           :::*      LISTEN      14238/varnishd    
+  /************************
+[root@web1 ~]# nginx 
+
+[root@web1 ~]# sed -n '/<h.*>/p' /usr/local/nginx/html/index.php
+<html>
+<head>
+<h1>PHP Login Session Web1 WEB</h1>
+<h2>Login Form</h2>
+-------------------------------------------------------------
+[root@proxy ~]# elinks -dump http://192.168.2.100 |sed -n '1p'
+                           PHP Login Session Web1 WEB
+
+[root@web1 ~]# sed -i '/<h1>/s/WEB/web1/' /usr/local/nginx/html/index.php
+
+[root@web1 ~]# sed -n '/<h1>/p' /usr/local/nginx/html/index.php
+<h1>PHP Login Session Web1 web1</h1>
+         //有可能缓存服务延时,页面显示结果与服务器不一致
+[root@proxy ~]# elinks -dump http://192.168.2.100 |sed -n '1p'
+                          PHP Login Session Web1 web1
+
+[root@proxy ~]# pstree -aulp |grep varnishd
+  |           |-grep,14828 --color=auto varnishd
+  `-varnishd,14238,varnish -f /usr/local/etc/default.vcl -s malloc,200M -T 127.0.0.1:3456
+[root@proxy ~]# ss -anputl |grep varnishd
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("cache-main",pid=14248,fd=5),("varnishd",pid=14238,fd=5))
+tcp    LISTEN     0      10     127.0.0.1:3456                  *:*                   users:(("varnishd",pid=14238,fd=8))
+tcp    LISTEN     0      128      :::80                   :::*                   users:(("cache-main",pid=14248,fd=6),("varnishd",pid=14238,fd=6))
+
+[root@proxy ~]# pkill  varnishd   关闭缓存服务
+
+[root@proxy ~]# ss -anputl |grep varnishd
+[root@proxy ~]# pstree -aulp |grep varnishd
+  |           |-grep,14846 --color=auto varnishd
+[root@proxy ~]# ==============================
+/usr/local/nginx/conf/.nginx.conf.swp
+E325: 注意
+发现交换文件 "/usr/local/nginx/conf/.nginx.conf.swp"
+[root@proxy ~]# ls -A /usr/local/nginx/conf/
+fastcgi.conf            mime.types          scgi_params.default
+fastcgi.conf.default    mime.types.default  uwsgi_params
+fastcgi_params          nginx.conf          uwsgi_params.default
+fastcgi_params.default  nginx.conf.default  win-utf
+koi-utf                 .nginx.conf.swp
+koi-win                 scgi_params
+[root@proxy ~]# ll /usr/local/nginx/conf/.nginx.conf.swp
+-rw-r--r--. 1 root root 12288 9月  28 09:43 /usr/local/nginx/conf/.nginx.conf.swp
+[root@proxy ~]# ll /usr/local/nginx/conf/nginx.conf
+-rw-r--r--. 1 root root 3098 9月  26 16:44 /usr/local/nginx/conf/nginx.conf
+[root@proxy ~]# rm -rf  /usr/local/nginx/conf/.nginx.conf.swp
+ 
+
+[root@proxy ~]# vim /usr/local/nginx/conf/nginx.conf
+ 11 events {
+ 12     worker_connections  1024;
+ 13 }
+ 14 stream {
+ 15   upstream mysqls {
+ 16     server 192.168.2.100:3306;
+ 17     server 192.168.2.200:3306;
+ 18   }
+ 19   server {
+ 20     listen  3306;
+ 21     proxy_pass  mysqls;
+ 22   }
+ 23 }
+ 24 http {
+
+ 41     #gzip  on;
+ 42     upstream webs  {
+ 43         server  192.168.2.100:80;
+ 44         server  192.168.2.200:80;
+ 45     }
+ 46     upstream tomcat  {
+ 47         server  192.168.2.100:8080;
+ 48         server  192.168.2.200:8080;
+ 49     }
+ 50     server {
+ 51         listen       80;
+ 52         server_name  localhost;
+ 57         location  /status  {
+ 58           stub_status on;
+ 59           allow  192.168.4.0/24;
+ 60           allow  192.168.2.0/24;
+ 61           deny all;
+ 62         }
+ 63         location / {
+ 64             proxy_pass  http://webs;
+ 65             root   html;
+ 66             index  index.php  index.html index.htm;
+ 67         }
+ 68         location /jsp {
+ 69             proxy_pass  http://tomcat;
+ 70             root   html;
+ 71             index  index.php  index.html index.htm;
+ 72         }
+ 73         #error_page  404              /404.html;
+       /***     使用nginx -c的参数指定nginx.conf文件的位置
+[root@proxy ~]# nginx -c /usr/local/nginx/conf/nginx.conf
+[root@proxy ~]# ls /usr/local/nginx/
+client_body_temp  fastcgi_temp  logs        sbin       uwsgi_temp
+conf              html          proxy_temp  scgi_temp
+[root@proxy ~]# ls /usr/local/nginx/html/
+50x.html  index.html  mem.php  test.php
+ [root@proxy ~]# netstat -anputl |egrep ":80|:8080|:3306|:3690|:9000|:11211" |column -t
+tcp  0  0  0.0.0.0:80      0.0.0.0:*  LISTEN  16802/nginx:   master
+tcp  0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN  1025/php-fpm:  maste
+tcp  0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN  16802/nginx:   master
+[root@proxy ~]# 
+
+
+
+
+
+ 
+
+
+
+[root@web1 ~]#  ss -anputl |egrep ':80|:9000|:3306|:11211|:8080'
+tcp    LISTEN     0      128    127.0.0.1:9000        *:*          users:(("php-fpm",pid=1381,fd=0),("php-fpm",pid=1380,fd=0),("php-fpm",pid=1379,fd=0),("php-fpm",pid=1378,fd=0),("php-fpm",pid=1377,fd=0),("php-fpm",pid=1036,fd=6))
+tcp    LISTEN     0      50       *:3306     *:*        users:(("mysqld",pid=1347,fd=14))
+[root@web1 ~]# nginx
+[root@web1 ~]# yum -y install subversion  #安装Subversion服务器
+
+[root@web1 ~]#  mkdir /var/svn  # )创建版本库
+[root@web1 ~]# svnadmin  create /var/svn/project
+
+[root@web1 ~]# svnadmin create /var/svn/project2
+[root@web1 ~]# du -sh /var/svn/project{,2}
+100K	/var/svn/project
+100K	/var/svn/project2
+                                     ##本地导入初始化数据
+[root@web1 system]# cd /usr/lib/systemd/system/;
+[root@web1 system]# ls  /usr/lib/systemd/system/sshd
+sshd-keygen.service  sshd@.service        
+sshd.service         sshd.socket 
+                         ##   本地导入初始化数据
+[root@web1 system]# svn  import  .  file:///var/svn/project  -m  "systemfile"
+
+正在增加       dracut-shutdown.service
+
+提交后的版本为 1。
+[root@web1 ~]# ls -ld /var/svn/project/
+drwxr-xr-x. 6 root root 86 9月  29 10:24 /var/svn/project/
+[root@web1 ~]# ls /var/svn/project/
+conf  db  format  hooks  locks  README.txt
+                                       ###   修改配置文件，创建账户与密码
+[root@web1 ~]# cd /var/svn/project/
+[root@web1 project]# ls conf/
+authz  passwd  svnserve.conf
+                    ##       要求顶头写，开头不要有空格
+[root@web1 project]# vim  /var/svn/project/conf/svnserve.conf #修改配置文件，
+ 19 anon-access = none    //19行，匿名无任何权限,全部顶格写
+ 20 auth-access = write   //20行，有效账户可写write
+ 27 password-db = passwd  //27行，密码文件
+ 34 authz-db = authz     //34行，ACL访问控制列表文件
+
+[root@web1 project]# vim conf/passwd
+[root@web1 project]# tail -n 5 conf/passwd
+[users]
+tom = 123456
+harry = 123456
+# harry = harryssecret
+# sally = sallyssecret
+[root@web1 project]# vim conf/authz 
+[root@web1 project]# tail  -n 8 conf/authz
+[/]       //定义ACL访问控制
+tom = rw
+harry = rw   //用户对项目根路径可读可写
+[/sec]
+tom =    //用户tom 对项目根路径无任何权限
+# [repository:/baz/fuz]
+# @harry_and_sally = rw
+# * = r
+[root@web1 project]# cd
+[root@web1 ~]# svnserve  -d -r /var/svn/project   # -d 表示转入后台运行
+-----# svnserve -d  /var/svn/project/ #未指定访问绝对路径 -r /var/svn/project/，
+客户端需要操作----firefox http://192.168.2.100/var/svn/project/
+
+[root@web1 ~]# ss -nptul |grep svn
+tcp    LISTEN    0   7    *:3690    *:*   users:(("svnserve",pid=3368,fd=3))
+[root@web1 ~]# 
+ [root@web1 ~]# svn  info   svn://192.168.2.100          //查看版本仓库基本信息
+认证领域: <svn://192.168.2.100:3690> 349ca418-54d9-4fb5-9255-fc3d51040362
+“root”的密码: 123
+认证领域: <svn://192.168.2.100:3690> 349ca418-54d9-4fb5-9255-fc3d51040362
+用户名: tom
+“tom”的密码: 123456
+-----------------------------------------------------------------------
+注意!  你的密码，对于认证域:
+   <svn://192.168.2.100:3690> 349ca418-54d9-4fb5-9255-fc3d51040362
+保存未加密的密码(yes/no)?yes
+路径: .
+URL: svn://192.168.2.100
+版本库根: svn://192.168.2.100
+版本库 UUID: 349ca418-54d9-4fb5-9255-fc3d51040362
+版本: 2
+节点种类: 目录
+最后修改的作者: harry
+最后修改的版本: 2
+最后修改的时间: 2018-09-29 11:24:57 +0800 (六, 2018-09-29)
+[root@web1 ~]# 
+[root@web1 ~]# svn log svn://192.168.2.100     //查看版本仓库的日志
+------------------------------------------------------------------------
+r2 | harry | 2018-09-29 11:24:57 +0800 (六, 2018-09-29) | 1 行
+
+ xivgaifile
+------------------------------------------------------------------------
+r1 | root | 2018-09-29 10:33:30 +0800 (六, 2018-09-29) | 1 行
+
+systemfile
+------------------------------------------------------------------------
+[root@web1 ~]# netstat -anputl |egrep ':80|:9000|:3306|:11211|:8080|:3690' |column -t
+tcp  0  0  0.0.0.0:80      0.0.0.0:*  LISTEN  2663/nginx:    master
+tcp  0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN  1036/php-fpm:  maste
+tcp  0  0  0.0.0.0:3690    0.0.0.0:*  LISTEN  3368/svnserve
+tcp  0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN  1347/mysqld
+[root@web1 ~]# 
+[root@web1 test]# svn --username  tom  --password  123456  co svn://192.168.2.100/ code
+取出版本 5。
+[root@web1 test]# ls
+code
+[root@web1 test]# cd /test/code/;ls |wc -l
+398
+[root@web1 code]# svn update
+正在升级 '.':
+版本 5。
+[root@web1 code]# sed -i "1a ##tomtom"  tmp.mount
+[root@web1 code]# svn ci -m "tomxx"
+正在发送       tmp.mount
+传输文件数据.
+提交后的版本为 6。
+[root@web1 code]# sed -i '3a xxx tom' user.slice
+[root@web1 code]# svn ci -m "tom"
+正在发送       user.slice
+传输文件数据.
+提交后的版本为 7。
+[root@web1 code]# sed -i d tmp.mount
+[root@web1 code]# svn ci -m "tom"
+正在发送       tmp.mount
+传输文件数据.
+提交后的版本为 8。
+[root@web1 code]# svn update
+正在升级 '.':
+U    user.slice
+U    umount.target
+更新到版本 9。
+[root@web1 code]# head -2 user.slice
+harryUUUU
+xxx harry
+[root@web1 code]# 
+[root@web1 code]# pwd
+/test/code
+[root@web1 code]# cd /var/svn/;ls
+project  project2
+[root@web1 svn]# svnadmin  dump  /var/svn/project > pro.bak
+* 已转存版本 0。
+* 已转存版本 1。
+* 已转存版本 2。
+* 已转存版本 3。
+* 已转存版本 4。
+* 已转存版本 5。
+* 已转存版本 6。
+* 已转存版本 7。
+* 已转存版本 8。
+* 已转存版本 9。
+[root@web1 svn]# svnadmin load /var/svn/project2/ < /var/svn/pro.bak 
+<<< 开始新的事务，基于原始版本 1
+     * 正在增加路径: -.slice ...完成。
+<<< 开始新的事务，基于原始版本 9
+     * 正在修改路径: umount.target ...完成。
+     * 正在修改路径: user.slice ...完成。
+------- 提交后版本 9 >>>
+[root@web1 svn]# ls
+pro.bak  project  project2
+[root@web1 svn]# ls -ld /var/svn/project2/
+drwxr-xr-x. 6 root root 86 9月  29 10:25 /var/svn/project2/
+[root@web1 svn]# ls -ld /var/svn/project/
+drwxr-xr-x. 6 root root 86 9月  29 10:24 /var/svn/project/
+[root@web1 svn]# ll /var/svn/pro.bak 
+-rw-r--r--. 1 root root 296579 9月  29 14:56 /var/svn/pro.bak
+
+
+
+
+ 
+
+
+
+
+[root@web2 ~]#  ss -anputl |egrep ':80|:9000|:3306|:11211|:8080'
+tcp    LISTEN     0      128    127.0.0.1:9000       *:*     users:(("php-fpm",pid=1372,fd=0),("php-fpm",pid=1371,fd=0),("php-fpm",pid=1370,fd=0),("php-fpm",pid=1369,fd=0),("php-fpm",pid=1368,fd=0),("php-fpm",pid=1026,fd=6))
+tcp    LISTEN     0     50     *:3306    *:*    users:(("mysqld",pid=1318,fd=14))
+[root@web2 ~]# 
+[root@web2 ~]# mkdir /test
+[root@web2 ~]# cd /test;ls
+[root@web2 test]# yum -y install subversion |tail -3
+  subversion-libs.x86_64 0:1.7.14-10.el7                                        
+完毕！                            //建立本地副本,从服务器192.168.2.100上co下载代码到本地code目录
+//用户名harry,密码123456
+[root@web2 test]# svn  --username harry --password  123456  checkout  svn://192.168.2.100/  code
+-----------------------------------------------------------------------
+注意!  你的密码，对于认证域:
+   <svn://192.168.2.100:3690> 349ca418-54d9-4fb5-9255-fc3d51040362
+你可以通过在“/root/.subversion/servers”中设置选项“store-plaintext-passwords”为“yes”或“no”，
+来避免再次出现此警告。
+-----------------------------------------------------------------------
+保存未加密的密码(yes/no)?yes
+[root@web2 test]# ls code/ |wc -l
+398
+
+[root@web2 test]# echo 123 web2 >> code/zram.service
+[root@web2 test]# svn ci -m " xivgaifile"
+svn: E155007: “/test”不是工作副本
+[root@web2 test]# cd code/
+------------commit [ ci ] 提交更新
+[root@web2 code]# svn ci -m " xivgaifile"
+正在发送       zram.service
+传输文件数据.
+提交后的版本为 2。
+[root@web2 code]# pwd
+/test/code
+[root@web2 code]# ls |wc -l
+398
+ [root@web2 code]# ls systemd* |wc -l
+62
+[root@web2 code]# echo web2 --123 > testweb2.txt
+[root@web2 code]# svn  add testweb2.txt    //将文件或目录加入版本控制
+A         testweb2.txt
+[root@web2 code]# svn commit -m  'new created file'   //再次提交，成功
+正在增加       testweb2.txt
+传输文件数据.
+提交后的版本为 3。
+[root@web2 code]# ls testweb2.txt 
+testweb2.txt
+[root@web2 code]# svn rm testweb2.txt 
+D         testweb2.txt
+[root@web2 code]# svn commit -m 'delete testweb2.txt'
+正在删除       testweb2.txt
+
+提交后的版本为 4。
+[root@web2 code]# 
+[root@web2 code]# svn diff  zram.service #/仅查看某一个文件的差异
+[root@web2 code]# tail -n 1 zram.service 
+123 web2
+[root@web2 code]# echo web2two >> zram.service
+[root@web2 code]# svn diff
+Index: zram.service
+===================================================================
+--- zram.service	(版本 2)
++++ zram.service	(工作副本)
+@@ -10,3 +10,4 @@
+ RemainAfterExit=yes
+ 
+ 123 web2
++web2two
+[root@web2 code]# svn tail -1 svn://192.168.2.100/zram.service
+svn: invalid option character: 1
+使用“svn help”得到用法。
+[root@web2 code]# svn help
+用法: svn <subcommand> [options] [args]
+Subversion 命令行客户端，版本 1.7.14。
+使用“svn help <subcommand>” 显示子命令的帮助信息。
+使用“svn --version”查看程序的版本号和版本库访问模块，或者
+使用“svn --version --quiet”只查看程序的版本号。
+可用的子命令: 
+   add
+   blame (praise, annotate, ann)
+   cat
+   changelist (cl)
+   checkout (co)
+   cleanup
+   commit (ci)
+   copy (cp)
+   delete (del, remove, rm)
+   diff (di)
+   export
+   help (?, h)
+   import
+   info
+   list (ls)
+   lock
+   log
+   merge
+   mergeinfo
+   mkdir
+   move (mv, rename, ren)
+   patch
+   propdel (pdel, pd)
+   propedit (pedit, pe)
+   propget (pget, pg)
+   proplist (plist, pl)
+   propset (pset, ps)
+   relocate
+   resolve
+   resolved
+   revert
+   status (stat, st)
+   switch (sw)
+   unlock
+   update (up)
+   upgrade
+
+Subversion 是版本控制工具。
+欲取得详细资料，请参阅 http://subversion.apache.org/
+[root@web2 code]# svn cat  svn://192.168.2.100/zram.service | tail -1
+123 web2
+[root@web2 code]# sed -i 'd' tmp.mount 
+[root@web2 code]# svn revert tmp.mount # 还原
+已恢复“tmp.mount”
+[root@web2 code]# rm -rf tmp.mount
+[root@web2 code]# svn update    //将服务器上新的数据同步到本地
+正在升级 '.':
+已还原“tmp.mount”
+版本 4。
+[root@web2 code]# sed  -i  '1a ###tesxxxx' tmp.mount 
+[root@web2 code]# svn  commit -m  "addtexxxx" 
+正在发送       tmp.mount
+正在发送       zram.service
+传输文件数据..
+提交后的版本为 5。
+[root@web2 code]# svn  merge  -r5:2 tmp.mount
+--- 正在反向合并 r5，经由 r3，到 “tmp.mount”:
+U    tmp.mount
+--- 记录反向合并 r5，经由 r3，到“tmp.mount”的信息:
+ U   tmp.mount
+--- 正在从 'tmp.mount' 删除合并信息:
+ U   tmp.mount
+[root@web2 code]# head -2 tmp.mount
+#  This file is part of systemd.
+#
+[root@web2 code]# 
+[root@web2 code]# svn  -r5  cat svn://192.168.2.100/tmp.mount |head -3
+#  This file is part of systemd.
+###tesxxxx
+[root@web2 code]# netstat -anputl |egrep ":80|:8080|:3306|:3690|:9000|:11211"
+tcp   0    0 127.0.0.1:9000   0.0.0.0:*    LISTEN   1026/php-fpm: maste 
+tcp   0    0 0.0.0.0:3306     0.0.0.0:*    LISTEN   1318/mysqld         
+[root@web2 code]# svn update
+正在升级 '.':
+版本 5。
+[root@web2 code]# sed -i "1a ###******harry"  user.slice
+[root@web2 code]# svn  commit  -m  "harry changed"
+正在发送       tmp.mount
+正在发送       umount.target
+正在发送       user.slice
+传输文件数据...svn: E160028: 提交失败(细节如下): 
+svn: E160028: 文件 “/tmp.mount” 已经过时
+[root@web2 code]# svn update
+正在升级 '.':
+在 “/test/code/tmp.mount” 中发现冲突。
+选择: (p) 推迟，(df) 显示全部差异，(e) 编辑,
+        (mc) 我的版本, (tc) 他人的版本,
+        (s) 显示全部选项: mv ###注意 字母一定要符合选项p df  e mc  tc s,否则重新选择
+选择: (p) 推迟，(df) 显示全部差异，(e) 编辑,
+        (mc) 我的版本, (tc) 他人的版本,
+        (s) 显示全部选项: p
+C    tmp.mount
+更新到版本 6。
+冲突概要：
+  正文冲突：1
+[root@web2 code]# sed -i '1a xxx harry' user.slice
+[root@web2 code]# svn update
+正在升级 '.':
+已跳过 'tmp.mount' -- 节点处于冲突状态
+版本 8。
+冲突概要：
+  跳过的路径：1
+[root@web2 code]# sed -i '2a ##harry' user.slice
+[root@web2 code]# head -3 user.slice
+#  This file is part of systemd.
+xxx harry
+##harry
+[root@web2 code]# ls |wc -l
+401
+[root@web2 code]# svn  resolved /test/code/tmp.mount #接下来还需要手动解决
+“tmp.mount”的冲突状态已解决
+[root@web2 code]# svn  commit  -m  "harryxxx"
+正在发送       tmp.mount
+正在发送       umount.target
+正在发送       user.slice
+传输文件数据...svn: E160028: 提交失败(细节如下): 
+svn: E160028: 文件 “/tmp.mount” 已经过时
+
+[root@web2 code]# rm -f tmp.mount  #需要手动解决
+[root@web2 code]# svn update
+正在升级 '.':
+已还原“tmp.mount”
+U    tmp.mount
+更新到版本 8。
+[root@web2 code]# ls user.slice 
+user.slice
+[root@web2 code]# sed -i '1c harryUUUU' user.slice
+[root@web2 code]# svn commit -m "newxxx"
+正在发送       umount.target
+正在发送       user.slice
+传输文件数据..
+提交后的版本为 9。
+[root@web2 code]# head -2 user.slice
+harryUUUU
+xxx harry
+[root@web2 code]# 
+
+
+
+
+
+
+
+
+[root@VM1 ~]# netstat  -anputl |egrep ':80|:9000|:3306|:11211|:8080' |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1032/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1026/php-fpm:   maste
+tcp   0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN          1324/mysqld
+tcp6  0  0  :::11211        :::*       LISTEN          1032/memcached
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1032/memcached
+udp6  0  0  :::11211        :::*       1032/memcached
+[root@VM1 ~]# 
+
+
+
+
+
+
+[root@VM2 ~]# netstat  -anputl |egrep ':80|:9000|:3306|:11211|:8080' |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1030/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1029/php-fpm:   maste
+tcp   0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN          1321/mysqld
+tcp6  0  0  :::11211        :::*       LISTEN          1030/memcached
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1030/memcached
+udp6  0  0  :::11211        :::*       1030/memcached
+[root@VM2 ~]# 
+
+
+
+
+
+[root@VM3 ~]# netstat  -anputl |egrep ':80|:9000|:3306|:11211|:8080' |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1023/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1026/php-fpm:   maste
+tcp   0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN          1337/mysqld
+tcp6  0  0  :::11211        :::*       LISTEN          1023/memcached
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1023/memcached
+udp6  0  0  :::11211        :::*       1023/memcached
+[root@VM3 ~]# 
+
+
+
+[root@VM4 ~]# netstat  -anputl |egrep ':80|:9000|:3306|:11211|:8080' |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1032/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1029/php-fpm:   maste
+tcp   0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN          1323/mysqld
+tcp6  0  0  :::11211        :::*       LISTEN          1032/memcached
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1032/memcached
+udp6  0  0  :::11211        :::*       1032/memcached
+[root@VM4 ~]# 
+
+
+[root@room9pc01 ~]# yum -y install git
+...或在命令行上创建一个新的存储库
+[root@room9pc01 webjava]# which git
+/usr/bin/git
+[root@room9pc01 ~]# rpm -q git
+git-1.8.3.1-11.el7.x86_64
+
+ echo“#webjava”>> README.md 
+git init 
+git add README.md 
+git commit -m“first commit” 
+git remote add origin https://github.com/hiyest/webjava.git
+ git push -u origin master
+...或从命令行推送现有存储库
+ git remote add origin https://github.com/hiyest/webjava.git
+ git push -u origin master
+...或从另一个存储库导入代码
+您可以使用Subversion，Mercurial或TFS项目中的代码初始化此存储库。
+[root@room9pc01 ~]# yum -y install git
+[root@room9pc01 ~]# git clone http://github.com/hiyest/webjava
+[root@room9pc01 ~]# ls
+anaconda-ks.cfg  console.sh            original-ks.cfg  模板  下载
+autoscp.sh       initial-setup-ks.cfg  setlnmp.sh       视频  音乐
+bin              ipyum                 webjava          图片  桌面
+clone.sh         lnmp.sh               公共             文档
+[root@room9pc01 ~]# cp ipyum  webjava/
+[root@room9pc01 webjava]# cp /root/{console.sh,autoscp.sh,clone.sh,lnmp.sh,setlnmp.sh} ./
+[root@room9pc01 webjava]# ls
+autoscp.sh  clone.sh  console.sh  ipyum  lnmp.sh  setlnmp.sh
+
+[root@room9pc01 webjava]# git add  .
+[root@room9pc01 webjava]# git  commit  -m "xx"
+ 1 file changed, 95 insertions(+)
+ create mode 100755 ipyum
+[root@room9pc01 webjava]# git  push
+Username for 'http://github.com': hiyest
+Password for 'http://hiyest@github.com': fe3630yin
+[root@room9pc01 webjava]# git reset
+[root@room9pc01 webjava]# git checkout -b feature_x
+切换到一个新分支 'feature_x'
+[root@room9pc01 webjava]# git checkout master
+切换到分支 'master'
+[root@room9pc01 webjava]# git branch -d feature_x
+已删除分支 feature_x（曾为 cf94103）。
+[root@room9pc01 webjava]# git pull
+
+
+[root@room9pc01 ~]# mkdir Loveme
+[root@room9pc01 ~]# cd Loveme/
+[root@room9pc01 Loveme]# git init
+初始化空的 Git 版本库于 /root/Loveme/.git/
+[root@room9pc01 Loveme]# touch README.md
+[root@room9pc01 Loveme]# git add README.md
+[root@room9pc01 Loveme]# git commit -m "first commit"
+[master（根提交） 5dfb0b4] first commit
+ Committer: root <root@room9pc01.tedu.cn>
+您的姓名和邮件地址基于登录名和主机名进行了自动设置。请检查它们正确
+与否。您可以通过下面的命令对其进行明确地设置以免再出现本提示信息：
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+设置完毕后，您可以用下面的命令来修正本次提交所使用的用户身份：
+
+    git commit --amend --reset-author
+
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 README.md
+
+[root@room9pc01 Loveme]# git remote add origin 'git@github.com/hiyest/Loveme.git'
+[root@room9pc01 Loveme]# echo $?
+0
+[root@room9pc01 Loveme]# git push -u origin master
+fatal: 'git@github.com/hiyest/Loveme.git' does not appear to be a git repository
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+[root@room9pc01 Loveme]# ls
+README.md
+
+[root@room9pc01 ~]# mkdir Loveme
+[root@room9pc01 ~]# cp ipyum lnmp.sh setlnmp.sh  Loveme/
+[root@room9pc01 ~]# cd .git
+[root@room9pc01 .git]# pwd
+/root/.git
+[root@room9pc01 .git]# ls
+branches        config       HEAD   info     refs
+COMMIT_EDITMSG  description  hooks  objects
+[root@room9pc01 .git]# ls objects/
+info  pack
+[root@room9pc01 .git]# vim config 
+[root@room9pc01 .git]# cat config
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "origin"]
+	url = https//github.com/hiyest/webjava.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[root@room9pc01 .git]#
+
+[root@room9pc01 ~]# cd Loveme/
+[root@room9pc01 Loveme]# git init
+初始化空的 Git 版本库于 /root/Loveme/.git/
+[root@room9pc01 Loveme]# touch README.md
+[root@room9pc01 Loveme]# git add README.md
+[root@room9pc01 Loveme]# git commit -m "first commit"
+
+[root@room9pc01 Loveme]# git remote add origin 'git@github.com/hiyest/Loveme.git'
+[root@room9pc01 Loveme]# echo $?
+0
+[root@room9pc01 Loveme]# git push -u origin master
+
+[root@room9pc01 Loveme]# ls
+ipyum  lnmp.sh  README.md  setlnmp.sh
+[root@room9pc01 Loveme]# git add ipyum lnmp.sh setlnmp.sh
+[root@room9pc01 Loveme]# git log
+
+
+[root@room9pc01 Loveme]# ssh-keygen -t rsa -C "hiyest@example.com"
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 123456
+Enter passphrase (empty for no passphrase): 123456
+Enter same passphrase again: 123456
+Your identification has been saved in 123456.
+Your public key has been saved in 123456.pub.
+The key fingerprint is:
+SHA256:klIJWRIMr3Vqej8zG1/xGAjQUFddVfQvDnkcRriNoFc hiyest@example.com
+The key's randomart image is:
++---[RSA 2048]----+
+|  .o*Bo .... ooo=|
+|   .o+.o  . E.  .|
+|    o =  . o +o .|
+|   o + o... o+...|
+|  . + o S.o o + .|
+|   o . .   = + . |
+|  . . .   o . .  |
+|   . .+o .       |
+|      o=.        |
++----[SHA256]-----+
+[root@room9pc01 Loveme]# 
+[root@room9pc01 ~]# ssh-keygen  -t rsa -C "m13530503630@163.com"
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 123456
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in 123456.
+Your public key has been saved in 123456.pub.
+The key fingerprint is:
+SHA256:TSZbaOPUviCv4UMFq+yy0KbWuMl2QMVyYepUyDUXt/0 m13530503630@163.com
+The key's randomart image is:
++---[RSA 2048]----+
+|. +*.o..         |
+| +++o o oo       |
+| o+    +*.=      |
+|o.    .+.X.      |
+|.. . ...S oE     |
+| o  o .o . .     |
+|. *. .. . .      |
+|.Boo...o         |
+|+++o  o.         |
++----[SHA256]-----+
+[root@room9pc01 ~]# 
+
+全球顶级科技公司纷纷加入 GitHub ，并贡献他们自己的项目代码
+
+**Google: https://github.com/google 
+苹果: https://github.com/apple 
+Facebook: https://github.com/facebook 
+Twitter：https://github.com/twitter 
+微软：https://github.com/microsoft 
+Square：https://github.com/square 
+阿里：https://github.com/alibaba**
+
+全球顶级开源项目都优先选择在 GitHub 上开源
+
+**Linux：https://github.com/torvalds/linux 
+Rails：https://github.com/rails/rails 
+Nodejs：https://github.com/nodejs/node 
+Swift：https://github.com/apple/swift 
+CoffeeScript：https://github.com/jashkenas/coffeescript 
+Ruby：https://github.com/ruby/ruby**
+
+全球顶级编程大牛加入GitHub
+
+Linux 发明者 Linus Torvalds：https://github.com/torvalds
+
+
+
+
+
+

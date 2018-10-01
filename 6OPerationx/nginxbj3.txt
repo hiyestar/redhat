@@ -1,0 +1,561 @@
+[root@proxy ~]# ifconfig |awk '/net /'
+        inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.5  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@proxy ~]# ps aux |grep nginx
+root      2083  0.0  0.0 112676   984 pts/0    R+   08:55   0:00 grep --color=auto nginx
+[root@proxy ~]# netstat -anptul |grep nginx
+[root@proxy ~]# nginx
+[root@proxy ~]# netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      2087/nginx: master  
+[root@proxy ~]# systemctl is-active mariadb
+active
+[root@proxy ~]# systemctl is-active php-fpm.service 
+active
+
+ [root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+ 42     #rewrite  /a.html  /b.html last; #last 不再读其他rewrite
+ 43         location /a.html {     #break 不再读其他语句，结束请求
+ 44                 rewrite  /a.html  /b.html break;
+ 45         }
+ 46         location /b.html {
+ 47                 rewrite /b.html /c.html ;
+ 48         }
+ 49         location / {
+ 50             root   html;
+ 51             index  index.html index.htm;
+ 52            # rewrite ^/(.*)$  http://www.tmooc.cn/$1;
+ 53         }
+ 54         if ($http_user_agent ~* firefox){
+ 55                 rewrite ^(.*)$   /firefox/$1;
+ 56         }
+[root@proxy html]# ls
+50x.html  b.html  firefox  index.html  test2.php  test.html  test.php
+[root@proxy html]# cat b.html
+BB
+[root@proxy html]# echo AAA >a.html;echo CCCC >c.html;
+[root@proxy html]# nginx -s reload
+[root@proxy html]# netstat -anptul | awk '/nginx/';
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      2087/nginx: master  
+[root@proxy html]# ls
+50x.html  b.html  firefox     test2.php  test.php
+a.html    c.html  index.html  test.html
+[root@proxy html]# curl 192.168.4.5/a.html
+BB
+
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+ 42         #rewrite  /a.html  /b.html last; #rewrite 旧地址 新地址 [选项];
+ 43         location /a.html {
+ 44         #  rewrite  /a.html  /b.html break;#break 不再读其他语句，结束请求
+ 45            rewrite /a.html  /b.html last; #last 不再读其他【rewrite】
+ 46         }
+ 47         location /b.html {
+ 48                 rewrite /b.html /c.html ;
+ 49         }
+[root@proxy html]# nginx -s reload
+[root@proxy html]# curl 192.168.4.5/a.html
+CCCC
+[root@proxy html]# elinks -dump 192.168.4.5/a.html
+   CCCC
+地址重写格式【总结】
+rewrite 旧地址 新地址 [选项];
+last 不再读其他rewrite
+break 不再读其他语句，结束请求
+redirect 临时重定向
+permament 永久重定向
+
+       tar - tar 档案文件管理程序的 GNU 版本
+       -t, --list
+              列出存档中文件的目录
+       -f, --file [HOSTNAME:]F
+              指定存档或设备 (缺省为 /dev/rmt0)
+       -v, --verbose
+              详细显示处理的文件
+       -z, --gzip, --ungzip
+              用 gzip 对存档压缩或解压
+       -y, --bzip2, --bunzip2
+              用 bzip2 对存档压缩或解压
+	-j, --bzip2,
+       -P, --absolute-paths
+              不要从文件名中去除 '/'
+       -c, --create
+              建立新的存档
+
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+[root@proxy html]# nginx -s reload
+[root@proxy html]# elinks -dump 192.168.4.5/a.html
+   AAA
+[root@proxy html]#cat /usr/local/nginx/conf/nginx.conf
+        #rewrite  /a.html  /b.html last;
+        #location /a.html {
+        #       rewrite  /a.html  /b.html break;
+         #      rewrite /a.html  /b.html last;
+        #}
+        #location /b.html {
+        #       rewrite /b.html /c.html ;
+        #}
+        location / {
+            root   html;
+            index  index.html index.htm;
+           # rewrite ^/(.*)$  http://www.tmooc.cn/$1;
+        }
+        #if ($http_user_agent ~* firefox){
+        #       rewrite ^(.*)$   /firefox/$1;
+        #}
+==================================================
+
+--------------------------------------------
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+     
+#使用upstream定义后端服务器集群，集群名称任意(如webserver)
+ 34     upstream webserver {
+ 35         server 192.168.2.100:80;
+ 36         server 192.168.2.200:80;
+ 37     }
+ 38     server {
+ 39         listen       80;
+ 40         server_name  localhost;
+
+ 53         location / {
+      #通过proxy_pass将用户的请求转发给webserver集群
+ 54             proxy_pass   http://webserver;
+ 55             root   html;
+ 56             index  index.html index.htm;
+ 57            # rewrite ^/(.*)$  http://www.tmooc.cn/$1;
+ 58         }
+[root@proxy html]# nginx -s reload
+[root@client ~]# firefox 192.168.4.5
+
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+ 34     upstream webserver {
+ 35         server 192.168.2.100:80 weight=1 max_fails=1 fail_timeout=30;
+ 36         server 192.168.2.200:80 weight=2 max_fails=2 fail_timeout=30;
+ 37     }
+[root@proxy html]# nginx -s reload ;echo $?
+0
+[root@client ~]# firefox 192.168.4.5
+您在 /var/spool/mail/root 中有新邮件
+
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+
+ 34     upstream webserver {
+ 35         server 192.168.2.100:80 weight=1 max_fails=1 fail_timeout=10;
+ 36         server 192.168.2.200:80 weight=2 max_fails=2 fail_timeout=30;
+ 37     }      ##weight设置服务器权重值，默认值为1 #max_fails设置最大失败次数
+  #fail_timeout设置失败超时时间，单位为秒
+[root@proxy html]# nginx -s reload ;echo $?
+0
+[root@client ~]# firefox 192.168.4.5
+Welcome to nginx!
+
+If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
+
+For online documentation and support please refer to nginx.org.
+Commercial support is available at nginx.com.
+
+Thank you for using nginx.
+-----------------------------------------------------------------
+[root@web1 html]# nginx -s stop;
+
+[root@client ~]# firefox 192.168.4.5
+/var/www/html--webye 
+------------------------------------------------------------------================
+upstream webserver {
+              server 192.168.2.100 weight=1 max_fails=1 fail_timeout=30;
+            server 192.168.2.200 weight=2 max_fails=2 fail_timeout=30;
+         server 192.168.2.101 down;   ###【down】标记服务器已关机，不参与集群调度
+        }
+#weight设置服务器权重值，默认值为1
+#max_fails设置最大失败次数
+#fail_timeout设置失败超时时间，单位为秒
+#down标记服务器已关机，不参与集群调度
+.. ..
+server {
+        listen        80;
+        server_name  localhost;
+            location / {
+            proxy_pass http://webserver;
+        }
+-----------------------------------------------------=========================
+[root@web1 html]# echo "192.168.3.3." |md5sum
+f3ad6507204ee8cff2158015caf636c8  -
+[root@web1 html]# echo "192.168.3.4." |md5sum
+9f9bde464eba701e1f2c8bc6c6809fa1  -
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+    upstream webserver {
+        ip_hash;     -----#只看IP前三位数（例如ip[192.168.4]%16）,将IP取余转成16进制数
+        server 192.168.2.100:80 weight=1 max_fails=1 fail_timeout=10;
+        server 192.168.2.200:80 weight=2 max_fails=2 fail_timeout=30;
+    }
+  ##通过ip_hash设置调度规则为：相同客户端访问相同服务器
+[root@proxy html]# nginx -s reload ;echo $?
+0
+[root@client ~]# firefox 192.168.4.5
+/var/www/html--webye inet 192.168.2.200 webye 
+     --------------------------客户端使用浏览器访问代理服务器测试轮询效果
+[root@client nginx]# curl 192.168.4.5
+/var/www/html--webye
+inet 192.168.2.200 webye
+[root@proxy html]# vim /usr/local/nginx/conf/nginx.conf
+[root@proxy html]# head -39 /usr/local/nginx/conf/nginx.conf |tail -5
+	ip_hash;
+	server 192.168.2.100:80 weight=1 max_fails=1 fail_timeout=20; 
+	server 192.168.2.200:80 weight=2 max_fails=2 fail_timeout=20;
+	server 192.168.2.208:80 weight=3 max_fails=2 fail_timeout=20;
+	server 192.168.2.207:80 weight=4 max_fails=2 fail_timeout=20;
+[root@proxy html]# nginx -s reload ;echo $?
+0
+[root@proxy html]# firefox 192.168.4.5
+=============编译安装必须要使用--with-stream参数开启4层代理模块。===========
+[root@proxy html]# nginx -s stop
+[root@proxy html]# rm -rf /usr/local/nginx/
+                                         //安装依赖包gcc pcre-devel openssl-devel
+[root@proxy nginx-1.12.2]# yum -y install gcc pcre-devel openssl-devel
+
+[root@proxy nginx-1.12.2]# cd nginx-1.12.2/
+     ## --with-http_ssl_module//开启SSL加密功能
+[root@proxy nginx-1.12.2]# ./configure --with-http_ssl_module --with-stream ;  
+ ###--with-stream ;    //开启TCP/UDP代理模块//开启4层反向代理功能     
+## --with-http_ssl_module//开启SSL加密功能
+[root@proxy nginx-1.12.2]# make |tail -3 && make install |tail -3;
+
+[root@proxy nginx-1.12.2]# netstat -anptul |grep nginx
+[root@proxy nginx-1.12.2]# nginx
+
+[root@proxy nginx-1.12.2]# grep nginx /etc/passwd
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+[root@proxy nginx-1.12.2]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  20 13:27 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+[root@proxy nginx-1.12.2]# netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      10266/nginx: master 
+
+[root@proxy nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+
+ 12 events {
+ 13     worker_connections  1024;
+ 14 }
+ 15 
+ 16 stream {
+ 17   upstream dns {
+ 18         server 192.168.2.100:22;
+ 19         server 192.168.2.200:22;
+ 20         server 192.168.2.208:22;
+ 21         server 192.168.2.207:22;
+ 22   }
+ 23   server {
+ 24     listen  12345;   //Nginx监听的端口
+ 25     proxy_pass dns;
+ 26   }
+ 27 }
+ 28 
+ 29 http {
+[root@proxy nginx-1.12.2]# head -27 /usr/local/nginx/conf/nginx.conf |tail -12;
+stream {
+  upstream dns {
+	server 192.168.2.100:22; /后端SSH服务器的IP和端口
+	server 192.168.2.200:22; /后端SSH服务器的IP和端口
+	server 192.168.2.208:22; /后端SSH服务器的IP和端口
+	server 192.168.2.207:22; /后端SSH服务器的IP和端口
+  }
+  server {
+    listen  12345;   //Nginx监听的端口
+    proxy_pass dns;
+  }
+}
+[root@proxy nginx-1.12.2]# nginx -s reload;echo $?
+0
+[root@client nginx]# ssh -p12345 192.168.4.5
+root@192.168.4.5's password: 
+Last login: Wed Aug 22 10:11:39 2018 from 192.168.2.254
+[root@web1 ~]# ifconfig |awk '/net /';
+        inet 192.168.4.2  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@client nginx]# exit
+登出
+[root@room11pc06 ~]# ssh -p12345 root@192.168.4.5
+root@192.168.4.5's password: 
+Last login: Wed Aug 22 10:14:22 2018 from 192.168.2.254
+[root@web2 ~]# ifconfig |awk '/net /';
+        inet 192.168.4.200  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.200  netmask 255.255.255.0  broadcast 192.168.2.255
+
+[root@client ~]# ssh -p12345 192.168.4.5
+root@192.168.4.5's password: 
+Last login: Wed Aug 22 08:32:44 2018 from 192.168.4.254
+[root@c4 ~]# ifconfig |awk '/net /{print $2}'
+192.168.4.208
+192.168.2.208
+127.0.0.1
+192.168.122.1
+[root@c4 ~]# exit
+登出
+Connection to 192.168.4.5 closed.
+[root@client ~]# ssh -p12345 192.168.4.5
+
+[root@pc207 ~]# ifconfig |awk '/net /{print $2}'
+192.168.4.207
+192.168.2.207
+127.0.0.1
+192.168.122.1
+[root@pc207 ~]# exit
+登出
+Connection to 192.168.4.5 closed.
+[root@client ~]# 
+
+
+
+
+[root@proxy nginx]# netstat -anptul |awk '/nginx/'
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      10266/nginx: master 
+tcp        0      0 0.0.0.0:12345           0.0.0.0:*               LISTEN      10266/nginx: master 
+[root@proxy nginx]# ss -anputl |grep nginx |column -t;
+tcp  LISTEN  0  128  *:80     *:*  users:(("nginx",pid=10545,fd=6),("nginx",pid=10266,fd=6))
+tcp  LISTEN  0  128  *:12345  *:*  users:(("nginx",pid=10545,fd=10),("nginx",pid=10266,fd=10))
+
+[root@proxy nginx]# ab -n200 -c200 http://192.168.4.5/ |tail -3;
+Completed 100 requests
+Completed 200 requests
+Finished 200 requests
+  98%     10
+  99%    202
+ 100%    202 (longest request)
+[root@proxy nginx]#  vim /usr/local/nginx/conf/nginx.conf
+ 
+12 events {
+13    worker_connections  65535;  //每个worker最大并发连接数
+14    use epoll;
+15 }
+[root@proxy nginx]# nginx -s reload
+[root@proxy nginx]# echo $?
+0
+
+[root@proxy nginx]# ulimit -Hn 100000   //设置硬限制（临时规则）
+[root@proxy nginx]# ulimit -Sn 100000     //设置软限制（临时规则）
+[root@proxy nginx]# vim /etc/security/limits.conf
+
+[root@proxy nginx]# ab -n12000 -c12000 http://192.168.4.5/ |tail -3;
+Completed 1200 requests
+Completed 2400 requests
+Completed 3600 requests
+Completed 4800 requests
+Completed 6000 requests
+Completed 7200 requests
+Completed 8400 requests
+apr_socket_recv: Connection reset by peer (104)
+
+Benchmarking 192.168.4.5 (be patient)
+Total of 9316 requests completed
+----------------------------------------------------------------------
+[root@proxy nginx]# ulimit -a     //查看所有属性值
+core file size          (blocks, -c) 0
+data seg size           (kbytes, -d) unlimited
+scheduling priority             (-e) 0
+file size               (blocks, -f) unlimited
+pending signals                 (-i) 3845
+max locked memory       (kbytes, -l) 64
+max memory size         (kbytes, -m) unlimited
+open files                      (-n) 1024
+pipe size            (512 bytes, -p) 8
+POSIX message queues     (bytes, -q) 819200
+real-time priority              (-r) 0
+stack size              (kbytes, -s) 8192
+cpu time               (seconds, -t) unlimited
+max user processes              (-u) 3845
+virtual memory          (kbytes, -v) unlimited
+file locks                      (-x) unlimited
+-----------------------------------------------------------------------------------------
+[root@proxy nginx]# vim xurl.sh
+[root@proxy nginx]# sh xurl.sh
+v1=1v2=2v3=3v4=4v5=5v6=6v7=7
+[root@proxy nginx]# cat xurl.sh
+#!/bin/bash
+for i in {1..7}
+do
+	URL=${URL}v$i=$i;
+done
+echo $URL ;
+[root@proxy nginx]# sh xurl.sh
+v1=1v2=2v3=3v4=4v5=5v6=6v7=7
+
+[root@proxy nginx]# vim xur2.sh
+[root@proxy nginx]# sh xur2.sh
+v1v2v3v4v5v6v7
+[root@proxy nginx]# cat xur2.sh
+#!/bin/bash
+for i in {1..7}
+do
+	URL=${URL}v$i;
+done
+echo $URL ;
+[root@proxy nginx]# sh xur2.sh
+v1v2v3v4v5v6v7
+
+-------------------------------------------------------------------
+[root@proxy nginx]# man limits.conf
+    nofile
+          maximum number of open file descriptors
+    nproc
+         maximum number of processes
+  *               hard    nofile          512
+   @500:           soft    cpu             10000
+-----------------------------------------------------------------------
+
+[root@proxy nginx]# vim /etc/security/limits.conf
+*       soft    nofile  100000            //设置软限制
+*       hard    nofile  100000            //设置硬限制
+
+[root@proxy nginx]# cat /root/lnmp_soft/buffer.sh
+#!/bin/bash
+URL=http://192.168.4.5/index.html?
+for i in {1..5000}
+do
+	URL=${URL}v$i=$i
+done
+curl $URL
+----------）修改Nginx配置文件，增加数据包头部缓存大小
+[root@proxy nginx]#  vim /usr/local/nginx/conf/nginx.conf
+http {
+   client_header_buffer_size    1k;     //默认请求包头信息的缓存 
+   large_client_header_buffers 4 2M;   //大请求包头部信息的缓存个数4与容量2M
+[root@proxy nginx]# nginx -s reload
+[root@proxy nginx]# echo $?
+0
+[root@proxy nginx]# bash /root/lnmp_soft/buffer.sh 
+<body>
+<h1>Welcome to nginx inet 192.168.2.5 192.168.4.5 !</h1>
+
+[root@room11pc06 ~]# firefox about:cache
+
+[root@proxy nginx]#  vim /usr/local/nginx/conf/nginx.conf
+[root@proxy nginx]# head -65 /usr/local/nginx/conf/nginx.conf |tail -5;
+        }
+        location ~ \.(jpg|png)$ {
+	   expires  20d;  //定义客户端缓存时间为20天
+	}
+        #error_page  404              /404.html;
+[root@proxy nginx]# cp /usr/share/backgrounds/day.jpg  /usr/local/nginx/html/
+[root@proxy nginx]# ls /usr/local/nginx/html/
+50x.html  day.jpg  index.html
+
+[root@proxy nginx]#  vim /usr/local/nginx/conf/nginx.conf
+ 58         location / {
+ 59             root   html;
+ 60             index  index.html index.htm;
+ 61         }
+ 62         location ~ \.(jpg|png)$ {
+ 63            expires  20d;
+ 64         }
+ 65         error_page  404              /404.html;
+[root@proxy nginx]# echo error_page 404  xixixi > html/404.html;
+[root@proxy nginx]# nginx -s reload;echo $?
+0
+[root@proxy nginx]# ls html/
+404.html  50x.html  day.jpg  index.html
+
+[root@proxy nginx]# firefox 192.168.4.5/day.jp
+http://192.168.4.5/day.jp
+error_page 404 xixixi 
+
+--------------Firefox地址栏内输入about:cache，查看本地缓存数据，
+
+
+
+
+
+---------------------web1--192.168.2.100-------------
+[root@web1 ~]# ifconfig |awk '/inet /';
+        inet 192.168.4.2  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@web1 ~]# netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      1809/nginx: master  
+[root@web1 ~]# ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     公共  图片  音乐
+initial-setup-ks.cfg  nginx-1.12.2         模板  文档  桌面
+lnmp_soft             nginx-1.12.2.tar.gz  视频  下载
+[root@web1 ~]# cd /usr/local/nginx/html
+[root@web1 html]# ls
+50x.html  index.html
+
+
+
+
+
+
+
+
+-------------------------web2---192.168.2.200-------------------------
+[root@web2 ~]# ifconfig |awk '/inet /';
+        inet 192.168.4.200  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.200  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@web2 ~]# ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     公共  视频  文档  音乐
+initial-setup-ks.cfg  nginx-1.12.2.tar.gz  模板  图片  下载  桌面
+[root@web2 ~]# yum -y install httpd
+[root@web2 ~]# systemctl start httpd && systemctl enable httpd.service
+
+[root@web2 ~]# netstat -anptul |grep :80 |column -t;
+tcp6  0  0  :::80  :::*  LISTEN  2864/httpd
+
+[root@web2 ~]# vim /etc/httpd/conf.d/virt.conf
+[root@web2 ~]# cat /etc/httpd/conf.d/virt.conf
+<VirtualHost *:80>
+  ServerName  server0.example.com
+  DocumentRoot  /var/www/html/
+</VirtualHost>
+<VirtualHost *:80>
+  ServerName  www0.example.com
+  DocumentRoot /var/www/html2/
+</VirtualHost>
+[root@web2 html]# mkdir -p /var/www/html2
+[root@web2 html]# vim /etc/httpd/conf.d/dir.conf
+[root@web2 html]# cat /etc/httpd/conf.d/dir.conf
+<Directory /var/www/html2/>
+  Allow from all
+</Directory>
+[root@web2 html]# cd /var/www/html2/
+[root@web2 html2]# httpd -t
+[root@web2 html2]# echo '/var/www/html--webye' >/var/www/html/index.html;
+[root@web2 html2]# echo '/var/www/html2--webye2' >/var/www/html2/index.html;
+[root@web2 html2]# ls /var/www/html2/
+index.html
+[root@web2 html2]# ls /var/www/html/
+index.html
+[root@web2 html2]# vim /etc/hosts
+[root@web2 html2]# curl http://server0.example.com
+/var/www/html--webye
+[root@web2 html2]# curl http://www0.example.com
+/var/www/html2--webye2
+[root@web2 html2]# tail -1 /etc/hosts
+192.168.2.200   server0.example.com  www0.example.com
+
+
+----------------------------------------------------------------------
+http://fanyi.baidu.com/translate?aldtype=16047&query=+Could+not+reliably+determine+the+server%27s+fully+qualified+domain+name%2C+using+fe80%3A%3A8c8d
+--------------------------------------------------------------------------------------------------------------------------------
+<h1>Welcome to nginx inet 192.168.4.100 </h1>
+<p>This page is Client, the nginx web server is OK</p>
+
+<h1>Welcome to nginx inet 192.168.2.5  192.168.4.5 !</h1>
+<p>If you see this page Proxy, the nginx web server is OK.</p>
+
+<h1>Welcome to nginx inet 192.168.2.100!</h1>
+<p>If you see this page WEB1, the nginx web server is ok</p>
+
+inet 192.168.2.200
+
+200  一切正常	；	301	永久重定向；	302	临时重定向；
+401  用户名/密码错误；	403 禁止访问（客户端IP地址被拒绝） ； 404  文件不存在；
+404  请求URI 头部过长 ；	500 服务器内部错误；	502  Bad Gateway
+========================
+https://github.com/redhatedu/course/
+==================================
+[root@client ~]# uptime
+ 15:39:19 up  7:09,  1 user,  load average: 0.00, 0.01, 0.05
+
+
+

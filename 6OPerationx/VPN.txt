@@ -1,0 +1,673 @@
+
+3690   svn
+9000   php-fpm
+8080   java 
+11211  memcached 缓存数据库文件
+varnish  缓存网站文件
+[root@client ~]# netstat -anputl |egrep ":80|:8080|:3306|:3690|:9000|:11211" |column -t
+tcp  0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN  1030/php-fpm:  maste
+tcp  0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN  1294/mysqld
+[root@client ~]# rpm -q gitlab
+未安装软件包 gitlab 
+[root@client ~]# yum -y gitlab
+ 没有可用软件包 gitlab。
+错误：无须任何处理
+[root@client ~]#
+/***开机自启动nginx方式( 1 )
+vim /usr/lib/systemd/system/nginx.service
+systemctl enable ngixn
+vim /etc/rc.local  开机自启动nginx方式二
+chmod +x /etc/rc.local
+ll /etc/rc.local
+ll /etc/rc.d/rc.local
+/usr/local/nginx/sbin/nginx
+***/
+[root@client ~]# nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes;
+
+[root@client ~]# nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.1.2.10/24 ipv4.gateway 201.1.2.254 connection.autoconnect yes
+[root@client ~]# nmcli connection up eth3
+[root@client ~]# nmcli connection show
+[root@client ~]# lsmod |grep gre
+[root@client ~]# modprobe ip_gre
+[root@client ~]# lsmod |grep gre
+ip_gre                 22707  0 
+ip_tunnel              25163  1 ip_gre
+gre                    13144  1 ip_gre
+[root@client ~]# modinfo ip_gre
+filename:       /lib/modules/3.10.0-693.el7.x86_64/kernel/net/ipv4/ip_gre.ko.xz
+alias:          netdev-gretap0
+alias:          netdev-gre0
+alias:          rtnl-link-gretap
+alias:          rtnl-link-gre
+license:        GPL
+rhelversion:    7.4
+srcversion:     F37A2BF90692F86E3A8BD15
+depends:        ip_tunnel,gre
+intree:         Y
+vermagic:       3.10.0-693.el7.x86_64 SMP mod_unload modversions 
+signer:         Red Hat Enterprise Linux kernel signing key
+sig_key:        4F:FD:D6:3C:93:7E:B4:A7:A1:14:BC:5E:89:1A:CB:DE:50:20:65:21
+sig_hashalgo:   sha256
+parm:           log_ecn_error:Log packets received with corrupted ECN (bool)
+
+[root@client ~]# ls /lib/modules/3.10.0-693.el7.x86_64/kernel/net/ipv4/ip_gre.ko.xz 
+/lib/modules/3.10.0-693.el7.x86_64/kernel/net/ipv4/ip_gre.ko.xz
+
+[root@client ~]# ip tunnel add tun0 mode gre \
+> remote 201.1.2.5 local 201.1.2.10
+
+[root@client ~]# ip link show |grep  tun
+10: tun0@NONE: <POINTOPOINT,NOARP> mtu 1476 qdisc noop state DOWN mode DEFAULT qlen 1
+
+[root@client ~]# ls /lib/modules/3.10.0-693.el7.x86_64/kernel/net/ipv4/ip_gre.ko.xz 
+/lib/modules/3.10.0-693.el7.x86_64/kernel/net/ipv4/ip_gre.ko.xz
+
+[root@client ~]# ip tunnel add tun0 mode gre \
+> remote 201.1.2.5 local 201.1.2.10
+
+[root@client ~]# ip link show |grep  tun
+10: tun0@NONE: <POINTOPOINT,NOARP> mtu 1476 qdisc noop state DOWN mode DEFAULT qlen 1
+[root@client ~]# ip a s tun0
+10: tun0@NONE: <POINTOPOINT,NOARP> mtu 1476 qdisc noop state DOWN qlen 1
+    link/gre 201.1.2.10 peer 201.1.2.5
+
+[root@client ~]# ip link set tun0 up
+
+[root@client ~]# ip link show |grep tun
+10: tun0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1476 qdisc noqueue state UNKNOWN mode DEFAULT qlen 1
+[root@client ~]# ip addr add 10.10.10.10/24  peer 10.10.10.5/24 dev tun0
+
+[root@client ~]# ip a s tun0
+10: tun0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1476 qdisc noqueue state UNKNOWN qlen 1
+    link/gre 201.1.2.10 peer 201.1.2.5
+    inet 10.10.10.10 peer 10.10.10.5/24 scope global tun0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::200:5efe:c901:20a/64 scope link 
+       valid_lft forever preferred_lft forever
+[root@client ~]# cat /proc/sys/net/ipv4/ip_forward
+1
+[root@client ~]# tail -2 /etc/ipsec.conf
+# It is best to add your IPsec connections as separate files in /etc/ipsec.d/
+include /etc/ipsec.d/*.conf
+[root@client ~]# cp lnmp_soft/vpn/myipsec.conf  /etc/ipsec.d/
+[root@client ~]# ls /etc/ipsec.d/
+myipsec.conf  policies  v6neighbor-hole.conf
+[root@client ~]# vim /etc/ipsec.d/myipsec.conf 
+[root@client ~]# cat /etc/ipsec.d/myipsec.conf
+conn IDC-PSK-NAT
+    rightsubnet=vhost:%priv
+    also=IDC-PSK-noNAT
+
+conn IDC-PSK-noNAT
+    authby=secret
+        ike=3des-sha1;modp1024
+        phase2alg=aes256-sha1;modp2048
+    pfs=no
+    auto=add
+    keyingtries=3
+    rekey=no
+    ikelifetime=8h
+    keylife=3h
+    type=transport
+    left=201.1.2.10    ####本机IP 201.1.2.10/24
+    leftprotoport=17/1701
+    right=%any
+    rightprotoport=17/%any
+[root@client ~]# cat /etc/ipsec.secrets 
+include /etc/ipsec.d/*.secrets
+[root@client ~]# vim /etc/ipsec.d/mypass.secrets
+201.1.2.10  %any:  PSK  "randpass"
+ [root@client ~]# cat /etc/ipsec.d/mypass.secrets
+201.1.2.10  %any:  PSK  "randpass"
+/***
+pre share key PSK
+**/
+[root@client ~]# systemctl start ipsec
+[root@client ~]# ss -anputl |grep pluto |column -t
+udp  UNCONN  0  0  127.0.0.1:4500      *:*   users:(("pluto",pid=7275,fd=28))
+udp  UNCONN  0  0  192.168.4.100:4500  *:*   users:(("pluto",pid=7275,fd=26))
+udp  UNCONN  0  0  192.168.2.15:4500   *:*   users:(("pluto",pid=7275,fd=24))
+udp  UNCONN  0  0  201.1.2.10:4500     *:*   users:(("pluto",pid=7275,fd=22))
+udp  UNCONN  0  0  192.168.122.1:4500  *:*   users:(("pluto",pid=7275,fd=20))
+udp  UNCONN  0  0  10.10.10.10:4500    *:*   users:(("pluto",pid=7275,fd=18))
+udp  UNCONN  0  0  127.0.0.1:500       *:*   users:(("pluto",pid=7275,fd=27))
+udp  UNCONN  0  0  192.168.4.100:500   *:*   users:(("pluto",pid=7275,fd=25))
+udp  UNCONN  0  0  192.168.2.15:500    *:*   users:(("pluto",pid=7275,fd=23))
+udp  UNCONN  0  0  201.1.2.10:500      *:*   users:(("pluto",pid=7275,fd=21))
+udp  UNCONN  0  0  192.168.122.1:500   *:*   users:(("pluto",pid=7275,fd=19))
+udp  UNCONN  0  0  10.10.10.10:500     *:*   users:(("pluto",pid=7275,fd=17))
+udp  UNCONN  0  0  ::1:500             :::*  users:(("pluto",pid=7275,fd=29))
+[root@client ~]#
+[root@client ~]# yum -y install lnmp_soft/vpn/xl2tpd-1.3.8-2.el7.x86_64.rpm 
+已安装:
+  xl2tpd.x86_64 0:1.3.8-2.el7                                                   
+完毕！
+[root@client ~]# ls lnmp_soft/vpn/
+myipsec.conf                  xl2tpd-1.3.8-2.el7.x86_64.rpm
+pptpd-1.4.0-2.el7.x86_64.rpm  xl2tp_ipsec.sh
+[root@client ~]# rpm -q  xl2tpd
+xl2tpd-1.3.8-2.el7.x86_64
+
+[root@client ~]# vim /etc/xl2tpd/xl2tpd.conf 
+ 17 [global]
+ 31 [lns default]
+ 32 ip range = 192.168.3.128-192.168.3.254
+ 33 local ip = 201.1.2.10
+ 34 require chap = yes
+ 35 refuse pap = yes
+ 36 require authentication = yes
+ 37 name = LinuxVPNserver
+ 38 ppp debug = yes
+ 39 pppoptfile = /etc/ppp/options.xl2tpd
+ 40 length bit = yes
+[root@client ~]# vim /etc/ppp/options.xl2tpd 
+  1 ipcp-accept-local
+  2 ipcp-accept-remote
+  3 ms-dns  8.8.8.8
+  8 noccp
+  9 auth
+ 10 #crtscts
+ 11 idle 1800
+ 12 mtu 1410
+ 13 mru 1410
+ 14 nodefaultroute
+ 15 debug
+ 16 #lock
+ 17 proxyarp
+ 18 connect-delay 5000
+ 21 require-mschap-v2
+[root@client ~]# vim /etc/ppp/chap-secrets
+[root@client ~]# tail -2 /etc/ppp/chap-secrets
+# client	server	secret			IP addresses
+jacob  *   123456   *
+[root@client ~]# systemctl start xl2tpd.service  
+
+/***http://livevideo.tarena.
+登陆账号  gzitnsd180701
+登陆密码 q3u33a35  ***/
+设置Windows注册表（不修改注册表，连接VPN默认会报789错误），具体操作如下：
+单击"开始"，单击"运行"，键入"regedit"，然后单击"确定"
+找到下面的注册表子项，然后单击它：
+HKEY_LOCAL_MACHINE\ System\CurrentControlSet\Services\Rasman\Parameters
+在"编辑"菜单上，单击"新建"->"DWORD值"
+在"名称"框中，键入"ProhibitIpSec"
+在"数值数据"框中，键入"1"，然后单击"确定"
+退出注册表编辑器，然后重新启动计算机
+连接VPN并测试网络连通性（参考案例2）。
+
+
+
+
+
+
+
+[root@proxy ~]# netstat -anputl |egrep ":80|:8080|:3306|:3690|:9000|:11211" |column -t
+tcp  0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN  1030/php-fpm:  maste
+[root@proxy ~]# nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes;
+
+[root@proxy ~]# nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.1.2.5/24 ipv4.gateway 201.1.2.254 connection.autoconnect yes
+[root@proxy ~]# nmcli connection up eth3
+
+[root@proxy ~]# nmcli connection show 
+[root@proxy ~]# ping -c2 -i0.2 -w1 201.1.2.254
+[root@proxy ~]# ping -c2 -i0.2 -w1 201.1.2.10
+[root@proxy ~]# lsmod |wc -l
+90
+[root@proxy ~]# lsmod |grep gre
+[root@proxy ~]# modprobe ip_gre
+[root@proxy ~]# lsmod |grep gre   #查看当前计算机已经加载的模块
+ip_gre                 22707  0 
+ip_tunnel              25163  1 ip_gre
+gre                    13144  1 ip_gre
+[root@proxy ~]# modinfo ip_gre
+filename:       /lib/modules/3.10.0-693.el7.x86_64/kernel/net/ipv4/ip_gre.ko.xz
+..................
+[root@proxy ~]# ls /lib/modules/3.10.0-693.el7.x86_64/kernel/net/ipv4/ip
+ipcomp.ko.xz     ipip.ko.xz       ip_vti.ko.xz     
+ip_gre.ko.xz     ip_tunnel.ko.xz
+[root@proxy ~]# ip tunnel  help
+Usage: ip tunnel { add | change | del | show | prl | 6rd } [ NAME ]
+          [ mode { ipip | gre | sit | isatap | vti } ] [ remote ADDR ] [ local ADDR ]
+.............................
+[root@proxy ~]# 
+[root@proxy ~]# ip link show |grep tun
+[root@proxy ~]# ip tunnel add tun0 mode gre \
+> remote 201.1.2.10 local 201.1.2.5
+
+[root@proxy ~]# ip link show |grep tun
+10: tun0@NONE: <POINTOPOINT,NOARP> mtu 1476 qdisc noop state DOWN mode DEFAULT qlen 1
+
+[root@proxy ~]# ip link set tun0 up
+
+[root@proxy ~]# ip link show |grep tun
+10: tun0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1476 qdisc noqueue state UNKNOWN mode DEFAULT qlen 1
+[root@proxy ~]# ip addr add 10.10.10.5/24 peer  10.10.10.10/24 dev tun0
+[root@proxy ~]# ip a s tun0
+10: tun0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1476 qdisc noqueue state UNKNOWN qlen 1
+    link/gre 201.1.2.5 peer 201.1.2.10
+    inet 10.10.10.5 peer 10.10.10.10/24 scope global tun0
+ 
+[root@proxy ~]# ping -c2 -i0.2 -w1 10.10.10.10
+--- 10.10.10.10 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.590/0.686/0.783/0.099 ms
+[root@proxy ~]# ping -c2 -i0.2 -w1 10.10.10.5
+ [root@proxy ~]# echo $?
+0
+[root@proxy ~]# ls /root/lnmp_soft/vpn/
+myipsec.conf                  xl2tpd-1.3.8-2.el7.x86_64.rpm
+pptpd-1.4.0-2.el7.x86_64.rpm  xl2tp_ipsec.sh
+[root@proxy ~]# yum -y install /root/lnmp_soft/vpn/pptpd-1.4.0-2.el7.x86_64.rpm 
+已安装:
+  pptpd.x86_64 0:1.4.0-2.el7                                                    
+
+完毕！
+[root@proxy ~]# rpm -qc pptpd
+/etc/ppp/options.pptpd
+/etc/pptpd.conf
+/etc/sysconfig/pptpd
+[root@proxy ~]# vim /etc/pptpd.conf 
+[root@proxy ~]# tail -4 /etc/pptpd.conf 
+#localip 192.168.0.234-238,192.168.0.245
+#remoteip 192.168.1.234-238,192.168.1.245
+localip  201.1.2.5
+remoteip 192.168.3.1-5,192.168.3.55
+
+[root@proxy ~]# vim /etc/ppp/options.pptpd
+ 17 # (must match the second field in /etc/ppp/chap-secrets entries)
+ 18 name pptpd
+ 67 #ms-dns 10.0.0.2
+ 68 ms-dns 8.8.8.8
+[root@proxy ~]# vim /etc/ppp/chap-secrets
+[root@proxy ~]# tail -4 /etc/ppp/chap-secrets 
+# client	server	secret			IP addresses
+jacob  pptpd  123456  192.168.*
+#jacob  *     123456  *
+tom   pptpd   123456  *
+[root@proxy ~]# cat /proc/sys/net/ipv4/ip_forward #0关闭   /1 开启
+1
+[root@proxy ~]# systemctl start pptpd  && systemctl enable pptpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/pptpd.service to /usr/lib/systemd/system/pptpd.service.
+[root@proxy ~]# iptables  -t  nat  -A  POSTROUTING  -s 192.168.3.0/24  \
+> -j SNAT  --to-source  201.1.2.5
+[root@proxy ~]# echo $?
+0
+/***windows 201.1.2.20/24
+Internet (I) 201.1.2.5
+VPN xxx
+jacob
+123456
+记住密码
+***/
+[root@proxy ~]# cd lnmp_soft/vpn/;ls
+myipsec.conf                  xl2tpd-1.3.8-2.el7.x86_64.rpm
+pptpd-1.4.0-2.el7.x86_64.rpm  xl2tp_ipsec.sh
+[root@proxy vpn]# cat myipsec.conf 
+conn IDC-PSK-NAT
+    rightsubnet=vhost:%priv
+    also=IDC-PSK-noNAT
+
+conn IDC-PSK-noNAT
+    authby=secret
+        ike=3des-sha1;modp1024
+        phase2alg=aes256-sha1;modp2048
+    pfs=no
+    auto=add
+....................
+[root@proxy vpn]# 
+[root@proxy ~]# rpm -qc chrony
+/etc/chrony.conf
+/etc/chrony.keys
+/etc/logrotate.d/chrony
+/etc/sysconfig/chronyd
+[root@proxy ~]# vim /etc/chrony.conf
+ 25 # Allow NTP client access from local network.
+ 26 allow 192.168.4.100
+ 27 allow 192.168.2.0/24
+ 28 deny  192.168.2.111
+ 29 # Serve time even if not synchronized to a time source.
+ 30 local stratum 10
+[root@proxy ~]# systemctl restart chronyd.service
+
+[root@client ~]# vim /etc/chrony.conf
+  6 #server 3.rhel.pool.ntp.org iburst
+  7 server  192.168.4.5  iburst
+[root@client ~]# systemctl restart chronyd
+[root@client ~]# date -s  "16:16"
+2018年 09月 30日 星期日 16:16:00 CST
+[root@client ~]# date
+2018年 09月 30日 星期日 16:16:11 CST
+[root@client ~]# systemctl restart chronyd
+[root@client ~]# date
+2018年 09月 30日 星期日 14:46:25 CST
+[root@proxy ~]# ls lnmp_soft/pssh-2.3.1-5.el7.noarch.rpm 
+lnmp_soft/pssh-2.3.1-5.el7.noarch.rpm
+[root@proxy ~]# rpm -ivh lnmp_soft/pssh-2.3.1-5.el7.noarch.rpm
+
+[root@proxy ~]# rpm -q pssh
+pssh-2.3.1-5.el7.noarch
+
+[root@proxy ~]# vim /etc/hosts
+[root@proxy ~]# tail -3 /etc/hosts
+192.168.2.100  host1
+192.168.2.200  host2
+192.168.4.100  host3
+[root@proxy ~]# vim  host.txt
+[root@proxy ~]# cat host.txt 
+root@host1
+host2
+host3
+[root@proxy ~]# cat /usr/bin/pssh
+ 72     for host, port, user in hosts:
+ 73         cmd = ['ssh', host, '-o', 'NumberOfPasswordPrompts=1',
+ 74                 '-o', 'SendEnv=PSSH_NODENUM PSSH_HOST']
+ 75         if opts.options:
+ 76             for opt in opts.options:
+ 77                 cmd += ['-o', opt]
+ 78         if user:
+ 79             cmd += ['-l', user]
+ 80         if port:
+ 81             cmd += ['-p', port]
+
+[root@proxy ~]# man pssh      //通过man帮助查看工具选项的作用
+pssh提供并发远程连接功能
+-A                使用密码远程其他主机（默认使用密钥）
+-i                将输出显示在屏幕
+-H                设置需要连接的主机
+-h                设置主机列表文件
+-p                设置并发数量
+-t                设置超时时间
+-o dir            设置标准输出信息保存的目录
+-e dir            设置错误输出信息保存的目录
+-x                传递参数给ssh
+
+ssh -o StrictHostKeyChecking=no -X root@192.168.4.5
+[root@proxy ~]# pssh -i -A -x '-o StrictHostKeyChecking=no' -H 'host1  host2 host3' echo 'Hello World';
+Warning: do not enter your password if anyone else has superuser
+privileges or access to your account.
+Password: 123
+[1] 15:37:45 [SUCCESS] host1
+Hello World
+Stderr: Warning: Permanently added 'host1,192.168.2.100' (ECDSA) to the list of known hosts.
+[2] 15:37:45 [SUCCESS] host2
+Hello World
+Stderr: Warning: Permanently added 'host2,192.168.2.200' (ECDSA) to the list of known hosts.
+[3] 15:37:45 [SUCCESS] host3
+Hello World
+Stderr: Warning: Permanently added 'host3,192.168.4.100' (ECDSA) to the list of known hosts.
+[root@proxy ~]# 
+[root@proxy ~]# pssh -i -A  -H 'host1  host2 host3' ls /home;Warning: do not enter your password if anyone else has superuser
+privileges or access to your account.
+Password: 
+[1] 15:43:50 [SUCCESS] host1
+lisi
+nginx
+[2] 15:43:50 [SUCCESS] host3
+lisi
+nginx
+nginx2
+[3] 15:43:50 [SUCCESS] host2
+lisi
+nginx
+[root@proxy ~]# pssh -A -h host.txt ls /test/
+Warning: do not enter your password if anyone else has superuser
+privileges or access to your account.
+Password: 
+[1] 15:45:57 [SUCCESS] root@host1
+[2] 15:45:57 [SUCCESS] host2
+[3] 15:45:57 [SUCCESS] host3
+
+[root@proxy ~]# ssh-keygen
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:Tssa1a4oYTIyCz/YRZzPei0Jgl1CGeTDzU4FeBitEVU root@proxy
+The key's randomart image is:
++---[RSA 2048]----+
+| .=XooE          |
+| o*oo.           |
+| .+=+.           |
+|  o+=    .       |
+| o +.o  S .      |
+|= = = o= o       |
+|.B * +.o+ .      |
+|o + o ++..       |
+|   . oo..        |
++----[SHA256]-----+
+[root@proxy ~]# ls
+anaconda-ks.cfg       lnmp.sh           nginx-1.12.2   公共  图片  音乐
+host.txt              lnmp_soft         setlnmp.sh     模板  文档  桌面
+initial-setup-ks.cfg  lnmp_soft.tar.gz  varnish-5.2.1  视频  下载
+[root@proxy ~]# ssh-keygen  -N '' -f /root/.ssh/^C
+[root@proxy ~]# ls .
+anaconda-ks.cfg       lnmp.sh           nginx-1.12.2   公共  图片  音乐
+host.txt              lnmp_soft         setlnmp.sh     模板  文档  桌面
+initial-setup-ks.cfg  lnmp_soft.tar.gz  varnish-5.2.1  视频  下载
+[root@proxy ~]# ls -A
+anaconda-ks.cfg  .cshrc                lnmp.sh           setlnmp.sh     模板
+.bash_history    .dbus                 lnmp_soft         .ssh           视频
+.bash_logout     .elinks               lnmp_soft.tar.gz  .tcshrc        图片
+.bash_profile    .esd_auth             .local            varnish-5.2.1  文档
+.bashrc          host.txt              .mozilla          .viminfo       下载
+.cache           .ICEauthority         .mysql_history    .Xauthority    音乐
+.config          initial-setup-ks.cfg  nginx-1.12.2      公共           桌面
+[root@proxy ~]#  ssh-keygen -N  ''   -f /root/.ssh/id_rsa
+Generating public/private rsa key pair.
+/root/.ssh/id_rsa already exists.
+Overwrite (y/n)? y
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:+rMiTZyyIoSmx775UbyD0d/io7K3Ceb+Y9EETW4xzjc root@proxy
+The key's randomart image is:
++---[RSA 2048]----+
+|       o+        |
+|      .+.o       |
+|       .= E      |
+|     o ... .     |
+|.   ..++S        |
+|.o  .+=+..       |
+|+.  ==+.o .      |
+|o +++o*=o.       |
+| ++==B==++       |
++----[SHA256]-----+
+[root@proxy ~]# ssh-copy-id host1
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@host1's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'host1'"
+and check to make sure that only the key(s) you wanted were added.
+
+[root@proxy ~]# ssh-copy-id  host2
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@host2's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'host2'"
+and check to make sure that only the key(s) you wanted were added.
+
+[root@proxy ~]# ssh-copy-id host3
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@host3's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'host3'"
+and check to make sure that only the key(s) you wanted were added.
+
+[root@proxy ~]# pssh -h host.txt ls /test
+[1] 15:52:28 [SUCCESS] root@host1
+[2] 15:52:28 [SUCCESS] host2
+[3] 15:52:28 [SUCCESS] host3
+[root@proxy ~]# pssh -i -h host.txt ls /test
+[1] 15:52:43 [SUCCESS] root@host1
+code
+[2] 15:52:43 [SUCCESS] host2
+code
+[3] 15:52:43 [SUCCESS] host3
+[root@proxy ~]# 
+[root@proxy ~]# mkdir /zhu;
+[root@proxy ~]# pssh -h host.txt -o /zhu/ ls /tsh
+[1] 15:59:09 [SUCCESS] root@host1
+[2] 15:59:09 [SUCCESS] host2
+[3] 15:59:09 [SUCCESS] host3
+[root@proxy ~]# ls /zhu/
+host2  host3  root@host1
+[root@proxy ~]# ls /zhu/host2
+/zhu/host2
+[root@proxy ~]# ll /zhu/host2
+-rw-r--r--. 1 root root 6 9月  30 15:59 /zhu/host2
+[root@proxy ~]# cat /zhu/host2
+a.txt
+[root@proxy ~]# echo love proxy > love.txt
+
+[root@proxy ~]# pscp.pssh   -h host.txt love.txt  /tsh
+[1] 16:02:06 [SUCCESS] root@host1
+[2] 16:02:06 [SUCCESS] host3
+[3] 16:02:06 [SUCCESS] host2
+[root@client ~]# mkdir /test
+[root@client ~]# ls /test
+[root@client ~]# mkdir /test
+[root@client ~]# ls /test
+[root@client ~]# mkdir /tsh;echo abc > /tsh/a.txt
+[root@client ~]# echo 123abc > /tsh/b.txt
+[root@client ~]# ls /tsh/
+a.txt  b.txt  love.txt
+
+[root@web1 ~]# ls /test/
+code
+[root@web1 ~]# mkdir /tsh
+[root@web1 ~]# echo abc > /tsh/a.txt
+[root@web1 ~]# ls /tsh/
+a.txt  love.txt
+
+[root@web2 ~]# ls /test/
+code
+[root@web2 ~]# mkdir /tsh;echo abc > /tsh/a.txt
+[root@web2 ~]# ls /tsh
+a.txt  love.txt
+[root@proxy ~]# pslurp  -h host.txt  /etc/hosts /xx
+[1] 16:09:51 [SUCCESS] root@host1
+[2] 16:09:51 [SUCCESS] host2
+[3] 16:09:51 [SUCCESS] host3
+[root@proxy ~]# ls host{1,2,3}/
+host1/:
+xx
+
+host2/:
+xx
+
+host3/:
+xx
+[root@proxy ~]# mkdir /test
+[root@proxy ~]# pslurp   -h host.txt  -L  /test  /etc/hosts /xx
+[1] 16:13:36 [SUCCESS] root@host1
+[2] 16:13:36 [SUCCESS] host2
+[3] 16:13:36 [SUCCESS] host3
+[root@proxy ~]# ls /test/
+host1  host2  host3
+[root@proxy ~]# ls /test/host1
+xx
+[root@proxy ~]# pnuke -h  host.txt sleep
+[1] 16:15:01 [SUCCESS] root@host1
+[2] 16:15:01 [SUCCESS] host2
+[3] 16:15:01 [SUCCESS] host3
+[root@client ~]# sleep 300
+已杀死
+[root@web1 ~]# sleep 300
+已杀死
+[root@web2 ~]# sleep 300
+已杀死
+[root@client ~]# vim test1
+[root@client ~]# cat test1
+#!/bin/bash
+while :
+do
+  echo hello
+  sleep 10
+done
+[root@client ~]# . test1
+[root@client ~]# cat  test1.sh
+#!/bin/bash
+while :
+do
+  echo hello
+#  sleep 10
+done
+[root@client ~]#
+[root@web1 ~]# cat test2.sh
+#!/bin/bash
+while :
+do
+  echo hello
+  sleep 10
+done
+[root@web1 ~]# 
+[root@web2 ~]# cat test3.sh
+#!/bin/bash
+while :
+do
+  echo hello
+  sleep 10
+done
+[root@web2 ~]#
+[root@proxy ~]# pnuke -h  host.txt test
+
+
+
+
+
+
+
+
+[root@web1 ~]# netstat -anputl |egrep ":80|:8080|:3306|:3690|:9000|:11211" |column -t
+tcp  0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN  1036/php-fpm:  maste
+tcp  0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN  1306/mysqld
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@web2 ~]# netstat -anputl |egrep ":80|:8080|:3306|:3690|:9000|:11211" |column -t
+tcp  0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN  1027/php-fpm:  maste
+tcp  0  0  0.0.0.0:3306    0.0.0.0:*  LISTEN  1288/mysqld
+[root@web2 ~]#
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,541 @@
+
+client (eth0 192.168.4.100    eth1               )
+proxy  (eth0 192.168.4.5      eth1 192.168.2.5   )
+web1   (eth0 192.168.4.2      eth1 192.168.2.100 )
+web2   (eth0 192.168.4.200    eth1 192.168.2.200 )
+
+
+-------------client (eth0 192.168.4.100    eth1               )------
+[root@client ~]# ifconfig |grep 'net '|head -2 |column -t;
+inet  192.168.4.100  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  127.0.0.1      netmask  255.0.0.0
+
+
+
+
+
+
+
+
+
+
+
+
+-------------proxy  (eth0 192.168.4.5      eth1 192.168.2.5   )-----
+[root@proxy ~]# ifconfig |grep 'net '|head -2 |column -t
+inet  192.168.4.5  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.5  netmask  255.255.255.0  broadcast  192.168.2.255
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------web1   (eth0 192.168.4.2      eth1 192.168.2.100 )------
+[root@web1 ~]# ifconfig |grep 'net '|head -2 |column -t
+inet  192.168.4.2    netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.100  netmask  255.255.255.0  broadcast  192.168.2.255
+[root@web1 ~]# yum -y install subversion 
+已安装:
+  subversion.x86_64 0:1.7.14-10.el7                                     
+作为依赖被安装:
+  subversion-libs.x86_64 0:1.7.14-10.el7                                
+完毕！
+[root@web1 ~]# rpm -q subversion
+subversion-1.7.14-10.el7.x86_64
+[root@web1 ~]# mkdir /var/svn ;cd /var/svn #创建版本库/var/svn/
+[root@web1 svn]# svnadmin create /var/svn/project ;ls
+project
+[root@web1 svn]# svnadmin create /var/svn/test ;ls
+project  test
+[root@web1 svn]# ls /var/svn/project/
+conf  db  format  hooks  locks  README.txt
+
+[root@web1 svn]# cd /usr/lib/systemd/system ;
+[root@web1 system]# ls |wc -l;
+398
+--------------------------------### 本地导入import初始化数据 "Init Data"是自己定义的随便写 ----------------------##
+[root@web1 system]# svn import  .  file:///var/svn/project  -m  "Init Data" ;
+
+正在增加       mdadm-last-resort@.timer
+
+提交后的版本为 1。
+[root@web1 system]#
+[root@web1 system]# cd  /var/svn/project/conf/;ls
+authz  passwd  svnserve.conf
+
+[root@web1 conf]#  vim /var/svn/project/conf/svnserve.conf #修改配置文件，
+ 19 anon-access = none    //19行，匿名无任何权限,全部顶格写
+ 20 auth-access = write   //20行，有效账户可写write
+ 27 password-db = passwd  //27行，密码文件
+ 34 authz-db = authz     //34行，ACL访问控制列表文件
+[root@web1 conf]# vim /var/svn/project/conf/passwd   #创建账户与密码
+[users]
+harry = 123456  //用户名和密码
+tom = 123      //用户名和密码
+
+[root@web1 conf]# vim /var/svn/project/conf/authz 
+# [/foo/bar]
+# harry = rw
+# &joe = r
+# * =
+[/]            //定义ACL访问控制
+tom = rw   //用户对项目根路径可读可写
+harry = rw
+# [repository:/baz/fuz]
+# @harry_and_sally = rw
+# * = r
+[root@web1 conf]# svnserve -d -r /var/svn/project/     # -d 表示转入后台运行
+-----# svnserve -d  /var/svn/project/ #未指定访问绝对路径-r /var/svn/project/，
+客户端需要操作----firefox http://192.168.2.100/var/svn/project/
+[root@web1 conf]# ls /var/svn/project/
+conf  db  format  hooks  locks  README.txt
+[root@web1 conf]# ss -anptul |grep svn |column -t;
+tcp  LISTEN  0  7  *:3690  *:*  users:(("svnserve",pid=3566,fd=3))
+
+
+[root@web1 conf]# svn --username harry --password 123456 cat svn://127.0.0.1/user.slice |tail -3 ;
+----------------------------------------------------------------------
+注意!  你的密码，对于认证域:
+   <svn://127.0.0.1:3690> 3d00d441-4576-402e-9525-b8aa6fab5c5c
+只能明文保存在磁盘上!
+保存未加密的密码(yes/no)?yes
+Documentation=man:systemd.special(7)
+Before=slices.target
+###hahah xixix hehehe
+[root@web1 conf]# tail -2 /usr/lib/systemd/system/user.slice
+Documentation=man:systemd.special(7)
+Before=slices.target
+[root@web1 conf]# ls /usr/lib/systemd/system/ |wc -l
+398
+[root@web1 conf]# svn ls svn://127.0.0.1/ |wc -l
+398
+[root@web1 conf]# cd /var/svn/project/;ls
+conf  db  format  hooks  locks  README.txt
+[root@web1 project]# ps -aux |grep svn |column -t
+root  3566  0.0  0.1  197628  1284  ?      Ss  10:42  0:00  svnserve  -d    -r   /var/svn/project/
+root  5274  0.0  0.0  112676  980   pts/0  R+  13:28  0:00  grep      --color=auto  svn
+
+[root@web1 project]# ls
+code  conf  db  format  hooks  locks  README.txt
+[root@web1 project]# cd /tmp/code
+-bash: cd: /tmp/code: 没有那个文件或目录
+[root@web1 project]# cd /tmp/
+                               //建立本地副本,从服务器192.168.2.100上co下载代码到本地code目录
+[root@web1 tmp]# svn --username harry --password 123456 co svn://127.0.0.1 code
+取出版本 6。
+[root@web1 tmp]# ls
+code
+firefox_root
+......
+[root@web1 tmp]# cd /tmp/code/;ls |wc -l
+400
+[root@web1 code]# pwd
+/tmp/code
+[root@web1 code]# wc -l tmp.mount 
+26 tmp.mount
+[root@web1 code]# sed -i "3a harry not tom" tmp.mount 
+[root@web1 code]# svn ci -m "zhushisuiyi harry"
+正在发送       tmp.mount
+传输文件数据.svn: E160028: 提交失败(细节如下): 
+svn: E160028: 文件 “/tmp.mount” 已经过时
+[root@web1 code]# svn update
+选择: (p) 推迟，(df) 显示全部差异，(e) 编辑,
+        (mc) 我的版本, (tc) 他人的版本,
+        (s) 显示全部选项: p
+C    tmp.mount
+更新到版本 7。
+冲突概要：
+  正文冲突：1
+
+[root@web1 code]# svn update
+正在升级 '.':
+版本 7。
+[root@web1 code]# wc -l tmp.mount
+32 tmp.mount
+[root@web1 code]# svn update
+正在升级 '.':
+U    user.slice
+更新到版本 8。
+[root@web1 code]#   vim  /var/svn/project/conf/svnserve.conf 
+[root@web1 code]# ss -ntlup | grep svn
+tcp    LISTEN     0      7         *:3690     *:*      users:(("svnserve",pid=3566,fd=3))
+[root@web1 code]# kill 3566
+
+[root@web1 code]# svnserve -d  -r /var/svn/project/  # -d 表示转入后台运行-启动服务
+
+[root@web1 code]# cd 
+[root@web1 ~]# ls /var/svn/
+project  test
+[root@web1 ~]# svnadmin dump /var/svn/project/ >/var/svn/project.bak;
+* 已转存版本 0。
+* 已转存版本 8。
+[root@web1 ~]# ls /var/svn/
+project  project.bak  test
+[root@web1 ~]# svnadmin create /var/svn/project2   //新建空仓库
+[root@web1 ~]# ls /var/svn/
+project  project2  project.bak  test
+[root@web1 ~]# svnadmin load /var/svn/project2 </var/svn/project.bak //还原
+<<< 开始新的事务，基于原始版本 1
+<<< 开始新的事务，基于原始版本 8
+     * 正在修改路径: user.slice ...完成。
+
+------- 提交后版本 8 >>>
+-----=======================================
+-===================================
+------------------------------3 案例3：制作nginx的RPM包-------------------------------------------------
+----------------------1）安装rpm-build软件包
+[root@web1 ~]# yum -y install rpm-build |tail -19;
+[root@web1 ~]# rpm -q rpm-build
+rpm-build-4.11.3-25.el7.x86_64
+[root@web1 ~]# ls
+-----------------------2）生成rpmbuild目录结构
+[root@web1 ~]# rpmbuild -ba  xx.spec  #忽视错误
+错误：stat /root/xx.spec 失败：没有那个文件或目录
+[root@web1 ~]# ls
+[root@web1 ~]# ls rpmbuild/   ##自动生成的目录结构
+BUILD  BUILDROOT  RPMS  SOURCES  SPECS  SRPMS
+
+[root@web1 ~]# ls rpmbuild/RPMS/
+-----------------------------------------------准备工作，将源码软件复制到SOURCES目录
+[root@web1 ~]# cp nginx-1.12.2.tar.gz /root/rpmbuild/SOURCES/ ;\
+> ls /root/rpmbuild/SOURCES/ ;
+nginx-1.12.2.tar.gz
+
+[root@web1 ~]# cd rpmbuild/SPECS/  ;ls
+
+----------------- 4）创建并修改SPEC配置文件
+
+[root@web1 SPECS]# vim nginx.spec
+[root@web1 SPECS]# cat nginx.spec
+Name:nginx
+Version:1.12.2
+Release:10
+Summary:This is a webserver.
+#Group:
+License:GPL
+URL:www.sex.org
+Source0:nginx-1.12.2.tar.gz
+#BuildRequires:
+#Requires:
+%description
+This ia a webserver too
+
+%post
+useradd nginx2
+
+%prep
+%setup -q      //自动解压源码包，并cd进入目录
+
+%build
+./configure  --prefix=/usr/local/nginx2 --user=nginx2  --group=nginx2  --with-stream  --with-http_ssl_module  --with-http_stub_status_module  
+make %{?_smp_mflags}
+
+%install              ####/root/rpmbuild/BUILDROOT/实际根目录
+make install DESTDIR=%{buildroot}
+
+%files
+%doc        ####/root/rpmbuild/BUILDROOT/usr/local/nginx2/实际目录
+/usr/local/nginx2/*
+
+
+[root@web1 SPECS]# ls
+nginx.spec
+[root@web1 SPECS]# ls /root/rpmbuild/
+BUILD  BUILDROOT  RPMS  SOURCES  SPECS  SRPMS
+[root@web1 SPECS]# ls /root/rpmbuild/RPMS/  #注意现在无任何文件
+--------------------------------------------------------1）安装依赖软件包
+[root@web1 ~]#  yum -y install  gcc  pcre-devel zlib-devel openssl-devel
+[root@web1 ~]# rpm -q gcc pcre-devel zlib-devel openssl-devel ;
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+zlib-devel-1.2.7-17.el7.x86_64
+openssl-devel-1.0.2k-8.el7.x86_64
+
+[root@web1 ~]# ls /root/rpmbuild/SPECS/nginx.spec 
+/root/rpmbuild/SPECS/nginx.spec
+----------------------2）rpmbuild创建RPM软件包
+[root@web1 ~]# rpmbuild -ba /root/rpmbuild/SPECS/nginx.spec
+.........
++ cd nginx-1.12.2
++ /usr/bin/rm -rf /root/rpmbuild/BUILDROOT/nginx-1.12.2-10.x86_64
++ exit 0
+[root@web1 ~]# ls /root/rpmbuild/RPMS/
+x86_64
+[root@web1 ~]# ls /root/rpmbuild/RPMS/x86_64/  #注意现在有2个文件
+
+nginx-1.12.2-10.x86_64.rpm  nginx-debuginfo-1.12.2-10.x86_64.rpm
+[root@web1 ~]# 
+[root@web1 ~]# rpm -qpi /root/rpmbuild/RPMS/x86_64/nginx-1.12.2-10.x86_64.rpm 
+Name        : nginx
+Version     : 1.12.2
+Release     : 10
+Architecture: x86_64
+Install Date: (not installed)
+Group       : Unspecified
+Size        : 909813
+License     : GPL
+Signature   : (none)
+Source RPM  : nginx-1.12.2-10.src.rpm
+Build Date  : 2018年08月27日 星期一 19时57分54秒
+Build Host  : web1
+Relocations : (not relocatable)
+URL         : www.sex.org
+Summary     : This is a webserver.
+Description :
+This ia a webserver too
+
+[root@web1 ~]# rpm -qpl /root/rpmbuild/RPMS/x86_64/nginx-1.12.2-10.x86_64.rpm
+/usr/local/nginx2/conf
+.....
+/usr/local/nginx2/sbin
+/usr/local/nginx2/sbin/nginx
+[root@web1 ~]# 步骤三：安装、卸载软件
+[root@web1 ~]# cd /root/rpmbuild/;ls
+BUILD  BUILDROOT  RPMS  SOURCES  SPECS  SRPMS
+[root@web1 rpmbuild]# grep nginx /etc/passwd
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+
+[root@web1 rpmbuild]# rpm -ivh RPMS/x86_64/nginx-1.12.2-10.x86_64.rpm 
+准备中...                                                            ################################# [100%]
+正在升级/安装...
+   1:nginx-1.12.2-10                                                 ################################# [100%]
+[root@web1 rpmbuild]# grep nginx /etc/passwd
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+nginx2:x:1002:1002::/home/nginx2:/bin/bash
+
+[root@web1 rpmbuild]# rpm -qa |grep nginx
+nginx-1.12.2-10.x86_64
+
+[root@web1 rpmbuild]# ls /usr/local/nginx2/
+conf  html  logs  sbin
+[root@web1 rpmbuild]# ll /usr/local/nginx2/sbin/nginx 
+-rwxr-xr-x. 1 root root 880000 8月  27 19:57 /usr/local/nginx2/sbin/nginx
+
+[root@web1 rpmbuild]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 8月  20 13:25 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+[root@web1 rpmbuild]# rm -f /sbin/nginx
+
+[root@web1 rpmbuild]# ss -anptul |grep nginx
+[root@web1 rpmbuild]# ln -s /usr/local/nginx2/sbin/nginx /sbin/
+[root@web1 rpmbuild]# nginx
+[root@web1 rpmbuild]# ss -anptul |grep nginx
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("nginx",pid=12646,fd=6),("nginx",pid=12645,fd=6))
+[root@web1 rpmbuild]# pwd
+/root/rpmbuild
+[root@web1 rpmbuild]# cd /usr/local/nginx2/;ls
+client_body_temp  fastcgi_temp  logs        sbin       uwsgi_temp
+conf              html          proxy_temp  scgi_temp
+[root@web1 nginx2]# ls html/
+50x.html  index.html
+[root@web1 nginx2]# vim html/index.html
+[root@web1 nginx2]# elinks -dump 192.168.2.100
+                             Web1 Welcome to nginx!
+
+   If you see this page, the nginx web server is web1.
+...............................................................
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------web2   (eth0 192.168.4.200    eth1 192.168.2.200 )---------
+
+[root@web2 ~]# ifconfig |grep 'net '|head -2 |column -t
+inet  192.168.4.200  netmask  255.255.255.0  broadcast  192.168.4.255
+inet  192.168.2.200  netmask  255.255.255.0  broadcast  192.168.2.255
+
+[root@web2 ~]# yum -y install subversion |tail -7
+已安装:
+  subversion.x86_64 0:1.7.14-10.el7                                             
+作为依赖被安装:
+  subversion-libs.x86_64 0:1.7.14-10.el7                                        
+完毕！
+[root@web2 ~]# rpm -q subversion
+subversion-1.7.14-10.el7.x86_64
+
+[root@web2 ~]# cd /tmp/ ;ls
+firefox_root
+hsperfdata_root
+...........
+-------------------------------//建立本地副本,从服务器192.168.2.100上co下载代码到本地code目录
+[root@web2 tmp]# svn --username tom --password 123  co svn://192.168.2.100/  code
+----------------------------------------------------------##检出代码checkout [ co ]
+注意!  你的密码，对于认证域:
+<svn://192.168.2.100:3690> 3d00d441-4576-402e-9525-b8aa6fab5c5c
+只能明文保存在磁盘上!
+保存未加密的密码(yes/no)?yes  //提示是否保存密码
+.......
+取出版本 1。
+[root@web2 tmp]# ls
+code
+firefox_root
+hsperfdata_root
+.......
+[root@web2 tmp]# cd code/ ;ls |wc -l
+398
+[root@web2 code]# svn list |wc -l #查看文件列表共计多少文件
+398
+[root@web2 code]# vim user.slice    //挑选任意文件修改其内容
+[root@web2 code]# tail -1  user.slice
+###hahah xixix hehehe
+----------------------commit [ ci ] 提交更新
+[root@web2 code]# pwd ;svn ci -m "zhushi"  //将本地修改的数据同步到服务器 commit [ ci ]
+/tmp/code
+正在发送       user.slice
+传输文件数据.
+提交后的版本为 2。
+[root@web2 code]# tail -1  user.slice
+###hahah xixix hehehe
+[root@web2 code]# svn update    //将服务器上新的数据同步到本地
+正在升级 '.':
+版本 2。
+[root@web2 code]# pwd
+/tmp/code
+[root@web2 code]# ls |wc -l
+398
+[root@web2 code]# svn log svn://192.168.2.100/   #//查看版本仓库的日志
+------------------------------------------------------------------------
+r2 | (没有作者信息) | (没有时间信息) | 1 行
+------------------------------------------------------------------------
+r1 | (没有作者信息) | (没有时间信息) | 1 行
+[root@web2 code]# echo "hehetom" > test.sh
+[root@web2 code]# svn ci -m "xx";     #-commit [ ci ] 提交更新失败
+[root@web2 code]# svn add test.sh    #添加文件
+A         test.sh
+[root@web2 code]# svn ci -m "xx2"   #-commit [ ci ] 提交更新成功
+正在增加       test.sh
+传输文件数据.
+提交后的版本为 3。
+============#    //查看版本仓库基本信息
+[root@web2 code]# svn info svn://192.168.2.100
+路径: .
+URL: svn://192.168.2.100
+版本库根: svn://192.168.2.100
+版本库 UUID: 3d00d441-4576-402e-9525-b8aa6fab5c5c
+版本: 3
+节点种类: 目录
+最后修改的作者: tom
+最后修改的版本: 3
+最后修改的时间: 2018-08-27 11:44:11 +0800 (一, 2018-08-27)
+[root@web2 code]# svn rm test.sh #删除文件svn del
+D         test.sh
+[root@web2 code]# svn update
+正在升级 '.':
+版本 3。
+[root@web2 code]# svn ci -m "rm test tom"  //将本地修改的数据同步到服务器
+正在删除       test.sh
+
+提交后的版本为 4。
+[root@web2 code]# svn update
+正在升级 '.':
+版本 4。
+[root@web2 code]# 
+[root@web2 code]# svn cat svn://192.168.2.100/user.slice  |tail -2;
+Before=slices.target
+###hahah xixix hehehe
+[root@web2 code]# svn list |wc -l
+398
+[root@web2 code]# svn diff  #文件对比，若相同，则无输出
+
+[root@web2 code]# touch test.sh
+[root@web2 code]# svn add test.sh
+A         test.sh
+[root@web2 code]# echo "tomtom" >tomx.sh
+[root@web2 code]# svn add tomx.sh 
+A         tomx.sh
+
+[root@web2 code]# svn diff  #文件对比
+Index: test.sh
+===================================================================
+Index: tomx.sh
+===================================================================
+--- tomx.sh	(版本 0)
++++ tomx.sh	(工作副本)
+@@ -0,0 +1 @@
++tomtom
+[root@web2 code]# svn ci -m "lllelle"  #-commit [ ci ] 提交更新成功
+正在增加       test.sh
+正在增加       tomx.sh
+传输文件数据..
+提交后的版本为 5。
+[root@web2 code]# 
+[root@web2 code]# sed -i 'd' tomx.sh
+[root@web2 code]# ls tomx.sh 
+tomx.sh
+[root@web2 code]# cat tomx.sh
+[root@web2 code]# svn ci -m "lxxxxe"
+正在发送       tomx.sh
+传输文件数据.
+提交后的版本为 6。
+[root@web2 code]# svn merge -r6:5  tomx.sh
+svn: E220001: 遇到不可读的路径；拒绝访问。
+[root@web2 code]# svn list |grep test.sh
+test.sh
+[root@web2 code]# svn list |grep tomx
+tomx.sh
+[root@web2 code]# svn list |grep user.slice
+user.slice
+
+[root@web2 code]# pwd
+/tmp/code
+[root@web2 code]# ls tmp.mount
+tmp.mount
+[root@web2 code]# cat tmp.mount |wc -l
+26
+[root@web2 code]# sed -i "3a EEE  tom" tmp.mount 
+[root@web2 code]# svn ci -m "zhushisuiyi"
+正在发送       tmp.mount
+传输文件数据.
+提交后的版本为 7。
+[root@web2 code]# svn list |wc -l
+400
+
+[root@web2 code]# svn  update
+正在升级 '.':
+版本 8。
+[root@web2 code]# svn merge -r8:7  user.slice 
+--- 正在反向合并 r8 到 “user.slice”:
+U    user.slice
+--- 记录反向合并 r8 到“user.slice”的信息:
+ U   user.slice
+--- 正在从 'user.slice' 删除合并信息:
+ U   user.slice
+[root@web2 code]# svn merge -r8:7  user.slice 
+--- 记录反向合并 r8 到“user.slice”的信息:
+ U   user.slice
+--- 正在从 'user.slice' 删除合并信息:
+ U   user.slice
+[root@web2 code]# ls user.slice
+user.slice
+[root@web2 code]# ls tun*
+tuned.service
+
+
+
+
+
+
+
+
+
