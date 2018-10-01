@@ -1,0 +1,511 @@
+[root@room11pc06 ~]# virsh console DB0
+[root@localhost ~]# echo 123 |passwd --stdin root
+[root@localhost ~]# echo DB0 >/etc/hostname
+
+[root@localhost ~]# nmcli connection modify eth0 ipv4.method manual \
+> ipv4.addresses 192.168.4.50/24 ipv4.gateway 192.168.4.254 \
+> connection.autoconnect yes;nmcli connection up eth0;
+
+[root@localhost ~]# nmcli connection add con-name eth1 ifname eth1 \
+> type ethernet autoconnect yes;
+
+[root@localhost ~]# nmcli connection modify eth1 ipv4.method manual \
+> ipv4.addresses 192.168.2.50/24  ipv4.gateway 192.168.2.254 \
+> connection.autoconnect yes;nmcli connection up eth1;
+
+[root@localhost ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@localhost ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+[root@localhost ~]# systemctl isolate graphical
+[root@localhost ~]# reboot
+[root@room11pc06 ~]# ssh -X 192.168.4.50
+
+[root@DB0 ~]# nmcli connection show 
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    7c5c5040-096d-4c3a-8363-85f929f7cff4  802-3-ethernet  eth1   
+virbr0  f3561787-f2c5-4cdc-95ef-d5d818792a15  bridge          virbr0 
+[root@DB0 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+[root@DB0 ~]# yum clean all >/dev/null;yum repolist |tail -4;
+[root@room11pc06 ~]# scp /root/桌面/mysql-5.7.17.tar root@192.168.4.50:/root/ ;\
+> scp /root/桌面/mysql-5.7.17.tar root@192.168.4.51:/root/ ;\
+> scp /root/桌面/mysql-5.7.17.tar root@192.168.4.52:/root/ ;\
+> scp /root/桌面/mysql-5.7.17.tar root@192.168.4.53:/root/ ;\
+> scp /root/桌面/mysql-5.7.17.tar root@192.168.4.54:/root/ ;\
+> scp /root/桌面/mysql-5.7.17.tar root@192.168.4.55:/root/ ;
+[root@room11pc06 ~]# ssh -X 192.168.4.50
+root@192.168.4.50's password: 
+[root@DB0 ~]# vim  mysqldb.sh
+[root@DB0 ~]# cat mysqldb.sh
+#!/bin/bash
+rpm -qa |grep -i mariadb
+yum list |grep -i mariadb
+systemctl stop mariadb
+systemctl disable mariadb
+rpm  -e  --nodeps mariadb-server mariadb
+rpm -qa |grep -i mariadb
+grep -v '^#\|^$' /etc/my.cnf
+rm -rf /var/lib/mysql/
+rm -rf /etc/my.cnf*
+tar -xvf mysql-5.7.17.tar
+ls
+yum -y install perl-JSON
+rpm -q perl-JSON
+rpm -Uvh mysql-community-*.rpm
+rpm -qa |grep -i mariadb
+rpm -qa |grep -i mysql
+ps -C mysqld
+systemctl start mysqld && systemctl enable mysqld
+ps -C mysqld
+netstat -untpl |grep mysqld
+awk '/root@localhost:/{print $NF}' /var/log/mysqld.log
+[root@DB0 ~]# sh mysqldb.sh
+ND5?<6yYc/r8
+[root@DB0 ~]# mysql -hlocalhost -uroot -p'ND5?<6yYc/r8'
+
+mysql> alter user root@'localhost' identified by 'Hiy53.es';
+mysql> system ls /home ;
+lisi                 /**管理员第一次给授权用户lisi设置密码
+mysql> grant all on mysql.user to lisi@localhost identified by'Hiy53.es';
+                 /**管理员再次给授权用户lisi重新设置密码
+mysql> set password for lisi@'localhost'=password('Hiy53.es');
+mysql> flush privileges;quit;
+
+[root@DB0 ~]# mysql -hlocalhost -ulisi -pHiy53.es
+mysql> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+                   /**授权用户lisi为自己重新设置密码
+mysql> set password=password('Hiy53.es');
+mysql> select @@hostname;
+| @@hostname |
+| DB0        |
+mysql> select user,host from mysql.user;
+| user      | host      |
+| lisi      | localhost |
+| mysql.sys | localhost |
+| root      | localhost |
+mysql> select user();
+| user()         |
+| lisi@localhost |
+mysql> select database();
+| database() |
+| NULL       |
+mysql> select now();
+| now()            |
+| 2018-09-15 11:50:58     |
+mysql> flush privileges;  只有管理员有刷新特权的命令使用权
+ERROR 1227 (42000): Access denied;
+mysql> quit;
+Bye
+[root@DB0 ~]# 
+
+[root@room11pc06 ~]# scp /root/桌面/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm \
+> /root/桌面/libev-4.15-1.el6.rf.x86_64.rpm root@192.168.4.50:/root/
+root@192.168.4.50's password: 
+
+[root@room11pc06 ~]# scp /root/桌面/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm /root/桌面/libev-4.15-1.el6.rf.x86_64.rpm root@192.168.4.51:/root/ ;\
+> scp /root/桌面/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm /root/桌面/libev-4.15-1.el6.rf.x86_64.rpm root@192.168.4.52:/root/ ; \
+> scp /root/桌面/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm /root/桌面/libev-4.15-1.el6.rf.x86_64.rpm root@192.168.4.53:/root/ ;\
+> scp /root/桌面/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm /root/桌面/libev-4.15-1.el6.rf.x86_64.rpm root@192.168.4.54:/root/ ;\
+> scp /root/桌面/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm /root/桌面/libev-4.15-1.el6.rf.x86_64.rpm root@192.168.4.55:/root/ ;
+
+[root@DB0 ~]# yum -y install /root/libev-4.15-1.el6.rf.x86_64.rpm \
+> /root/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm ;
+已安装:
+  libev.x86_64 0:4.15-1.el6.rf                                     
+  percona-xtrabackup-24.x86_64 0:2.4.7-1.el7                       
+作为依赖被安装:
+  perl-DBD-MySQL.x86_64 0:4.023-5.el7                              
+  perl-Digest.noarch 0:1.17-245.el7                                
+  perl-Digest-MD5.x86_64 0:2.52-3.el7                              
+完毕！
+[root@DB0 ~]# rpm -q libev   percona-xtrabackup-24 
+libev-4.15-1.el6.rf.x86_64
+percona-xtrabackup-24-2.4.7-1.el7.x86_64
+
+/** innobackupex 在线热备份，支持myisam，innodb和xtradb存储引擎，完全备份，
+/** xtrabackup  在线热备份,支持innodb和xtradb存储引擎
+
+mysql-day06 部署mysql主从同步
+一、什么是mysql主从同步
+主：正在被客户端访问的数据库服务器，被称作主库服务器。
+从：自动同步主库上的数据的数据库服务器，被称作从库服务器。
+二、配置mysql主从同步
+2.1 拓扑图
+数据库服务器DB1  192.168.4.51  做主库
+数据库服务器DB2  192.168.4.52  做从库
+[root@DB1 ~]# mysql -hlocalhost -uroot -pHiy53.es
+
+mysql> create database db5;use db5;
+mysql> create table a(id int(3) unsigned);
+mysql> create table b(name char(12));
+mysql> insert into db5.a(id) values(10),(11),(110);
+mysql> insert into db5.b(name) values("diyi"),('peri'),('lily');
+mysql> show databases;
+| Database           |
+| information_schema |
+| db5                |
+| mysql              |
+| performance_schema |
+| sys                |
+5 rows in set (0.00 sec)
+
+mysql> show tables;
+| Tables_in_db5 |
+| a             |
+| b             |
+mysql> select * from db5.a;
+| id   |
+|   10 |
+|   11 |
+|  110 |
+mysql> select  * from db5.b;
+| name |
+| diyi |
+| peri |
+| lily |
+ /***mysqldump -uroot -pmima -B shujuku1 shujuku2 ku3 > /beifen/wenjian
+  --databases,
+  -B 导出几个数据库。参数后面所有名字参量都被看作数据库名
+
+mysqldump  -uroot -p --databases test mysql
+[root@DB1 ~]# mysqldump -uroot -pHiy53.es db5 >/root/db5.sql
+[root@DB1 ~]# ll /root/db5.sql
+-rw-r--r--. 1 root root 2302 9月  15 13:46 /root/db5.sql
+[root@DB1 ~]# scp /root/db5.sql root@192.168.4.52:/tmp/
+数据库服务器DB1  192.168.4.51  做主库
+
+数据库服务器DB2  192.168.4.52  做从库
+[root@DB2 ~]# ll /tmp/db5.sql 
+-rw-r--r--. 1 root root 2302 9月  15 13:48 /tmp/db5.sql
+[root@DB2 ~]# mysql -uroot -pHiy53.es
+mysql> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+mysql> create database db5;
+  /***必须先指定数据库名 db5 ，否则数据导入source失败，数据是空的
+mysql> use db5;show tables;
+Empty set 
+mysql> source /tmp/db5.sql
+
+mysql> show tables;
+| Tables_in_db5 |
+| a             |
+| b             |
+/**以上是 前提 ---- 实验环境准备 确保数据一致**********/
+1）master会将变动记录到二进制日志里面；
+2）master有一个I/O线程将二进制日志发送到slave;
+3) slave有一个I/O线程把master发送的二进制写入到relay日志里面；
+4）slave有一个SQL线程，按照relay日志处理slave的数据；
+二、操作步骤
+按照原理，我们开启mysql主从复制，我们大体需要做以下操作：
+1）开启master的二进制日志
+2）开启slave的二进制日志
+3）将slave指向master
+4）开始复制
+三、开启master二进制日志
+1）编辑mysql的配置文件，使用命令：
+[root@DB1 ~]# vim /etc/my.cnf
+2）添加二进制日志配置，开启二进制
+[mysqld]
+server_id=51     #server-id是要指定的，每一台指定一个唯一标识符
+log-bin=db51     #日志文件名称log-bin，可以自己指定 db51
+binlog_format='mixed' 
+
+#主从复制的格式mixed,statement,row，默认格式statement
+ /** MySQL 提供了第三种复制模式：Mixed，在 Mixed 模式下，
+  * MySQL 会根据执行的每一条具体的 SQL 语句来区分对待记录的日志形式，
+也就是在 statement 和 row 之间选择一种 **/
+
+[root@DB1 ~]# systemctl restart mysqld
+[root@DB1 ~]# ls /var/lib/mysql/
+
+mysql> show master status;
+| File       |Position|Binlog_Do_DB|Binlog_Ignore_DB|Executed_Gtid_Set|
+| db51.000001|    154 |            |                |                 |
+四、授权
+我们需要给slave配置一个用户/密码的权限
+
+mysql> grant replication slave on *.* to
+    -> repluser@'%' identified by 'Hiy53.es';
+
+mysql> select user,host from mysql.user
+    -> where user='repluser';
+| user     | host |
+| repluser | %    |
+
+mysql>GRANT REPLICATION SLAVE ON *.* TO '用户名'@'slave数据库的IP地址' 
+     > IDENTIFIED BY '密码';
+允许在某个IP地址的某个用户以某个密码对当前数据库的所有库和所有表进行复制操作
+刷新以下权限使用命令：
+mysql>flush privileges;
+
+五、查看以下master的状态
+主要是查看以下master的日志文件名字，以及文件所在的位置
+mysql> show master status\G;
+*************************** 1. row ***************************
+             File: db51.000001
+         Position: 599
+     Binlog_Do_DB: 
+ Binlog_Ignore_DB: 
+Executed_Gtid_Set:
+
+File: 日志文件名称
+Position: 日志所在位置
+
+六、开启slave的二进制日志
+进入slave的服务器,从数据库的配置步骤：
+1）编辑mysql的配置文件
+[root@DB2 ~]# vim /etc/my.cnf
+[mysqld]
+server_id=52
+log-bin=db52
+binlog_format='mixed'
+[root@DB2 ~]# systemctl restart mysqld
+
+添加二进制日志配置，开启二进制（db52只是日志文件名称，可以自己指定）
+注意：server-id是要指定的，每一台指定一个唯一标识符
+
+[root@DB1 ~]# ls /var/lib/mysql/db*
+/var/lib/mysql/db51.000001  /var/lib/mysql/db51.index
+/var/lib/mysql/db5:
+a.frm  a.ibd  b.frm  b.ibd  db.opt
+
+七、将slave指向master
+[root@DB2 ~]# !mysq
+mysql -uroot -pHiy53.es
+
+mysql> change master to master_host='192.168.4.51',
+    -> master_password='Hiy53.es',master_user='repluser',
+    -> master_log_file='db51.000001',
+    -> master_log_pos=599;
+/******
+mysql>CHANGE MASTER TO
+>MASTER_HOST='master所在服务器的IP',
+>MASTER_USER='master授权的账号',
+>MASTER_PASSWORD='master授权的密码',
+>MASTER_LOG_FILE='master的日志文件名',
+>MASTER_LOG_POS=master的日志所在位置;  **/
+ 
+八、开始主从复制
+在DB2----slave上执行
+mysql> start slave;
+
+mysql> show slave status\G;
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51  #master的IP地址
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: db51.000001
+          Read_Master_Log_Pos: 599
+               Relay_Log_File: DB2-relay-bin.000002
+                Relay_Log_Pos: 315
+        Relay_Master_Log_File: db51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+                Last_IO_Errno: 0
+                Last_IO_Error: 
+               Last_SQL_Errno: 0
+               Last_SQL_Error: 
+......    
+注意：
+Slave_IO_Running: YES 表示slave的日志读取线程开启
+Slave_SQL_Running: YES 表示SQL执行线程开启
+Last_IO_Error:记录IO报错信息
+Last_SQL_Error:记录SQL保存信息
+[root@DB2 ~]# cat  /var/lib/mysql/master.info 
+25
+db51.000001
+599
+192.168.4.51
+repluser
+Hiy53.es
+3306
+60..........
+[root@DB2 ~]# cat  /var/lib/mysql/relay-log.info 
+7
+./DB2-relay-bin.000002
+315
+db51.000001
+599
+0
+0
+1
+[root@DB2 ~]# cat /var/lib/mysql/DB2-relay-bin.index
+./DB2-relay-bin.000001
+./DB2-relay-bin.000002
+[root@DB2 ~]# ll /var/lib/mysql/DB2-relay-bin.000002
+-rw-r-----. 1 mysql mysql 315 9月  15 16:11 /var/lib/mysql/DB2-relay-bin.000002
+
+九、测试
+以上我们就将主从复制功能设置完毕了，我们可以通过在master里面创建数据库，或者表，插入数据等来测试一下
+[root@DB1 ~]# mysql -hlocalhost -uroot -pHiy53.es
+
+mysql> grant select,insert on db5.* to yaya@'%'
+    -> identified by'Hiy53.es';
+mysql> select user,host from mysql.user;
+| user      | host      |
+| repluser  | %         |
+| yaya      | %         |
+| mysql.sys | localhost |
+| root      | localhost |
+mysql> show grants;
+| Grants for root@localhost  |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION        |
+ 
+[root@DB0 ~]# mysql -h 192.168.4.51 -uyaya -pHiy53.es db5
+mysql> show tables;
+| Tables_in_db5 |
+| a             |
+| b             |
+mysql> use db5;
+Database changed
+mysql> insert into a values(22),(20);
+
+[root@DB2 ~]# !mysq
+mysql -uroot -pHiy53.es
+mysql> use db5;show tables;
+
+mysql> select  * from a;
+| id   |
+|   10 |
+|   11 |
+|  110 |
+3 rows in set (0.00 sec)
+
+mysql> select * from db5.a;
+| id   |
+|   10 |
+|   11 |
+|  110 |
+|   22 |
+|   20 |
+半同步复制（Semisynchronous replication），介于异步复制和全同步复制之间，
+主库在执行完客户端提交的事务后不是立刻返回给客户端，
+而是等待至少一个从库接收到并写到relay log中才返回给客户端。
+相对于异步复制，半同步复制牺牲了一定的性能，
+提高了数据的安全性。/***linux mysql半同步模式**/
+
+[root@DB1 ~]# mysql -hlocalhost -uroot -pHiy53.es
+
+mysql> select plugin_name,plugin_status from 
+    -> information_schema.plugins
+    -> where plugin_name like '%semi%';
+Empty set (0.00 sec)
+
+mysql> show variables like 'have_dynamic_loading';
+| Variable_name        | Value |
+| have_dynamic_loading | YES   |
+     /***安装插件 命令行加载模块,(马上生效 只要不重启服务一直有效)
+mysql> install plugin rpl_semi_sync_master soname 
+    -> 'semisync_master.so';
+
+mysql> install plugin rpl_semi_sync_slave soname 
+    -> 'semisync_slave.so';
+
+mysql> select plugin_name,plugin_status from
+    -> information_schema.plugins
+    -> where plugin_name like '%semi%';
+| plugin_name          | plugin_status |
+| rpl_semi_sync_master | ACTIVE        |
+| rpl_semi_sync_slave  | ACTIVE        |
+
+mysql> show variables  like 'rpl%';
+| Variable_name                             | Value      |
+| rpl_semi_sync_master_enabled              | OFF        |
+| rpl_semi_sync_master_timeout              | 10000      |
+| rpl_semi_sync_master_trace_level          | 32         |
+| rpl_semi_sync_master_wait_for_slave_count | 1          |
+| rpl_semi_sync_master_wait_no_slave        | ON         |
+| rpl_semi_sync_master_wait_point           | AFTER_SYNC |
+| rpl_semi_sync_slave_enabled               | OFF        |
+| rpl_semi_sync_slave_trace_level           | 32         |
+| rpl_stop_slave_timeout                    | 31536000   |
+              /***设置变量，启用半同步复制
+mysql> set global rpl_semi_sync_master_enabled=1;
+
+mysql> set global rpl_semi_sync_slave_enabled=1;
+
+mysql> show variables like 'rpl_semi_sync_%';
+| Variable_name                             | Value      |
+| rpl_semi_sync_master_enabled              | ON         |
+| rpl_semi_sync_master_timeout              | 10000      |
+| rpl_semi_sync_master_trace_level          | 32         |
+| rpl_semi_sync_master_wait_for_slave_count | 1          |
+| rpl_semi_sync_master_wait_no_slave        | ON         |
+| rpl_semi_sync_master_wait_point           | AFTER_SYNC |
+| rpl_semi_sync_slave_enabled               | ON         |
+| rpl_semi_sync_slave_trace_level           | 32         |
+
+写在主配置文件里使其永久有效
+[root@DB1 ~]# vim /etc/my.cnf
+[mysqld]
+server_id=51
+log-bin=db51
+binlog_format='mixed'
+#log_slave_updates
+plugin-load="rpl_semi_sync_master=semisync_slave.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl_semi_sync_master_enabled=1
+rpl_semi_sync_slave_enabled=1
+[root@DB1 ~]# systemctl restart mysqld
+[root@DB1 ~]# echo $?
+0
+
+
+
+
+
+
+
+
+
+
+
+
+十、注意点
+
+1）开启了主从复制，slave库如果写入数据的话，可能导致数据回滚从而主从复制线程中断，可以通过以下方式解决：
+
+mysql> stop slave;
+mysql> set GLOBAL SQL_SLAVE_SKIP_COUNTER=1;
+mysql> start slave;
+2）如果要停止slave的复制可以使用命令：
+
+mysql>stop slave;
+3）由于主从复制是基于I/O的日志，所以会存在一定延时，如果对数据一致性要求非常高的话，简单的主从复制在实际环境中会存在问题 
+
+
+
+
+
+
+
+

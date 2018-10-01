@@ -1,0 +1,622 @@
+
+[root@DB0 ~]# yum -y install /root/libev-4.15-1.el6.rf.x86_64.rpm \
+> /root/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm ;
+
+1、在50主机部署网站运行平台LAMP
+[root@DB0 ~]# yum -y install httpd php php-mysql
+
+[root@DB0 ~]# systemctl start httpd && systemctl enable httpd;\
+> systemctl start mysqld && systemctl enable mysqld;
+
+[root@DB0 ~]# rpm -qa |grep -i mysql
+mysql-community-client-5.7.17-1.el7.x86_64
+mysql-community-minimal-debuginfo-5.7.17-1.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+mysql-community-test-5.7.17-1.el7.x86_64
+perl-DBD-MySQL-4.023-5.el7.x86_64
+...........
+mysql-community-server-5.7.17-1.el7.x86_64
+
+[root@DB0 ~]# ss -unptl |grep -E '(:80|:3306)'
+tcp    LISTEN     0      128      :::80                   :::*                   users:(("httpd",pid=1910,fd=4),("httpd",pid=1737,fd=4),("httpd",pid=1502,fd=4),
+......
+[root@DB0 ~]# ss -unptl |egrep  '(:80|:3306)'
+     ......
+tcp    LISTEN     0      80       :::3306                 :::*                   users:(("mysqld",pid=1321,fd=30))
+[root@DB0 ~]# vim /var/www/html/test.php
+                    /**         在客户端访问网页文件
+[root@DB0 ~]# firefox http://192.168.4.50/test.php
+[root@DB0 ~]# cat /var/www/html/test.php 
+<?php
+phpinfo();
+?>
+---------------------------DB1---------------
+2 部署数据库服务器192.168.4.51
+[root@DB1 ~]# netstat -nuptl |grep :3306
+tcp6       0      0 :::3306                 :::*                    LISTEN      1319/mysqld         
+[root@DB1 ~]# mysql -uroot -pHiy53.es
+mysql> create database db5;use db5;
+mysql> create table a(id int(3) unsigned);
+mysql> create table b(name char(12));
+mysql> insert into db5.a(id) values(10),(11),(110);
+mysql> insert into db5.b(name) values("diyi"),('peri'),('lily');
+[root@DB1 ~]# mysqldump -uroot -pHiy53.es db5 >/root/db5.sql
+[root@DB1 ~]# ll /root/db5.sql
+-rw-r--r--. 1 root root 2302 9月  15 13:46 /root/db5.sql
+[root@DB1 ~]# scp /root/db5.sql root@192.168.4.52:/tmp/
+数据库服务器DB1  192.168.4.51  做主库
+
+数据库服务器DB2  192.168.4.52  做从库
+[root@DB2 ~]# ll /tmp/db5.sql 
+-rw-r--r--. 1 root root 2302 9月  15 13:48 /tmp/db5.sql
+[root@DB2 ~]# mysql -uroot -pHiy53.es
+mysql> create database db5;
+  /***必须先指定数据库名 db5 ，否则数据导入source失败，数据是空的
+mysql> use db5;show tables;
+Empty set 
+mysql> source /tmp/db5.sql
+
+mysql> show tables;
+| Tables_in_db5 |
+| a             |
+| b             |
+----------------------------------DB1--------------------------
+[root@DB1 ~]# vim /etc/my.cnf
+2）添加二进制日志配置，开启二进制
+[mysqld]
+server_id=51     #server-id是要指定的，每一台指定一个唯一标识符
+log-bin=db51     #日志文件名称log-bin，可以自己指定 db51
+binlog_format='mixed' 
+
+#主从复制的格式mixed,statement,row，默认格式statement
+
+[root@DB1 ~]# systemctl restart mysqld
+[root@DB1 ~]# ls /var/lib/mysql/
+我们需要给slave配置一个用户/密码的权限
+
+mysql> grant replication slave on *.* to
+    -> repluser@'%' identified by 'Hiy53.es';
+
+mysql> select user,host from mysql.user
+    -> where user='repluser';
+| user     | host |
+| repluser | %    |
+mysql>flush privileges;
+
+主要是查看以下master的日志文件名字，以及文件所在的位置
+mysql> show master status\G;
+*************************** 1. row ***************************
+             File: db51.000001   ##File: 日志文件名称
+         Position: 599         # Position: 日志所在位置
+
+六、开启slave的二进制日志------------DB2-----------
+进入slave的服务器,从数据库的配置步骤：
+1）编辑mysql的配置文件
+[root@DB2 ~]# vim /etc/my.cnf
+[mysqld]
+server_id=52
+log-bin=db52
+binlog_format='mixed'
+[root@DB2 ~]# systemctl restart mysqld
+[root@DB2 ~]# !mysq
+mysql -uroot -pHiy53.es
+
+mysql> change master to master_host='192.168.4.51',
+    -> master_password='Hiy53.es',
+    -> master_user='repluser',
+    -> master_log_file='db51.000001',
+    -> master_log_pos=599;
+--------->MASTER_USER='master授权的账号',---------------
+八、开始主从复制
+在DB2----slave上执行
+mysql> start slave;
+                       /****查看slave进程状态
+mysql> show slave status\G;
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51  #master的IP地址
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: db51.000001
+          Read_Master_Log_Pos: 599
+               Relay_Log_File: DB2-relay-bin.000002
+                Relay_Log_Pos: 315
+        Relay_Master_Log_File: db51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+...........................
+Slave_IO_Running: YES 表示slave的日志读取线程开启
+Slave_SQL_Running: YES 表示SQL执行线程开启
+Last_IO_Error:记录IO报错信息
+Last_SQL_Error:记录SQL保存信息
+[root@DB2 ~]# cat  /var/lib/mysql/master.info 
+[root@DB2 ~]# cat  /var/lib/mysql/relay-log.info 
+
+[root@DB2 ~]# cat /var/lib/mysql/DB2-relay-bin.index
+./DB2-relay-bin.000001
+./DB2-relay-bin.000002
+[root@DB2 ~]# ll /var/lib/mysql/DB2-relay-bin.000002
+
+-----------------------DB1---------------
+[root@DB1 ~]# mysql -hlocalhost -uroot -pHiy53.es
+
+mysql> grant select,insert on db5.* to yaya@'%'
+    -> identified by'Hiy53.es';
+mysql> select user,host from mysql.user;
+| user      | host      |
+| repluser  | %         |
+| yaya      | %         |
+| mysql.sys | localhost |
+| root      | localhost |
+mysql> show grants;
+| Grants for root@localhost  |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION        |
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db5                |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> create database bbs;use bbs;
+
+mysql> create table  bbs.user(name char(15),password char(6));
+
+mysql> grant select,insert on bbs.user to webadmin@'192.168.4.50'
+    -> identified by 'Hiy53.es';
+
+半同步复制（Semisynchronous replication），介于异步复制和全同步复制之间，
+主库在执行完客户端提交的事务后不是立刻返回给客户端，
+而是等待至少一个从库接收到并写到relay log中才返回给客户端。
+相对于异步复制，半同步复制牺牲了一定的性能，
+提高了数据的安全性。/***linux mysql半同步模式**/
+
+[root@DB1 ~]# mysql -hlocalhost -uroot -pHiy53.es
+
+mysql> select plugin_name,plugin_status from 
+    -> information_schema.plugins
+    -> where plugin_name like '%semi%';
+Empty set (0.00 sec)
+
+mysql> show variables like 'have_dynamic_loading';
+| Variable_name        | Value |
+| have_dynamic_loading | YES   |
+     /***安装插件 命令行加载模块,(马上生效 只要不重启服务一直有效)
+mysql> install plugin rpl_semi_sync_master soname 
+    -> 'semisync_master.so';
+
+mysql> install plugin rpl_semi_sync_slave soname 
+    -> 'semisync_slave.so';
+
+mysql> select plugin_name,plugin_status from
+    -> information_schema.plugins
+    -> where plugin_name like '%semi%';
+| plugin_name          | plugin_status |
+| rpl_semi_sync_master | ACTIVE        |
+| rpl_semi_sync_slave  | ACTIVE        |
+
+mysql> show variables  like 'rpl%';
+| Variable_name                             | Value      |
+| rpl_semi_sync_master_enabled              | OFF        |
+| rpl_semi_sync_master_timeout              | 10000      |
+| rpl_semi_sync_master_trace_level          | 32         |
+| rpl_semi_sync_master_wait_for_slave_count | 1          |
+| rpl_semi_sync_master_wait_no_slave        | ON         |
+| rpl_semi_sync_master_wait_point           | AFTER_SYNC |
+| rpl_semi_sync_slave_enabled               | OFF        |
+| rpl_semi_sync_slave_trace_level           | 32         |
+| rpl_stop_slave_timeout                    | 31536000   |
+              /***设置变量，启用半同步复制
+mysql> set global rpl_semi_sync_master_enabled=1;
+
+mysql> set global rpl_semi_sync_slave_enabled=1;
+
+mysql> show variables like 'rpl_semi_sync_%';
+| Variable_name                             | Value      |
+| rpl_semi_sync_master_enabled              | ON         |
+| rpl_semi_sync_master_timeout              | 10000      |
+| rpl_semi_sync_master_trace_level          | 32         |
+| rpl_semi_sync_master_wait_for_slave_count | 1          |
+| rpl_semi_sync_master_wait_no_slave        | ON         |
+| rpl_semi_sync_master_wait_point           | AFTER_SYNC |
+| rpl_semi_sync_slave_enabled               | ON         |
+| rpl_semi_sync_slave_trace_level           | 32         |
+
+写在主配置文件里使其永久有效
+[root@DB1 ~]# vim /etc/my.cnf
+[mysqld]
+server_id=51
+log-bin=db51
+binlog_format='mixed'
+#log_slave_updates
+plugin-load="rpl_semi_sync_master=semisync_slave.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl_semi_sync_master_enabled=1
+rpl_semi_sync_slave_enabled=1
+[root@DB1 ~]# systemctl restart mysqld
+[root@DB1 ~]# echo $?
+0
+
+------------DB0--------------------------
+在50网站服务器测试数据库服务器的授权用户webadmin
+[root@DB0 ~]# mysql -h 192.168.4.51 -uwebadmin -pHiy53.es
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| bbs                |
+
+mysql> show grants;
+| Grants for webadmin@192.168.4.50                                  |
+| GRANT USAGE ON *.* TO 'webadmin'@'192.168.4.50'                   |
+| GRANT SELECT, INSERT ON `bbs`.`user` TO 'webadmin'@'192.168.4.50' |
+
+mysql> use bbs;show tables;
+| Tables_in_bbs |
+| user          |
+
+mysql> desc bbs.user;
+| Field    | Type     | Null | Key | Default | Extra |
+| name     | char(15) | YES  |     | NULL    |       |
+| password | char(6)  | YES  |     | NULL    |       |
+
+mysql> insert into user values('yaya','123456');
+
+mysql> select * from bbs.user;
+| name | password |
+| yaya | 123456   |
+
+------------------------3 给数据库服务器51 配置从数据库服务器192.168.4.52
+  /****4 在网站服务上编写网页文件 192.168.4.50 
+0[root@DB0 ~]# vim /var/www/html/index.html
+[root@DB0 ~]# cat /var/www/html/index.html
+<html>
+ <form action="reg.php" method="post">
+  <h1> reg login user info :</h1>
+  <h3>LoginName: </h3>
+  <input type="text" name="name" size="20" maxlength="255"/>
+  <br />
+  <br />
+  <h3>LoginPass: </h3>
+  <input type="text" name="password" size="20" maxlength="255"/>
+  <br />
+  <br />
+  <h3><input type="submit" name="submit" value="SUBMIT" /></h3></p>
+ </form>
+</html>
+[root@DB0 ~]# vim /var/www/html/reg.php
+<?php
+$servername = "192.168.4.51";
+$username = "webadmin";
+$password = "Hiy53.es";
+$dbname = "bbs";
+$conn = new mysqli($servername,$username,$password,$dbname);
+if($conn->connect_error}{ ##syntax error, unexpected '}' on line 7*/
+  die("link fail: " . $conn->connect_error);
+}else{
+  echo "link mysql Ok";
+  echo " xixixi   ";
+}
+$username=$_POST['name'];
+$userpassword=$_POST['password'];
+$sql="insert into user (name,password) values ('$username','$userpassword')";
+if($conn->query($sql)){
+  echo "insert data ok ";
+}
+$conn->close();
+?>
+[root@DB0 ~]# php /var/www/html/reg.php ##检查语法错误的命令
+PHP Parse error:  syntax error, unexpected '}' in /var/www/html/reg.php on line 7
+[root@DB0 ~]# vim /var/www/html/reg.php #改正错误 '_error}' "_error)"
+
+if($conn->connect_error){
+             /****客户端 访问网站50 注册用户
+[root@DB0 ~]# firefox http://192.168.4.50/
+http://192.168.4.50
+ reg login user info :
+LoginName:
+   yahu
+LoginPass:
+   123
+ [SUBMIT]
+http://192.168.4.50/reg.php
+link mysql Ok xixixi insert data ok 
+-------------------DB2-------------
+mysql> select * from bbs.user;
+| name   | password |
+| yaya   | 123456   |
+| yaya   | 123456   |
+| xixixi | 123      |
+| yahu   | 123      |
+------------------------------------
+
+[root@room11pc06 ~]# cat ipyum.sh
+
+[root@room11pc06 ~]# virsh console DB60
+
+[root@localhost ~]# cat ipyum.sh
+
+#!/bin/bash
+echo 123 |passwd --stdin root
+echo $1 >/etc/hostname
+nmcli connection modify eth0 ipv4.method manual \
+ipv4.addresses $2/24 ipv4.gateway 192.168.4.254 \
+connection.autoconnect yes;nmcli connection up eth0;
+
+nmcli connection add con-name eth1 ifname eth1 \
+type ethernet autoconnect yes;
+nmcli connection modify eth1 ipv4.method manual \
+ipv4.addresses $3/24 ipv4.gateway 192.168.2.254 \
+connection.autoconnect yes;nmcli connection up eth1;
+echo '[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+' >/etc/yum.repos.d/rhel7.repo
+yum clean all ;yum repolist |tail -4;
+
+[root@localhost ~]# chmod +x ipyum.sh
+[root@localhost ~]# /root/ipyum.sh DB60  192.168.4.60  192.168.2.60
+
+[root@room11pc06 ~]# ssh -X 192.168.4.60
+[root@DB60 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.60
+192.168.2.60
+127.0.0.1
+192.168.122.1
+/**************
+echo 123 |passwd --stdin root 
+echo DB70 >/etc/hostname
+nmcli connection modify eth0 ipv4.method manual \
+ipv4.addresses 192.168.4.70/24 ipv4.gateway 192.168.4.254 \
+connection.autoconnect yes;nmcli connection up eth0;
+
+nmcli connection add con-name eth1 ifname eth1 \
+type ethernet autoconnect yes;
+nmcli connection modify eth1 ipv4.method manual \
+ipv4.addresses 192.168.2.70/24 ipv4.gateway 192.168.2.254 \
+connection.autoconnect yes;nmcli connection up eth1;
+echo '[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+' >/etc/yum.repos.d/rhel7.repo
+yum clean all ;yum repolist |tail -4;
+****************/
+
+==========================
+7 搭建监控服务器192.168.4.56
+监控网站服务器 服务的运行状态
+监控数据库服务器 服务的运行状态
+
+监控从库192.168.4.52 主机 
+IO线程 和SQL线程 的状态 
+和 
+数据库目录存储空间的使用情况
+
+
+8 再添加1台网站服务器60 和当前的50一起提供网站服务（使用Nginx反向代理）
+[root@DB60 ~]# ping -c2 -i0.2 -w1 192.168.4.60
+[root@room11pc06 ~]# scp /root/桌面/lnmp_soft.tar.gz /root/桌面/nginx-1.12.2.tar.gz  root@192.168.4.60:/root/
+[root@room11pc06 ~]# scp /root/桌面/mysql-5.7.17.tar  root@192.168.4.60:/root/
+[root@DB60 ~]# tar -xf mysql-5.7.17.tar 
+
+[root@DB60 ~]# tar -xzPf lnmp_soft.tar.gz 
+[root@DB60 ~]# tar -xzPf  nginx-1.12.2.tar.gz
+[root@DB60 ~]# ls /var/lib/mysql
+ls: 无法访问/var/lib/mysql: 没有那个文件或目录
+[root@DB60 ~]# ls mysql-community-*.rpm |wc -l
+11
+[root@DB60 ~]# yum -y install  perl-JSON  elinks  telnet  gcc \
+> httpd-tools  pcre-devel  openssl-devel php-pecl-memcache \
+> php php-mysql  memcache \
+> /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm 
+[root@DB60 ~]# rpm -q  perl-JSON  elinks  telnet  gcc httpd-tools \
+> pcre-devel  openssl-devel php-pecl-memcache php 
+> php-mysql  memcached php-fpm
+
+perl-JSON-2.59-2.el7.noarch
+elinks-0.12-0.36.pre6.el7.x86_64
+telnet-0.17-64.el7.x86_64
+gcc-4.8.5-16.el7.x86_64
+httpd-tools-2.4.6-67.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+openssl-devel-1.0.2k-8.el7.x86_64
+php-pecl-memcache-3.0.8-4.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+memcached-1.4.15-10.el7_3.1.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+/***rpm  -e  --nodeps mariadb-server mariadb **防止版本冲突
+[root@DB60 ~]# rpm -Uvh mysql-community-*.rpm
+....
+  11:mysql-community-minimal-debuginfo                           ################################# [ 92%]
+正在清理/删除...
+  12:mariadb-libs-1:5.5.56-2.el7                                 ################################# [100%]
+[root@DB60 ~]# systemctl start mysqld && systemctl enable mysqld
+[root@DB60 ~]# awk '/root@localhost/{print $NF}' /var/log/mysqld.log 
+xiw_Q0y!a,YB
+[root@DB60 ~]# mysql -hlocalhost -uroot -p'xiw_Q0y!a,YB'
+mysql> alter user root@'localhost' identified by 'Hiy53.es';
+mysql> quit;
+[root@DB60 ~]# useradd -s /sbin/nologin nginx
+[root@DB60 ~]# grep nginx /etc/passwd
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+[root@DB60 ~]# cd /root/nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+--------安装部署Nginx、mysql、PHP环境---------安装部署Nginx、mysql、PHP、PHP-FPM；
+============编译安装必须要使用--with-stream参数开启4层代理模块。=======
+注意必须要为PHP安装memcache扩展（php-pecl-memcache），否则PHP无法解析连接memcached的指令
+
+[root@DB60 nginx-1.12.2]# ./configure  --prefix=/usr/local/nginx \
+> --user=nginx  --group=nginx  --with-http_ssl_module \
+> --with-stream  --with-http_stub_status_module \
+> --without-http_autoindex_module \
+> --without-http_ssi_module ;
+
+[root@DB60 nginx-1.12.2]# make  && make install
+
+[root@DB60 nginx-1.12.2]# ln -s /usr/local/nginx/sbin/nginx  /sbin/
+[root@DB60 nginx-1.12.2]# ll /sbin/nginx 
+lrwxrwxrwx. 1 root root 27 9月  17 17:16 /sbin/nginx -> /usr/local/nginx/sbin/nginx
+[root@DB60 nginx-1.12.2]# nginx -s stop
+[root@DB60 nginx-1.12.2]# ss -nptul |grep nginx
+[root@DB60 nginx-1.12.2]# nginx 
+[root@DB60 nginx-1.12.2]# ss -nptul |grep nginx |column -t
+tcp  LISTEN  0  128  *:80  *:*  users:(("nginx",pid=7481,fd=6),("nginx",pid=7480,fd=6))
+
+[root@DB60 nginx-1.12.2]# cd /usr/local/nginx/html/;ls
+50x.html  index.html
+[root@DB60 html]# vim test.php
+[root@DB60 html]# cat test.php
+<?php
+$i=333;echo $i;echo "\n";
+?>
+[root@DB60 html]# php test.php 
+[root@DB60 html]# systemctl start php-fpm && systemctl enable php-fpm
+[root@DB60 html]# php test.php 
+333
+[root@DB60 html]# netstat -nptul |egrep ':9000|:80|:3306' |column -t;
+tcp   0  0  0.0.0.0:80      0.0.0.0:*  LISTEN  7480/nginx:    master
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN  7594/php-fpm:  maste
+tcp6  0  0  :::3306         :::*       LISTEN  4392/mysqld
+
+[root@DB60 html]# vim /usr/local/nginx/conf/nginx.conf
+ 17 http {
+ 33     #gzip  on;
+ 34     upstream webserver {
+ 35        server 192.168.4.50:80;
+ 36     }
+ 37     server {
+ 38         listen       80;
+ 39         server_name  localhost;
+ 40 
+ 41         #charset koi8-r;
+ 42 
+ 43         #access_log  logs/host.access.log  main;
+ 44 
+ 45         location / {
+ 46             proxy_pass  http://webserver;
+ 47             root   html;
+ 48             index  index.html index.htm;
+ 49         }
+[root@DB60 html]# vim /usr/local/nginx/html/index.html
+<title>Welcome to nginx!DB60</title>
+
+<h1>DB60 Welcome to nginx!</h1>
+[root@DB60 html]# nginx -s reload
+
+[root@DB70 ~]# firefox http://192.168.4.60
+http://192.168.4.60/
+ reg login user info :
+LoginName:
+kehu70
+LoginPass:
+6070
+SUBMIT
+http://192.168.4.60/reg.php
+link mysql Ok xixixi insert data ok 
+
+[root@DB2 ~]# mysql -uroot -pHiy53.es
+mysql> show databases;
+| Database           |
+| information_schema |
+| bbs                |
+| db5                |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> use bbs;show tables;
+| Tables_in_bbs |
+| user          |
+
+mysql> select * from bbs.user;
+| name   | password |
+| yaya   | 123456   |
+| yaya   | 123456   |
+| xixixi | 123      |
+| yahu   | 123      |
+| kehu70 | 6070     |
+[root@DB1 ~]# mysql -uroot -pHiy53.es
+mysql> desc bbs.user;
+| Field    | Type     | Null | Key | Default | Extra |
+| name     | char(15) | YES  |     | NULL    |       |
+| password | char(6)  | YES  |     | NULL    |       |
+
+mysql> select * from bbs.user where name like "kehu%";
+| name   | password |
+| kehu70 | 6070     |
+
+9 2台网站服务器的网页文件存储在共享存储NFS服务器192.168.4.70的/webdir 目录里
+[root@DB0 ~]# yum -y install nfs-utils 
+[root@DB0 ~]# ls -ld /var/www/html/
+drwxr-xr-x. 2 root root 55 9月  17 11:57 /var/www/html/
+
+
+[root@DB60 ~]# yum -y install nfs-utils
+[root@DB60 html]# ls -ld /usr/local/nginx/html/
+drwxr-xr-x. 2 root root 56 9月  17 17:48 /usr/local/nginx/html/
+[root@DB60 html]# vim /etc/exports
+[root@DB60 html]# cat /etc/exports  #假设网页文件可读写rw
+
+/usr/local/nginx/html/  192.168.4.0/24(rw)
+
+[root@DB60 html]# chmod 777  /usr/local/nginx/html/
+[root@DB60 html]# systemctl restart nfs-server && systemctl enable nfs-server
+  2台网站服务器的网页文件存储在共享存储NFS服务器192.168.4.70的/webdir 目录里
+[root@DB70 ~]# mkdir /webdir
+[root@DB70 ~]# showmount -e 192.168.4.60
+Export list for 192.168.4.60:
+/usr/local/nginx/html 192.168.4.0/24
+[root@DB70 ~]# vim /etc/fstab 
+[root@DB70 ~]# tail -1 /etc/fstab
+192.168.4.60:/usr/local/nginx/html/  /webdir nfs defaults,_netdev 0  0
+[root@DB70 ~]# mount -a
+[root@DB70 ~]# ls /webdir/
+50x.html  index.html  test.php
+
+[root@DB70 ~]# vim /webdir/test.php
+<?php
+$i=3303;echo $i;echo "\n";
+?>
+:wq!
+[root@DB70 ~]# cat /webdir/test.php
+<?php
+$i=3303;echo $i;echo "\n";
+?>
+
+[root@DB60 html]# cat test.php 
+<?php
+$i=3303;echo $i;echo "\n";
+?>
+[root@DB60 html]# php test.php
+3303
+
+
+
+
+
+
+
+
+
+
+

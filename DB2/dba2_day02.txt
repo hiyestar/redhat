@@ -1,0 +1,293 @@
+一、配置数据读写分离
+1.1 数据读写分离：
+把客户端查询数据和写入数据的请求分别给不同的数据库服务器处理
+
+1.2 实现方式： 
+通过服务实现 :  
+在客户端使用程序实现（人为分离）
+
+MySQL  5251
+1.1
+51 binlog    binlog
+
+1.2
+52 
+server_id   slave slave
+
+
+1.3 53 
+
+1.3.1 dba2    
+mysql> create  database dba2;
+mysql> create  table dba2.user(id int);
+mysql> mysql> grant select , insert  on  dba2.* to 
+admina@"%" identified by "123qqq...A";
+
+1.3.2 53 51 
+]#mysql -h192.168.4.51  -uadmina  -p123qqq...A
+mysql> insert into dba2.user values(666);
+mysql> insert into dba2.user values(999);
+
+1.3.3 53 52 
+]#mysql -h192.168.4.52  -uadmina  -p123qqq...A
+mysql> select  * from  dba2.user;
+|  666 |
+|  999 |
+
+ 50
+2.1 
+]# rpm -ivh maxscale-2.1.2-1.rhel.7.x86_64.rpm
+
+2.2 
+]# cp /etc/maxscale.cnf /etc/maxscale.cnf.bak
+]# vim /etc/maxscale.cnf
+
+
+2.3 2
+mysql> grant replication slave, replication client on  *.*
+    -> to 
+    -> scalemon@"%"
+    -> identified by "123qqq...A";
+Query OK, 0 rows affected, 1 warning (0.04 sec)
+
+mysql> grant select on mysql.* to  scaleuser@"%"
+    -> identified by "123qqq...A";
+Query OK, 0 rows affected, 1 warning (0.03 sec)
+
+mysql> select host,user from  mysql.user where user in 
+("scalemon","scaleuser");
++------+-----------+
+| host | user      |
++------+-----------+
+| %    | scalemon  |
+| %    | scaleuser |
++------+-----------+
+
+2.4 
+[root@host50 ~]# maxscale -f /etc/maxscale.cnf
+
+
+2.5 
+[root@host50 ~]# netstat -utnlp  | grep maxscale
+
+tcp6       0      0 :::4016                 :::*           
+         LISTEN      20999/maxscale 
+     
+tcp6       0      0 :::4006                 :::*           
+         LISTEN      20999/maxscale      
+[root@host50 ~]#
+
+
+
+
+2.6 
+2.6.1  50
+[root@host50 ~]# maxadmin  -uadmin -pmariadb -P4016
+MaxScale> list servers
+Servers.
+-------------------+-----------------+-------
++-------------+--------------------
+Server             | Address         | Port  | Connections 
+| Status              
+-------------------+-----------------+-------
++-------------+--------------------
+server1            | 192.168.4.51    |  3306 |           0 
+| Master, Running
+server2            | 192.168.4.52    |  3306 |           0 
+| Slave, Running
+-------------------+-----------------+-------
++-------------+--------------------
+ MaxScale>exit
+
+2.6.2 53 50   
+53]#  mysql  -h192.168.4.50 -P4006 -uadmina  -p123qqq...A
+mysql> select  * from dba2.user;
+mysql> insert into dba2.user values(777);
+
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+]# tar -zxvf mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz 
+]# mv mysql-5.7.20-linux-glibc2.12-x86_64 /usr/local/mysql
+
+[root@node56 ~]# ls /usr/local/mysql/
+bin  COPYING  docs  include  lib  man  README  share  
+support-files
+[root@node56 ~]# 
+
+]# MySQL 
+systemctl  stop   mysqld
+mv  /etc/my.cnf  /root/
+
+]#vim /etc/my.cnf
+[mysqld_multi]
+mysqld=/usr/local/mysql/bin/mysqld_safe
+mysqladmin=/usr/local/mysql/bin/mysqladmin
+user = root
+
+[mysqld1]
+datadir=/data3307
+port=3307
+socket=/data3307/mysql3307.socket
+pid-file=/data3307/mysqld.pid
+log-error=/data3307/mysqld.err
+
+[mysqld2]
+datadir=/data3308
+port=3308
+socket=/data3308/mysql3308.socket
+pid-file=/data3308/mysqld.pid
+log-error=/data3308/mysqld.err
+:wq
+
+
+
+
+]# mkdir /data3307
+]# mkdir /data3308
+
+1 
+]# /usr/local/mysql/bin/mysqld_multi start 1
+....
+....
+2018-09-18T07:37:51.162003Z 1 [Note] A temporary password 
+is generated for root@localhost: wo62,%2q-.tN
+
+
+
+]# ls /data3307
+auto.cnf        ib_logfile0  mysql                  
+mysqld.err          sys
+ib_buffer_pool  ib_logfile1  mysql3307.socket       
+mysqld.pid
+ibdata1         ibtmp1       mysql3307.socket.lock  
+performance_schema
+
+
+]# netstat -utnlp  | grep :3307
+
+tcp6       0      0 :::3307                 :::*           
+         LISTEN      2580/mysqld         
+[root@node56 ~]#
+
+
+
+]# /usr/local/mysql/bin/mysql -uroot -p'wo62,%2q-.tN' -S 
+/data3307/mysql3307.socket
+
+mysql> alter user  user() identified by "123456";
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+mysql> quit;
+
+]# /usr/local/mysql/bin/mysql -uroot -p123456 -S 
+/data3307/mysql3307.socket
+
+mysql> create database testdb;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> create table testdb.a(id int);
+
+mysql> quit;
+
+
+
+[root@node56 ~]# netstat -utnlp  | grep :3307
+tcp6       0      0 :::3307                 :::*           
+         LISTEN      2580/mysqld         
+[root@node56 ~]# /usr/local/mysql/bin/mysqld_multi  --
+user=root --password=123456  stop  1
+
+[root@node56 ~]# 
+[root@node56 ~]# netstat -utnlp  | grep :3307[root@node56 
+~]# 
+
+[root@node56 ~]# /usr/local/mysql/bin/mysql -uroot -
+p123456 -S /data3307/mysql3307.socket
+
+mysql: [Warning] Using a password on the command line 
+interface can be insecure.
+ERROR 2002 (HY000): Can't connect to local MySQL server 
+through socket '/data3307/mysql3307.socket' (2)
+[root@node56 ~]#
+
+16:38
+++++++++++++++++++++++++++++++++++++++++++++++
+2 
+
+]#/usr/local/mysql/bin/mysqld_multi  start 2
+
+]#/usr/local/mysql/bin/mysql -uroot -p'>K8x>>(?Th2(' -S  
+/data3308/mysql3308.socket
+
+mysql>  alter user   user() identified by "123456";
+mysql> quit;
+
+]#/usr/local/mysql/bin/mysql -uroot -p123456 -S  
+/data3308/mysql3308.socket
+mysql> show databases;
+
+
+++++++++++++++++++++++++++++++++++++++
+56 3 
+
+
+
+
+
++++++++++++++++++++++++++++++++++++++++
+
+mysql> show   processlist;
+
++++++++++++++++++++++++++++++++
+mysql> show status;
+
+mysql> show status like "%innodb%";
+
+mysql> show status like "Innodb_row_lock_waits";
++-----------------------+-------+
+| Variable_name         | Value |
++-----------------------+-------+
+| Innodb_row_lock_waits | 0     |
++-----------------------+-------+
+1 row in set (0.00 sec)
+
+mysql> show   variables;
+
+mysql> show   variables  like "%memory%";
++---------------------------------------+-------+
+| Variable_name                         | Value |
++---------------------------------------+-------+
+| locked_in_memory                      | OFF   |
+| performance_schema_max_memory_classes | 320   |
++---------------------------------------+-------+
+
+mysql> show   variables  like "datetime_format";
++-----------------+-------------------+
+| Variable_name   | Value             |
++-----------------+-------------------+
+| datetime_format | %Y-%m-%d %H:%i:%s |
++-----------------+-------------------+
+
+mysql> show variables like  "connect_timeout";
+mysql> set GLOBAL connect_timeout = 20
+mysql> show variables like  "connect_timeout";
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| connect_timeout | 20    |
++-----------------+-------+
+
+]# vim /etc/my.cnf
+[mysqld]
+connect_timeout  =  20
+:wq

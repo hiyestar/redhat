@@ -1,0 +1,13 @@
+<html>
+	<form action="reg.php" method="post">
+	<h3>NAME</h3>
+	<input type="text" name="sysun" size="20" maxlength="255"/>
+	<br/>
+	<br/>
+	<h3>PASSWORD</h3>
+	<input type="text" name="syspn" size="20" maxlength="255"/>
+	<br/>
+	<br/>
+	<h3><input type="submit" name="submit" values="SUBMIT" /></h3></p>
+	</form>
+</html>
