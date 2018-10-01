@@ -1,0 +1,318 @@
+部署 网络服务进阶  教学环境
+
+真机:快速产生两台虚拟机
+[root@room9pc01 ~]# clone-vm7
+ Enter VM number: 6
+ Creating Virtual Machine disk image......	[OK]
+ Defining new virtual machine......		     [OK]
+
+ 利用root用户,密码123456登陆两台虚拟机
+
+虚拟机A:作为练习使用的服务端
+1.配置永久的主机名:svr7.tedu.cn
+2.配置eth0永久的IP地址:192.168.4.7/24
+
+
+虚拟机B:作为练习使用的客户端
+1.配置永久的主机名:pc207.tedu.cn
+2.配置eth0永久的IP地址:192.168.4.207/24
+
+####################################################
+搭建网络Yum仓库
+
+1.真机构建FTP服务器,共享光盘所有内容
+[root@room9pc01 ~]# rpm  -q  vsftpd
+vsftpd-3.0.2-22.el7.x86_64
+[root@room9pc01 ~]# systemctl restart vsftpd
+[root@room9pc01 ~]# systemctl enable vsftpd
+
+[root@room9pc01 ~]# ls /var/ftp/rhel7/   #查看是否有光盘内容
+
+[root@room9pc01 ~]# ls -l /iso
+lrwxrwxrwx 1 root root 27 1月  23 17:32 /iso -> /var/lib/libvirt/images/iso
+
+[root@room9pc01 ~]# vim /etc/fstab      #不支持快捷方式
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso   /var/ftp/rhel7   iso9660   defaults  0  0
+
+
+[root@room9pc01 ~]# firefox ftp://192.168.4.254/rhel7
+
+2.在两台虚拟机上操作,指定Yum服务端
+
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo
+ [rhel7]
+ name=rhel7.4
+ baseurl=ftp://192.168.4.254/rhel7
+ enabled=1
+ gpgcheck=0
+
+[root@svr7 ~]# yum repolist
+[root@svr7 ~]# yum -y install xeyes
+
+######################################################
+进行远程管理,为真机永久的别名的设置
+
+[root@room9pc01 ~]# vim /root/.bashrc 
+alias  goa='ssh -X root@192.168.4.7'
+alias  gob='ssh -X root@192.168.4.207'
+
+#######################################################
+目录结构
+
+[root@svr7 ~]# man hier
+
+ /boot 		      存放系统引导必需的文件,包括内核、启动配置
+ /bin、/sbin        存放各种命令程	序
+ /dev               存放硬盘、键盘、鼠标、光驱等各种设备文件
+ /etc 		      存放Linux系统及各种程序的配置文件
+ /root、/home/用户名  分别是管理员root、普通用户的默认家目录
+ /var 		      存放日志文件、邮箱目录等经常变化的文件
+ /proc 			  存放内存中的映射数据,不占用磁盘
+ /tmp 			  存放系统运行过程中使用的一些临时文件
+
+#####################################################
+权限的数值表示
+
+• 权限的数值化
+– 基本权限:r = 4,w = 2,x = 1
+– 附加权限:SUID = 4,SGID = 2,Sticky Bit = 1
+
+[root@svr7 ~]# mkdir /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+
+[root@svr7 ~]# chmod 700 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+
+[root@svr7 ~]# chmod 007 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+
+[root@svr7 ~]# chmod 755 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+
+[root@svr7 ~]# chmod 750 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+
+################################################
+历史命令
+• 管理/调用曾经执行过的命令
+– history:查看历史命令列表
+– history -c:清空历史命令
+– !n:执行命令历史中的第n条命令
+– !str:执行最近一次以str开头的历史命令
+
+• 调整历史命令的数量
+[root@svr7 ~]# vim /etc/profile
+HISTSIZE=1000     //默认记录1000条
+
+
+[root@svr7 ~]# history           #查看历史命令列表
+
+[root@svr7 ~]# history -c        #清空历史命令
+[root@svr7 ~]# history 
+
+[root@svr7 ~]# cat /etc/redhat-release 
+
+[root@svr7 ~]# ls /root/
+
+[root@svr7 ~]# !cat     #执行历史命令中最近一条以cat开头的命令
+
+[root@svr7 ~]# !ls
+
+
+####################################################
+• du,统计文件的占用空间
+– du [选项]... [目录或文件]...
+
+– -s:只统计每个参数所占用的总空间大小
+– -h:提供易读容量单位(K、M等)
+
+[root@svr7 ~]# du -sh /boot/ /etc/pki/
+
+#####################################################
+• date,查看/调整系统日期时间
+
+– date +%F、date +%R
+– date +"%Y-%m-%d  %H:%M:%S"
+– date -s "yyyy-mm-dd HH:MM:SS"    #修改时间
+
+[root@svr7 ~]# date  +%F
+[root@svr7 ~]# date  +%Y
+[root@svr7 ~]# date  +%m
+[root@svr7 ~]# date  +%d
+[root@svr7 ~]# date  +%H
+[root@svr7 ~]# date  +%M
+
+##################################################
+快捷方式制作,必须是绝对路径
+
+–  ln  -s  原始文件或目录    软连接文件
+
+[root@svr7 ~]# ln -s /etc/redhat-release  /
+[root@svr7 ~]# ls /
+
+[root@svr7 ~]# ln -s /etc/redhat-release  /abc
+[root@svr7 ~]# ls /
+
+[root@svr7 ~]# ls -l /abc 
+lrwxrwxrwx. 1 root root 19 6月  19 11:55 /abc -> /etc/redhat-release
+[root@svr7 ~]# cat /abc 
+ 
+######################################################
+• ln,创建软连接
+– 软连接 --> 原始文档 --> i节点 --> 文档数据
+– ln -s 原始文件或目录 软连接文件
+  若原始文件或目录被删除,连接文件将失效
+  软连接可存放在不同分区/文件系统
+
+
+• ln,创建硬连接
+– 硬连接 --> i节点 --> 文档数据
+– ln  原始文件    硬连接文件
+ 若原始文件被删除,连接文件仍可用
+ 硬连接与原始文件必须在同一分区/文件系统
+
+
+i节点 :编号标识硬盘独立一个存储空间
+
+   原始文档----->i节点------>硬盘所对应的区域
+
+[root@svr7 ~]# echo 123 > /opt/A
+[root@svr7 ~]# ls /opt/
+
+[root@svr7 ~]# ln -s /opt/A  /opt/B   #制作软连接(软链接)
+[root@svr7 ~]# ls /opt/
+
+[root@svr7 ~]# ln /opt/A   /opt/C    #制作硬连接(硬链接)
+[root@svr7 ~]# ls /opt/
+
+[root@svr7 ~]# ls  -i  /opt       #查看i节点编号
+
+#####################################################
+获取命令帮助
+• man,格式化手册阅读工具
+– 按 上 、下 、 PgUp 、PgDn 键滚动及翻页
+– 按 q 键退出
+– 按 / 键向后查找关键词(n、N切换)
+
+[root@svr7 ~]# man mkdir
+[root@svr7 ~]# man passwd
+[root@svr7 ~]# man 5 passwd    #数字5:帮助类型(文件帮助信息)
+[root@svr7 ~]# man teamd.conf 
+
+• 对于内部命令,使用“ help 命令名”查看
+
+• 对于外部命令程序,通常 会提供“--help”帮助选项
+
+[root@svr7 ~]# ls --help
+[root@svr7 ~]# ls --help | less
+
+#####################################################
+zip归档工具,跨平台的归档工具
+
+
+• 归档+压缩操作
+– zip [-r]   备份文件.zip   被归档的文档...
+
+• 释放归档+解压操作
+– unzip   备份文件.zip   [-d 目标文件夹]
+
+[root@svr7 ~]# zip -r /root/file.zip  /home/  /etc/passwd 
+[root@svr7 ~]# ls /root/
+
+[root@svr7 ~]# mkdir /nsd02
+[root@svr7 ~]# unzip /root/file.zip -d /nsd02
+
+
+######################################################
+自定义Yum仓库
+
+真机将tools.tar.gz上传到虚拟机A上
+1.具备自己的软件包
+
+# scp /root/桌面/tools.tar.gz     root@192.168.4.7:/root/
+
+2.虚拟机A上操作:
+# ls /root
+
+3.虚拟机A上操作:tar解包
+[root@svr7 ~]# tar -xf /root/tools.tar.gz  -C  /
+[root@svr7 ~]# ls /
+[root@svr7 ~]# ls /tools/
+
+4.虚拟机A上操作:生成仓库数据文件
+[root@svr7 ~]# createrepo  /tools/other/
+ 
+[root@svr7 ~]# ls /tools/other/
+[root@svr7 ~]# ls /tools/other/repodata/
+
+5.虚拟机A上操作:书写一个客户端文件
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo 
+ ......
+[myrpm]                 #仓库标识
+name=myrpm  
+baseurl=file:///tools/other
+enabled=1
+gpgcheck=0
+
+[root@svr7 ~]# yum repolist 
+
+[root@svr7 ~]# yum -y install  sl
+[root@svr7 ~]# rpm -ql  sl  #查询软件包安装的清单
+
+[root@svr7 ~]# yum -y install  cmatrix
+[root@svr7 ~]# cmatrix
+
+[root@svr7 ~]# yum -y install  oneko
+[root@svr7 ~]# oneko
+
+###################################################
+
+源码编译安装
+
+ rpm包: 简单方便,不够灵活    yum   rpm -ivh
+
+
+  源码包:非常的灵活,可以指定安装的位置及功能
+
+
+  源码包------gcc\make----->可以执行的文件-------->运行安装
+
+
+步骤一:安装开发工具gcc与make
+[root@svr7 ~]# yum  -y  install   gcc  make
+
+步骤二:tar进行解包
+# tar -xf /tools/inotify-tools-3.13.tar.gz -C /mnt/
+# ls /mnt/
+# ls /mnt/inotify-tools-3.13/
+
+步骤三:配置 ./configure ,进行指定可以指定安装的位置及功能
+# cd /mnt/inotify-tools-3.13/
+
+# ./configure   --prefix=/opt/myrpm
+     检测是否安装gcc
+
+常见的报错:没有安装gcc
+ checking for gcc... no
+ checking for cc... no
+ checking for cl.exe... no
+ configure: error: no acceptable C compiler found in $PATH
+
+步骤四:编译  make
+# make
+
+
+步骤五:安装 make install
+
+# make install
+
+# ls /opt/
+
+# ls /opt/myrpm/
+
+# ls /opt/myrpm/bin/
+
+#####################################################
+
+
+

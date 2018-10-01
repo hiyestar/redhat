@@ -1,0 +1,686 @@
+
+[root@room9pc01 ~]# clone-vm7
+Enter VM number: 1
+Creating Virtual Machine disk image......	[OK]
+Defining new virtual machine......		[OK]
+[root@room9pc01 ~]# clone-auto7
+number of vms: 3
+created rh7_node1					[Done]
+created rh7_node2					[Done]
+created rh7_node3					[Done]
+[root@room9pc01 ~]# 
+
+[root@room9pc01 ~]# ssh -X root@192.168.4.7
+The authenticity of host '192.168.4.7 (192.168.4.7)' can't be established.
+ECDSA key fingerprint is SHA256:59Byua15gv4TAVEm7YutMtmgXfxGTYbzSfO84kICu0E.
+ECDSA key fingerprint is MD5:7e:6e:95:ed:84:fe:5b:8e:26:94:73:9b:c3:4b:90:cb.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.4.7' (ECDSA) to the list of known hosts.
+root@192.168.4.7's password: 
+Last login: Tue Jun 19 09:19:00 2018
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@svr7 ~]# vim /etc/hostname
+[root@svr7 ~]# cat /etc/hostname
+svr7.tedu.cn
+[root@svr7 ~]# nmcli connection modify eth0 ipv4.addresses 192.168.4.7/24 ipv4.method manual connection.autoconnect yes
+[root@svr7 ~]# ifconfig | head -10
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.7  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet6 fe80::d61f:c941:386b:1ff0  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:50:de:ac  txqueuelen 1000  (Ethernet)
+        RX packets 1550  bytes 101999 (99.6 KiB)
+        RX errors 0  dropped 11  overruns 0  frame 0
+        TX packets 241  bytes 33131 (32.3 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+[root@svr7 ~]# 
+
+=======================
+[root@room9pc01 ~]# ssh -X root@192.168.4.207
+The authenticity of host '192.168.4.207 (192.168.4.207)' can't be established.
+ECDSA key fingerprint is SHA256:59Byua15gv4TAVEm7YutMtmgXfxGTYbzSfO84kICu0E.
+ECDSA key fingerprint is MD5:7e:6e:95:ed:84:fe:5b:8e:26:94:73:9b:c3:4b:90:cb.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.4.207' (ECDSA) to the list of known hosts.
+root@192.168.4.207's password: 
+Last login: Tue Jun 19 09:28:37 2018
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@pc207 ~]# echo pc207.tedu.cn > /etc/hostname
+[root@pc207 ~]# cat /etc/hostname
+pc207.tedu.cn
+[root@pc207 ~]# nmcli connection modify eth0 ipv4.addresses 192.168.4.207/24 ipv4.method manual connection.autoconnect yes
+[root@pc207 ~]# ifconfig
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.207  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet6 fe80::2af4:aa0a:c463:dd4c  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:c9:e8:9a  txqueuelen 1000  (Ethernet)
+        RX packets 1014  bytes 67269 (65.6 KiB)
+        RX errors 0  dropped 5  overruns 0  frame 0
+        TX packets 236  bytes 27099 (26.4 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        ether 52:54:00:95:57:79  txqueuelen 1000  (Ethernet)
+        RX packets 637  bytes 33238 (32.4 KiB)
+        RX errors 0  dropped 5  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        ether 52:54:00:8a:95:b8  txqueuelen 1000  (Ethernet)
+        RX packets 637  bytes 33238 (32.4 KiB)
+        RX errors 0  dropped 5  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth3: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        ether 52:54:00:c3:b5:e6  txqueuelen 1000  (Ethernet)
+        RX packets 637  bytes 33238 (32.4 KiB)
+        RX errors 0  dropped 5  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 400  bytes 33120 (32.3 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 400  bytes 33120 (32.3 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+        ether 52:54:00:62:a0:90  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@pc207 ~]# 
+
+[root@room9pc01 ~]# ifconfig enp1s0
+enp1s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.209.129  netmask 255.255.255.0  broadcast 176.121.209.255
+        inet6 fe80::de4a:3eff:fe48:2dc  prefixlen 64  scopeid 0x20<link>
+        ether dc:4a:3e:48:02:dc  txqueuelen 1000  (Ethernet)
+        RX packets 15323  bytes 6881114 (6.5 MiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 5488  bytes 893409 (872.4 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@room9pc01 ~]# ifconfig private1
+private1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.254  netmask 255.255.255.0  broadcast 192.168.4.255
+        ether 52:54:00:37:78:11  txqueuelen 1000  (Ethernet)
+        RX packets 666  bytes 75940 (74.1 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1013  bytes 91160 (89.0 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@room9pc01 ~]# rpm -q vsftpd
+vsftpd-3.0.2-22.el7.x86_64
+[root@room9pc01 ~]# systemctl restart vsftpd
+[root@room9pc01 ~]# systemctl enable vsftpd
+[root@room9pc01 ~]# ls /var/ftp/
+pub  rhel7  share
+[root@room9pc01 ~]# ls /var/ftp/rhel7/
+addons  EULA              GPL     isolinux  media.repo  repodata                 RPM-GPG-KEY-redhat-release
+EFI     extra_files.json  images  LiveOS    Packages    RPM-GPG-KEY-redhat-beta  TRANS.TBL
+[root@room9pc01 ~]# vim /etc/fstab 
+[root@room9pc01 ~]# cat /etc/fstab | tail -3
+UUID=bb62e9f9-f903-40e2-be01-730eb61cc7ea /                       ext4    defaults        1 1
+UUID=d60728be-85d6-4b5d-8ca8-b29016db27f1 /var/lib/libvirt/images ext4    defaults        1 2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+
+[root@room9pc01 ~]# ls /var/lib/libvirt/images/iso
+CentOS-7-x86_64-DVD-1708.iso  rhel-server-6.7-x86_64-dvd.iso  Win10_Pro_X64_zh_CN.iso
+lost+found                    rhel-server-7.4-x86_64-dvd.iso
+
+[root@room9pc01 ~]# firefox ftp://192.168.4.254/rhel7
+============================================
+[root@room9pc01 ~]# systemctl status sshd
+● sshd.service - OpenSSH server daemon
+   Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled; vendor preset: enabled)
+   Active: active (running) since 二 2018-06-19 07:34:20 CST; 3h 3min ago
+     Docs: man:sshd(8)
+           man:sshd_config(5)
+ Main PID: 893 (sshd)
+   CGroup: /system.slice/sshd.service
+           └─893 /usr/sbin/sshd -D
+
+6月 19 07:34:20 room9pc01.tedu.cn systemd[1]: Starting OpenSSH server daemon...
+6月 19 07:34:20 room9pc01.tedu.cn sshd[893]: Server listening on 0.0.0.0 port 22.
+6月 19 07:34:20 room9pc01.tedu.cn sshd[893]: Server listening on :: port 22.
+6月 19 07:34:20 room9pc01.tedu.cn systemd[1]: Started OpenSSH server daemon.
+您在 /var/spool/mail/root 中有新邮件
+[root@room9pc01 ~]# scp -r /var/lib/libvirt/images/iso/
+CentOS-7-x86_64-DVD-1708.iso    rhel-server-6.7-x86_64-dvd.iso  .Trash-0/
+lost+found/                     rhel-server-7.4-x86_64-dvd.iso  Win10_Pro_X64_zh_CN.iso
+[root@room9pc01 ~]# scp -r /var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso root@176.121.209.134:/^C
+[root@room9pc01 ~]# scp -r /var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso root@176.121.209.134:/var/lib/libvirt/images/iso/
+root@176.121.209.134's password: 
+rhel-server-7.4-x86_64-dvd.iso    
+============================================================================
+[root@svr7 ~]# getenforce 
+Permissive
+[root@svr7 ~]# vim/etc/yum.repos.d/rhel7.repo
+-bash: vim/etc/yum.repos.d/rhel7.repo: 没有那个文件或目录
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@svr7 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+baseurl=ftp://192.168.4.254/rhel7
+enable=1
+gpgcheck=0
+[root@svr7 ~]# 
+
+========================
+[root@pc207 ~]# ifconfig eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.207  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet6 fe80::2af4:aa0a:c463:dd4c  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:c9:e8:9a  txqueuelen 1000  (Ethernet)
+        RX packets 1721  bytes 106611 (104.1 KiB)
+        RX errors 0  dropped 5  overruns 0  frame 0
+        TX packets 278  bytes 34659 (33.8 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@pc207 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@pc207 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+baseurl=ftp://192.168.4.254/rhel7
+enable=1
+gpgcheck=0
+[root@pc207 ~]# 
+
+
+
+[root@pc207 ~]# yum repolist
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+rhel7                                                                                                  | 4.1 kB  00:00:00     
+(1/2): rhel7/group_gz                                                                                  | 137 kB  00:00:00     
+(2/2): rhel7/primary_db                                                                                | 4.0 MB  00:00:00     
+源标识                                                      源名称                                                       状态
+rhel7                                                       rhel7.4                                                      4,986
+repolist: 4,986
+[root@pc207 ~]# yum -y install xeyes
+已安装:
+  xorg-x11-apps.x86_64 0:7.7-7.el7                                                                                            
+
+作为依赖被安装:
+  libXaw.x86_64 0:1.0.13-4.el7                                                                                                
+
+完毕！
+[root@pc207 ~]# xeyes 
+^C
+
+[root@svr7 ~]# yum -y install xeyes
+
+已安装:
+  xorg-x11-apps.x86_64 0:7.7-7.el7                                                                                            
+
+作为依赖被安装:
+  libXaw.x86_64 0:1.0.13-4.el7                                                                                                
+
+
+[root@svr7 ~]# rpm -q xeyes
+未安装软件包 xeyes 
+[root@svr7 ~]# xeyes
+^C
+===================
+[root@svr7 ~]# 
+[root@room9pc01 ~]# alias
+alias cp='cp -i'
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias god='ssh -X root@172.25.0.10'
+alias gos='ssh -X root@172.25.0.11'
+alias grep='grep --color=auto'
+alias l.='ls -d .* --color=auto'
+alias ll='ls -l --color=auto'
+alias ls='ls --color=auto'
+alias mv='mv -i'
+alias rm='rm -i'
+alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'
+[root@room9pc01 ~]# vim /root/.bashrc
+[root@room9pc01 ~]# cat /root/.bashrc 
+# .bashrc
+ alias gos='ssh -X root@172.25.0.11'
+ alias god='ssh -X root@172.25.0.10'
+ alias goa='ssh -X root@192.168.4.7'
+ alias gob='ssh -X root@192.168.4.207'
+# User specific aliases and functions
+
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+[root@room9pc01 ~]# 
+
+[root@svr7 ~]# mkdir /nsd01
+[root@svr7 ~]# ls -l /nsd01
+总用量 0
+[root@svr7 ~]# ls -ld /nsd01
+drwxr-xr-x. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# chmod 700 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+drwx------. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# chmod 755 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+drwxr-xr-x. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# chmod 007 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+d------rwx. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# chmod 750 /nsd01
+[root@svr7 ~]# ls -d /nsd01
+/nsd01
+[root@svr7 ~]# ls -ld /nsd01
+drwxr-x---. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# chmod 755 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+drwxr-xr-x. 2 root root 6 6月  19 11:27 /nsd01
+
+[root@svr7 ~]# chmod 3755 /nsd01/
+[root@svr7 ~]# ls -ld /nsd01
+drwxr-sr-t. 2 root root 6 6月  19 11:27 /nsd01
+
+
+
+[root@svr7 ~]# vim /etc/profile
+
+fi
+
+HOSTNAME=`/usr/bin/hostname 2>/dev/null`
+HISTSIZE=100
+if [ "$HISTCONTROL" = "ignorespace" ] ; then
+    export HISTCONTROL=ignoreboth
+else
+    export HISTCONTROL=ignoredups
+fi
+
+export PATH USER LOGNAME MAIL HOSTNAME HISTSIZE HISTCONTROL
+
+[root@svr7 ~]# history | tail -3
+   38  vim /etc/profile.d
+   39  vim /etc/profile
+   40  history | tail -3
+[root@svr7 ~]# cat /etc/redhat-release 
+Red Hat Enterprise Linux Server release 7.4 (Maipo)
+[root@svr7 ~]# ls /root/
+anaconda-ks.cfg  initial-setup-ks.cfg  公共  模板  视频  图片  文档  下载  音乐  桌面
+[root@svr7 ~]# !cat
+cat /etc/redhat-release 
+Red Hat Enterprise Linux Server release 7.4 (Maipo)
+
+[root@svr7 ~]# du -sh /etc/ /root/  /home
+43M	/etc/
+3.9M	/root/
+12K	/home
+
+[root@svr7 ~]# date
+2018年 06月 19日 星期二 11:48:06 CST
+[root@svr7 ~]# date +%F
+2018-06-19
+[root@svr7 ~]# date +%Y
+2018
+[root@svr7 ~]# date +%m
+06
+[root@svr7 ~]# date +%H
+11
+[root@svr7 ~]# date +%M
+49
+[root@svr7 ~]# date +%S
+39
+[root@svr7 ~]# date +%d
+19
+[root@svr7 ~]# date +%R
+11:51
+
+
+[root@svr7 ~]# ls /etc/redhat-release
+/etc/redhat-release
+[root@svr7 ~]# cat /etc/redhat-release
+Red Hat Enterprise Linux Server release 7.4 (Maipo)
+[root@svr7 ~]# ln -s /etc/redhat-release  /
+[root@svr7 ~]# ls /
+bin  boot  dev  etc  home  lib  lib64  media  mnt  nsd01  opt  proc  redhat-release  root  run  sbin  srv  sys  tmp  usr  var
+[root@svr7 ~]# ls -l /redhat-release
+lrwxrwxrwx. 1 root root 19 6月  19 11:55 /redhat-release -> /etc/redhat-release
+[root@svr7 ~]# ln -s /etc/redhat-release /newkuai
+[root@svr7 ~]# ls -l /newkuai
+lrwxrwxrwx. 1 root root 19 6月  19 11:56 /newkuai -> /etc/redhat-release
+[root@svr7 ~]# cat /newkuai
+Red Hat Enterprise Linux Server release 7.4 (Maipo)
+[root@svr7 ~]# ls /
+bin   dev  home  lib64  mnt      nsd01  proc            root  sbin  sys  usr
+boot  etc  lib   media  newkuai  opt    redhat-release  run   srv   tmp  var
+
+[root@svr7 ~]# ls  -l /newkuai
+lrwxrwxrwx. 1 root root 19 6月  19 11:56 /newkuai -> /etc/redhat-release
+
+[root@svr7 ~]# ls -i /root/
+33574978 anaconda-ks.cfg        2595950 公共   2595951 视频  17851507 文档  33575014 音乐
+33574990 initial-setup-ks.cfg  51401706 模板  51401707 图片  33575009 下载  17851506 桌面
+[root@svr7 ~]# echo 1234 > /opt/Aa
+[root@svr7 ~]# ls  /opt/
+Aa  rh
+[root@svr7 ~]# ln  -s  /opt/Aa  /opt/B
+[root@svr7 ~]# ls  /opt/
+Aa  B  rh
+[root@svr7 ~]# ls -i /opt
+   44501 Aa     44502 B  17761089 rh
+[root@svr7 ~]# ln  /opt/Aa  /opt/C
+[root@svr7 ~]# ls /opt/
+Aa  B  C  rh
+[root@svr7 ~]# ls -i /opt
+   44501 Aa     44502 B     44501 C  17761089 rh
+[root@svr7 ~]# cat /opt/B
+1234
+[root@svr7 ~]# cat /opt/C
+1234
+[root@svr7 ~]# rm -f /opt/Aa
+[root@svr7 ~]# ls -i /opt
+   44502 B     44501 C  17761089 rh
+[root@svr7 ~]# cat /opt/B
+cat: /opt/B: 没有那个文件或目录
+[root@svr7 ~]# cat /opt/C
+1234
+
+
+[root@svr7 ~]# man 5 passwd
+PASSWD(5)                                            File formats                                           PASSWD(5)
+
+NAME 名称
+       passwd - 密码文件
+
+[root@svr7 ~]# help
+GNU bash， 版本 4.2.46(2)-release (x86_64-redhat-linux-gnu)
+这些 shell 命令是内部定义的。请输入 `help' 以获取一个列表.
+输入 `help 名称' 以得到有关函数`名称'的更多信息.
+使用 `info bash' 来获得关于 shell 的更多一般性信息
+使用 `man -k' 或 `info' 来获取不在列表中的命令的更多信息.
+
+名称旁边的星号 (*) 意味着该命令被禁用.
+
+ job_spec [&]                                                history [-c] [-d 偏移量] [n] 或 history -anrw [文��>
+ (( 表达式 ))                                             if 命令; then 命令; [ elif 命令; then 命令; ]...>
+ . 文件名 [参数]                                        jobs [-lnprs] [任务声明 ...] 或 jobs -x 命令 [参>
+ :                                                           kill [-s 信号声明 | -n 信号编号 | -信号声明]>
+ [ 参数... ]                                               let 参数 [参数 ...]
+ [[ 表达式 ]]                                             local [option] 名称[=值] ...
+ alias [-p] [名称[=值] ... ]                              logout [n]
+ bg [任务声明 ...]                                       mapfile [-n 计数] [-O 起始序号] [-s 计数] [-t] [>
+ bind [-lpvsPVS] [-m 键映射] [-f 文件名] [-q 名称]>  popd [-n] [+N | -N]
+ break [n]                                                   printf [-v var] 格式 [参数]
+ builtin [shell 内嵌 [参数 ...]]                         pushd [-n] [+N | -N | 目录]
+ caller [表达式]                                          pwd [-LP]
+ case 词 in [模式 [| 模式]...) 命令 ;;]... esac       read [-ers] [-a 数组] [-d 分隔符] [-i 缓冲区文�>
+ cd [-L|[-P [-e]]] [dir]                                     readarray [-n 计数] [-O 起始序号] [-s 计数] [-t]>
+ command [-pVv] 命令 [参数 ...]                          readonly [-aAf] [name[=value] ...] or readonly -p
+ compgen [-abcdefgjksuv] [-o 选项]  [-A 动作] [-G 全�>  return [n]
+ complete [-abcdefgjksuv] [-pr] [-DE] [-o 选项] [-A 动�>  select NAME [in 词语 ... ;] do 命令; done
+ compopt [-o|+o 选项] [-DE] [名称 ...]                   set [-abefhkmnptuvxBCHP] [-o option-name] [--] [arg ...]>
+ continue [n]                                                shift [n]
+ coproc [名称] 命令 [重定向]                          shopt [-pqsu] [-o] [选项名 ...]
+ declare [-aAfFgilrtux] [-p] [name[=value] ...]              source 文件名 [参数]
+ dirs [-clpv] [+N] [-N]                                      suspend [-f]
+ disown [-h] [-ar] [任务声明 ...]                        test [表达式]
+ echo [-neE] [参数 ...]                                    time [-p] 管道
+ enable [-a] [-dnps] [-f 文件名] [名称 ...]             times
+ eval [参数 ...]                                           trap [-lp] [[参数] 信号声明 ...]
+ exec [-cl] [-a 名称] [命令 [参数 ...]] [重定向 .>  真
+ exit [n]                                                    type [-afptP] 名称 [名称 ...]
+ export [-fn] [名称[=值] ...] 或 export -p               typeset [-aAfFgilrtux] [-p] name[=value] ...
+ 伪                                                         ulimit [-SHacdefilmnpqrstuvx] [限制]
+ fc [-e 编辑器名] [-lnr] [起始] [终结] 或 fc -s [>  umask [-p] [-S] [模式]
+ fg [任务声明]                                           unalias [-a] 名称 [名称 ...]
+ for 名称 [in 词语 ... ] ; do 命令; done               unset [-f] [-v] [名称 ...]
+ for (( 表达式1; 表达式2; 表达式3 )); do 命令; >  until 命令; do 命令; done
+ function 名称 { 命令 ; } 或 name () { 命令 ; }       variables - 一些 shell 变量的名称和含义
+ getopts 选项字符串 名称 [参数]                     wait [编号]
+ hash [-lr] [-p 路径名] [-dt] [名称 ...]                while 命令; do 命令; done
+ help [-dms] [模式 ...]                                    { 命令 ; }
+[root@svr7 ~]# 
+[root@svr7 ~]# help alias
+alias: alias [-p] [名称[=值] ... ]
+    定义或显示别名。
+    
+    不带参数时， `alias' 以可重用的格式
+    `alias 名称=值'在标准输出设备上打印别名列表。
+    
+    否则，对于每个给定值的名称定义一个别名。
+    值末尾的空格会使下一个词被检测
+    作为别名替换展开。
+    
+    选项：
+      -p	以可重用的格式打印所有的已定义的别名
+    
+    退出状态：
+    除非一个没有定义的名字被作为参数提供，否则 alias 
+    返回值为真。
+[root@svr7 ~]# ls  --help | less
+[root@svr7 ~]# 
+[root@svr7 ~]# zip -r /root/filex.zip  /etc/passwd
+  adding: etc/passwd (deflated 61%)
+[root@svr7 ~]# ls /root
+anaconda-ks.cfg  filex.zip  initial-setup-ks.cfg  公共  模板  视频  图片  文档  下载  音乐  桌面
+[root@svr7 ~]# mkdir /nsd02/
+[root@svr7 ~]# unzip  /root/filex.zip  -d /nsd02
+Archive:  /root/filex.zip
+  inflating: /nsd02/etc/passwd       
+[root@svr7 ~]# ls /nsd02
+etc
+[root@svr7 ~]# cat /nsd02/etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+[root@svr7 ~]# cat /nsd02/etc/passwd | head -1
+root:x:0:0:root:/root:/bin/bash
+
+[root@room9pc01 ~]# scp -r  /root/桌面/tools.tar.gz root@192.168.4.7:/root/
+root@192.168.4.7's password: 
+tools.tar.gz                                  100%  766KB  28.4MB/s   00:00 
+[root@svr7 ~]# ls /root
+anaconda-ks.cfg  filex.zip  initial-setup-ks.cfg  tools.tar.gz  公共  模板  视频  图片  文档  下载  音乐  桌面
+
+[root@svr7 ~]# tar -xf /root/tools.tar.gz -C /
+[root@svr7 ~]# ls /
+bin   dev  home  lib64  mnt      nsd01  opt   redhat-release  run   srv  tmp    usr
+boot  etc  lib   media  newkuai  nsd02  proc  root            sbin  sys  tools  var
+[root@svr7 ~]# ls /tools/
+inotify-tools-3.13.tar.gz  other
+[root@svr7 ~]# ls /tools/other/
+boxes-1.1.1-4.el7.x86_64.rpm  ntfs-3g-2014.2.15-6.el6.x86_64.rpm  sl-5.02-1.el7.x86_64.rpm
+cmatrix-1.2a-1.i386.rpm       oneko-1.2-19.fc24.x86_64.rpm
+[root@svr7 ~]# 
+
+[root@svr7 ~]# createrepo  /tools/other/
+Spawning worker 0 with 5 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+[root@svr7 ~]# ls /tools/other/ 
+boxes-1.1.1-4.el7.x86_64.rpm  ntfs-3g-2014.2.15-6.el6.x86_64.rpm  repodata
+cmatrix-1.2a-1.i386.rpm       oneko-1.2-19.fc24.x86_64.rpm        sl-5.02-1.el7.x86_64.rpm
+[root@svr7 ~]# ls /tools/other/repodata/
+4510d89472a46087687deedb43b44038238c057d85b0acd4d792dd276752ec31-other.sqlite.bz2
+5c773aae466acfbcb92fc88af147ae313998ef4afe649c1e8f9a4442fe382420-primary.xml.gz
+679b3de7d30fe5d9d49fd83a847234b13e78704cc85d9e3023db5eae6ef4ff90-filelists.xml.gz
+c7a3c785ad26f0c2aa64a252f0a16b5c1822fee51d133203c453686eddca898a-filelists.sqlite.bz2
+d9ce0aa24483f8411915398b66e2c8000ec3c5e6f11a83f48efb6885cea57329-other.xml.gz
+fe925dbab22913101e0c90af0af2a7ed5d10e202322a729cd222e2895753ef87-primary.sqlite.bz2
+repomd.xml
+[root@svr7 ~]# 
+
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@svr7 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+baseurl=ftp://192.168.4.254/rhel7
+enable=1
+gpgcheck=0
+[myrpm]
+name=myrpm
+baseurl=file:///tools/other
+enable=1
+gpgcheck=0
+[root@svr7 ~]# yum repolist
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+myrpm                                                                                            | 2.9 kB  00:00:00     
+rhel7                                                                                            | 4.1 kB  00:00:00     
+myrpm/primary_db                                                                                 | 4.8 kB  00:00:00     
+源标识                                                   源名称                                                    状态
+myrpm                                                    myrpm                                                         5
+rhel7                                                    rhel7.4                                                   4,986
+repolist: 4,991
+
+[root@svr7 ~]# rpm -ql  sl
+未安装软件包 sl 
+[root@svr7 ~]# yum -y install sl
+
+已安装:
+  sl.x86_64 0:5.02-1.el7                                                                                                
+
+完毕！
+[root@svr7 ~]# rpm -ql sl
+/usr/bin/sl
+/usr/share/doc/sl-5.02
+/usr/share/doc/sl-5.02/LICENSE
+/usr/share/doc/sl-5.02/README.ja.md
+/usr/share/doc/sl-5.02/README.md
+/usr/share/man/ja/man1/sl.1.ja.gz
+/usr/share/man/man1/sl.1.gz
+[root@svr7 ~]# 
+[root@svr7 ~]# rpm -q  sl
+sl-5.02-1.el7.x86_64
+
+[root@svr7 ~]# yum  -y install oneko
+
+已安装:
+  oneko.x86_64 0:1.2-19.fc24                                                                                            
+
+完毕！
+[root@svr7 ~]# rpm -ql oneko
+/usr/bin/oneko
+/usr/share/applications/oneko.desktop
+/usr/share/doc/oneko
+/usr/share/doc/oneko/README-NEW
+/usr/share/doc/oneko/README-SUPP.jp
+/usr/share/doc/oneko/README.jp
+/usr/share/doc/oneko/sample.resource
+/usr/share/man/ja/man1/oneko.1.gz
+/usr/share/man/man1/oneko.1.gz
+/usr/share/pixmaps/oneko.png
+[root@svr7 ~]# rpm -q oneko
+oneko-1.2-19.fc24.x86_64
+
+[root@svr7 ~]# oneko
+
+[root@svr7 ~]# yum -y install cmatrix
+已安装:
+  cmatrix.i386 0:1.2a-1                                                                                                 
+
+作为依赖被安装:
+  glibc.i686 0:2.17-196.el7                  libgcc.i686 0:4.8.5-16.el7                libstdc++.i686 0:4.8.5-16.el7   
+  ncurses-libs.i686 0:5.9-13.20130511.el7    nss-softokn-freebl.i686 0:3.28.3-6.el7   
+
+完毕！
+[root@svr7 ~]# cmatrix
+[root@svr7 ~]# chmod 5755 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+drwsr-sr-t. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# chmod 4755 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+drwsr-sr-x. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# chmod 1755 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+drwsr-sr-t. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# chmod 3755 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+drwsr-sr-t. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# chmod 2755 /nsd01
+[root@svr7 ~]# ls -ld /nsd01
+drwsr-sr-x. 2 root root 6 6月  19 11:27 /nsd01
+[root@svr7 ~]# yum -y install gcc
+已安装:
+  gcc.x86_64 0:4.8.5-16.el7                                                                                             
+
+作为依赖被安装:
+  cpp.x86_64 0:4.8.5-16.el7                 glibc-devel.x86_64 0:2.17-196.el7    glibc-headers.x86_64 0:2.17-196.el7   
+  kernel-headers.x86_64 0:3.10.0-693.el7    libmpc.x86_64 0:1.0.1-3.el7         
+
+完毕！
+[root@svr7 ~]# rpm -q make
+make-3.82-23.el7.x86_64
+[root@svr7 ~]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+[root@svr7 ~]# ls /tools/
+inotify-tools-3.13.tar.gz  other
+[root@svr7 ~]# ls /mnt/
+[root@svr7 ~]# tar -xf /tools/inotify-tools-3.13.tar.gz  -C  /mnt/
+[root@svr7 ~]# ls /mnt/
+inotify-tools-3.13
+
+[root@svr7 ~]# ls /mnt/inotify-tools-3.13/
+aclocal.m4  config.guess  configure     depcomp     libinotifytools  Makefile.in  NEWS
+AUTHORS     config.h.in   configure.ac  INSTALL     ltmain.sh        man          README
+ChangeLog   config.sub    COPYING       install-sh  Makefile.am      missing      src
+[root@svr7 ~]# cd /mnt/inotify-tools-3.13/
+[root@svr7 inotify-tools-3.13]# ./configure --prefix=/opt/myrpm
+[root@svr7 inotify-tools-3.13]# make
+[root@svr7 inotify-tools-3.13]# make install
+[root@svr7 inotify-tools-3.13]# ls /opt/
+B  C  myrpm  rh
+[root@svr7 inotify-tools-3.13]# ls /opt/myrpm/
+bin  include  lib  share
+[root@svr7 inotify-tools-3.13]# ls /opt/myrpm/bin/
+inotifywait  inotifywatch
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

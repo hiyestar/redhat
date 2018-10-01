@@ -1,0 +1,49 @@
+1.vim编辑器，命令模式如何同时复制4行？
+      4yy
+
+2.制作zip归档压缩包:将/home、/boot归档及压缩成/opt/test.zip 请写出该命令？
+   zip  -r  /opt/test.zip  /home  /boot 
+
+3.将/etc/passwd制作快捷方式放在/opt/pas 请写出该命令？
+    ln  -s /etc/passwd   /opt/pas
+
+
+4.配置nfs共享，配置文件在哪里？
+     /etc/exports
+
+5.yum客户端配置文件放在什么路径下？具体都有哪些字段？
+   /etc/yum.repos.d/*.repo
+    []  name   baseurl  enabled  gpgcheck
+
+
+6.将/opt/test.zip解压缩到/mnt下 请写出该命令？
+    unzip   /opt/test.zip  -d /mnt
+
+
+7.配置Apache的httpd服务时，虚拟Web主机区分方式都有哪些？
+   基于域名    基于端口    基于IP地址
+
+
+8.配置Apache的httpd服务,指定网页文件根目录配置字段是什么？
+    DocumentRoot
+
+9.httpd服务，虚拟Web主机配置，具体格式是什么？
+     <VirtualHost  *:80>
+        ServerName
+        DocumentRoot
+     </VirtualHost>
+
+10.请写出您熟知的Linux命令，至少10条以上（请开始您的表演）
+  
+
+
+
+
+
+
+
+
+
+
+
+

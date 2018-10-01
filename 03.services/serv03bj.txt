@@ -1,0 +1,877 @@
+[root@room9pc01 ~]# scp -r /root/桌面/tools.tar.gz root@192.168.4.7:/root/
+root@192.168.4.7's password: 
+tools.tar.gz                                                                              100%  766KB  13.2MB/s   00:00    
+
+
+[root@svr7 ~]# ls /root
+anaconda-ks.cfg  initial-setup-ks.cfg  tools.tar.gz  公共  模板  视频  图片  文档  下载  音乐  桌面
+
+[root@svr7 ~]# tar -zxf /root/tools.tar.gz -C /
+[root@svr7 ~]# ls /tools/
+inotify-tools-3.13.tar.gz  other
+[root@svr7 ~]# ls /tools/other
+boxes-1.1.1-4.el7.x86_64.rpm  ntfs-3g-2014.2.15-6.el6.x86_64.rpm  sl-5.02-1.el7.x86_64.rpm
+cmatrix-1.2a-1.i386.rpm       oneko-1.2-19.fc24.x86_64.rpm
+[root@svr7 ~]# createrepo /tools/other/
+Spawning worker 0 with 5 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+
+[root@svr7 ~]# ls /tools/other/repodata/
+4510d89472a46087687deedb43b44038238c057d85b0acd4d792dd276752ec31-other.sqlite.bz2
+5c773aae466acfbcb92fc88af147ae313998ef4afe649c1e8f9a4442fe382420-primary.xml.gz
+679b3de7d30fe5d9d49fd83a847234b13e78704cc85d9e3023db5eae6ef4ff90-filelists.xml.gz
+c7a3c785ad26f0c2aa64a252f0a16b5c1822fee51d133203c453686eddca898a-filelists.sqlite.bz2
+d9ce0aa24483f8411915398b66e2c8000ec3c5e6f11a83f48efb6885cea57329-other.xml.gz
+fe925dbab22913101e0c90af0af2a7ed5d10e202322a729cd222e2895753ef87-primary.sqlite.bz2
+repomd.xml
+
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@svr7 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[root@room9pc01 ~]# ifconfig private1 | head -2
+private1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.254  netmask 255.255.255.0  broadcast 192.168.4.255
+
+[root@svr7 ~]# yum repolist 
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+rhel7                                                                                                | 4.1 kB  00:00:00     
+(1/2): rhel7/group_gz                                                                                | 137 kB  00:00:00     
+(2/2): rhel7/primary_db                                                                              | 4.0 MB  00:00:00     
+源标识                                                     源名称                                                      状态
+rhel7                                                      rhel7.4                                                     4,986
+repolist: 4,986
+[root@svr7 ~]# 
+[root@svr7 ~]# hostname
+svr7.tedu.cn
+
+[root@svr7 ~]# yum -y install dhcp
+
+
+[root@svr7 ~]# vim /etc/dhcp/dhcpd.conf
+[root@svr7 ~]# cat /etc/dhcp/dhcpd.conf
+subnet 192.168.4.0 netmask 255.255.255.0 {
+  range 192.168.4.100  192.168.4.150;
+  option domain-name-servers 192.168.4.7;
+  option routers 192.168.4.254;
+  default-lease-time 600;
+  max-lease-time 7200;
+}
+[root@svr7 ~]# systemctl restart dhcpd
+[root@svr7 ~]# vim /etc/dhcp/dhcpd.conf
+[root@svr7 ~]# cat /etc/dhcp/dhcpd.conf
+subnet 192.168.4.0 netmask 255.255.255.0 {
+  range 192.168.4.100  192.168.4.150;
+  option domain-name-servers 192.168.4.7;
+  option routers 192.168.4.254;
+  default-lease-time 600;
+  max-lease-time 7200;
+  next-server 192.168.4.7;
+  filename "pxelinux.0";
+}
+
+[root@svr7 ~]# systemctl restart dhcpd
+
+[root@svr7 ~]# yum -y install tftp-server
+
+已安装:
+  tftp-server.x86_64 0:5.2-13.el7                                                                                 
+
+完毕！
+[root@svr7 ~]# systemctl restart tftp
+[root@svr7 ~]# rpm -q tftp
+未安装软件包 tftp 
+[root@svr7 ~]# rpm -q tftp-server 
+tftp-server-5.2-13.el7.x86_64
+[root@svr7 ~]# ls  /var/lib/tftpboot
+[root@svr7 ~]# yum provides */pxelinux.0
+
+syslinux-4.05-13.el7.x86_64 : Simple kernel loader which boots from a FAT filesystem
+源    ：@rhel7
+匹配来源：
+文件名    ：/usr/share/syslinux/pxelinux.0
+[root@svr7 ~]# yum -y install syslinux
+
+
+[root@svr7 ~]# rpm -ql syslinux | grep pxelinux.0
+/usr/share/syslinux/gpxelinux.0
+/usr/share/syslinux/pxelinux.0
+[root@svr7 ~]# cp -p /usr/share/syslinux/pxelinux.0  /var/lib/tftpboot/
+[root@svr7 ~]# ls /var/lib/tftpboot/
+pxelinux.0
+
+[root@svr7 ~]# ls /var/lib/tftpboot/
+pxelinux.0
+[root@svr7 ~]# mkdir /var/lib/tftpboot/pxelinux.cfg
+[root@svr7 ~]# mount /dev/cdrom /mnt/
+mount: 在 /dev/sr0 上找不到媒体
+[root@svr7 ~]# mount /dev/cdrom /mnt/
+mount: /dev/sr0 写保护，将以只读方式挂载
+[root@svr7 ~]# ls /mnt/isolinux/
+boot.cat  grub.conf   isolinux.bin  memtest     TRANS.TBL    vesamenu.c32
+boot.msg  initrd.img  isolinux.cfg  splash.png  upgrade.img  vmlinuz
+[root@svr7 ~]# 
+[root@svr7 ~]# cp /mnt/isolinux/isolinux.cfg  /var/lib/tftpboot//pxelinux.cfg//default
+[root@svr7 ~]# chmod u+w /var/lib/tftpboot/pxelinux.cfg/default
+[root@svr7 ~]# ls -l /var/lib/tftpboot/pxelinux.cfg/default
+-rw-r--r--. 1 root root 3166 6月  22 11:41 /var/lib/tftpboot/pxelinux.cfg/default
+[root@svr7 ~]# 
+
+
+[root@svr7 ~]# cp /mnt/isolinux/vesamenu.c32  /mnt/isolinux/splash.png  /var/lib/tftpboot/
+
+[root@svr7 ~]# ls /var/lib/tftpboot/
+pxelinux.0  pxelinux.cfg  splash.png  vesamenu.c32
+
+[root@svr7 ~]# cp /mnt/isolinux/vmlinuz  /mnt/isolinux/initrd.img  /var/lib/tftpboot/
+[root@svr7 ~]# ls /var/lib/tftpboot/
+initrd.img  pxelinux.0  pxelinux.cfg  splash.png  vesamenu.c32  vmlinuz
+
+
+[root@svr7 ~]# vim /var/lib/tftpboot/pxelinux.cfg/default
+
+  1 default vesamenu.c32
+  2 timeout 600
+  3 
+  4 display boot.msg
+ 10 menu background splash.png
+
+ 11 menu title NSD1805pxe Server
+ 12 #menu title Red Hat Enterprise Linux 7.4
+ 61 
+ 62 label linux
+ 63   menu label Install RHEL7
+ 64   menu default
+ 65   kernel vmlinuz
+ 66   append initrd=initrd.img
+
+label linux
+  menu label Install RHEL7
+  menu default
+  kernel vmlinuz
+  append initrd=initrd.img  ks=http://192.168.4.7/ks.cfg
+
+
+[root@svr7 ~]# yum -y install httpd
+已安装:
+  httpd.x86_64 0:2.4.6-67.el7                                                                                     
+
+作为依赖被安装:
+  apr.x86_64 0:1.4.8-3.el7            apr-util.x86_64 0:1.5.2-6.el7       httpd-tools.x86_64 0:2.4.6-67.el7      
+  mailcap.noarch 0:2.1.41-2.el7      
+
+
+[root@svr7 ~]# rpm -q httpd
+httpd-2.4.6-67.el7.x86_64
+[root@svr7 ~]# systemctl restart httpd
+
+[root@svr7 ~]# mkdir /var/www/html/rhel7
+
+[root@svr7 ~]# mount /dev/cdrom /var/www/html/rhel7
+mount: /dev/sr0 写保护，将以只读方式挂载
+mount: /dev/sr0 已经挂载或 /var/www/html/rhel7 忙
+       /dev/sr0 已经挂载到 /mnt 上
+       /dev/sr0 已经挂载到 /var/www/html/rhel7 上
+
+[root@svr7 ~]# ls /var/www/html/rhel7
+addons  EULA              GPL     isolinux  media.repo  repodata                 RPM-GPG-KEY-redhat-release
+EFI     extra_files.json  images  LiveOS    Packages    RPM-GPG-KEY-redhat-beta  TRANS.TBL
+
+
+[root@svr7 ~]# firefox http://192.168.4.7/rhel7
+
+[root@svr7 ~]# yum -y install system-config-kickstart
+
+
+已安装:
+  system-config-kickstart.noarch 0:2.9.6-1.el7                                                                    
+
+作为依赖被安装:
+  system-config-date.noarch 0:1.10.6-2.el7              system-config-date-docs.noarch 0:1.0.11-4.el7             
+  system-config-keyboard.noarch 0:1.4.0-4.el7           system-config-keyboard-base.noarch 0:1.4.0-4.el7          
+  system-config-language.noarch 0:1.4.0-9.el7          
+
+完毕！
+[root@svr7 ~]# rpm -q system-config-kickstart 
+system-config-kickstart-2.9.6-1.el7.noarch
+[root@svr7 ~]# system-config-kickstart 
+/usr/share/system-config-kickstart/kickstartGui.py:104: GtkWarning: GtkSpinButton: setting an adjustment with non-zero page size is deprecated
+
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo 
+[root@svr7 ~]# cat /etc/yum.repos.d/rhel7.repo
+[development]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[myrpm]
+name=myrpm
+enabled=1
+gpgcheck=0
+baseurl=file:///tools/other
+
+
+[root@svr7 ~]# ls /root
+anaconda-ks.cfg  initial-setup-ks.cfg  ks.cfg  tools.tar.gz  公共  模板  视频  图片  文档  下载  音乐  桌面
+[root@svr7 ~]# vim /root/ks.cfg 
+# Use network installation
+url --url="http://192.168.4.7/rhel7"
+# System language
+lang zh_CN
+# Firewall configuration
+firewall --disabled
+# System authorization information
+auth  --useshadow  --passalgo=sha512
+# Use graphical install
+graphical
+firstboot --disable
+# SELinux configuration
+selinux --disabled
+
+# Network information
+network  --bootproto=dhcp --device=eth0
+# Reboot after installation
+reboot
+# System timezone
+timezone Asia/Shanghai
+# System bootloader configuration
+bootloader --location=mbr
+# Clear the Master Boot Record
+zerombr
+# Partition clearing information
+clearpart --all --initlabel
+# Disk partitioning information
+part / --fstype="xfs" --grow --size=1
+
+%post --interpreter=/bin/bash
+useradd lisi
+echo 123 |  passwd  --stdin  lisi
+%end
+
+%packages
+@base
+
+%end
+          
+[root@svr7 ~]# cp -p /root/ks.cfg  /var/www/html/
+[root@svr7 ~]# ls /var/www/html/
+ks.cfg  rhel7
+
+[root@svr7 ~]# vim /var/lib/tftpboot/pxelinux.cfg//default 
+
+label linux
+  menu label Install RHEL7
+  menu default
+  kernel vmlinuz
+  append initrd=initrd.img  ks=http://192.168.4.7/ks.cfg
+
+
+[root@svr7 ~]# systemctl restart dhcpd
+[root@svr7 ~]# systemctl  restart tftp
+[root@svr7 ~]# systemctl restart httpd
+[root@svr7 ~]# system-config-kickstart 
+
+基本配置 安装后重起
+         在文本模式中执行安装
+安装方法
+    HTTP服务器：192.168.4.7
+     目录        ：rhel7
+
+
+分区信息  RAID挂在点
+        /    xfs   是   1
+
+设备  网络类型
+192.168.4.7
+
+安装后脚本
+/bin/bash
+useradd lisi
+echo 123  | passwd --stdin  lisi
+
+保存 root
+名称ks.cfg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# alias | grep go
+alias goc10='ssh -X root@192.168.4.10'
+alias god20='ssh -X root@192.168.4.20'
+alias gopc207='ssh -X root@192.168.4.207'
+alias gosvr7='ssh -X root@192.168.4.7'
+[root@room9pc01 ~]# gosvr7
+root@192.168.4.7's password: 
+Last login: Fri Jun 22 08:12:04 2018
+[root@svr7 ~]# ls /root
+anaconda-ks.cfg  initial-setup-ks.cfg  tools.tar.gz  公共  模板  视频  图片  文档  下载  音乐  桌面
+[root@svr7 ~]# tar -zxf /root/tools.tar.gz -C /
+[root@svr7 ~]# ls /tools/
+inotify-tools-3.13.tar.gz  other
+[root@svr7 ~]# ls /tools/other
+boxes-1.1.1-4.el7.x86_64.rpm  ntfs-3g-2014.2.15-6.el6.x86_64.rpm  sl-5.02-1.el7.x86_64.rpm
+cmatrix-1.2a-1.i386.rpm       oneko-1.2-19.fc24.x86_64.rpm
+[root@svr7 ~]# createrepo /tools/other/
+Spawning worker 0 with 5 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+[root@svr7 ~]# ls /tools/other/repodata/
+4510d89472a46087687deedb43b44038238c057d85b0acd4d792dd276752ec31-other.sqlite.bz2
+5c773aae466acfbcb92fc88af147ae313998ef4afe649c1e8f9a4442fe382420-primary.xml.gz
+679b3de7d30fe5d9d49fd83a847234b13e78704cc85d9e3023db5eae6ef4ff90-filelists.xml.gz
+c7a3c785ad26f0c2aa64a252f0a16b5c1822fee51d133203c453686eddca898a-filelists.sqlite.bz2
+d9ce0aa24483f8411915398b66e2c8000ec3c5e6f11a83f48efb6885cea57329-other.xml.gz
+fe925dbab22913101e0c90af0af2a7ed5d10e202322a729cd222e2895753ef87-primary.sqlite.bz2
+repomd.xml
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@svr7 ~]# cat /etc/yum.repos.d/rhel7.repo
+me=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@svr7 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[root@svr7 ~]# yum repolist 
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+rhel7                                                                                                | 4.1 kB  00:00:00     
+(1/2): rhel7/group_gz                                                                                | 137 kB  00:00:00     
+(2/2): rhel7/primary_db                                                                              | 4.0 MB  00:00:00     
+源标识                                                     源名称                                                      状态
+rhel7                                                      rhel7.4                                                     4,986
+repolist: 4,986
+[root@svr7 ~]# 
+[root@svr7 ~]# hostname
+svr7.tedu.cn
+[
+[root@svr7 ~]# 
+[root@svr7 ~]# 
+[root@svr7 ~]# yum -y install dhcp
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+正在解决依赖关系
+                                                            | 1.6 kB  00:00:00     
+  验证中      : 12:dhcp-4.2.5-58.el7.x86_64                                                                   1/1 
+
+已安装:
+  dhcp.x86_64 12:4.2.5-58.el7                                                                                     
+
+完毕！
+[root@svr7 ~]# vim /etc/dhcp/dhcpd.conf
+[root@svr7 ~]# vim /etc/dhcp/dhcpd.conf
+[root@svr7 ~]# vim /etc/dhcp/dhcpd.conf
+[root@svr7 ~]# cat /etc/dhcp/dhcpd.conf
+#
+# DHCP Server Configuration file.
+#   see /usr/share/doc/dhcp*/dhcpd.conf.example
+#   see dhcpd.conf(5) man page
+#
+
+
+
+# dhcpd.conf
+#
+# Sample configuration file for ISC dhcpd
+#
+
+# option definitions common to all supported networks...
+# option domain-name "example.org";
+#option domain-name-servers ns1.example.org, ns2.example.org;
+
+#default-lease-time 600;
+#max-lease-time 7200;
+
+# Use this to enble / disable dynamic dns updates globally.
+#ddns-update-style none;
+
+# If this DHCP server is the official DHCP server for the local
+# network, the authoritative directive should be uncommented.
+#authoritative;
+
+# Use this to send dhcp log messages to a different log file (you also
+# have to hack syslog.conf to complete the redirection).
+#log-facility local7;
+
+# No service will be given on this subnet, but declaring it helps the 
+# DHCP server to understand the network topology.
+
+#subnet 10.152.187.0 netmask 255.255.255.0 {
+#}
+
+# This is a very basic subnet declaration.
+
+#subnet 10.254.239.0 netmask 255.255.255.224 {
+subnet 192.168.4.0 netmask 255.255.255.0 {
+  range 192.168.4.100  192.168.4.150;
+  option domain-name-servers 192.168.4.7;
+  option routers 192.168.4.7;
+  default-lease-time 600;
+  max-lease-time 7200;
+}
+[root@svr7 ~]# vim /etc/dhcp/dhcpd.conf
+[root@svr7 ~]# cat /etc/dhcp/dhcpd.conf
+subnet 192.168.4.0 netmask 255.255.255.0 {
+  range 192.168.4.100  192.168.4.150;
+  option domain-name-servers 192.168.4.7;
+  option routers 192.168.4.7;
+  default-lease-time 600;
+  max-lease-time 7200;
+}
+[root@svr7 ~]# systemctl restart dhcpd
+[root@svr7 ~]# 
+[root@svr7 ~]# vim /etc/dhcp/dhcpd.conf
+[root@svr7 ~]# cat /etc/dhcp /dhcpd.conf
+cat: /etc/dhcp: 是一个目录
+cat: /dhcpd.conf: 没有那个文件或目录
+[root@svr7 ~]# cat /etc/dhcp/dhcpd.conf
+subnet 192.168.4.0 netmask 255.255.255.0 {
+  range 192.168.4.100  192.168.4.150;
+  option domain-name-servers 192.168.4.7;
+  option routers 192.168.4.7;
+  default-lease-time 600;
+  max-lease-time 7200;
+  next-server 192.168.4.7;
+  filename "pxelinux.0";
+}
+[root@svr7 ~]# systemctl restart dhcpd
+[root@svr7 ~]# vim /etc/dhcp/dhcpd.conf
+[root@svr7 ~]# cat /etc/dhcp/dhcpd.conf
+subnet 192.168.4.0 netmask 255.255.255.0 {
+  range 192.168.4.100  192.168.4.150;
+  option domain-name-servers 192.168.4.7;
+  option routers 192.168.4.254;
+  default-lease-time 600;
+  max-lease-time 7200;
+  next-server 192.168.4.7;
+  filename "pxelinux.0";
+}
+[root@svr7 ~]# systemctl restart dhcpd
+[root@svr7 ~]# 
+[root@svr7 ~]# yum -y install tftp-server
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to r
+Transaction test succeeded
+Running transaction
+  正在安装    : tftp-server-5.2-13.el7.x86_64                                                                 1/1 
+  验证中      : tftp-server-5.2-13.el7.x86_64                                                                 1/1 
+
+已安装:
+  tftp-server.x86_64 0:5.2-13.el7                                                                                 
+
+完毕！
+[root@svr7 ~]# systemctl restart tftp
+[root@svr7 ~]# rpm -q tftp
+未安装软件包 tftp 
+[root@svr7 ~]# rpm -q tftp-server 
+tftp-server-5.2-13.el7.x86_64
+[root@svr7 ~]# ls  /var/lib/tftpboot
+[root@svr7 ~]# 
+[root@svr7 ~]# yum provides */guestmount
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+rhel7/filelists_db                                                                         | 3.4 MB  00:00:00     
+1:libguestfs-tools-c-1.36.3-6.el7.x86_64 : System administration tools for virtual machines
+源    ：rhel7
+匹配来源：
+文件名    ：/usr/bin/guestmount
+
+
+
+[root@svr7 ~]# yum -y install syslinux
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+正在解决依赖关系
+--> 正在检查事务
+---> 软件包 syslinux.x86_64.0.4.05-13.el7 将被 安装
+--> 解决依赖关系完成
+
+依赖关系解决
+
+==================================================================================================================
+ Package                    架构                     版本                           源                       大小
+==================================================================================================================
+正在安装:
+ syslinux                   x86_64                   4.05-13.el7                    rhel7                   990 k
+
+事务概要
+==================================================================================================================
+安装  1 软件包
+
+总下载量：990 k
+安装大小：2.3 M
+Downloading packages:
+syslinux-4.05-13.el7.x86_64.rpm                                                            | 990 kB  00:00:00     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  正在安装    : syslinux-4.05-13.el7.x86_64                                                                   1/1 
+  验证中      : syslinux-4.05-13.el7.x86_64                                                                   1/1 
+
+已安装:
+  syslinux.x86_64 0:4.05-13.el7                                                                                   
+
+完毕！
+[root@svr7 ~]# 
+[root@svr7 ~]# yum provides */pxelinux.0
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+syslinux-4.05-13.el7.x86_64 : Simple kernel loader which boots from a FAT filesystem
+源    ：rhel7
+匹配来源：
+文件名    ：/usr/share/syslinux/pxelinux.0
+
+
+
+syslinux-4.05-13.el7.x86_64 : Simple kernel loader which boots from a FAT filesystem
+源    ：@rhel7
+匹配来源：
+文件名    ：/usr/share/syslinux/pxelinux.0
+
+
+
+[root@svr7 ~]# rpm -ql syslinux | grep pxelinux.0
+/usr/share/syslinux/gpxelinux.0
+/usr/share/syslinux/pxelinux.0
+[root@svr7 ~]# cp -p /usr/share/syslinux/pxelinux.0  /var/lib/tftpboot/
+[root@svr7 ~]# ls /var/lib/tftpboot/
+pxelinux.0
+[root@svr7 ~]# mkdir /var/lib/tftpboot/pxelinux.cfg
+--------------
+-----------------------------------=============================
+========================================================
+[root@svr7 ~]# mount /dev/cdrom /mnt/
+mount: 在 /dev/sr0 上找不到媒体
+[root@svr7 ~]# mount /dev/cdrom /mnt/
+mount: /dev/sr0 写保护，将以只读方式挂载
+[root@svr7 ~]# ls /mnt/isolinux/
+boot.cat  grub.conf   isolinux.bin  memtest     TRANS.TBL    vesamenu.c32
+boot.msg  initrd.img  isolinux.cfg  splash.png  upgrade.img  vmlinuz
+[root@svr7 ~]# 
+[root@svr7 ~]# cp /mnt/isolinux/isolinux.cfg  /var/lib/tftpboot//pxelinux.cfg//default
+[root@svr7 ~]# chmod u+w /var/lib/tftpboot/pxelinux.cfg/default
+[root@svr7 ~]# ls -l /var/lib/tftpboot/pxelinux.cfg/default
+-rw-r--r--. 1 root root 3166 6月  22 11:41 /var/lib/tftpboot/pxelinux.cfg/default
+[root@svr7 ~]# cp /mnt/isolinux/vesamenu.c32  /mnt/isolinux/splash.png  /var/lib//tftpboot/
+[root@svr7 ~]# ls /var/lib//tftpboot/
+pxelinux.0  pxelinux.cfg  splash.png  vesamenu.c32
+[root@svr7 ~]# cp /mnt/isolinux/vesamenu.c32  /mnt/isolinux/splash.png  /var/lib/tftpboot/
+cp：是否覆盖"/var/lib/tftpboot/vesamenu.c32"？ 
+cp：是否覆盖"/var/lib/tftpboot/splash.png"？ yes
+[root@svr7 ~]# ls /var/lib/tftpboot/
+pxelinux.0  pxelinux.cfg  splash.png  vesamenu.c32
+[root@svr7 ~]# cp /mnt/isolinux//vmlinuz  /mnt/isolinux/initrd.img  /var/lib/tftpboot/
+[root@svr7 ~]# ls /var/lib/tftpboot/
+initrd.img  pxelinux.0  pxelinux.cfg  splash.png  vesamenu.c32  vmlinuz
+[root@svr7 ~]# ls /tools/other/
+boxes-1.1.1-4.el7.x86_64.rpm  ntfs-3g-2014.2.15-6.el6.x86_64.rpm  repodata
+cmatrix-1.2a-1.i386.rpm       oneko-1.2-19.fc24.x86_64.rpm        sl-5.02-1.el7.x86_64.rpm
+[root@svr7 ~]# vim /var/lib/tftpboot/pxelinux.cfg/default
+[root@svr7 ~]# yum -y install httpd
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+rhel7                                                                                      | 4.1 kB  00:00:00     
+正在解决依赖关系
+--
+ httpd-tools                  x86_64                  2.4.6-67.el7                   rhel7                   87 k
+ mailcap                      noarch                  2.1.41-2.el7                   rhel7                   31 k
+
+事务概要
+                                                                  1/5 
+                                                               5/5 
+
+已安装:
+  httpd.x86_64 0:2.4.6-67.el7                                                                                     
+
+作为依赖被安装:
+  apr.x86_64 0:1.4.8-3.el7            apr-util.x86_64 0:1.5.2-6.el7       httpd-tools.x86_64 0:2.4.6-67.el7      
+  mailcap.noarch 0:2.1.41-2.el7      
+
+完毕！
+[root@svr7 ~]# rpm -q httpd
+httpd-2.4.6-67.el7.x86_64
+[root@svr7 ~]# systemctl restart httpd
+[root@svr7 ~]# mkdir /var/www/html/rhel7
+[root@svr7 ~]# mount /dev/cdrom //var/www/html/rhel7
+mount: /dev/sr0 写保护，将以只读方式挂载
+[root@svr7 ~]# unmount  //var/www/html/rhel7
+bash: unmount: 未找到命令...
+[root@svr7 ~]# unmount /var/www/html/rhel7
+bash: unmount: 未找到命令...
+[root@svr7 ~]# mount /dev/cdrom /var/www/html/rhel7
+mount: /dev/sr0 写保护，将以只读方式挂载
+mount: /dev/sr0 已经挂载或 /var/www/html/rhel7 忙
+       /dev/sr0 已经挂载到 /mnt 上
+       /dev/sr0 已经挂载到 /var/www/html/rhel7 上
+[root@svr7 ~]# ls /var/www/html/rhel7
+addons  EULA              GPL     isolinux  media.repo  repodata                 RPM-GPG-KEY-redhat-release
+EFI     extra_files.json  images  LiveOS    Packages    RPM-GPG-KEY-redhat-beta  TRANS.TBL
+[
+
+[root@svr7 ~]# firefox http://192.168.4.7/rhel7
+^C
+[Child 9177] ###!!! ABORT: Aborting on channel error.: file /builddir/build/BUILD/firefox-52.2.0/firefox-52.2.0esr/ipc/glue/MessageChannel.cpp, line 2152
+[Child 9177] ###!!! ABORT: Aborting on channel error.: file /builddir/build/BUILD/firefox-52.2.0/firefox-52.2.0esr/ipc/glue/MessageChannel.cpp, line 2152
+您在 /var/spool/mail/root 中有邮件
+[root@svr7 ~]# df -h 
+文件系统               容量  已用  可用 已用% 挂载点
+/dev/mapper/rhel-root   17G  3.4G   14G   20% /
+devtmpfs               481M     0  481M    0% /dev
+tmpfs                  497M     0  497M    0% /dev/shm
+tmpfs                  497M  7.1M  490M    2% /run
+tmpfs                  497M     0  497M    0% /sys/fs/cgroup
+/dev/vda1             1014M  161M  854M   16% /boot
+tmpfs                  100M  4.0K  100M    1% /run/user/0
+tmpfs                  100M   12K  100M    1% /run/user/42
+/dev/sr0               3.8G  3.8G     0  100% /mnt
+您在 /var/spool/mail/root 中有新邮件
+[root@svr7 ~]# yum -y install system-config-kickstart
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+正在解
+依赖关系解决
+
+==================================================================================================================
+ Package                                  架构                版本                       源                  大小
+==================================================================================================================
+正在安装:
+ system-config-kickstart                  noarch              2.9.6-1.el7                rhel7              352 k
+为依赖而安装:
+         | 619 -base-1.4.0-4.el7.noarch                                                6/6 
+
+已安装:
+  system-config-kickstart.noarch 0:2.9.6-1.el7                                                                    
+
+作为依赖被安装:
+  system-config-date.noarch 0:1.10.6-2.el7              system-config-date-docs.noarch 0:1.0.11-4.el7             
+  system-config-keyboard.noarch 0:1.4.0-4.el7           system-config-keyboard-base.noarch 0:1.4.0-4.el7          
+  system-config-language.noarch 0:1.4.0-9.el7          
+
+完毕！
+[root@svr7 ~]# rpm -q system-config-kickstart 
+system-config-kickstart-2.9.6-1.el7.noarch
+[root@svr7 ~]# 
+[root@svr7 ~]# system-config-kickstart 
+/usr/share/system-config-kickstart/kickstartGui.py:104: GtkWarning: GtkSpinButton: setting an adjustment with non-zero page size is deprecated
+
+
+  entry = ZoneTabEntry(code, lat, long, tz, comments)
+已加载插件：langpacks, product-id
+^C
+[root@svr7 ~]# 
+[root@svr7 ~]# vim /etc/yum.repos.d/rhel7.repo 
+[root@svr7 ~]# cat /etc/yum.repos.d/rhel7.repo
+[development]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[myrpm]
+name=myrpm
+enabled=1
+gpgcheck=0
+baseurl=file:///tools/other
+[root@svr7 ~]# yum repolist
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+development                                                                                | 4.1 kB  00:00:00     
+myrpm                                                                                      | 2.9 kB  00:00:00     
+(1/3): myrpm/primary_db                                                                    | 4.8 kB  00:00:00     
+(2/3): development/group_gz                                                                | 137 kB  00:00:00     
+(3/3): development/primary_db                                                              | 4.0 MB  00:00:00     
+源标识                                                  源名称                                               状态
+development                                             rhel7.4                                              4,986
+myrpm                                                   myrpm                                                    5
+repolist: 4,991
+[root@svr7 ~]# system-config-kickstart 
+/usr/share/system-config-kickstart/kickstartGui.py:104: GtkWarning: GtkSpinButton: setting an adjustment with non-zero page size is deprecated
+
+
+  entry = ZoneTabEntry(code, lat, long, tz, comments)
+
+[root@svr7 ~]# system-config-kickstart 
+/usr/share/system-config-kickstart/kickstartGui.py:104: GtkWarning: GtkSpinButton: setting an adjustment with non-zero page size is deprecated
+
+ing: Untranslated time zone: Asia/Srednekolymsk
+  entry = ZoneTabEntry(code, lat, long, tz, comments)
+已加载插件：langpacks, product-id
+/tmp/tmpU9iBan/var/lib/rpm: 没有那个文件或目录
+您在 /var/spool/mail/root 中有新邮件
+[root@svr7 ~]# ls /root/ks.cfg 
+/root/ks.cfg
+[root@svr7 ~]# ls /root
+anaconda-ks.cfg  initial-setup-ks.cfg  ks.cfg  tools.tar.gz  公共  模板  视频  图片  文档  下载  音乐  桌面
+[root@svr7 ~]# vim /root/ks.cfg 
+[root@svr7 ~]# 
+[root@svr7 ~]# cp -p /root/ks.cfg  /var/www/html/
+[root@svr7 ~]# ls /var/www/html/
+ks.cfg  rhel7
+[root@svr7 ~]# vim /var/lib/tftpboot/pxelinux.cfg//default 
+[root@svr7 ~]# vim /var/www/html/ks.cfg 
+[root@svr7 ~]# vim /var/lib/tftpboot/pxelinux.cfg/default 
+[root@svr7 ~]# vim /etc/dhcp/dhcpd.conf 
+[root@svr7 ~]# cat /etc/dhcp/dhcpd.conf
+subnet 192.168.4.0 netmask 255.255.255.0 {
+  range 192.168.4.100  192.168.4.150;
+  option domain-name-servers 192.168.4.7;
+  option routers 192.168.4.254;
+  default-lease-time 200;
+  max-lease-time 300;
+  next-server 192.168.4.7;
+  filename "pxelinux.0";
+}
+[root@svr7 ~]# systemctl restart dhcpd
+[root@svr7 ~]# systemctl  restart tftp
+[root@svr7 ~]# systemctl restart httpd
+[root@svr7 ~]# system-config-kickstart 
+/usr/share/system-config-kickstart/kickstartGui.py:104: GtkWarning: GtkSpinButton: setting an adjustment with non-zero page size is deprecated
+  
+  entry = ZoneTabEntry(code, lat, long, tz, comments)
+/usr/lib/python2.7/site-packages/scdate/core/zonetab.py:241: RuntimeWarning: Untranslated time zone: Asia/Srednekolymsk
+  entry = ZoneTabEntry(code, lat, long, tz, comments)
+已加载插件：langpacks, product-id
+/tmp/tmpdUAcYm/var/lib/rpm: 没有那个文件或目录
+[root@svr7 ~]# 
+
+
+[root@svr7 ~]# vim /var/lib/tftpboot/pxelinux.cfg/default 
+
+
+# Unselected menu item
+menu color unsel 0 #84b8ffff #00000000 none
+
+# Selected hotkey
+menu color hotsel 0 #84b8ffff #00000000 none
+
+# Unselected hotkey
+menu color hotkey 0 #ffffffff #00000000 none
+
+# Help text
+menu color help 0 #ffffffff #00000000 none
+
+# A scrollbar of some type? Not sure.
+menu color scrollbar 0 #ffffffff #ff355594 none
+
+# Timeout msg
+menu color timeout 0 #ffffffff #00000000 none
+menu color timeout_msg 0 #ffffffff #00000000 none
+
+# Command prompt text
+menu color cmdmark 0 #84b8ffff #00000000 none
+menu color cmdline 0 #ffffffff #00000000 none
+
+# Do not display the actual menu unless the user presses a key. All that is displayed is a timeout message.
+
+menu tabmsg Press Tab for full configuration options on menu items.
+
+menu separator # insert an empty line
+menu separator # insert an empty line
+
+label linux
+  menu label Install RHEL7
+  menu default
+  kernel vmlinuz
+  append initrd=initrd.img  ks=http://192.168.4.7/ks.cfg
+
+
+[root@svr7 ~]# 
+[root@svr7 ~]# ls /root/ks.cfg 
+/root/ks.cfg
+[root@svr7 ~]# cat /root/ks.cfg
+#platform=x86, AMD64, 或 Intel EM64T
+#version=DEVEL
+# Install OS instead of upgrade
+install
+# Keyboard layouts
+keyboard 'us'
+# Root password
+rootpw --iscrypted $1$YT/vGcpc$wnTkplnL8LtEm2PE8SdpA.
+# Use network installation
+url --url="http://192.168.4.7/rhel7"
+# System language
+lang zh_CN
+# Firewall configuration
+firewall --disabled
+# System authorization information
+auth  --useshadow  --passalgo=sha512
+# Use text mode install
+text
+firstboot --disable
+# SELinux configuration
+selinux --disabled
+
+# Network information
+network  --bootproto=dhcp --device=192.168.4.7
+# Reboot after installation
+reboot
+# System timezone
+timezone Asia/Shanghai
+# System bootloader configuration
+bootloader --location=mbr
+# Clear the Master Boot Record
+zerombr
+# Partition clearing information
+clearpart --all --initlabel
+# Disk partitioning information
+part / --fstype="xfs" --grow --size=1
+
+%post --interpreter=/bin/bash
+useradd lisi
+echo 123  | passwd --stdin  lisi
+%end
+
+%packages
+@base
+
+%end
+[root@svr7 ~]# ls /var/www/html/
+ks.cfg  rhel7
+[root@svr7 ~]# 
+
+已加载插件：langpacks, product-id
+/tmp/tmpTA41wp/var/lib/rpm: 没有那个文件或目录
+[root@pc207 ~]# cp /root/ks.cfg  /var/www/html/
+[root@pc207 ~]# ls /var/www/html/
+ks.cfg  rhel7
+
+
+
+
+
+
+
+
+
+
+
