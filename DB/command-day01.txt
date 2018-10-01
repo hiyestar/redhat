@@ -1,0 +1,234 @@
+一、搭建mysql数据库服务器 192.168.4.51
+1装包
+1.1 删除系统自带mariadb mysql数据库软件
+]#rpm   -qa  |  grep   -i  mariadb
+]#systemctl  stop  mariadb
+]#rpm   -e  --nodeps   mariadb-server   mariadb
+]#rm  -rf  /etc/my.cnf
+]#rm  -rf  /var/lib/mysql
+1.2 安装mysql软件
+]# tar  -xf  mysql-5.7.17-1.el7.x86_64.rpm-bundle.tar
+]#  ls  *.rpm
+]#  rm  -rf   mysql-community-server-minimal-5.7.17-
+
+1.el7.x86_64.rpm
+
+]#  yum   -y   install    perl-JSON   
+]#  rpm  -Uvh    mysql-community-*.rpm
+]#  rpm  -qa   | grep  -i   mysql
+
+
+修改配置文件(不需要修改配置文件 按默认配置运行即可)
+ls  /etc/my.cnf
+
+启动服务
+systemctl   start  mysqld
+]# systemctl   enable  mysqld
+
+查看服务进程和端口号
+[root@mysql51 mysql]# ps   -C   mysqld
+  PID TTY          TIME CMD
+ 3252 ?        00:00:00 mysqld
+
+[root@mysql51 mysql]# netstat  -utnlp  | grep  mysqld
+tcp6       0      0 :::3306                 :::*                    LISTEN      
+
+3252/mysqld         
+[root@mysql51 mysql]#
+
+
+二、数据库服务的基本使用
+2.1 使用初始密码在本机连接数据库服务
+]# grep password /var/log/mysqld.log
+]# mysql   -hlocalhost   -uroot   -p'hqToPwaqf5,g!><'
+
+2.2 重置本机连接密码
+mysql>set global validate_password_policy=0;  只检查密
+
+码的长度
+mysql>set global validate_password_length=6; 密码长度
+
+不能小于6个字符
+
+mysql>alter  user   root@"localhost"  identified by 
+
+"123456"；
+mysql>quit
+
+]# mysql   -hlocalhost   -uroot   -p123456
+mysql>  show   databases;
+
+让密码策略永久生效
+]#vim  /etc/my.cnf
+[mysqld]
+validate_password_policy=0
+validate_password_length=6
+:wq
+]#systemctl   restart  mysqld
+
+2.3 把数据存储在数据库服务器上的过程？
+连接数据库服务器（命令行   API    图形工具）
+选择库 （存放数据的文件夹）
+选择表 （就是文件）
+插入记录  （文件中的行）
+断开连接
+
+2.4 sql命令使用规则？
+2.5 sql命令分类？
+
+2.6 管理数据库的sql命令
+查看  show  databases;
+创建  create  database  库名；
+切换  use  库名；  
+删除  drop   database  库名；   
+显示当前所在的库      select  database();
+
+2.7 管理表的 sql命令
+查看  mysql> show  tables;
+创建  mysql> create  table  gamedb.stuinfo(
+    -> name  char(10),
+    -> addr  char(20)
+    -> );
+
+删除     drop  table    库名.表名   ;  
+
+查看表记录  select   *  from   库名.表名   ;  
+查看表结构  desc    库名.表名     ;
+
+2.8  管理记录的sql命令
+查看   select   *  from   库名.表名   ; 
+插入   insert    into   库名.表名  values(字段值列表);
+insert into  gamedb.stuinfo values ("tom","beijing");
+insert into  gamedb.stuinfo values ("bob","beijing");
+
+修改  update  库名.表名  set   字段名=值 where  条件；
+update  gamedb.stuinfo  set  addr="shanghai" where 
+
+name="tom";
+
+删除
+delete  from   库名.表名;
+delete  from  gamedb.stuinfo;
+++++++++++++++++++++++++++++++++
+三、mysql数据类型
+3.1  数值类型   （成绩  年龄   工资  ）
+每种类型的存储数据的范围都是固定
+整数类型 （只能存储整数）
+create  database  studb;
+use   studb;
+create  table   t1(level  smallint,age  tinyint);
+insert into  t1  values(1024,19),(9,21);
+
+insert into  t1  values(21.45,9.87);
+select   * from  t1;
+
+create  table   t2(
+level   int     unsigned, 
+age   tinyint   unsigned
+);
+
+desc   t2;
+insert into  t2  values(-201,  -1);
+insert into  t2  values(201,  0);
+select  * from t2;
+
+create  table   t3(
+pay   float(5,2)  
+);
+xxx.xx
+999.99
+      0.00
+-999.99
+
+insert  into  t3  values(124);
+insert  into  t3  values(1.24);
+insert  into  t3  values(-999.99);
+insert  into  t3  values(1000);
+select  *  from  t3;
+
+
+create  table   t4(
+pay   double(7,2)  
+);
+xxxxx.xx
+99999.99
+-99999.99
+
+
+create  table   t5(
+name    char(5),
+addrhome   char(30),
+email   varchar(25)
+);
+
+insert   into  t5  values
+
+("bob","beijing","bob@163.com"); 
+
+select  * from  t5;
+
+----------------------
+create  table  t6(
+name   char(15),
+age      tinyint   unsigned,
+pay      float(7,2),
+email   varchar(30),
+birthday    date,
+up_time     time,
+start_year  year,
+party          datetime
+);
+
+desc   t6;
+
+insert into  t6  values
+
+("lanyiqun",18,26800,"lyq@tedu.cn",20181001,083000,
+
+1990,20180501220000);
+
+select   *  from  t6;
+
+mysql> select  now();
+mysql> select  year(  now() );
+mysql> select  year( 20191120 );
+mysql> select  month(  now() );
+mysql> select  day(  now() );
+mysql> select  date(  now() );
+mysql> select  time(  now() );
+
+insert  into  t6  values( "lucy", 21 , 18800, 
+
+"lucy@tedu.cn" , date( now() ), time(now()) ,  year
+
+(20111218) , now()  );
+
+insert  into  t6(name,start_year)  values("tom",69);
+
++++++++++++++++++++++
+create  table  t7  (
+meetting   datetime,
+party          timestamp
+);
+desc  t7;
+insert into  t7  values( now() , now() );
+insert into  t7(party)  values(20161123184518);
+insert into  t7(meetting )   values(20201123153000);
+select  * from t7;
++++++++++++++++++++
+create  table  t8(
+name  char(15),
+sex      enum("boy","girl","no"),
+likes    set("woman","game","money","flim","eat")
+);
+
+desc   t8;
+
+insert into t8  values
+
+("guoxuehao","boy","game,flim,eat");
+
+insert into t8  values("xierongyue",  3  ,"money,eat");
+
+select   * from  t8;
+

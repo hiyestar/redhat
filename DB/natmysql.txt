@@ -1,0 +1,251 @@
+for i in mangle security raw nat filter;do
+     iptables -t ${i} -F
+     iptables -t ${i} -X
+     rmmod iptable_${i}
+done
+sysctl -w net.ipv4.ip_forward=1
+ETH=$(ip route show|awk '{if($1=="default" && $2=="via")print $5}')
+iptables -t nat -A POSTROUTING -s 192.168.0.0/16 -o ${ETH} -j MASQUERADE
+
+========================================
+[root@X1 ~]# vim  mysqldb.sh
+[root@X1 ~]# cat mysqldb.sh
+#!/bin/bash
+rpm -qa |grep -i mariadb
+yum list |grep -i mariadb
+systemctl stop mariadb
+systemctl disable mariadb
+rpm  -e  --nodeps mariadb-server mariadb
+rpm -qa |grep -i mariadb
+grep -v '^#\|^$' /etc/my.cnf
+rm -rf /var/lib/mysql/
+rm -rf /etc/my.cnf*
+tar -xvf mysql-5.7.17.tar
+ls
+yum -y install perl-JSON
+rpm -q perl-JSON
+rpm -Uvh mysql-community-*.rpm
+rpm -qa |grep -i mariadb
+rpm -qa |grep -i mysql
+ps -C mysqld
+systemctl start mysqld && systemctl enable mysqld
+ps -C mysqld
+netstat -untpl |grep mysqld
+awk '/root@localhost:/{print $NF}' /var/log/mysqld.log
+========================================**##############
+[root@X3 ~]# awk  '/root@localhost:/{print $NF}' /var/log/mysqld.log
+>sKxr:Du8kqI
+[root@X3 ~]# mysql -hlocalhost -uroot -p'>sKxr:Du8kqI'
+
+mysql> alter user root@'localhost' identified by 'Hiy53.es';
+Query OK, 
+
+mysql> flush privileges;
+Query OK, 
+
+mysql> set global validate_password_policy=0;
+Query OK
+
+mysql> set global validate_password_length=4;
+Query OK, 
+
+mysql> alter user root@localhost identified by'1234';
+Query OK,
+
+mysql> set password for root@@'localhost'=password('redhat');
+ERROR 1064 (42000): check the manual that corresponds to your MySQL server version 
+for the right syntax to use near '@'localhost'=password('redhat')' at line 1
+
+mysql> grant select on mysql.user to lisi@localhost identified by'1234';
+Query OK, 
+
+mysql> grant all on mysql.user to lisi@localhost identified by'1234';
+Query OK,
+
+mysql> grant * on mysql.user to lisi@localhost identified by'1234';
+ERROR 1064 (42000):  check the manual that corresponds to your MySQL server version 
+for the right syntax to use near
+  '* on mysql.user to lisi@localhost identified by'1234'' at line 1
+
+mysql> flush privileges;
+Query OK,
+/**
+flush privileges 命令本质上的作用是
+将当前user和privilige表中的用户信息/权限设置
+从mysql库(MySQL数据库的内置库)中提取到内存里。
+MySQL用户数据和权限有修改后，希望在”不重启MySQL服务”的情况下直接生效，
+那么就需要执行这个命令。通常是在修改ROOT帐号的设置后，
+怕重启后无法再登录进来，那么直接flush之后就可以看权限设置是否生效
+**/
+mysql> select user,host from mysql.user;
+
+| user      | host      |
++-----------+-----------+
+| mysql.sys | localhost |
+| root      | localhost |
+
+mysql> quit;
+Bye
+[root@X3 ~]# mysql -uroot -p1234;
+mysql> quit;
+Bye
+[root@X3 ~]# vim /etc/my.cnf
+[root@X3 ~]# tail -2 /etc/my.cnf
+validate_password_policy=0
+validate_password_length=4
+[root@X3 ~]# systemctl restart mysqld
+
+/**# mysqladmin -uroot password 'mima' 回车（第一次设置秘码）
+
+** [root@proxy ~]# mysqladmin -uroot -predhat password 'mysql'
+***修改密码，旧密码为redhat，新密码为mysql
+
+** [root@proxy ~]# mysql -uroot -pmysql
+
+** MariaDB [(none)]>set password for root@'localhost'=password('redhat');
+*  //使用账户登录数据库，修改密码
+* MariaDB [(none)]> select user,host,password from mysql.user;
+
+* [root@proxy ~]# cat .bash_history
+* mysqladmin -uroot -pxxx password 'redhat'
+* //通过命令行修改的密码，bash会自动记录历史，历史记录中记录了明文密码
+* [root@proxy ~]# cat .mysql_history 
+* set password for root@'localhost'=password('redhat');
+* select user,host,password from mysql.user;
+**/
+[root@X3 ~]# cat /root/.bash_history
+systemctl set-default multi-user.target 
+systemctl stop firewalld.service 
+systemctl disable firewalld.service 
+vim /etc/selinux/config 
+grubby --update-kernel=ALL --args="console=ttyS0"
+reboot 
+echo 123 |passwd --stdin root
+echo X3 >/etc/hostname 
+nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.207/24 ipv4.gateway 192.168.4.254 connection.autoconnect yes ;
+nmcli connection up eth0 
+systemctl isolate graphical
+exit
+nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes;
+nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.207/24 ipv4.gateway 192.168.2.254 connection.autoconnect yes
+nmcli connection up eth1
+ tail -5 /etc/sysconfig/network-scripts/ifcfg-eth0
+ tail -5 /etc/sysconfig/network-scripts/ifcfg-eth1
+.....
+[root@X3 ~]# cat /root/.mysql_history
+_HiStOrY_V2_
+flush\040privileges;
+select\040user,host\040from\040mysql.user;
+quit;
+=========================================================
+mysql> create table db1.t3(name char(3),homeaddr varchar(65529));
+Query OK, 
+mysql> alter table t3 modify name varchar(30);
+Query OK,
+
+mysql> alter table t3 change name name2 char(20),change homeaddr addr varchar(55);
+Query OK, 
+
+--创建测试表
+create table test(
+    id int;
+);
+--add支持多列，change/drop需要在每列前添加关键字，逗号隔开，'column'可有可无
+--添加多列
+alter table test add (c1 char(1),c2 char(1));   --正确，add支持多列
+alter table test add column (c1 char(1),c2 char(1));    --正确
+alter table test add c1 char(1),add c2 char(1);     --正确
+
+--修改多列
+alter table test change c1 c3 char(1),change c2 c4 char(1);     --正确
+alter table test change column c1 c3 char(1),change column c2 c4 char(1);       --正确
+
+--删除多列
+alter table test drop c1,drop c2;   --正确
+alter table test drop column c1,drop column c2;     --正确
+
+修改表名：alter table t_book rename to bbb;
+添加列：alter table 表名 add column 列名 varchar(30);
+删除列：alter table 表名 drop column 列名;
+
+修改列名MySQL： alter table bbb change nnnnn hh int;
+修改列名SQLServer：exec sp_rename't_student.name','nn','column';
+修改列名Oracle：lter table bbb rename column nnnnn to hh int;
+修改列属性：alter table t_book modify name varchar(22);
+
+MySQL 查看约束，添加约束，删除约束 添加列，修改列，删除列
+
+查看表的字段信息：desc 表名;
+查看表的所有信息：show create table 表名;
+添加主键约束：alter table 表名 add constraint 主键 （形如：PK_表名） primary key 表名(主键字段);
+
+添加外键约束：alter table 从表 add constraint 外键（形如：FK_从表_主表） foreign key 从表(外键字段) references 主表(主键字段);
+
+删除主键约束：alter table 表名 drop primary key;
+删除外键约束：alter table 表名 drop foreign key 外键（区分大小写）;
+
+    /**添加主键方式一 create table 表名（字段名  字段类型 primary key,列名  属性类型,...);     
+mysql> create table t28(name char(10) primary key, age int(2));
+
+ /**添加主键方式二 create table 表名(字段名  字段类型,列名 属性类型,..,primary key(要添加主键的字段名));
+mysql> create table t29(name char(10),age int(2),primary key(name));
+
+  /**添加主键方式三 alter table 表名 add primary key(字段名);
+   mysql> alter table db1.t5 add  primary key(name);
+
+       /**建表时创建索引  
+/**  create table 表名（index（用于索引的字段名）,index（用于索引的字段名 ）)； */
+mysql> create table t27(name char(10),age int(2) unsigned,
+    -> class char(7),index(name),index(age));
+
+  // 给已有表创建index字段
+/** create index 索引名自定义 on  库名.表名（用于索引的字段列名）**/
+mysql> create index suoyin on db1.t5(name);
+
+mysql> drop index name on t27;desc t27;
+Query OK,  ##删除 字段名?为name 的索引属性，取消列名?为name 的索引
+
+修改表名：alter table t_book rename to bbb;
+
+添加列：alter table 表名 add column 列名 varchar(30);
+删除列：alter table 表名 drop column 列名;
+
+修改列名MySQL： alter table bbb change nnnnn hh int;
+
+修改列名SQLServer：exec sp_rename't_student.name','nn','column';
+修改列名Oracle：alter table bbb rename column nnnnn to hh int;
+
+修改列属性：alter table t_book modify name varchar(22);
+sp_rename：SQLServer 内置的存储过程，用与修改表的定义。
+
+
+mysql> select now();
+| now()               |
+| 2018-09-09 15:54:14 |
+
+mysql> select date(now());
+| date(now()) |
+| 2018-09-09  |
+mysql> select day(now());
+| day(now()) |
++------------+
+|          9 |
+
+mysql> select month(now());
+| month(now()) |
+|            9 |
+mysql> select year(now());
+| year(now()) |
+|        2018 |
+mysql> select time(now());
+| time(now()) |
++-------------+
+| 15:59:55    |
+
+
+
+
+
+
+
+

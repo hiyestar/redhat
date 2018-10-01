@@ -1,0 +1,315 @@
+mysql-day03
+一、mysql存储引擎
+1.1  存储引擎介绍: 是mysql数据库软件自带的功能程序，
+                            每种存储引擎的功能和数据存储方式也不同
+                            存储引擎就处理表的处理器   
+
+1.2  查看数据库服务支持的存储引擎有那些？
+mysql>   show  engines;
+InnoDB             DEFAULT
+
+1.3  查看已有的表使用的存储引擎
+show   create  table 表名；
+
+1.4  修改数据库服务默认使用的存储引擎
+]#vim /etc/my.cnf
+[mysqld]
+default-storage-engine=myisam
+:wq
+]# systemctl  restart   mysqld
+
+1.5  修改表使用的存储引擎，或 建表时指定表使用的存储引擎
+alter  table  表   engine=存储引擎名；
+create  table  表（字段列表）engine=存储引擎名；
+
+1.6 常用存储引擎的特点
+innodb特点：
+支持事务  、 事务回滚   、行级锁  、外键
+存储方式： 一个表对应2个存储文件
+                 表名.frm    表结构
+                 表名.ibd     数据和索引
+
+myisam特点
+不支持事务  、 事务回滚、外键
+支持表级锁
+存储方式： 一个表对应3个存储文件
+                表名.frm     表结构
+                表名.MYD   数据
+                表名.MYI     索引
+                                    
+
+事务：对数据库服务的访问过程（连接数据库服务器    操作数据   断开连接）
+
+事务回滚 ： 在事务执行过程中，任何一步操作失败，都会恢复之前的所有操作。
+
+插卡 （与数据库服务器建立连接）
+转账：  对方卡号   888888
+            金额          50000
+                             ok
+                             提示转账成功   -50000      +50000
+                             提示转账失败   +50000
+退卡
+
+mysql数据库服务使用事务日志文件记录，对innodb存储引擎表执行的sql操作。
+cd  /var/lib/mysql/
+ib_logfile0 -|
+                   |------> 记录SQL命令
+ib_logfile1 -|
+                                 insert into  t1  values(8888);
+ibdata1 ----> 数据源（sql命令执行后产生的数据信息）
+
+锁粒度：
+表级锁（myisam）给整张表加锁
+行级锁 (innodb)    只给表中当前被操作行加锁
+
+锁的作用：解决对表的并发访问冲突问题。
+                select  *  from  t1  where   id <=20;
+                 insert
+                delete   from  t1;
+                update  t1  set  name="bob"  where  name="lucy";
+                update  t1  set  name="tom"  where  name="jerry";
+锁类型
+读锁  （共享锁）
+写锁  （互斥锁）
+
+1.7 建表时如何决定表使用那种存储引擎
+执行写操作多的表适合使用innodb存储引擎，可以并发访问。
+执行查操作多的表适合使用myisam存储引擎,可以节省系统资源
+++++++++++++++++++++++++++++++++++++++
+二、数据导入导出（批量操作数据）
+2.1  数据导入的命令格式及数据导入时的注意事项
+导入数据的命令格式：
+
+数据导入：把系统文件的内容存储到数据库服务器的表里。
+把系统已有用户的信息保存到db3库下的usertab表里
+
+
+创建存储数据表
+create  database  db3;
+create  table  db3.usertab(
+username    char(50),
+password     char(1),
+uid               int(2),
+gid              int(2),
+comment   char(100),
+homedir     char(100),
+shell         char(50),
+index(username)
+);
+desc  db3.usertab;
+select   * from  db3.usertab;
+
+导入数据
+]# cp /etc/passwd    /var/lib/mysql-files/
+
+mysql>  
+load  data  infile   "/var/lib/mysql-files/passwd"   
+into  table    db3.usertab   
+fields  terminated by ":"   
+lines  terminated  by   "\n";
+
+mysql> alter  table  db3.usertab  
+add  
+id  int(2)  primary key  auto_increment  first;
+
+mysql> select   * from   db3.usertab;
+mysql> select   * from   db3.usertab   where  id=20;
+
+
+
+load  data  infile   "/mysqldata/passwd"   
+into  table    db3.usertab   
+fields  terminated by ":"   
+lines  terminated  by   "\n";
+
+
+2.2  数据导出的命令格式及数据导出时的注意事项
+
+mysql>select   username,uid  from  db3.usertab   into  outfile   "/mysqldata/user1.txt";
+
+mysql>select  *  from  db3.usertab  into  outfile   "/mysqldata/user2.txt";
+
+mysql>select  username,uid  from  db3.usertab  into  outfile   "/mysqldata/user3.txt"   fields  terminated  by  "###";
+
+
+]# cat  /mysqldata/user1.txt
+]# cat  /mysqldata/user2.txt
+]# cat  /mysqldata/user3.txt
+
+三、管理表记录(db3.usertab)
+插入记录
+
+mysql> insert into  usertab  
+values
+(43,"yaya","x",1001,1001,"","/home/yaya","/bin/bash");
+
+mysql> insert into  usertab   
+values (50,"yaya2","x",1002,1002,"","/home/yaya2","/sbin/nologin"),(51,"7yaya","x",1003,1003,"","/home/7yaya","/sbin/nologin");
+
+insert into   usertab(username,homedir,shell) 
+values
+("lucy","/home/lucy","/bin/bash");
+
+insert into   usertab(username,homedir,shell) 
+values
+("lu8cy","/home/lu8cy","/bin/bash"),("tom","/home/tom","/bin/bash"),("lilei","/home/lilei","/bin/bash");
+
++++++++++查看记录
+select  *  from   db3.usertab;
+
+select *  from  usertab  where  id = 1;
+
+select  id,username,password  from   db3.usertab;
+
+select  username,uid,shell from  usertab  where  id = 1;
+
+------修改记录
+update   db3.usertab  set   password="A"  ;
+update   db3.usertab  set   password="x"   where id=1;
+select   *   from  db3.usertab;
+
+-----删除记录
+delete  from   db3.usertab    where   id=3;
+
+四、匹配条件（查看 修改 删除记录时可以加条件）
+
+4.1  数值比较   字段名   符号    数字
+=   !=    <      <=       >     >=
+
+select  username  from  usertab  where  uid=10;
+select  id,username,uid  from  usertab  where  uid=1001;
+select  *  from  usertab  where  id<=10;
+
+4.2  字符比较       字段名   符号    “字符串”
+=   !=
+select  username  from  usertab  where  username="apache";
+select  username,shell  from  usertab  where  shell="/bin/bash";
+select  username,shell   from  usertab  where  shell!="/bin/bash";
+
+
+4.3 范围内比较   
+字段名  between  数字1  and  数字2         在...之间...
+字段名   in  (值列表)                                  在...里
+字段名   not  in   (值列表)                         不在...里
+select  username    from  usertab  where uid  between 100 and 150;
+
+select  username,uid    from  usertab  where uid  in (10,20,30,50);
+
+select  username,uid    from  usertab  where username  in  ("root","rsync","mysql");
+
+select  username  from  usertab  where username not in ("root","bin");
+
+4.4 逻辑比较（就是有个查询条件）
+逻辑与 and            多个条件同时成立    才匹配
+逻辑或   or             多个条件,某一个条件成立  就匹配
+逻辑非  ！ 或 not    取反  
+
+select  username,uid  from usertab  where  username="root" and  uid=0   and  shell="/bin/bash";
+
+select  username,uid  from usertab  where  username="root"  or  uid=1  or  shell="/bin/bash";
+
+select  username,uid  from usertab  where  username="root"  or username="apache" or username="bob";
+
+4.5  匹配空     字段名  is  null
+       匹配空     字段名  is  not  null
+
+select  username,uid,gid  from  usertab  
+where  
+uid is null  and  gid  is  null;
+
+mysql> update usertab  set uid=3000,gid=3000 where username="lucy";
+
+select  id  from  usertab  where  name="yaya"  and  uid is not null;
+
+update  usertab  set  username=null  where id=2;
+
+
+4.6 模糊匹配
+字段名  like   '表达式';
+%   表示零个或多个字符
+_    表任意一个字符
+
+select  username from  usertab where  username like  '_ _ _ _';
+select  username from  usertab where  username like  'a_ _t';
+
+insert  into usertab(username)values("a");
+
+select  username from  usertab where  username like  'a%';
+select  username from  usertab where  username like  '_%_';
+
+4.7 正则匹配
+字段名  regexp   '正则表达式';
+^   $    .    *   [  ]
+select  username  from usertab where  username  regexp '[0-9]';
+select  username  from usertab where  username  regexp '^[0-9]';
+select  username  from usertab where  username  regexp '[0-9]$';
+
+select  username  from usertab where  username  regexp 'a.*t';
+
+select  username  from usertab where  username  regexp '^a.*t$';
+
+select  username,uid  from usertab where  uid  regexp '..';
+select  username,uid  from usertab where  uid  regexp '^..$';
+
+4.7 四则运算(select 和 update 操作是可以做数学计算)
+字段类型必须数值类型（整型 或浮点型）
++   -   *     /      %
+
+select  id,username,uid  from usertab where  id <=10;
+update  usertab  set  uid=uid+1  where  id <=10;
+
+select   username ,uid,gid  from usertab where usernane="mysql";
+select   username ,uid,gid, uid+gid  as  zh  from usertab where username="mysql";
+
+select   username ,uid,gid, uid+gid  as  zh  ,  (uid+gid)/2  as  pjz   from usertab where username="mysql";
+
+alter  table  usertab   add  age  tinyint(2)  unsigned  default 21   after username;
+
+mysql> select  username,age from usertab;
+select  username , age ,  2018-age   s_year   from usertab where username="root";
+
+4.9聚集函数（对字段的值做统计，字段的类型要求是数值类型）
+count(字段名）统计字段值的个数
+sum(字段名）  求和
+max(字段名）  输出字段值的最大值
+min(字段名）  输出字段值的最小值
+avg(字段名）  输出字段值的平均值
+select  max(uid)  from usertab;
+select  sum(uid)  from usertab;
+select  min(uid)  from usertab;
+select  avg(uid)  from usertab;
+select  count(id)  from usertab;
+select  count(username) from usertab where shell="/bin/bash";
+
+4.10  查询不显示字段重复值  distinct 字段名
+
+select  distinct shell  from  usertab;
+
+select  distinct shell  from  usertab where  uid >10  and uid<=100;
+
+ 
+4.11查询分组
+sql查询   group   by  字段名；
+
+select shell  from  usertab where  uid >10  and uid<=100
+group  by  shell;
+
+4.12 查询排序 (按照数值类型的字段排队)
+sql查询  order  by  字段名  asc|desc;
+
+select  username,uid   from  usertab where  uid >10  and uid<=100
+order  by  uid;
+
+select  username,uid   from  usertab where  uid >10  and uid<=100
+order  by  uid  desc;
+
+4.13 限制查询显示行数(默认显示所有查询的记录)
+sql查询  limit  数字； 显示查询结果的前几行
+sql查询  limit  数字1，数字2；  显示查询结果指定范围的行
+
+select  username,uid   from  usertab where  uid >10  and uid<=100
+order  by  uid  desc  limit  1;
+
+select  username,uid   from  usertab where  uid >10  and uid<=100
+order  by  uid  desc  limit 2,3;
+

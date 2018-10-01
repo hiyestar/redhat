@@ -1,0 +1,874 @@
+DB]# touch db{1..4}.txt
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+
+VM1(eth0:192.168.4.7    eth1:192.168.2.7  )
+VM2(eth0:192.168.4.252  eth1:192.168.2.252)
+VM3(eth0:192.168.4.207  eth1:192.168.2.207)
+VM4(eth0:192.168.4.208  eth1:192.168.2.208)
+
+[root@DB1 ~]# nmcli connection show 
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    e66959f2-707d-4f33-8fb4-0a1efff34199  802-3-ethernet  eth1   
+virbr0  fb7f86bd-e427-472a-ac55-0829b0cf5fc9  bridge          virbr0 
+[root@DB1 ~]#  route -n |awk 'NR<6{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+[root@DB1 ~]# ifconfig |grep 'inet ' |head -4
+        inet 192.168.4.51  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.51  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@DB1 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+[root@DB1 ~]# yum clean all >/dev/null;yum repolist |tail -4;
+源标识                  源名称                              状态
+rhel7              rhel7.4                    4,986
+rhel7-2            rhel7.4                    4,986
+repolist: 9,972
+[root@DB1 ~]# ls /etc/yum.repos.d/
+redhat.repo  rhel7.repo
+[root@DB1 ~]# rpm -qa |grep -i mariadb
+[root@DB1 ~]# yum list |grep -i mariadb
+mariadb.x86_64                          1:5.5.56-2.el7             rhel7 
+mariadb-bench.x86_64                    1:5.5.56-2.el7             rhel7 
+mariadb-devel.i686                      1:5.5.56-2.el7             rhel7 
+mariadb-devel.x86_64                    1:5.5.56-2.el7             rhel7 
+mariadb-libs.i686                       1:5.5.56-2.el7             rhel7 
+mariadb-libs.x86_64                     1:5.5.56-2.el7             rhel7 
+mariadb-server.x86_64                   1:5.5.56-2.el7             rhel7 
+mariadb-test.x86_64                     1:5.5.56-2.el7             rhel7
+[root@room11pc06 ~]# scp '/root/桌面/mysql-5.7.17.tar' root@192.168.4.51:/root/
+[root@DB1 ~]# tar -xPf mysql-5.7.17.tar 
+[root@DB1 ~]# ls
+anaconda-ks.cfg
+initial-setup-ks.cfg
+mysql-5.7.17.tar
+mysql-community-client-5.7.17-1.el7.x86_64.rpm
+.......
+mysql-community-test-5.7.17-1.el7.x86_64.rpm
+公共
+......
+桌面
+[root@DB1 ~]# 
+[root@DB1 ~]# yum -y install perl-JSON |tail -3;
+  perl-JSON.noarch 0:2.59-2.el7                                                 
+
+完毕！
+[root@DB1 ~]# rpm  -Uvh  /root/mysql-community-*.rpm |tail -15 ;
+
+正在清理/删除...
+mariadb-libs-1:5.5.56-2.el7          
+ ########################################
+[root@DB1 ~]# systemctl start mysqld
+[root@DB1 ~]# rpm -qa |grep -i mysql
+mysql-community-client-5.7.17-1.el7.x86_64
+mysql-community-minimal-debuginfo-5.7.17-1.el7.x86_64
+.........
+mysql-community-server-5.7.17-1.el7.x86_64
+[root@DB1 ~]# ls /etc/my.cnf
+/etc/my.cnf
+
+[root@DB1 ~]# grep mysql /etc/passwd  /etc/group
+/etc/passwd:mysql:x:27:27:MySQL Server:/var/lib/mysql:/bin/false
+/etc/group:mysql:x:27:
+[root@DB1 mysql]# ps -C mysqld
+  PID TTY          TIME CMD
+ 2691 ?        00:00:03 mysqld
+
+[root@DB1 ~]# ss -nuplt |grep mysqld
+tcp    LISTEN     0      80       :::3306                 :::*                   users:(("mysqld",pid=2691,fd=22))
+
+[root@DB1 ~]# systemctl enable mysqld
+
+[root@DB1 mysql]# rpm -qf /usr/bin/mysql
+mysql-community-client-5.7.17-1.el7.x86_64
+
+[root@DB1 mysql]# which mysql
+/usr/bin/mysql
+[root@DB1 mysql]# mysql
+mysql                       mysqlimport
+mysqladmin                  mysql_install_db
+mysqlbinlog                 mysql_plugin
+...........
+mysqldumpslow               
+ [root@DB1 mysql]# grep password /var/log/mysqld.log 
+2018-09-06T00:59:52.240883Z 1 [Note] A temporary password is generated for root@localhost: 2j9rJtS!,wYa
+[root@DB1 mysql]# grep root@localhost: /var/log/mysqld.log
+2018-09-06T00:59:52.240883Z 1 [Note] A temporary password is generated for root@localhost: 2j9rJtS!,wYa
+
+[root@DB1 mysql]# awk '/root@localhost:/{print $NF}' /var/log/mysqld.log 
+2j9rJtS!,wYa
+[root@DB1 ~]# awk '/password/{print $NF}' /var/log/mysqld.log 
+2j9rJtS!,wYa
+[root@DB1 ~]# mysql -hlocalhost -uroot -p2j9rJtS!,wYa #注意单引号
+-bash: !,wYa: event not found   #注意单引号
+[root@DB1 ~]# systemctl is-enabled mysqld
+enabled
+[root@DB1 ~]# systemctl is-active mysqld
+active
+[root@DB1 ~]# mysql  -hlocalhost -uroot  -p'2j9rJtS!,wYa'  #注意单引号,特殊字符需要单引号
+
+Welcome to the MySQL monitor.
+
+mysql> alter user root@"localhost" identified by"HiY53.es";
+Query OK, 0 rows affected (0.00 sec)
+mysql> flush privileges;
+Query OK, 
+mysql> quit
+Bye
+[root@DB1 ~]# ls /var/lib/mysql
+auto.cnf         ib_buffer_pool  mysql               public_key.pem
+ca-key.pem       ibdata1         mysql.sock          server-cert.pem
+ca.pem           ib_logfile0     mysql.sock.lock     server-key.pem
+client-cert.pem  ib_logfile1     performance_schema  sys
+client-key.pem   ibtmp1          private_key.pem
+[root@DB1 ~]# cd /var/lib/mysql
+mysql/         mysql-files/   mysql-keyring/ 
+[root@DB1 ~]# cd /var/lib/mysql
+[root@DB1 mysql]# mysql -hlocalhost -uroot -p"HiY53.es" #注意单引号,特殊字符需要单引号
+mysql> quit
+Bye
+[root@DB1 mysql]# mysql -hlocalhost -uroot -pHiY53.es #注意单引号,特殊字符需要单引号
+mysql> quit
+Bye
+[root@DB1 mysql]# mysql -hlocalhost -uroot -pHiY53.es
+
+mysql> alter user root@'localhost' identified by'Hiy53.es';
+mysql> quit
+Bye
+[root@DB1 mysql]# mysql -uroot -pHiy53.es
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |  ## information_schema 内存映射的,不占用物理磁盘空间
+| mysql              |
+| performance_schema |  #performance_schema sys 系统库，存放已有的表信息
+| sys                |
++--------------------+
+4 rows in set (0.02 sec)
+
+mysql> create database studb;
+mysql> show databases;
+
+mysql> use studb;
+Database changed
+mysql> create table studb.t1(name char,age1 int,sex char,level smallint,age2  tinyint);
+
+mysql> select database();
+| database() |
++------------+
+| studb      |
+1 row in set (0.00 sec)
+
+mysql> show tables;
+mysql> desc studb.t1;
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| name  | char(1)     | YES  |     | NULL    |       |
+| age1  | int(11)     | YES  |     | NULL    |       |
+| sex   | char(1)     | YES  |     | NULL    |       |
+| level | smallint(6) | YES  |     | NULL    |       |
+| age2  | tinyint(4)  | YES  |     | NULL    |       |
+
+mysql> create database game;use game;select database();show tables; 
+mysql>  select database();
+
+mysql> show tables;
+mysql> create table game.t1(name char,age tinyint,sex char);
+mysql> insert into game.t1 values("a",19,"m"),("b",21,"g");
+
+Records: 2  Duplicates: 0  Warnings: 0
+查看   select   *  from   库名.表名   ; 
+插入   insert    into   库名.表名  values(字段值列表);
+删除   delete  from   库名.表名;
+修改  update  库名.表名  set   字段名=值 where  条件；
+
+mysql> select name,age from game.t1;
+mysql> update game.t1 set age=21 where name="a";
+
+mysql> select * from game.t1;
+mysql> delete from t1 where name="b";
+
+mysql> select * from game.t1;
+mysql> delete from t1;show tables ;
+mysql> drop table game.t1;select database();
+mysql> show tables;
+Empty set (0.00 sec)
+mysql> drop database game;show databases;
+mysql> show dataBas\c
+
+mysql> create database bbs;use bbs;create table t2(name char,age int);show tables;
+
+mysql> show create table t2;
+
+| t2    | CREATE TABLE `t2` (
+  `name` char(1) DEFAULT NULL,
+  `age` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 |
+/**
+扩展：
+1.InnoDB，是MySQL的数据库引擎之一，为MySQL AB发布binary的标准之一。
+2.AUTO_INCREMENT会在新记录插入表中时生成一个唯一的数字。
+希望在每次插入新记录时，自动地创建主键字段的值，
+可以在表中创建一个 auto_increment 字段。
+ENGINE=InnoDB 表示将数据库的引擎设置为InnoDB,
+从MySQL 5.6开始默认使用该引擎。
+DEFAULT CHARSET=utf8 表示设置数据库的默认字符集为utf8
+AUTO_INCREMENT=1 表示自动增长的起始值为1
+*/
+mysql> desc bbs.t2;
+mysql> select database();
++------------+
+| database() |
++------------+
+| bbs        |
+
+mysql> create table 学生表(姓名 char(15),班级 char(7),家庭地址 char(50)
+    -> )engine=innodb default charset=utf8;
+Query OK,
+
+mysql> show tables;show create table 学生表;
++---------------+
+| Tables_in_bbs |
++---------------+
+| 学生表        |
+| t2            |
+
+| 学生表    | CREATE TABLE `学生表` (
+  `姓名` char(15) DEFAULT NULL,
+  `班级` char(7) DEFAULT NULL,
+  `家庭地址` char(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8            |
+
+mysql> desc bbs.学生表;insert into bbs.学生表 values("张三丰","1806","武当山");
+| Field        | Type     | Null | Key | Default | Extra |
++--------------+----------+------+-----+---------+-------+
+| 姓名         | char(15) | YES  |     | NULL    |       |
+| 班级         | char(7)  | YES  |     | NULL    |       |
+| 家庭地址     | char(50) | YES  |     | NULL    |       |
+
+mysql> select * from bbs.学生表;
++-----------+--------+--------------+
+| 姓名      | 班级   | 家庭地址     |
++-----------+--------+--------------+
+| 张三丰    | 1806   | 武当山       |
+
+mysql> create database db1;use db1;
+
+mysql> select database(); 显示当前所在的库 
++------------+
+| database() |
++------------+
+| db1        |
+
+mysql> create  table db1.t1(age tinyint,pay float(7,2));desc db1.t1;
+
+| Field | Type       | Null | Key | Default | Extra |
++-------+------------+------+-----+---------+-------+
+| age   | tinyint(4) | YES  |     | NULL    |       |
+| pay   | float(7,2) | YES  |     | NULL    |       |
+
+mysql> insert into db1.t1 values(24,29000.99),(10,98800.88);
+
+mysql> create table db1.t2(age tinyint unsigned,pay float(8,3));
+
+mysql> desc db1.t2;
+
+| Field | Type                | Null | Key | Default | Extra |
++-------+---------------------+------+-----+---------+-------+
+| age   | tinyint(3) unsigned | YES  |     | NULL    |       |
+| pay   | float(8,3)          | YES  |     | NULL    |       |
+
+mysql> insert into db1.t1 values(-1,22200.33),(126,33000.44);
+
+mysql> insert into db1.t2 values(255,888.888);
+mysql> select * from t1;select * from t2;
+
+查看   select   *  from   库名.表名   ; 
+插入   insert    into   库名.表名  values(字段值列表);
+删除   delete  from   库名.表名;
+修改  update  库名.表名  set   字段名=值 where  条件；
+mysql> create table db1.t3(name char(3),homeaddr varchar(65529));
+Query OK, 
+mysql> alter table t3 modify name varchar(30);
+Query OK,
+
+mysql> alter table t3 change name name2 char(20),change homeaddr addr varchar(55);
+Query OK, 
+
+mysql> create table db1.t3(name char(255),homeaddr varchar(55531));
+mysql> show tables;
+mysql> desc db1.t3;
++----------+----------------+------+-----+---------+-------+
+| Field    | Type           | Null | Key | Default | Extra |
++----------+----------------+------+-----+---------+-------+
+| name     | char(255)      | YES  |     | NULL    |       |
+| homeaddr | varchar(55531) | YES  |     | NULL    |       |
+mysql> insert into t3 values("abc","beijing");
+mysql> insert into t3 values("hihixixi","guangzhou");
+mysql> select * from t3;
+mysql> select database();
+| database() |
++------------+
+| db1        |
+mysql> create table db1.t4(name char(255),homeaddr varchar(65000));
+Query OK,
+如果数据表只有一个varchar字段且该字段DEFAULT NULL，那么该varchar字段的最大长度为65532个字节，即65535-2-1=65532 byte。
+字符类型若为gbk，每个字符最多占2个字节，最大长度不能超过32766;
+字符类型若为utf8，每个字符最多占3个字节，最大长度不能超过21845。
+mysql> select database();
+mysql> create table db1.t5(name char(10),birthday date,meetting datetime,
+    -> start year,sktime  time);
+mysql> desc db1.t5;
++----------+----------+------+-----+---------+-------+
+| Field    | Type     | Null | Key | Default | Extra |
++----------+----------+------+-----+---------+-------+
+| name     | char(10) | YES  |     | NULL    |       |
+| birthday | date     | YES  |     | NULL    |       |
+| meetting | datetime | YES  |     | NULL    |       |
+| start    | year(4)  | YES  |     | NULL    |       |
+| sktime   | time     | YES  |     | NULL    |       |
+mysql> insert into db1.t5 values ("joehan",20180906,20180906203010,1990,083055);
+Query OK, 
+
+mysql> select * from db1.t5;
++--------+------------+---------------------+-------+----------+
+| name   | birthday   | meetting            | start | sktime   |
++--------+------------+---------------------+-------+----------+
+| joehan | 2018-09-06 | 2018-09-06 20:30:10 |  1990 | 08:30:55 |
+
+date       2018-09-06
+datetime   2018-09-06 20:30:10
+ year(4)   1990
+ time      08:30:55
+
+mysql> create table db1.t6(name char(5),
+    -> sex enum("boy","girl","no"),
+    -> likes set("eat","sleep","game","it"));
+mysql> desc db1.t6;
+
+| Field | Type                           | Null | Key | Default | Extra |
++-------+--------------------------------+------+-----+---------+-------+
+| name  | char(5)                        | YES  |     | NULL    |       |
+| sex   | enum('boy','girl','no')        | YES  |     | NULL    |       |
+| likes | set('eat','sleep','game','it') | YES  |     | NULL    |       |
+
+mysql> insert into db1.t6 values("bob","boy","eat,sleep,it");
+
+mysql> select * from db1.t6;
+| name | sex  | likes        |
++------+------+--------------+
+| bob  | boy  | eat,sleep,it |
+
+mysql> use mysql;show tables;
+| Tables_in_mysql           |
++---------------------------+
+| columns_priv              |
+| db                        |
+| proc                      |
+| procs_priv                |
+| proxies_priv              |
+| server_cost               |
+| servers                   |
+| time_zone                 |
+| user 
+mysql> desc mysql.user;
+| Field                  | Type                              | Null | Key | Default  | Extra |
++------------------------------------------+---------------------------------------------------------------+----------+---------+-----------------+------+
+| Host                   | char(60)                          | NO   | PRI |          |    |
+| User                   | char(32)                          | NO   | PRI |          |    |
+| Create_tablespace_priv | enum('N','Y')                     | NO   |     | N        |    |
+| ssl_type               | enum('','ANY','X509','SPECIFIED') | NO   |     |          |    |
+| ssl_cipher             | blob                              | NO   |     | NULL     |    |
+| max_user_connections   | int(11) unsigned                  | NO   |     | 0                     |  |
+| plugin                 | char(64)                          | NO   |     | mysql_native_password |  |
+| authentication_string  | text                              | YES  |     | NULL                  |  |
+| password_expired       | enum('N','Y')                     | NO   |     | N                     |  |
+| password_last_changed  | timestamp                         | YES  |     | NULL                  |  |
+| password_lifetime      | smallint(5) unsigned              | YES  |     | NULL                  |  |
+| account_locked         | enum('N','Y')                     | NO   |     | N                     |  |
+45 rows in set (0.01 sec)
+
+mysql> create database perdb;
+
+mysql> use perdb;
+Database changed
+mysql> select database();
++------------+
+| database() |
++------------+
+| perdb      |
+mysql> create table perdb.perinfo(name char(8),age tinyint unsigned,
+    -> pay float(8,2),birthday date,meetting datetime,
+    -> start year,listen time,
+    -> sex enum("boy","girl","no"),
+    -> hobby set("eat","sleep","music","peri"));
+Query OK, 0 rows affected (0.31 sec)
+
+mysql> desc perdb.perinfo;
+| Field    | Type                              | Null | Key | Default | Extra |
++----------+-----------------------------------+------+-----+---------+-------+
+| name     | char(8)                           | YES  |     | NULL    |       |
+| age      | tinyint(3) unsigned               | YES  |     | NULL    |       |
+| pay      | float(8,2)                        | YES  |     | NULL    |       |
+| birthday | date                              | YES  |     | NULL    |       |
+| meetting | datetime                          | YES  |     | NULL    |       |
+| start    | year(4)                           | YES  |     | NULL    |       |
+| listen   | time                              | YES  |     | NULL    |       |
+| sex      | enum('boy','girl','no')           | YES  |     | NULL    |       |
+| hobby    | set('eat','sleep','music','peri') | YES  |     | NULL    |       |
+
+ date       2018-09-06
+ datetime   2018-09-06 20:30:10
+ year(4)   1990
+ time      08:30:55
+mysql> insert into perdb.perinfo values ("lily",255,108888.66,19900612,20021211083030,2002,092920,"girl","sleep,music,peri");
+Query OK, 1 row affected (0.02 sec)
+
+mysql> select * from perdb.perinfo;
++------+------+-----------+------------+---------------------+-------+----------+------+------------------+
+| name | age  | pay       | birthday   | meetting            | start | listen   | sex  | hobby            |
++------+------+-----------+------------+---------------------+-------+----------+------+------------------+
+| lily |  255 | 108888.66 | 1990-06-12 | 2002-12-11 08:30:30 |  2002 | 09:29:20 | girl | sleep,music,peri |
++------+------+-----------+------------+---------------------+-------+----------+------+------------------+
+
+
+
+
+
+
+
+
+
+
+
+
+VM1(eth0:192.168.4.7    eth1:192.168.2.7  )
+VM2(eth0:192.168.4.252  eth1:192.168.2.252)
+VM3(eth0:192.168.4.207  eth1:192.168.2.207)
+VM4(eth0:192.168.4.208  eth1:192.168.2.208)
+
+虚拟机 7  eth2:  201.1.1.100
+虚拟机 8  eth2:  201.1.1.5
+        eth3:  201.1.2.5
+虚拟机 9  eth3:  201.1.2.100
+虚拟机 10 eth3:  201.1.2.200
+---VM1(eth0:192.168.4.7    eth1:192.168.2.7  虚拟机 7 eth2: 201.1.1.100) ----------
+
+[root@VM1 ~]# nmcli connection add con-name eth2 ifname eth2 type ethernet autoconnect yes;
+[root@VM1 ~]# nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.1.1.100/24 \
+> ipv4.gateway 201.1.1.254 connection.autoconnect yes;  nmcli connection up eth2;
+[root@VM1 ~]# nmcli connection show
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    afa2eb5d-76aa-4e4c-9e5c-8fd15bfddf6a  802-3-ethernet  eth1   
+eth2    54d7d0bf-2315-4ba1-b9ba-636ce35de078  802-3-ethernet  eth2   
+virbr0  97370a41-cb6c-43d6-8898-862901a61481  bridge          virbr0 
+[root@VM1 ~]# ifconfig |grep 'inet ' |head -3;
+        inet 192.168.4.7  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.7  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.1.100  netmask 255.255.255.0  broadcast 201.1.1.255
+[root@VM1 ~]# rpm -qa |grep -i mariadb
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+[root@VM1 ~]# yum list |grep -i mariadb
+...........
+[root@VM1 ~]# systemctl stop mariadb   #删除系统自带mariadb mysql数据库软件
+[root@VM1 ~]# rpm -e --nodeps mariadb-server mariadb
+[root@VM1 ~]# rpm -qa |grep -i mariadb
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+
+[root@VM1 ~]# grep -v '^#\|^$' /etc/my.cnf
+[mysqld]
+data.....
+[mysqld_safe]
+...
+[root@VM1 ~]# egrep -v '(^#|^$)' /etc/my.cnf
+[mysqld]
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+symbolic-links=0
+[mysqld_safe]
+log-error=/var/log/mariadb/mariadb.log
+pid-file=/var/run/mariadb/mariadb.pid
+!includedir /etc/my.cnf.d
+
+[root@VM1 ~]# rm -rf /var/lib/mysql/
+[root@VM1 ~]# rm -f /etc/my.cnf
+[root@VM1 ~]# ls /etc/my.cnf.d/
+mysql-clients.cnf
+[root@VM1 ~]# rm -rf /etc/my.cnf*
+[root@VM1 ~]# ls /etc/my.cnf.d/
+ls: 无法访问/etc/my.cnf.d/: 没有那个文件或目录
+
+[root@VM1 ~]# tar -xvf mysql-5.7.17.tar 
+./mysql-community-client-5.7.17-1.el7.x86_64.rpm
+./mysql-community-common-5.7.17-1.el7.x86_64.rpm
+./mysql-community-devel-5.7.17-1.el7.x86_64.rpm
+./mysql-community-embedded-5.7.17-1.el7.x86_64.rpm
+./mysql-community-embedded-compat-5.7.17-1.el7.x86_64.rpm
+./mysql-community-embedded-devel-5.7.17-1.el7.x86_64.rpm
+./mysql-community-libs-5.7.17-1.el7.x86_64.rpm
+./mysql-community-libs-compat-5.7.17-1.el7.x86_64.rpm
+./mysql-community-minimal-debuginfo-5.7.17-1.el7.x86_64.rpm
+./mysql-community-server-5.7.17-1.el7.x86_64.rpm
+./mysql-community-test-5.7.17-1.el7.x86_64.rpm
+[root@VM1 ~]# ls
+2.txt
+anaconda-ks.cfg
+hai.jpg
+initial-setup-ks.cfg
+lnmp_soft
+lnmp_soft.tar.gz
+mysql-5.7.17.tar
+mysql-community-client-5.7.17-1.el7.x86_64.rpm
+mysql-community-common-5.7.17-1.el7.x86_64.rpm
+mysql-community-devel-5.7.17-1.el7.x86_64.rpm
+mysql-community-embedded-5.7.17-1.el7.x86_64.rpm
+mysql-community-embedded-compat-5.7.17-1.el7.x86_64.rpm
+mysql-community-embedded-devel-5.7.17-1.el7.x86_64.rpm
+mysql-community-libs-5.7.17-1.el7.x86_64.rpm
+mysql-community-libs-compat-5.7.17-1.el7.x86_64.rpm
+mysql-community-minimal-debuginfo-5.7.17-1.el7.x86_64.rpm
+mysql-community-server-5.7.17-1.el7.x86_64.rpm
+mysql-community-test-5.7.17-1.el7.x86_64.rpm
+nginx-1.12.2
+nginx-1.12.2.tar.gz
+公共
+.....
+桌面
+[root@VM1 ~]# yum -y install perl-JSON
+  perl-JSON.noarch 0:2.59-2.el7    
+完毕！
+[root@VM1 ~]# rpm -q perl-JSON
+perl-JSON-2.59-2.el7.noarch
+
+[root@VM1 ~]# rpm -Uvh mysql-community-*.rpm   #升级版本安装
+警告：mysql-community-client-5.7.17-1.el7.x86_64.rpm: 
+头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY
+准备中...
+
+正在清理/删除...
+  12:mariadb-devel-1:5.5.56-2.el7    ################################# [ 92%])
+  13:mariadb-libs-1:5.5.56-2.el7     警告：文件 /etc/my.cnf.d/mysql-clients.cnf: 移除失败: 没有那个文件或目录
+################################# [100%]
+[root@VM1 ~]# rpm -qa |grep -i mariadb
+[root@VM1 ~]# rpm -qa |grep -i mysql
+mysql-community-embedded-5.7.17-1.el7.x86_64
+mysql-community-client-5.7.17-1.el7.x86_64
+mysql-community-minimal-debuginfo-5.7.17-1.el7.x86_64
+
+mysql-community-server-5.7.17-1.el7.x86_64
+mysql-community-test-5.7.17-1.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+mysql-community-common-5.7.17-1.el7.x86_64
+mysql-community-devel-5.7.17-1.el7.x86_64
+
+mysql-community-libs-compat-5.7.17-1.el7.x86_64
+perl-DBD-MySQL-4.023-5.el7.x86_64
+mysql-community-libs-5.7.17-1.el7.x86_64
+mysql-community-embedded-compat-5.7.17-1.el7.x86_64
+mysql-community-embedded-devel-5.7.17-1.el7.x86_64
+[root@VM1 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+[root@VM1 ~]# systemctl start mysqld && systemctl enable mysqld
+[root@VM1 ~]# ps -C mysqld    #查看服务进程
+  PID TTY          TIME CMD
+ 5548 ?        00:00:00 mysqld
+[root@VM1 ~]# netstat -untpl |grep mysqld    查看服务进程和端口号
+tcp6  0   0 :::3306   :::*     LISTEN  5548/mysqld 
+
+[root@VM1 ~]# grep password /var/log/mysqld.log 
+2018-09-06T05:20:53.244669Z 1 [Note] A temporary password is generated for root@localhost: O6KcjcgZ8s)M
+[root@VM1 ~]# awk '/root@localhost:/{print $NF}' /var/log/mysqld.log 
+O6KcjcgZ8s)M
+                                     #注意单引号,特殊字符需要'单引号'
+[root@VM1 ~]# mysql -hlocalhost -uroot -p"O6KcjcgZ8s)M"
+
+mysql> alter user root@'localhost' identified by 'Hiy53.es';
+
+mysql> quit
+Bye
+[root@VM1 ~]# 
+
+
+
+
+
+--VM2(eth0:192.168.4.252  eth1:192.168.2.252  虚拟机 8 eth2: 201.1.1.5 eth3: 201.1.2.5)--
+[root@VM2 ~]# nmcli connection show |grep 'eth[0-3]'
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    9ac67a27-3d77-4d61-a5df-b7391ed982f9  802-3-ethernet  eth1   
+eth2    366a4b17-fae2-4c29-8676-d80601546666  802-3-ethernet  eth2   
+eth3    36447881-233d-46de-b31a-02605ea1b654  802-3-ethernet  eth3 
+[root@VM2 ~]# ifconfig |grep 'inet ' |head -4;
+        inet 192.168.4.252  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.252  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.1.5  netmask 255.255.255.0  broadcast 201.1.1.255
+        inet 201.1.2.5  netmask 255.255.255.0  broadcast 201.1.2.255
+[root@VM2 ~]# nmcli connection modify eth1 ipv4.gateway 192.168.2.254;\
+> nmcli connection up eth1 ;
+  /** # route -n |awk '{if(NR>1&&NR<7){print $2}}'  **/
+[root@VM2 ~]# route -n |awk 'NR>1&&NR<7{print $2}'Gateway
+192.168.4.254
+201.1.1.254
+201.1.2.254
+192.168.2.254
+
+
+[root@VM2 ~]# rpm -qa |grep -i mariadb
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+[root@VM2 ~]# yum list |grep -i mariadb
+mariadb.x86_64                          1:5.5.56-2.el7             @rhel7       
+mariadb-devel.x86_64                    1:5.5.56-2.el7             @rhel7       
+mariadb-libs.x86_64                     1:5.5.56-2.el7             @anaconda/7.4
+mariadb-server.x86_64                   1:5.5.56-2.el7             @rhel7       
+......       
+[root@VM2 ~]# systemctl is-active mariadb
+active
+[root@VM2 ~]# systemctl is-enabled mariadb
+enabled
+[root@VM2 ~]# systemctl stop mariadb.service 
+[root@VM2 ~]# systemctl disable mariadb.service 
+Removed symlink /etc/systemd/system/multi-user.target.wants/mariadb.service.
+
+[root@VM2 ~]# rpm -e --nodeps  mariadb mariadb-server
+警告：/var/log/mariadb/mariadb.log 已另存为 /var/log/mariadb/mariadb.log.rpmsave
+
+[root@VM2 ~]# rpm -qa |grep -i mariadb
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+
+[root@VM2 ~]# grep -v '^#\|^$' /etc/my.cnf
+[mysqld]
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+symbolic-links=0
+[mysqld_safe]
+log-error=/var/log/mariadb/mariadb.log
+pid-file=/var/run/mariadb/mariadb.pid
+!includedir /etc/my.cnf.d
+[root@VM2 ~]# rm -rf /var/lib/mysql
+[root@VM2 ~]# rm -rf /etc/my.cnf*
+[root@VM2 ~]# ls /etc/my.cnf*
+ls: 无法访问/etc/my.cnf*: 没有那个文件或目录
+--------------------------------------------------------------------------------------------------
+[root@VM2 ~]# tar -xvf mysql-5.7.17.tar 
+./mysql-community-client-5.7.17-1.el7.x86_64.rpm
+.........
+./mysql-community-server-5.7.17-1.el7.x86_64.rpm
+./mysql-community-test-5.7.17-1.el7.x86_64.rpm
+
+[root@VM2 ~]# yum -y install perl-JSON
+已安装:
+  perl-JSON.noarch 0:2.59-2.el7
+
+[root@VM2 ~]# rpm -q perl-JSON
+perl-JSON-2.59-2.el7.noarch
+
+[root@VM2 ~]# rpm -Uvh mysql-community-*.rpm
+警告：mysql-community-client-5.7.17-1.el7.x86_64.rpm: 
+头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY
+........
+正在清理/删除...
+  12:mariadb-devel-1:5.5.56-2.el7                                  ################################# [ 92%]
+  13:mariadb-libs-1:5.5.56-2.el7                                   警告：文件 /etc/my.cnf.d/mysql-clients.cnf: 移除失败: 没有那个文件或目录
+################################# [100%]
+[root@VM2 ~]# rpm -qa |grep -i mariadb
+[root@VM2 ~]# rpm -qa |grep -i mysql
+mysql-community-embedded-devel-5.7.17-1.el7.x86_64
+mysql-community-server-5.7.17-1.el7.x86_64
+perl-DBD-MySQL-4.023-5.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+mysql-community-client-5.7.17-1.el7.x86_64
+.....................
+[root@VM2 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+[root@VM2 ~]# systemctl start mysqld && systemctl enable mysqld ;
+[root@VM2 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 9398 ?        00:00:00 mysqld
+[root@VM2 ~]# ss -untpl |grep mysqld
+tcp    LISTEN     0      80       :::3306                 :::*                   users:(("mysqld",pid=9398,fd=22))
+[root@VM2 ~]# grep password /var/log/mysqld.log 
+2018-09-06T11:18:33.611604Z 1 [Note] A temporary password is generated for root@localhost: 0>qKeQkp*5Ch
+[root@VM2 ~]# awk '/root@localhost/{print $NF}' /var/log/mysqld.log 
+0>qKeQkp*5Ch                            #注意单引号,特殊字符需要'单引号'
+[root@VM2 ~]# mysql -hlocalhost -uroot -p'0>qKeQkp*5Ch'
+
+mysql> alter user root@'localhost' identified by 'Hiy53.es';
+mysql> quit
+Bye
+[root@VM2 ~]# mysql -uroot -pHiy53.es
+mysql> quit
+Bye
+[root@VM2 ~]#
+
+
+
+
+
+------VM3(eth0:192.168.4.207  eth1:192.168.2.207 虚拟机 9 eth3:201.1.2.100 )----
+[root@VM3 ~]# ifconfig |grep 'inet ' |head -3;
+        inet 192.168.4.207  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.207  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.2.100  netmask 255.255.255.0  broadcast 201.1.2.255
+[root@VM3 ~]# nmcli connection show 
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    cf25ee26-04d8-46dd-b590-76628c454a57  802-3-ethernet  eth1   
+eth3    22a4a90d-eaee-4b49-a8ae-6ce9f86af03d  802-3-ethernet  eth3   
+virbr0  a8c1d122-0406-41b1-861a-f8acca0bbfa3  bridge          virbr0 
+
+[root@VM3 ~]# rpm -qa |grep -i mariadb
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+[root@VM3 ~]# yum list |grep -i mariadb
+[root@VM3 ~]# systemctl is-active mariadb || systemctl is-enabled mariadb ;
+unknown
+disabled
+[root@VM3 ~]# rpm -e  --nodeps mariadb mariadb-server  
+###移除软件包mariadb mariadb-server
+
+[root@VM3 ~]# rpm -qa |grep -i mariadb
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+
+[root@VM3 ~]# grep -v '^#\|^$' /etc/my.cnf
+[mysqld]
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+symbolic-links=0
+[mysqld_safe]
+.........
+[root@VM3 ~]# rm -rf /var/lib/mysql
+[root@VM3 ~]# rm -rf /etc/my.cnf*
+[root@VM3 ~]# tar -xvPf mysql-5.7.17.tar 
+[root@VM3 ~]# yum -y install perl-JSON |tail -4;
+警告：RPM 数据库已被非 yum 程序修改。
+已安装:
+  perl-JSON.noarch 0:2.59-2.el7                                                 
+
+完毕！
+[root@VM3 ~]# rpm -q perl-JSON
+perl-JSON-2.59-2.el7.noarch
+[root@VM3 ~]# rpm -Uvh  mysql-community-*.rpm |tail -3;
+警告：mysql-community-client-5.7.17-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY
+警告：文件 /etc/my.cnf.d/mysql-clients.cnf: 移除失败: 没有那个文件或目录
+正在清理/删除...
+mariadb-devel-1:5.5.56-2.el7          ########################################
+mariadb-libs-1:5.5.56-2.el7           ########################################
+[root@VM3 ~]# rpm -qa |grep -i mariadb
+[root@VM3 ~]# rpm -qa |grep -i mysql
+mysql-community-common-5.7.17-1.el7.x86_64
+........
+[root@VM3 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+[root@VM3 ~]# systemctl start mysqld && systemctl enable mysqld;
+[root@VM3 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 9491 ?        00:00:00 mysqld
+[root@VM3 ~]# ss -nptul |grep mysqld
+tcp    LISTEN     0      80       :::3306                 :::*       [[root@VM3 ~]# awk '/root@localhost/{print $NF}' /var/log/mysqld.log
+foO=g?aKH5py
+
+[root@VM3 ~]# mysql -hlocalhost -uroot -p'foO=g?aKH5py'
+mysql> alter user root@'localhost' identified by 'Hiy53.es';quit;
+Query OK, 0 rows affected (0.00 sec)
+Bye
+[root@VM3 ~]# mysql -uroot -pHiy53.es
+mysql> quit;
+Bye
+[root@VM3 ~]# 
+
+
+
+
+-----VM4(eth0:192.168.4.208  eth1:192.168.2.208 虚拟机 10 eth3: 201.1.2.200 )-----
+[root@VM4 ~]# ifconfig |grep 'inet ' |head -3;
+        inet 192.168.4.208  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.208  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 201.1.2.200  netmask 255.255.255.0  broadcast 201.1.2.255
+[root@VM4 ~]# nmcli connection show 
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    4ca7b26d-f3dc-4455-aed9-a9bbc3e9fba1  802-3-ethernet  eth1   
+eth3    6b43eac6-157d-4d1a-934d-3152d5dcaaea  802-3-ethernet  eth3   
+virbr0  0448f2e8-fe37-423f-a303-95f0e0694461  bridge          virbr0 
+
+  223  ifconfig |grep 'inet ' |head -3;
+  224  nmcli connection show 
+
+  225  rpm -qa |grep -i mariadb
+  226  yum list |grep -i mariadb
+  227  systemctl is-active mariadb || systemctl is-enabled mariadb;
+  228  rpm -e --nodeps mariadb mariadb-server
+  229  rpm -qa |grep -i mariadb
+  230  grep -v '^#\|^$' /etc/my.cnf
+  231  rm -rf /var/lib/mysql
+  232  rm -rf /etc/ym.cnf*
+  233  yum -y install perl-JSON |tail -4;
+  234  tar -xvPf mysql-5.7.17.tar 
+  235  yum -y install perl-JSON |tail -4;
+  236  rpm -q perl-JSON
+  238  ls
+  239  rpm -Uvh mysql-community-*.rpm 
+  241  rpm -qa |grep -i mariadb
+  242  rpm -qa |grep -i mysql
+[root@VM4 ~]# rpm -qa |grep -i mariadb
+[root@VM4 ~]# rpm -qa |grep -i mysql
+
+[root@VM4 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+[root@VM4 ~]# systemctl start mysqld && systemctl enable mysqld;
+[root@VM4 ~]# echo $?
+0
+[root@VM4 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 9092 ?        00:00:00 mysqld
+[root@VM4 ~]# ss -nputl |grep mysqld
+tcp    LISTEN     0      80       :::3306                 :::*                   users:(("mysqld",pid=9092,fd=22))
+[root@VM4 ~]# awk '/root@localhost/{print $NF}' /var/log/mysqld.log
+%#uFkOS>-0%H
+[root@VM4 ~]# mysql -hlocalhost -uroot -p'%#uFkOS>-0%H'
+
+mysql> alter user root@'localhost' identified by 'Hiy53.es';quit;
+Query OK, 0 rows affected (0.00 sec)
+Bye
+[root@VM4 ~]# mysql -hlocalhost -uroot -pHiy53.es
+mysql> quit;
+Bye
+[root@VM4 ~]# 
+
+
+
+

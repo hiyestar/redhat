@@ -1,0 +1,63 @@
+[root@room11pc06 ~]# virsh console DB0
+[root@localhost ~]# echo 123 |passwd --stdin root
+[root@localhost ~]# echo DB0 >/etc/hostname
+
+[root@localhost ~]# nmcli connection modify eth0 ipv4.method manual \
+> ipv4.addresses 192.168.4.50/24 ipv4.gateway 192.168.4.254 \
+> connection.autoconnect yes;nmcli connection up eth0;
+
+[root@localhost ~]# nmcli connection add con-name eth1 ifname eth1 \
+> type ethernet autoconnect yes;
+
+[root@localhost ~]# nmcli connection modify eth1 ipv4.method manual \
+> ipv4.addresses 192.168.2.50/24  ipv4.gateway 192.168.2.254 \
+> connection.autoconnect yes;nmcli connection up eth1;
+
+[root@localhost ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@localhost ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+[root@localhost ~]# systemctl isolate graphical
+[root@localhost ~]# reboot
+[root@room11pc06 ~]# ssh -X 192.168.4.50
+
+[root@DB0 ~]# nmcli connection show 
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    7c5c5040-096d-4c3a-8363-85f929f7cff4  802-3-ethernet  eth1   
+virbr0  f3561787-f2c5-4cdc-95ef-d5d818792a15  bridge          virbr0 
+[root@DB0 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+[root@DB0 ~]# yum clean all >/dev/null;yum repolist |tail -4;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

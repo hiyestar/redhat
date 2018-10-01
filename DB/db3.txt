@@ -1,0 +1,636 @@
+DB]# touch db{1..4}.txt
+
+
+
+
+
+[root@DB1 ~]# mysql -uroot -pHiy53.es
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| bbs                |
+| db1                |
+| mysql              |
+| perdb              |
+| performance_schema |
+| studb              |
+| sys                |
+mysql> use db1;show tables;
+
+mysql> desc xfb;
+| Field | Type       | Null | Key | Default  | Extra |
+| fname | char(10)   | NO   | PRI | NULL     |       |
+| pay   | float(7,2) | YES  |     | 28000.00 |       |
+
+mysql> desc xsb;
+| Field | Type          | Null | Key | Default | Extra |
+| xname | char(10)      | YES  | MUL | NULL    |       |
+| sex   | enum('b','g') | YES  |     | g       |       |
+
+mysql> show create table xsb;                
+ -------------------+
+| xsb   | CREATE TABLE `xsb` (
+  `xname` char(10) DEFAULT NULL,
+  `sex` enum('b','g') DEFAULT 'g',
+  KEY `xname` (`xname`),
+  CONSTRAINT `xsb_ibfk_1` FOREIGN KEY (`xname`) REFERENCES `xfb` (`fname`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 |
++-------
+
+mysql> alter table xsb drop foreign key xsb_ibfk_1;
+Query OK, 
+mysql> insert into xsb(xname)values('jerry');
+Query OK,
+mysql> select * from xsb;
+| xname | sex  |
++-------+------+
+| bob   | g    |
+| tom   | g    |
+| lucy  | g    |
+| jack  | g    |
+| jerry | g    |
+
+mysql> drop table xsb;
+mysql> drop table xfb;
+
+mysql> create table xfb(name char(10) primary key, pay float(7,2))engine=innodb;
+
+mysql> insert into xfb values('bob',28800),
+    -> ('lucy',26800);
+
+mysql> select * from xfb;
++------+----------+
+| name | pay      |
++------+----------+
+| bob  | 28800.00 |
+| lucy | 26800.00 |
+
+mysql> create table xsb(xname char(10),sex enum('boy','girl') default
+    -> 'girl',foreign key(xname) references xfb(name)
+    -> on update  cascade on delete cascade)engine=innodb;
+
+mysql> insert into xsb(xname)values('bob');
+
+mysql> insert into xsb(xname)values('lucy');
+
+mysql> update xfb set name='tom' where name='bob';
+
+mysql> select * from xsb;
++-------+------+
+| xname | sex  |
++-------+------+
+| tom   | girl |
+| lucy  | girl |
+
+mysql> delete from xfb where name='lucy';
+Query OK, 
+mysql> select * from xsb;
+| xname | sex  |
+| tom   | girl |
+
+mysql> select * from xfb;
+| name | pay      |
+| tom  | 28800.00 |
+
+mysql> desc xfb;
+| Field | Type       | Null | Key | Default | Extra |
+| name  | char(10)   | NO   | PRI | NULL    |       |
+| pay   | float(7,2) | YES  |     | NULL    |       |
+
+mysql> desc xsb;
+| Field | Type               | Null | Key | Default | Extra |
+| xname | char(10)           | YES  | MUL | NULL    |       |
+| sex   | enum('boy','girl') | YES  |     | girl    |       |
+
+mysql> insert into xfb values('jerry',28800);
+Query OK, 1 row affected (0.04 sec)
+
+mysql> select *  from xfb;
++-------+----------+
+| name  | pay      |
++-------+----------+
+| jerry | 28800.00 |
+| tom   | 28800.00 |
+
+mysql> insert into xsb values('jerry','boy');
+
+mysql> select * from xsb;
+| xname | sex  |
+| tom   | girl |
+| jerry | boy  |
+
+mysql> delete from xsb;
+
+mysql> alter table xsb add primary key(xname);
+
+mysql> insert into xsb(xname) values('bob');
+ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`db1`.`xsb`, CONSTRAINT `xsb_ibfk_1` FOREIGN KEY (`xname`) REFERENCES `xfb` (`name`) ON DELETE CASCADE ON UPDATE CASCADE)
+
+mysql> insert into xfb(name) values('bob');
+mysql> insert into xsb(xname) values('bob');
+mysql> select * from xsb;
++-------+------+
+| xname | sex  |
++-------+------+
+| bob   | girl |
++-------+------+
+1 row in set (0.00 sec)
+
+mysql> select * from xfb;
++-------+----------+
+| name  | pay      |
++-------+----------+
+| bob   |     NULL |
+| jerry | 28800.00 |
+| tom   | 28800.00 |
+mysql> show engines;
+| Engine     | Support | Comment   | Transactions | XA   | Savepoints |
+------------------------------------------------------------------------------------------------------------------------------------------
+| InnoDB     | DEFAULT | Supports transactions, row-level locking, and foreign keys | YES | YES | YES |
+| MRG_MYISAM | YES     | Collection of identical MyISAM tables            | NO | NO | NO |
+| MEMORY     | YES     | Hash based, stored in memory, useful for temporary tables      | NO  | NO  | NO  |
+| BLACKHOLE  | YES     | /dev/null storage engine (anything you write to it disappears) | NO  | NO  | NO  |
+| MyISAM     | YES     | MyISAM storage engine        | NO   | NO   | NO   |
+| CSV        | YES     | CSV storage engine           | NO   | NO   | NO   |
+| ARCHIVE            | YES     | Archive storage engine  | NO   | NO   | NO   |
+| PERFORMANCE_SCHEMA | YES     | Performance Schema      | NO   | NO   | NO   |
+| FEDERATED          | NO      | Federated MySQL storage engine | NULL | NULL | NULL |
+mysql> quit;
+Bye
+[root@DB1 ~]# systemctl stop mysqld
+[root@DB1 ~]# vim  /etc/my.cnf  ##修改默认存储引擎为myisam
+  4 [mysqld]
+  5 default-storage-engine=myisam ##修改默认存储引擎为myisam
+  6 #
+[root@DB1 ~]# systemctl restart mysqld;
+[root@DB1 ~]# mysql -hlocalhost -uroot -p1234
+mysql> show engines;
+| Engine     | Support | Comment     | Transactions | XA | Savepoints |
+| InnoDB     | YES     | Supports transactions, row-level locking, and foreign keys | YES | YES | YES |
+| MRG_MYISAM | YES     | Collection of identical MyISAM tables    | NO  | NO  | NO  |
+| MEMORY     | YES     | Hash based, stored in memory, useful for temporary tables  | NO  | NO | NO |
+| BLACKHOLE  | YES     | /dev/null storage engine (anything you write to it disappears) | NO | NO | NO |
+**| MyISAM     | DEFAULT | MyISAM storage engine       | NO | NO | NO |***
+| CSV        | YES     | CSV storage engine          | NO | NO | NO |
+| ARCHIVE            | YES     | Archive storage engine   | NO | NO | NO |
+| PERFORMANCE_SCHEMA | YES     | Performance Schema  | NO | NO | NO |
+| FEDERATED          | NO      | Federated MySQL storage engine     | NULL | NULL | NULL |
+
+/*默认存储引擎为myisam ---[表级锁]读锁也是共享锁,适用于查询select操作,节约CPU资源
+.frm 表结构 desc 表名;
+.MYI 表索引 show index from 表名\G;
+.MYD 表数据  select * from 表名;
+[root@DB1 mysql]# ls /var/lib/mysql/db3/{a.frm,a.MYD,a.MYI}
+*/
+mysql> create database db3;use db3;
+mysql> create table db3.a(name  char(8));
+mysql> show create table a;
+| Table | Create Table  |
+| a     | CREATE TABLE `a` ( `name` char(8) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 |
+
+mysql> create index suoyin on db3.a(name);
+
+mysql> desc a;  //.frm 表结构/var/lib/mysql/db3/a.frm
+| Field | Type    | Null | Key | Default | Extra |
+| name  | char(8) | YES  | MUL | NULL    |       |
+
+mysql> show create table a;
+| Table | Create Table   |
+| a     | CREATE TABLE `a` (
+  `name` char(8) DEFAULT NULL,
+  KEY `suoyin` (`name`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 |
+
+mysql> show index from a\G;  //.MYI 表索引/var/lib/mysql/db3/a.MYI
+     Key_name: suoyin
+ Seq_in_index: 1
+  Column_name: name
+
+mysql> select * from a; //.MYD 表数据 /var/lib/mysql/db3/a.MYD
+/*默认存储引擎为myisam ---[表级锁]读锁也是共享锁,适用于查询select操作,节约CPU资源
+
+============================================
+
+/** 默认存储引擎为 innodb  ------[行级锁]适用 于 并发访问量大,写操作
+   .ibd  index + select  
+[root@DB1 mysql]# ls /var/lib/mysql/db3/{b.frm,b.ibd}
+/var/lib/mysql/db3/b.frm   /var/lib/mysql/db3/b.ibd  
+*/
+mysql> create table b(age int unsigned)engine=innodb;
+mysql> show create table db3.b;
+| Table | Create Table  |
+| b     | CREATE TABLE `b` ( `age` int(10) unsigned DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 
+
+mysql> desc b;         //.frm 表结构/var/lib/mysql/db3/b.frm
+| Field | Type             | Null | Key | Default | Extra |
+| age   | int(10) unsigned | YES  |     | NULL    |       |
+
+mysql> show index from b;//index + select innodb /var/lib/mysql/db3/b.ibd
+mysql> select * from b; //index + select innodb /var/lib/mysql/db3/b.ibd
+/** 默认存储引擎为 innodb  ------[行级锁]适用 于 并发访问量大,写操作
+===================================
+/**默认存储引擎为 memory 系统重起,数据消失,表结构还在.
+ .frm  
+/var/lib/mysql/db3/c.frm
+ **/
+mysql> create table c(class char(10))engine=MEMORY;
+mysql> insert into c values('abvc');
+mysql> desc c;
+mysql> show index from c\G;
+mysql> select * from c;  
+| class |
+| abvc  |
+[root@DB1 mysql]# ls /var/lib/mysql/db3/
+a.frm  a.MYD  a.MYI [ b.frm  b.ibd ][ c.frm ]  db.opt
+
+mysql> alter table c  engine=innodb;
+Query OK, 
+mysql> show create table c;
+| Table | Create Table      |
+| c     | CREATE TABLE `c` (
+  `class` char(10) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 |
+
+[root@DB1 mysql]# ll ib_logfile0    #事务日志文件
+-rw-r-----. 1 mysql mysql 50331648 9月  10 14:06 ib_logfile0
+[root@DB1 mysql]# ll ib_logfile1
+-rw-r-----. 1 mysql mysql 50331648 9月   6 08:59 ib_logfile1
+[root@DB1 mysql]# ll ibdata1 
+-rw-r-----. 1 mysql mysql 12582912 9月  10 14:06 ibdata1
+[root@DB1 mysql]# pwd
+/var/lib/mysql
+
+mysql> show status;
+| Variable_name         | Value |
+| Aborted_clients       | 0     |
+| Aborted_connects      | 0     |
+| Compression           | OFF   |
+| Handler_external_lock | 14    |
+| Handler_update        | 0     |
+| Handler_write         | 21    |
+| validate_password_dictionary_file_last_parsed | 2018-09-10 11:30:45  |
+| validate_password_dictionary_file_words_count | 0     |
+358 rows in set 
+
+mysql> show status like '%lock';
++-----------------------+-------+
+| Variable_name         | Value |
++-----------------------+-------+
+| Handler_external_lock | 14    |
+
+mysql> show status like '%lock%';
++------------------------------------------+-------+
+| Variable_name                            | Value |
++------------------------------------------+-------+
+| Com_lock_tables                          | 0     |
+| Com_unlock_tables                        | 0     |
+| Handler_external_lock                    | 14    |
+| Innodb_row_lock_current_waits            | 0     |
+| Innodb_row_lock_waits                    | 0     |
+| Key_blocks_not_flushed                   | 0     |
+| Key_blocks_unused                        | 6695  |
+| Key_blocks_used                          | 3     |
+| Locked_connects                          | 0     |
+| Qcache_total_blocks                      | 1     |
+| Table_locks_immediate                    | 106   |
+| Table_locks_waited                       | 0     |
++------------------------------------------+-------+
+21 rows in set 
+
+mysql> show variables; 
+
+   /**第一个终端窗口**/
+mysql> show variables like '%autocommit%';
+| Variable_name | Value |
+| autocommit    | ON    |
+
+mysql> set autocommit=off;
+
+mysql> show variables like "autocommit";
+| Variable_name | Value |
+| autocommit    | OFF   |
+mysql> use db3;
+mysql> create table d(id int unsigned)engine=innodb;
+mysql> insert into d values(110);
+mysql> commit;  #永久性 durability
+mysql> select * from db3.d; 去第二个终端窗口查看
+| id   |
+|  110 |
+mysql> select * from d; #事务隔离性isolation
+| id   |
+|  110 |
+
+/**第二个终端窗口**/
+mysql> show variables like '%autocommit%';
+| Variable_name | Value |
+| autocommit    | ON    |
+
+mysql> set autocommit=off;
+
+mysql> show variables like 'autocommit';
+| Variable_name | Value |
+| autocommit    | OFF   |
+mysql> use db3;
+mysql> select * from d;
+| id   |
+|  110 |
+mysql> delete from d;
+mysql> select * from d;
+Empty set 
+
+mysql> rollback; ##事务回滚
+Query OK,
+mysql> select * from d;
+| id   |
+|  110 |
+
+===========================
+
+mysql> set autocommit=on;
+Query OK, 
+mysql> show variables like 'autocommit';
+| Variable_name | Value |
+| autocommit    | ON    |
+
+mysql> commit;
+Query OK,
+mysql> select database();
+| database() |
+| db3        |
+mysql>  create table user(
+    -> name char(30),
+    -> password char(1),
+    -> uid int(2),
+    -> gid int(2),
+    -> comment char(150),
+    -> homedir char(150),
+    -> shell char(30),
+    -> index(name));
+mysql> desc user;
++----------+-----------+------+-----+---------+-------+
+| Field    | Type      | Null | Key | Default | Extra |
++----------+-----------+------+-----+---------+-------+
+| name     | char(30)  | YES  | MUL | NULL    |       |
+| password | char(1)   | YES  |     | NULL    |       |
+| uid      | int(2)    | YES  |     | NULL    |       |
+| gid      | int(2)    | YES  |     | NULL    |       |
+| comment  | char(150) | YES  |     | NULL    |       |
+| homedir  | char(150) | YES  |     | NULL    |       |
+| shell    | char(30)  | YES  |     | NULL    |       |
+
+[root@DB1 mysql]# wc -l /etc/passwd
+41 /etc/passwd
+[root@DB1 mysql]# cp /etc/passwd /var/lib/mysql-files/ ;
+[root@DB1 mysql]# cd /var/lib/mysql-files/;ls
+passwd
+[root@DB1 mysql-files]# rm -f passwd 
+mysql> system  cp  /etc/passwd /var/lib/mysql-files/;
+mysql> system  ls  /var/lib/mysql-files/;
+passwd
+[root@DB1 mysql-files]# ls
+passwd
+
+mysql> select * from user;
+Empty set (0.00 sec)
+/**数据导入的命令格式
+  load data infile  "目录/文件名"  into table    库.表
+   fields terminated by ':'  
+   lines terminated  by '\n'; 
+**/
+
+mysql> load data infile '/var/lib/mysql-files/passwd'
+    -> into table db3.user
+    -> fields terminated by ':'
+    -> lines terminated by '\n';
+
+mysql> select * from db3.user;
+| name   | password | uid | gid | comment | homedir  | shell     |
+| root   | x    |  0  |  0  | root    | /root    | /bin/bash |
+| bin    | x    |  1  |  1  | bin     | /bin     | /sbin/nologin  |
+| daemon | x    |  2  |  2  | daemon  | /sbin    | /sbin/nologin  |
+| sshd  | x | 74 | 74 | Privilege-separated SSH | /var/empty/sshd | /sbin/nologin |
+| postfix | x   |  89 |  89 |         | /var/spool/postfix  | /sbin/nologin |
+| ntp     | x   |  38 |  38 |         | /etc/ntp | /sbin/nologin  |
+| tcpdump | x   |  72 |  72 |         | /        | /sbin/nologin  |
+| lisi    | x   |1000 |1000 | lisi    | /home/lisi    | /bin/bash |
+| mysql   | x   | 27  |  27 | MySQL Server | /var/lib/mysql  | /bin/false |
+
+41 rows in set (0.00 sec)
+[root@DB1 mysql-files]# head -2 /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+[root@DB1 mysql-files]# tail -2 /etc/passwd
+lisi:x:1000:1000:lisi:/home/lisi:/bin/bash
+mysql:x:27:27:MySQL Server:/var/lib/mysql:/bin/false
+
+[root@DB1 mysql-files]# ls
+passwd
+
+mysql> select * from db3.user into    
+    -> outfile '/var/lib/mysql-files/user.txt';
+          必须有引号'/var/lib/mysql-files/user.txt'
+[root@DB1 mysql-files]# ls
+passwd  user.txt
+[root@DB1 mysql-files]# head -2 user.txt
+root	x	0	0	root	/root	/bin/bash
+bin	x	1	1	bin	/bin	/sbin/nologin
+
+mysql> select * from db3.user into outfile
+    -> '/var/lib/mysql-files/user2.txt'
+    -> fields terminated by'#';
+
+mysql> select  name,uid,shell from db3.user into
+    -> outfile '/var/lib/mysql-files/user3.txt';
+
+mysql> system ls /var/lib/mysql-files/;
+passwd	user2.txt  user3.txt  user.txt
+
+/**查看导入文件内容时，
+   默认在系统的/var/lib/mysql-files/目录下搜索文件**/
+
+mysql> show variables like "secure_file_priv";
++------------------+-----------------------+
+| Variable_name    | Value                 |
++------------------+-----------------------+
+| secure_file_priv | /var/lib/mysql-files/ |
+
+[root@DB1 mysql-files]# ls
+passwd  user2.txt  user3.txt  user.txt
+
+[root@DB1 mysql-files]# head -2 user2.txt
+root#x#0#0#root#/root#/bin/bash
+bin#x#1#1#bin#/bin#/sbin/nologin
+[root@DB1 mysql-files]# head -1 user3.txt
+root	0	/bin/bash
+
+[root@DB1 mysql-files]# vim /etc/my.cnf
+  4 [mysqld]
+  5 default-storage-engine=myisam
+  6 secure_file_priv=/myload #也可以加引号"/myload"
+   
+[root@DB1 mysql-files]# mkdir /myload/
+[root@DB1 mysql-files]# chown mysql /myload/
+[root@DB1 mysql-files]# systemctl restart  mysqld;
+[root@DB1 mysql-files]# chmod 777 /myload/
+
+mysql> show variables like "secure_file_priv";
++------------------+----------+
+| Variable_name    | Value    |
++------------------+----------+
+| secure_file_priv | /myload/ |
+
+
+mysql> alter table db3.user add id int(2)
+    -> primary key auto_increment first;
+
+mysql> desc user;
+| Field    | Type      | Null | Key | Default | Extra          |
++----------+-----------+------+-----+---------+----------------+
+| id       | int(2)    | NO   | PRI | NULL    | auto_increment |
+| name     | char(30)  | YES  | MUL | NULL    |                |
+| password | char(1)   | YES  |     | NULL    |                |
+| uid      | int(2)    | YES  |     | NULL    |                |
+| gid      | int(2)    | YES  |     | NULL    |                |
+| comment  | char(150) | YES  |     | NULL    |                |
+| homedir  | char(150) | YES  |     | NULL    |                |
+| shell    | char(30)  | YES  |     | NULL    |                |
+
+mysql> insert into user(name,uid)values('lucy',2001),('tom',2007),
+    -> ('lucy',2000);
+
+mysql> select * from user;
+mysql> select uid,name from user where id<=10;
+| uid  | name     |
+|    0 | root     |
+|   11 | operator |
+
+mysql> update db3.user set password='x',gid=1088 where id=1;
+
+mysql> select name,uid,gid,shell from user where id=1;
+| name | uid  | gid  | shell     |
+| root |    0 | 1088 | /bin/bash |
+
+mysql> delete from user where id>=40;
+
+mysql> select * from user where id>38;
+
+mysql> select name,uid,gid,password from user where uid=gid
+    -> and name='lisi';
+
+| name | uid  | gid  | password |
+| lisi | 1000 | 1000 | x        |
+
+mysql> select name,shell from user where shell='/bin/bash';
+
+mysql> select * from user wher uid is null;
+mysql> select * from user where uid is not null 
+    -> and gid>=20 and gid<33;
+
+mysql> select name,uid,shell from user  where uid between 50 and 70;
+| name  | uid  | shell         |
+| tss   |   59 | /sbin/nologin |
+| avahi |   70 | /sbin/nologin |
+
+mysql> select name,uid from user where  
+     > name!='apache' and uid=10 or shell='/bin/bash';
+| name | uid  |
+| root |    0 |
+| lisi | 1000 |
+mysql> select name,uid,shell from user where uid not in (10,20,30) 
+    -> and name in ('adm','mysql','lisi');
+
+mysql> select distinct shell from user;
++----------------+
+| shell          |
++----------------+
+| /bin/bash      |
+| /sbin/nologin  |
+| /bin/sync      |
+| /sbin/shutdown |
+| /sbin/halt     |
+
+mysql> select distinct shell from user where uid < 6;
++---------------+
+| shell         |
++---------------+
+| /bin/bash     |
+| /sbin/nologin |
+| /bin/sync     |
+
+
+
+
+
+
+
+
+
+
+
+
+[root@DB2 ~]# grep 'mysql -uroot -p' /root/.bash_history 
+mysql -uroot -p1234
+.........
+[root@DB2 ~]# mysql -uroot -p1234
+mysql> use db1;
+mysql> show tables;
++---------------+
+| Tables_in_db1 |
+
+mysql> create table xfb(name char(10) primary key,
+    -> pay float(7,2))engine=innodb;
+Query OK, 0 rows affected (0.17 sec)
+
+mysql> insert into xfb values('bob',28800),
+    -> ('lucy',26800);
+Query OK, 2 rows affected (0.03 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> select * from xfb;
++------+----------+
+| name | pay      |
++------+----------+
+| bob  | 28800.00 |
+| lucy | 26800.00 |
++------+----------+
+2 rows in set (0.00 sec)
+
+mysql> create table xsb(xname char(10),sex enum('boy','girl')
+    -> default 'girl',foreign key(xname) 
+    -> references xfb(name) on update cascade on delete
+    -> cascade)engine=innodb;
+Query OK, 0 rows affected (0.22 sec)
+
+mysql> desc xfb;
++-------+------------+------+-----+---------+-------+
+| Field | Type       | Null | Key | Default | Extra |
++-------+------------+------+-----+---------+-------+
+| name  | char(10)   | NO   | PRI | NULL    |       |
+| pay   | float(7,2) | YES  |     | NULL    |       |
++-------+------------+------+-----+---------+-------+
+2 rows in set (0.01 sec)
+
+mysql> desc xsb;
++-------+--------------------+------+-----+---------+-------+
+| Field | Type               | Null | Key | Default | Extra |
++-------+--------------------+------+-----+---------+-------+
+| xname | char(10)           | YES  | MUL | NULL    |       |
+| sex   | enum('boy','girl') | YES  |     | girl    |       |
++-------+--------------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
+mysql> 
+
+
+
+
+
+
+
+
+
+

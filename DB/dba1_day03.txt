@@ -1,0 +1,189 @@
+休息到10:25
+mysql> show engines;
+
+
+innodb存储引擎的特点
+事务： 一次sql操作从开始建立连接 执行各种sql命令 到 断开连接的过程。
+
+事务回滚： 事务执行时，任意一步操作没有成功，会恢复之前的所有操作。
+
+
+行级锁：
+
+
++++++++++++++++++++++++++++++++++++
+mysql> create table user(
+    -> name char(30),
+    -> password  char(1),
+    -> uid  int(2),
+    -> gid  int(2),
+    -> comment  char(150),
+    -> homedir  char(150),
+    -> shell char(30),
+    -> index(name)
+    -> );
+]# cp /etc/passwd /var/lib/mysql-files/
+或
+mysql> system cp /etc/passwd  /var/lib/mysql-files/
+mysql> system ls  /var/lib/mysql-files/
+mysql> load  data  infile  "/var/lib/mysql-files/passwd"
+    -> into  table db3.user
+    -> fields  terminated by ":"
+    -> lines terminated by "\n";
+
+mysql> select  * from db3.user;
+
+mysql>
+select name,uid,shell from user into  outfile  "/var/lib/mysql-files/user3.txt" ;
+
+mysql>
+select * from user into  outfile  "/var/lib/mysql-files/user2.txt" fields  terminated by "#";
+
+]# cat /var/lib/mysql-files/user2.txt
+]# cat /var/lib/mysql-files/user3.txt
+
+
+mysql> alter table db3.user
+    -> add 
+    -> id int(2) primary key  auto_increment
+    -> first;
+
+mysql> desc  db3.user
+mysql> select  * from db3.user;
+
++++++++++++++++++++++++++++++++++
+insert into  user 
+values 
+(60,"bob","x",3003,3003,"student user","/home/bob","/bin/bash");
+
+
+insert into user(name,uid)values("lucy",2001);
+
+insert into user(name,uid)
+values("lucy",2001),("tom",2009),("lucy",2007);
+
++++++++++++++++++++++++++++++++++
+use db3;
+select  * from user;
+select name,uid,shell from  user;
+select name,uid,shell from  user where id=1;
+select name,uid,shell from  user where id<=10;
+
+++++++++++++++++++++++++++++++++++++++++++++
+update  user set password="A",gid=1000;
+update  user set password="x",gid=1088 where id=1;
+select  password,gid from  user;
++++++++++++++++++++++++++
+delete  from  user where id>60;
+delete  from  user where id=41;
+
+基本匹配条件和高级匹配条件应用于select\update\delete
+
+select  name from user where uid=7;
+select  name,uid,gid from user where uid=gid;
+select  name,uid,gid from user where 1=2;
+select  * from user where id<=10;
+
+
+select  name from  user where name="mysql";
+select  name,shell from  user where shell="/bin/bash";
+select  name,shell from  user where shell!="/bin/bash";
+
+select  * from user where  uid is null;
+select  name,uid from user where  uid is not null;
+
+
+select name,uid from user 
+where  name="apache" and  uid=10  and shell="/bin/bash;
+Empty set (0.00 sec)
+
+
+select name,uid,shell from user 
+where  name="apache" or uid=10  or shell="/bin/bash";
+
+select name,uid,shell from user 
+where uid in (10,20,30,40);
+
+
+select name,uid,shell from user 
+where uid not in (10,20,30,40);
+
+
+select name,uid,shell from user 
+where name  in ("adm","mysql","zhangsan","bob");
+
+
+select name,uid,shell from user 
+where uid between 50 and 80;
+
+mysql> select   distinct shell from user;
+mysql> select   distinct shell from user where id<=10; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

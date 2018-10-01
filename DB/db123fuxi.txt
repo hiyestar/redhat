@@ -1,0 +1,127 @@
+DB]# touch db{1..4}.txt
+1. 字符 ‘^' 查询以特定字符或字符串开头的记录
+1
+SELECT * FROM user WHERE email REGEXP '^a'
+字符 ‘^' 匹配以特定字符或字符串开头的记录，以上语句查询邮箱以 a 开头的记录
+2. 字符 ' 查询以特定字符或字符串结尾的记录
+1
+SELECT * FROM user WHERE phone REGEXP '0$'
+字符 ‘$' 匹配以特定字符或字符串结尾的记录，以上语句查询邮箱以 0 结尾的记录
+3. 用符号“.”；来代替字符串中的任意一个字符
+1
+SELECT * FROM user WHERE email REGEXP 'a.c'
+查询邮箱 a、c 之间有一个字符的记录，'.' 相当于是一个占位符。如果写成 REGEXP ‘a..c' , 即a、c之间有两个点，则表示邮箱中 a、c 之间要有两个字符。
+4.使用“*”匹配多个字符
+1
+SELECT * FROM user WHERE email REGEXP 'm*'
+查询所有邮箱中有 m 的记录。
+1
+SELECT * FROM user WHERE email REGEXP '^am*'
+查询邮箱字母 a开头， a后面有字母 m 的记录。其中'*' 表示0次或以上。
+5. 用字符“+”表示紧跟的字符
+1
+SELECT * FROM user WHERE email REGEXP 'm+'
+查询所有邮箱中有 m 的记录。
+1
+SELECT * FROM user WHERE email REGEXP '^am+'
+查询邮箱字母 a开头， a后面紧跟字母 m 的记录。其中'+' 表示紧跟字符。
+6. “|” 分隔条件匹配指定字符串
+1
+SELECT * FROM user WHERE email REGEXP 'qq.com|163.com'
+正则表达式可以匹配指定的字符串，字符串之间使用 “|” 分隔。
+7. “[]” 表示集合匹配指定字符串中的任意一个
+?
+1
+SELECT * FROM user WHERE email REGEXP '[az]'
+”[]“ 指定一个集合，以上表示查询邮箱中带有 a或z或两者都有的邮箱。也可以用来匹配数字集合，比如 [0-9] 表示集合区间所有数字，[a-z] 表示集合区间所有字母。
+8. “[^]”匹配指定字符以外的字符
+1
+SELECT * FROM user WHERE email REGEXP '[^a-d1-3]'
+如上匹配邮箱中不包含 a、b、c、d 且 不包含 1、2、3 的记录。
+9. 使用{n,} 或 {n,m} 来指定字符串连接出现的次数
+1
+SELECT * FROM user WHERE email REGEXP 'b{2}'
+表示字母 b 至少出现 2 次。
+1
+SELECT * FROM user WHERE email REGEXP 'yu{1,3}'
+表示字符串 ba 至少出现1次，至多出现3次。
+
+
+
+select id,kind,click_num from code as a   
+where  click_num=(select max(b.click_num)  
+    from code as b  
+    where a.kind = b.kind  
+);
+
+
+select的5中子句where，group by, havaing, order by, limit的使用顺序及实例
+
+-- 语法：
+
+1
+2
+3
+4
+5
+6
+7
+SELECT select_list　　　
+FROM table_name　　
+[ WHERE search_condition ]　　
+[ GROUP BY group_by_expression ]　　
+[ HAVING search_condition ]　　
+[ ORDER BY order_expression [ ASC | DESC ] ]
+[limit m,n]
+　　
+
+  
+-- 示例：
+-- limit 0,10是从第一条开始,取10条数据
+1
+2
+3
+4
+5
+select classNo  from table_name 
+group by classNo  
+having(avg(成绩)>70)
+order by classNo 
+limit 0,10
+　　
+
+ 
+说明：
+1.where 
+
+where后跟条件用来筛选我们所需的行。它后面可以跟的操作符有=、！=、<、>、<=、>=、 in、 like(可以和通配符%结合一起用，效果将会更好) 、between....and........ AND、OR 、NOT 
+
+如：select id,name,score form student where score in (每组里面的最高分组合); 
+
+2.group by（GROUP BY 语句用于结合合计函数（也叫聚合函数sum count avg max min），根据一个或多个列对结果集进行分组。否则没有多大的意义）
+
+group by 有一个原则,就是 select 后面的所有列中,没有使用聚合函数的列,必须出现在 group by 后面
+如：我们对文字的分类id进行分组,查询每组分类的文章数 select articlecategory_id,count（*） from article group by articlecategory_id;
+再次提示：
+如果你使用了group by，而没有相应的使用聚合函数那么结果就没有意义了，按照实际情况来思考的话就变成了一对多了（也就是一个分组对应多个对象（也就是多行），那么一个分组对应多行数据的显示就变成了分组和第一行数据进行显示了，所以此时我们应该使用聚合函数（聚合函数就是把多个变成一），也就是对多行数据进行筛选，得到我们想要的数据，如：可以使用count计算论坛小组总帖子数，可以使用sum来计算
+论坛小组帖子总回复数，可以使用max来计算论坛小组最多回复的帖子，可以使用min来计算论坛小组最少回复数（没有多大意义，商城最便宜的商品就意义了），可以使用avg来计算论坛每周的平均访问量（商城所有商品的平均价格）等。
+3.having 这个是针对查询的结果进行作用，只能对结果拥有的列进行操作，与where不同的是where是针对原表(就是from后面的那张表的字段)发挥作用。其中having里面可以使用聚合函数。为group by子句设置条件，类似于where为select语句设置条件的方法。having的查找条件可以包括集合函数表达式。除此之外，它的查找条件与where查找条件相同。
+
+select articlecategory_id,count（*） from article group by articlecategory_id having count(*)<5;
+
+4.order by 排序 （可以对多个字段进行排序）
+
+可以针对字段进行排序，order by 字段1 [asc] 升序，[desc] 降序
+
+5.limit 获取条目的限定
+
+语法 limit offset,N
+
+limit 5 《====》 limit 0,5;
+
+总结：where是针对from后面跟的表进行处理，而group by having order by limit则是针对select后面的字段进行处理。从它们的结构角度来看则：先整体后部分。
+
+
+
+
+

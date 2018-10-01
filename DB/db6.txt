@@ -1,0 +1,618 @@
+
+DNS分类与区别-权威DNS、递归DNS、转发DNS
+
+权威各种DNS有什么区别？
+
+比如帝恩思小编的电脑上配置的是DNS114.114.114.114，但是www.dns.com用的是帝恩思dns.com的DNS，这两种DNS有什么区别？
+
+这里就做一些解释。
+
+首先，DNS按功能（角色）的分类：
+
+1.权威DNS：
+
+权威DNS是经过上一级授权对域名进行解析的服务器，同时它可以把解析授权转授给其他人，如COM顶级服务器可以授权dns.com这个域名的的权威服务器为NS.ABC.COM，同时NS.ABC.COM还可以把授权转授给NS.DDD.COM，这样NS.DDD.COM就成了ABC.COM实际上的权威服务器了。平时我们解析域名的结果都源自权威DNS。比如dns.com的权威DNS服务器就是帝恩思的ns1.dns.com ns2.dns.com
+
+
+2.递归DNS:
+
+负责接受用户对任意域名查询，并返回结果给用户。递归DNS可以缓存结果以避免重复向上查询。我们平时使用最多的就是这类DNS，他对公众开放服务，一般由网络运营商提供，大家都自己可以架递归DNS提供服务。递归DNS一定要有可靠的互联网连接方可使用。比如谷歌的8.8.8.8和8.8.4.4以及114的114.114.114.114和114.114.115.115都属于这一类DNS。你本地电脑上设置的DNS就是这类DNS。
+
+3.转发DNS:
+
+负责接受用户查询，并返回结果给用户。但这个结果不是按标准的域名解析过程得到的，而是直接把递归DNS的结果转发给用户。它也具备缓存功能。他主要使用在没有直接的互联网连接，但可以连接到一个递归DNS那里，这时使用转发DNS就比较合适。其缺陷是：直接受递归DNS的影响，服务品质较差。比如我们用的路由器里面的DNS就是这一类，用路由器的朋友可以看下本地电脑的DNS一般都是192.168.1.1。
+
+域名解析过程:
+用户—本地递归服务器—根权威服务器—COM权威服务器—xxorg.com权威服务器—用户
+
+FAQ：
+
+1.递归服务器怎么知道根权威服务器的地址？
+
+很简单，在递归服务器上都保存有一份根服务器的地址列表。最新的根服务器地址列表在这里可以得到：ftp://ftp.internic.net/domain/named.root
+
+2.递归服务器每次查询域名都要向根那里找权威服务器吗？
+
+不是的，一旦成功一次，递归服务器就会把权威服务器列表缓存下来（如COM顶级服务器列表可以缓存48小时）。
+
+3.这些DNS都是什么人在管理？
+
+本地递归服务器一般由电信运营商架设，服务于自己的用户，并有其管理，自然人也架设。根服务器与顶级域服务器由国际组织统一部署管理（实际控制器在美国政府）。对顶级域服务器来说销售商有可控的写入权。
+
+4.根DNS服务器在全球的放置
+
+美国VeriSign公司 2台
+
+美国PSINet公司 1台
+
+美国ISI(Information Sciences Institute) 1台
+
+美国ISC(Internet Software Consortium) 1台
+
+美国马里兰大学(University of Maryland) 1台
+
+美国太空总署(NASA) 1台
+
+美国国防部 1台
+
+美国陆军研究所 1台
+
+挪威NORDUnet 1台
+
+日本WIDE(Widely Integrated Distributed Environments)研究计划 1台
+
+网络管理组织IANA(Internet Assigned Number Authority) 1台
+
+欧洲网络管理组织RIPE-NCC(Resource IP Europeens Network Coordination Centre) 1台
+
+[root@DB2 ~]# vim /root/bakstudb.sh
+[root@DB2 ~]# chmod +x /root/bakstudb.sh
+[root@DB2 ~]# cat /root/bakstudb.sh
+#!/bin/bash
+day=`date +%F`
+if [ ! -e /dbbak ];then
+  mkdir  /dbbak
+fi
+mysqldump -uroot -pHiy53.es db3 > /dbbak/${day}_db3.sql
+[root@DB2 ~]# /root/bakstudb.sh
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@DB2 ~]# ll /dbbak/2018-09-13_db3.sql 
+-rw-r--r--. 1 root root 4723 9月  13 20:18 /dbbak/2018-09-13_db3.sql
+
+[root@DB2 ~]# mkdir /crondx
+
+[root@DB2 ~]# crontab -e  -u root
+crontab: installing new crontab
+
+[root@DB2 ~]# systemctl restart crond
+[root@DB2 ~]# crontab -l -u root
+05 21 * * *  /root/bakstudb.sh && echo hello >> /crondx/sql.txt
+
+[root@DB2 ~]# ll /dbbak/*.sql >> /crondx/sql2.txt
+[root@DB2 ~]# cat /crondx/sql2.txt
+-rw-r--r--. 1 root root 4723 9月  13 20:54 /dbbak/2018-09-13_db3.sql
+
+[root@DB2 ~]# cat /crondx/sql.txt 
+hello
+您在 /var/spool/mail/root 中有新邮件
+
+]# mysqldump -uroot -p654321  studb > /mydatabak/studb.sql
+
+]# mysqldump -uroot -p654321  db3 user3 > /mydatabak/db3-user3.sql
+
+]#mysql  -uroot  -p654321  db3  <  /root/user3.sql
+2.3 完全恢复数据
+先建 空库 studb,再导入库 studb
+mysql > create database studb;
+]# mysql -uroot -p654321  studb  < /mydatabak/studb.sql 
+
+]#mysqldump  -uroot  -p654321  --flush-logs  db3.user3  >  /root/user3.sql
+[root@DB3 ~]# mysqldump -uroot -pHiy53.es -A > /mydata/all.sql
+
+[root@DB3 ~]# mysqldump -uroot -pHiy53.es -B 库1  库2  库3 > /mydata/all.sql
+读取日志文件指定范围内的sql命令恢复数据。
+]# mysqlbinlog  --start-position=293  --stop-position=1450   plj.000001   |
+  mysql  -uroot  -p654321
+
+==============================
+[root@DB3 ~]# rm -rf /new1dir   /new2dir/  /fullbak/
+[root@DB3 ~]# ls /new1dir   /new2dir/  /fullbak/
+ls: 无法访问/new1dir: 没有那个文件或目录
+ls: 无法访问/new2dir/: 没有那个文件或目录
+ls: 无法访问/fullbak/: 没有那个文件或目录
+
+
+[root@DB3 ~]# mysql -uroot -pHiy53.es
+
+mysql> show engines;
+| InnoDB             | DEFAULT |
+
+mysql> create database db5;
+
+mysql> use db5;create table db5.a(id int(3) unsigned);
+
+mysql> insert into a(id) values(666),(666),(666),(666);
+mysql> insert into a(id) values(666),(666),(666),(666);
+
+mysql> show tables;
+| Tables_in_db5 |
+| a             |
+
+mysql> show databases;
+
+[root@DB3 ~]# innobackupex --user root  --password Hiy53.es /fullbak  --no-timestamp
+
+[root@DB3 ~]# ls /fullbak/
+backup-my.cnf  db5             mysql               xtrabackup_checkpoints
+db3            ib_buffer_pool  performance_schema  xtrabackup_info
+db4            ibdata1         sys                 xtrabackup_logfile
+
+mysql> insert into a(id) values(776),(676),(766),(667);
+mysql> insert into a(id) values(776),(676),(766),(667);
+
+[root@DB3 ~]# innobackupex --user root  --password Hiy53.es \
+> --incremental /new1dir  --incremental-basedir=/fullbak  \
+> --no-timestamp ;
+
+[root@DB3 ~]# ls /new1dir/
+backup-my.cnf  ib_buffer_pool  performance_schema      xtrabackup_logfile
+db3            ibdata1.delta   sys
+db4            ibdata1.meta    xtrabackup_checkpoints
+db5            mysql           xtrabackup_info
+
+[root@DB3 ~]# ls /new1dir/db5/
+a.frm  a.ibd.delta  a.ibd.meta  db.opt
+
+[root@DB3 ~]# ls /fullbak/db5/
+a.frm  a.ibd  db.opt
+
+mysql> insert into a(id) values(778),(688),(788),(887);
+mysql> insert into a(id) values(778),(688),(788),(887);
+
+[root@DB3 ~]# innobackupex --user root  --password Hiy53.es 
+ > --incremental /new2dir  --incremental-basedir=/new1dir --no-timestamp;
+
+[root@DB3 ~]# ls /new2dir/db5/
+a.frm  a.ibd.delta  a.ibd.meta  db.opt
+
+[root@DB3 ~]# ls /new2dir/
+backup-my.cnf   ibdata1.delta       xtrabackup_checkpoints
+db3             ibdata1.meta        xtrabackup_info
+db4             mysql               xtrabackup_logfile
+db5             performance_schema
+ib_buffer_pool  sys
+
+mysql> select count(*) from db5.a
+    -> ;
+| count(*) |
+|       24    |
+   /*******xtrabackup_logfile已经提交的数据ib_logfile0   ib_logfile1
+ /***ibdata1 【完全备份】还没有 提交的数据  a.ibd.meta 【增量备份】
+[root@DB3 ~]# cd /var/lib/mysql/;ls
+auto.cnf         db3             ib_logfile0  mysql.sock.lock     server-key.pem
+ca-key.pem       db4             ib_logfile1  performance_schema  sys
+ca.pem           db5             ibtmp1       private_key.pem
+client-cert.pem  ib_buffer_pool  mysql        public_key.pem
+client-key.pem   ibdata1         mysql.sock   server-cert.pem
+   /***innodb存储引擎的事务日志文件 ibdata1  ib_logfile0 ib_logfile1
+[root@DB3 mysql]# ll  ibdata1 
+-rw-r-----. 1 mysql mysql 12582912 9月  14 09:35 ibdata1
+[root@DB3 mysql]# ll  ib_logfile0
+-rw-r-----. 1 mysql mysql 50331648 9月  14 09:35 ib_logfile0
+[root@DB3 mysql]# ll  ib_logfile1
+-rw-r-----. 1 mysql mysql 50331648 9月  13 10:55 ib_logfile1
+
+[root@DB3 mysql]# ls /fullbak/xtrabackup_*
+/fullbak/xtrabackup_checkpoints  /fullbak/xtrabackup_logfile
+/fullbak/xtrabackup_info
+[root@DB3 mysql]# ll /fullbak/xtrabackup_checkpoints 
+-rw-r-----. 1 root root 113 9月  14 09:22 /fullbak/xtrabackup_checkpoints
+[root@DB3 mysql]# cat /fullbak/xtrabackup_checkpoints
+backup_type = full-backuped
+from_lsn = 0   ##lsn日志序列号
+to_lsn = 2647136
+last_lsn = 2647145
+compact = 0
+recover_binlog_info = 0
+
+[root@DB3 mysql]# cat /new1dir/xtrabackup_checkpoints 
+backup_type = incremental
+from_lsn = 2647136
+to_lsn = 2652965
+last_lsn = 2652974
+compact = 0
+recover_binlog_info = 0
+[root@DB3 mysql]# cat /new2dir/xtrabackup_checkpoints 
+backup_type = incremental
+from_lsn = 2652965
+to_lsn = 2660670
+last_lsn = 2660679
+compact = 0
+recover_binlog_info = 0
+
+
+[root@DB3 mysql]# mkdir  /var/lib/mysql2/ 
+[root@DB3 mysql]# cp -rpf /var/lib/mysql/* /var/lib/mysql2/
+[root@DB3 mysql]# systemctl stop mysqld
+
+[root@DB3 mysql]# rm -rf /var/lib/mysql/*
+[root@DB3 mysql]# innobackupex --user root --password Hiy53.es \
+> --apply-log --redo-only /fullbak
+
+[root@DB3 mysql]# innobackupex --user root --password Hiy53.es \
+> --apply-log --redo-only /fullbak/ \
+> --incremental-dir=/new1dir
+
+[root@DB3 mysql]# innobackupex --user root --password Hiy53.es \
+> --apply-log --redo-only /fullbak/ \
+> --incremental-dir=/new2dir
+
+[root@DB3 mysql]# innobackupex --user root --password Hiy53.es \
+> --copy-back /fullbak/
+
+[root@DB3 mysql]# ls /var/lib/mysql/
+db3  db5             ibdata1  performance_schema  xtrabackup_info
+db4  ib_buffer_pool  mysql    sys
+[root@DB3 mysql]# ls -ld /var/lib/mysql/
+drwxr-x--x. 8 mysql mysql 149 9月  14 11:17 /var/lib/mysql/
+
+[root@DB4 ~]# systemctl restart mysqld
+
+[root@DB4 ~]# cat /fullbak/xtrabackup_checkpoints
+backup_type = log-applied
+from_lsn = 0
+to_lsn = 2658557
+last_lsn = 2658566
+compact = 0
+recover_binlog_info = 0
+[root@DB4 ~]# cat /new2dir/xtrabackup_checkpoints 
+backup_type = incremental
+from_lsn = 2653983
+to_lsn = 2658557
+last_lsn = 2658566
+compact = 0
+recover_binlog_info = 0
+[root@DB4 ~]# cat /new1dir/xtrabackup_checkpoints 
+backup_type = incremental
+from_lsn = 2648257
+to_lsn = 2653983
+last_lsn = 2653992
+compact = 0
+recover_binlog_info = 0
+
+mysql> use db5;show tables;
+mysql> create table b(name char(10));
+
+[root@DB4 ~]# innobackupex --user root  --password Hiy53.es \
+> --databases="db5" /db5full  --no-timestamp
+
+[root@DB4 ~]# ls /db5full/
+backup-my.cnf   ibdata1                 xtrabackup_logfile
+db5             xtrabackup_checkpoints
+ib_buffer_pool  xtrabackup_info
+
+mysql> drop table b; 删除表b
+
+[root@DB4 ~]# innobackupex --user root  --password Hiy53.es \
+> --databases="db5" --apply-log --export  /db5full  导出表信息
+
+mysql> create table b(name char(10));
+
+mysql> alter table db5.b discard tablespace; 删除表空间
+Query OK,
+
+mysql> system cp /db5full/db5/b.{cfg,exp,ibd} /var/lib/mysql/db5/ ;
+
+mysql> system chown mysql:mysql /var/lib/mysql/db5/b.* ;
+
+mysql> system ll /var/lib/mysql/db5/b.* ;
+sh: ll: 未找到命令
+mysql> system ls -l /var/lib/mysql/db5/b.* ;
+-rw-r--r--. 1 mysql mysql   369 9月  14 14:22 /var/lib/mysql/db5/b.cfg
+-rw-r-----. 1 mysql mysql 16384 9月  14 14:22 /var/lib/mysql/db5/b.exp
+-rw-r-----. 1 mysql mysql  8560 9月  14 14:20 /var/lib/mysql/db5/b.frm
+-rw-r-----. 1 mysql mysql 98304 9月  14 14:22 /var/lib/mysql/db5/b.ibd
+mysql> select * from db5.b;
+ERROR 1814 (HY000): Tablespace has been discarded for table 'b'
+                                  /** 导入表空间
+mysql> alter table db5.b import tablespace;
+
+mysql> select * from db5.b;
+| name |
+| bbo  |
+| bbo  |
+| bbo  |
+| bbo2 |
+| bbo2 |
+| bbo2 |
+6 rows in set (0.00 sec)
+
+mysql> system ls /var/lib/mysql/db5/ ;
+a.frm  a.ibd  b.cfg  b.exp  b.frm  b.ibd  db.opt
+
+mysql> system rm -rf /var/lib/mysql/db5/b.{cfg,exp} ;
+mysql> system ls /var/lib/mysql/db5/ ;
+a.frm  a.ibd  b.frm  b.ibd  db.opt
+==================================
+===========================================
+
+mysql> create database db5;
+
+mysql> use db5;
+mysql> create table a(id int(3) unsigned);
+
+mysql> insert into a(id) values(111),(11),(10);
+
+[root@DB1 ~]# mysqldump -uroot -pHiy53.es db4 >/root/db4.sql
+
+[root@DB1 ~]# scp /root/db4.sql root@192.168.4.52:/tmp/
+
+[root@DB2 ~]#mysql -uroot -pHiy53.es
+mysql> create database db4;
+Query OK, 1 row affected (0.00 sec)
+mysql> use db4;show tables;
+    /***必须先指定数据库名 db4 ，否则数据导入失败，数据是空的
+mysql> source /tmp/db4.sql
+
+mysql>show tables;
+| Tables_in_db4 |
++---------------+
+| user2         |
+| user3         |
+| user4         |
+
+[root@DB1 ~]# vim /etc/my.cnf
+
+[mysqld]
+server_id=51
+log-bin=db51
+#log-bin
+#log-bin=/mylog/plj
+binlog_format='mixed'
+#default-storage-engine=myisam
+secure_file_priv=/myload
+
+[root@DB1 ~]# systemctl restart mysqld
+[root@DB1 ~]# ls /var/lib/mysql/db51*
+/var/lib/mysql/db51.000001  /var/lib/mysql/db51.index
+
+mysql> show master status;
+| File        | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| db51.000001 |      765 |              |                  |                   |
+
+mysql> grant replication slave on *.* to 
+    -> repluser@'%'
+    -> identified by 'Hiy53.es';
+
+mysql> select user,host from mysql.user 
+    -> where user='repluser';
+| user     | host |
+| repluser | %    |
+
+[root@DB2 ~]# vim /etc/my.cnf
+[mysqld]
+#skip-grant-tables
+default-storage-engine=innodb
+server_id=52
+
+[root@DB2 ~]# systemctl restart mysqld
+
+mysql> show slave status;
+Empty set (0.00 sec)
+
+mysql> change master to master_host="192.168.4.51",
+    -> master_user="repluser",
+    ->  master_password="Hiy53.es",
+    -> master_log_file="db51.000001",
+    -> master_log_pos=765;
+
+mysql> start slave;
+
+mysql> show slave status\G;
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: db51.000001
+          Read_Master_Log_Pos: 1055
+               Relay_Log_File: DB2-relay-bin.000002
+                Relay_Log_Pos: 605
+        Relay_Master_Log_File: db51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+                Last_IO_Errno: 0
+                Last_IO_Error: 
+               Last_SQL_Errno: 0
+               Last_SQL_Error: 
+
+--------------------------DB1-------------------
+/******* > grant 权限列表 on 库名.表名 to  用户名@‘匹配的客户端主机地址’
+     > identified by '给于客户的用户密码'
+     > with grant option ------是否有授权权限
+     【@‘%.baidu.com’匹配指定的域名】 【@'192.168.1.%'匹配指定的网段】
+mysql> grant all on *.* to mydba@"%" 【%表示匹配任意主机】
+    -> identified by "Hiy53.es"
+    -> with grant option;
+*******/
+/***
+mysql> grant select,insert on db4.* to '%' [任意用户任意主机]
+    -> identified by 'Hiy53.es';
+Query OK, 
+**/
+mysql> grant select,insert on db4.* to yaya@'%'
+    -> identified by 'Hiy53.es';
+[root@DB4 ~]# mysql -h 192.168.4.51 -u yaya -pHiy53.es
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db4                |
+
+mysql> use db4;show tables;
+| Tables_in_db4 |
+| user2         |
+| user3         |
+| user4         |
+
+[root@DB2 ~]# cd /var/lib/mysql;ls
+auto.cnf         DB2-relay-bin.000001  ib_logfile0         private_key.pem
+bbs              DB2-relay-bin.000002  ib_logfile1         public_key.pem
+ca-key.pem       DB2-relay-bin.index   ibtmp1              relay-log.info
+[root@DB2 mysql]# cat DB2-relay-bin.index 
+./DB2-relay-bin.000001
+./DB2-relay-bin.000002
+[root@DB2 mysql]# mysqlbinlog DB2-relay-bin.000002 |grep insert
+[root@DB2 mysql]# mysqlbinlog DB2-relay-bin.000002 |head -2
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=1*/;
+/*!50003 SET @OLD_COMPLETION_TYPE=@@COMPLETION_TYPE,COMPLETION_TYPE=0*/;
+[root@DB2 mysql]# cat auto.cnf 
+[auto]
+server-uuid=c071e0db-b256-11e8-bfd6-5254004e2968
+[root@DB2 mysql]# cat master.info 
+25
+db51.000001
+1634
+192.168.4.51
+repluser
+Hiy53.es
+3306
+60
+0
+0
+30.000
+0
+84d3dca2-b740-11e8-8eec-525400dc6eb1
+86400
+0
+[root@DB2 mysql]# cat  relay-log.info
+7
+./DB2-relay-bin.000002
+1184
+db51.000001
+1634
+0
+0
+1
+
+mysql> stop slave;
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> show slave status\G;
+                  Master_Host: 192.168.4.51
+        Relay_Master_Log_File: db51.000001
+             Slave_IO_Running: No
+            Slave_SQL_Running: No
+
+mysql> start slave;
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> show slave status\G;
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: db51.000001
+          Read_Master_Log_Pos: 1634
+               Relay_Log_File: DB2-relay-bin.000003
+                Relay_Log_Pos: 315
+        Relay_Master_Log_File: db51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+
+mysql> quit;
+Bye
+[root@DB2 ~]# ls /var/lib/mysql/{master.info,relay-log.info}
+/var/lib/mysql/master.info  /var/lib/mysql/relay-log.info
+[root@DB2 ~]# rm -rf /var/lib/mysql/{master.info,relay-log.info}
+
+[root@DB2 ~]# ls /var/lib/mysql/DB2-relay-bin.*
+/var/lib/mysql/DB2-relay-bin.000002  /var/lib/mysql/DB2-relay-bin.index
+/var/lib/mysql/DB2-relay-bin.000003
+[root@DB2 ~]# rm -rf /var/lib/mysql/DB2-relay-bin.*
+[root@DB2 ~]# systemctl restart mysqld
+
+[root@DB2 ~]# mysql -uroot -pHiy53.es
+
+mysql> show slave status\G;
+Empty set (0.01 sec)
+
+==================================
+---------------DB1---------------------
+mysql> create database db5;
+mysql> use db5;
+mysql> create table a(id int(3) unsigned);
+
+mysql> insert into a(id) values(111),(11),(10);
+
+mysql> use db5;show tables;
+Database changed
+| Tables_in_db5 |
+| a             |
+
+ ~]# mysqldump -uroot -pHiy53.es db5 >/root/db5.sql
+
+ ~]# scp /root/db5.sql root@192.168.4.52:/tmp/
+[root@DB1 ~]# scp /root/db5.sql root@192.168.4.54:/tmp/
+[root@DB4 ~]# ll /tmp/db5.sql
+-rw-r--r--. 1 root root 1774 9月  14 17:14 /tmp/db5.sql
+
+ ~]#mysql -uroot -pHiy53.es
+mysql> create database db5;
+mysql> use db5;show tables;
+
+mysql> source /tmp/db5.sql
+mysql> show tables;
+| Tables_in_db5 |
++---------------+
+| a             |
+-------------------------------DB1---------------
+mysql> show master status;
++-------------+----------+--------------+------------------+-------------------+
+| File        | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++-------------+----------+--------------+------------------+-------------------+
+| db51.000001 |     1634 |              |                  |                   |
+----------------------------------------------------------------------------------------------------
+
+
+mysql> use db5;show tables;
+
+mysql> source /tmp/db5.sql
+
+mysql> show slave status;
+Current database: db5
+Empty set (0.01 sec)
+
+mysql> change master to master_host='192.168.4.51',
+    -> master_user='repluser',
+    -> master_password='Hiy53.es',
+    -> master_log_file='db51.000001',
+    -> master_log_file='1634';
+Query OK, 0 rows affected, 3 warnings (0.29 sec)
+
+mysql> start slave;
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> show slave status\G;
+
+percona-xtrabackup-24-2.4.7-1.el7.x86_64
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

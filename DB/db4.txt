@@ -1,0 +1,838 @@
+DB]# touch db{1..4}.txt
+
+mysql> use db3;show tables;
+
+mysql> select count(distinct shell) from db3.user;
+| count(distinct shell) |
+|                     5 |
+mysql> select count(shell) from user;
+| count(shell) |
+|           40 |
+mysql> select distinct shell from db3.user;
+| shell          |
+| /bin/bash      |
+| /sbin/nologin  |
+| /bin/sync      |
+| /sbin/shutdown |
+| /sbin/halt     |
+mysql> select count(*) from db3.user;
+| count(*) |
+|       40    |
+
+mysql> desc db3.user;
+| Field    | Type      | Null | Key | Default | Extra          |
+| id       | int(2)    | NO   | PRI | NULL    | auto_increment |
+| name     | char(30)  | YES  | MUL | NULL    |                |
+| password | char(1)   | YES  |     | NULL    |                |
+| uid      | int(2)    | YES  |     | NULL    |                |
+| gid      | int(2)    | YES  |     | NULL    |                |
+| comment  | char(150) | YES  |     | NULL    |                |
+| homedir  | char(150) | YES  |     | NULL    |                |
+| shell    | char(30)  | YES  |     | NULL    |                |
+
+mysql> select name,uid from user where name like '_a___%';
+| name     | uid  |
+| daemon   |    2 |
+| games    |   12 |
+| saslauth |  996 |
+| radvd    |   75 |
+mysql> select name,uid from user where name like '_a_m_%';
+| name   | uid  |
+| daemon |    2 |
+mysql> insert into user(name) values('yaya7'),
+    -> ('jer9ry'),('tom8'),('jack666');
+
+mysql> select name,uid,id,shell from user where name regexp '^d....n$';
+| name   | uid  | id | shell         |
+| daemon |    2 |  3 | /sbin/nologin |
+
+mysql> select name,uid,id,shell from user where name regexp '^d.*n$';
+| name   | uid  | id | shell         |
+| daemon |    2 |  3 | /sbin/nologin |
+
+mysql> select name,uid,id,shell from user where
+    -> name regexp '^[0-9]';
+
+mysql> select name,uid,id,shell from user where name regexp '.a.';
+| name                | uid  | id | shell         |
+| daemon              |    2 |  3 | /sbin/nologin |
+| halt                |    7 |  8 | /sbin/halt    |
+| mail                |    8 |  9 | /sbin/nologin |
+| operator            |   11 | 10 | /sbin/nologin |
+| games               |   12 | 11 | /sbin/nologin |
+| libstoragemgmt      |  998 | 17 | /sbin/nologin |
+| saslauth            |  996 | 20 | /sbin/nologin |
+| radvd               |   75 | 23 | /sbin/nologin |
+| gnome-initial-setup |  992 | 34 | /sbin/nologin |
+| avahi               |   70 | 36 | /sbin/nologin |
+| jack666             | NULL | 48 | NULL          |
+| yaya7               | NULL | 45 | NULL          |
+
+mysql> alter table user add age tinyint(1) default 18 after name;
+
+mysql> desc user;
+| Field    | Type       | Null | Key | Default | Extra          |
+| id       | int(2)     | NO   | PRI | NULL    | auto_increment |
+| name     | char(30)   | YES  | MUL | NULL    |                |
+| age      | tinyint(1) | YES  |     | 18      |                |
+| password | char(1)    | YES  |     | NULL    |                |
+| uid      | int(2)     | YES  |     | NULL    |                |
+| gid      | int(2)     | YES  |     | NULL    |                |
+| comment  | char(150)  | YES  |     | NULL    |                |
+| homedir  | char(150)  | YES  |     | NULL    |                |
+| shell    | char(30)   | YES  |     | NULL    |                |
+
+mysql> select name,uid,id,age,2018-age bieming from user 
+     > where uid%20=0;
+| name | uid  | id | age  | bieming |
+| root |    0 |  1 |   18 |    2000 |
+| lisi | 1000 | 40 |   18 |    2000 |
+
+mysql> select name,age,2018-age from user where name='root';
+| name | age  | 2018-age |
+| root |   18 |     2000 |
+
+mysql> select name,uid,gid,age,(uid+gid)/2 pjzhi from user
+    -> where name='root';
+| name | uid  | gid  | age  | pjzhi    |
+| root |    0 | 1088 |   18 | 544.0000 |
+
+mysql> update user set age=age+2;
+
+mysql> select name,age,uid from user where uid/2=1;
+| name   | age  | uid  |
+| daemon |   20 |    2 |
+
+mysql> select name,age,uid from user where uid/2=4;
+| name | age  | uid  |
+| mail |   20 |    8 |
+
+mysql> update user set age=age+10 where name regexp '^to.*';
+
+mysql> select name,age from user where name regexp '^to.*';
+| name | age  |
+| tom8 |   30 |
+mysql> update user set age=age/10 where name regexp '^to.*';
+mysql> select name,age from user where name regexp '^to.*';
+| name | age  |
+| tom8 |    3 |
+mysql> update user set age=age*10 where name regexp '^to.*';
+mysql> select name,age from user where name regexp '^to.*';
+| name | age  |
+| tom8 |   30 |
+
+mysql> update user set age=(age-70) where  name regexp '^to..';
+
+mysql> select name,age from user where name regexp '^to..';
+| name | age  |
+| tom8 |   20 |
+
+mysql> select name,age,gid from user
+    -> where gid in(72);
+| name    | age  | gid  |
+| tcpdump |   20 |   72 |
+
+mysql> select name,age,gid from user where gid in(72,1000);
+| name    | age  | gid  |
+| tcpdump |   20 |   72 |
+| lisi    |   20 | 1000 |
+
+
+mysql> select sum(uid) from user;
+| sum(uid) |
+|    76259 |
+1 row in set (0.00 sec)
+
+mysql> select min(uid) from user;
+| min(uid) |
+|        0 |
+1 row in set (0.00 sec)
+
+mysql> select max(uid) from user;
+| max(uid) |
+|    65534 |
+
+mysql> select avg(age) from user;
+| avg(age) |
+|  20.0000 |
+mysql> select avg(age)  avgjunzhi from user;
+| avgjunzhi |
+|   20.0000 |
+
+mysql> select name,uid,gid from user where
+    -> uid between 100 and 1000;
+| name                | uid  | gid  |
+| systemd-network     |  192 |  192 |
+| polkitd             |  999 |  998 |
+| libstoragemgmt      |  998 |  996 |
+| colord              |  997 |  995 |
+| saslauth            |  996 |   76 |
+| abrt                |  173 |  173 |
+| rtkit               |  172 |  172 |
+| chrony              |  995 |  993 |
+
+mysql> select name,uid,gid from user where 
+     > uid between 100 and 1000 order by uid;
+| name                | uid  | gid  |
+| qemu                |  107 |  107 |
+| usbmuxd             |  113 |  113 |
+| pulse               |  171 |  171 |
+| rtkit               |  172 |  172 |
+| abrt                |  173 |  173 |
+
+mysql> select name,uid,gid from user where 
+     > uid between 100 and 1000 order by uid desc;
+| name                | uid  | gid  |
+| lisi                | 1000 | 1000 |
+| polkitd             |  999 |  998 |
+| libstoragemgmt      |  998 |  996 |
+| colord              |  997 |  995 |
+| saslauth            |  996 |   76 |
+
+mysql> select shell  from user group by shell;
+| shell          |
+| NULL           |
+| /bin/bash      |
+| /bin/sync      |
+| /sbin/halt     |
+| /sbin/nologin  |
+| /sbin/shutdown |
+6 rows in set (0.00 sec)
+mysql> select shell,count(name) from user group by shell;
+| shell          | count(name) |
+| NULL           |           4 |
+| /bin/bash      |           2 |
+| /bin/sync      |           1 |
+| /sbin/halt     |           1 |
+| /sbin/nologin  |          35 |
+| /sbin/shutdown |           1 |
+      /** group by 字段名
+mysql> select shell from user where uid <= 500 group by shell;
+| shell          |
+| /bin/bash      |
+| /bin/sync      |
+| /sbin/halt     |
+| /sbin/nologin  |
+| /sbin/shutdown |
+5 rows in set (0.00 sec)
+
+mysql> select  distinct shell from user where
+    -> uid <=500;
+| shell          |
+| /bin/bash      |
+| /sbin/nologin  |
+| /bin/sync      |
+| /sbin/shutdown |
+| /sbin/halt     |
+5 rows in set (0.00 sec)
+    /*** having 字段名='字段值' 执行性能比where 好，节约资源
+    /** having 是在查询的结果中 过滤 筛选条件得到最终结果
+mysql> select name,uid from user having name='daemon';
+| name   | uid  |
+| daemon |    2 |
+/***where条件查询和having条件查询的区别 
+where条件查询的作用域是针对 表 进行操作，
+而having条件查询则是将 查询结果 进行操作 
+**/
+mysql> select shell from user group by shell
+    -> having shell='/sbin/nologin';
+| shell         |
+| /sbin/nologin |
+1 row in set (0.00 sec)
+                 /***从第 1 行开始，显示第1 到 第5行 这 5 行
+mysql> select name,uid,gid,age from user  limit 5;
+| name   | uid  | gid  | age  |
+| root   |    0 | 1088 |   20 |
+| bin    |    1 |    1 |   20 |
+| daemon |    2 |    2 |   20 |
+| adm    |    3 |    4 |   20 |
+| lp     |    4 |    7 |   20 |
+             /***从第四行开始，显示 第四 第五行 这2 行//第1行编号是0
+mysql> select name,uid,gid,age from user  limit 3,2;
+| name | uid  | gid  | age  |
+| adm  |    3 |    4 |   20 |
+| lp   |    4 |    7 |   20 |
+[root@DB1 ~]# cat /etc/my.cnf
+[mysqld]
+default-storage-engine=myisam
+secure_file_priv=/myload
+
+
+----------[root@DB2 ~]# mysql -hlocalhost -uroot -p1234 ---------------
+mysql> create database db4;
+mysql> use db4;show tables;
+mysql> show variables like '%secure_file_priv%';
+| Variable_name    | Value   |
+| secure_file_priv | /mybak/ |
+mysql> system cp /etc/passwd  /mybak/;
+mysql> system ls /mybak/;
+
+mysql> create table db4.userx(
+    -> name char(30),password char(1),
+    -> uid int(2) unsigned,gid int(2),
+    -> comment char(150),homedir char(150),
+    -> shell char(30),index(name)
+    -> )engine=innodb default charset=utf8;
+mysql> show create table db4.userx;
+
+/** user  | CREATE TABLE `user` (
+ ** `id` int(2) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`),
+  KEY `name` (`name`)
+) ENGINE=MyISAM AUTO_INCREMENT=49 DEFAULT CHARSET=latin1 
+ ** KEY `name` (`name`)
+**/
+
+mysql> desc db4.userx;
+| Field    | Type            | Null | Key | Default | Extra |
+| name     | char(30)        | YES  | MUL | NULL    |       |
+| password | char(1)         | YES  |     | NULL    |       |
+| uid      | int(2) unsigned | YES  |     | NULL    |       |
+| gid      | int(2)          | YES  |     | NULL    |       |
+| comment  | char(150)       | YES  |     | NULL    |       |
+| homedir  | char(150)       | YES  |     | NULL    |       |
+| shell    | char(30)        | YES  |     | NULL    |       |
+mysql> load data infile '/mybak/passwd'
+    -> into table db4.userx
+    -> fields terminated by':' lines terminated by'\n';
+
+mysql> select name,uid,gid,shell from db4.userx;
+| name                | uid   | gid   | shell          |
+| root                |     0 |     0 | /bin/bash      |
+| bin                 |     1 |     1 | /sbin/nologin  |
+| daemon              |     2 |     2 | /sbin/nologin  |
+。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。
+| lisi                |  1000 |  1000 | /bin/bash      |
+| mysql               |    27 |    27 | /bin/false     |
+| lucy                |  1001 |  1001 | /bin/bash      |
+
+42 rows in set (0.01 sec)
+                             /*无序显示 原始记录顺序 第 1 行开始的 前 3 条记录
+mysql> select name,uid,gid,shell from db4.userx limit 3;
+| name   | uid  | gid  | shell         |
+| root   |    0 |    0 | /bin/bash     |
+| bin    |    1 |    1 | /sbin/nologin |
+| daemon |    2 |    2 | /sbin/nologin |
+                              /*无序显示 原始记录顺序 第 40 行开始的 3 条记录
+mysql> select name,uid,gid,shell from db4.userx limit 39,3;
+| name  | uid  | gid  | shell      |
+| lisi  | 1000 | 1000 | /bin/bash  |
+| mysql |   27 |   27 | /bin/false |
+| lucy  | 1001 | 1001 | /bin/bash  |
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------
+
+mysql> create database db4;use db4;select database();
+
+| database() |
+| db4        |
+
+mysql> create table user2
+    -> select * from db3.user;
+
+mysql> select count(*) from db4.user2;
+| count(*) |
+|       44 |
+
+mysql> select count(*) from db3.user;
+| count(*) |
+|       44 |
+
+mysql> create table user3 select * from db3.user order by 
+    -> uid desc limit 10;
+
+mysql> show tables;
+| Tables_in_db4 |
+| user2         |
+| user3         |
+
+mysql> desc user3;
+| Field    | Type       | Null | Key | Default | Extra |
+| id       | int(2)     | NO   |     | 0       |       |
+| name     | char(30)   | YES  |     | NULL    |       |
+| age      | tinyint(1) | YES  |     | 18      |       |
+| password | char(1)    | YES  |     | NULL    |       |
+| uid      | int(2)     | YES  |     | NULL    |       |
+| gid      | int(2)     | YES  |     | NULL    |       |
+| comment  | char(150)  | YES  |     | NULL    |       |
+| homedir  | char(150)  | YES  |     | NULL    |       |
+| shell    | char(30)   | YES  |     | NULL    |       |
+
+mysql> select count(*) from user3;
+| count(*) |
+|       10 |
+
+mysql> create table user4 
+    -> select * from db3.user where 1=2;
+
+mysql> desc user4;       //注意字段key PRI MUL
+| Field    | Type       | Null | Key | Default | Extra |
+| id       | int(2)     | NO   |     | 0       |       |
+| name     | char(30)   | YES  |     | NULL    |       |
+| age      | tinyint(1) | YES  |     | 18      |       |
+| password | char(1)    | YES  |     | NULL    |       |
+| uid      | int(2)     | YES  |     | NULL    |       |
+| gid      | int(2)     | YES  |     | NULL    |       |
+| comment  | char(150)  | YES  |     | NULL    |       |
+| homedir  | char(150)  | YES  |     | NULL    |       |
+| shell    | char(30)   | YES  |     | NULL    |       |
+
+mysql> desc db3.user;     //注意字段key PRI MUL
+| Field    | Type       | Null | Key | Default | Extra          |
+| id       | int(2)     | NO   | PRI | NULL    | auto_increment |
+| name     | char(30)   | YES  | MUL | NULL    |                |
+| age      | tinyint(1) | YES  |     | 18      |                |
+| password | char(1)    | YES  |     | NULL    |                |
+| uid      | int(2)     | YES  |     | NULL    |                |
+| gid      | int(2)     | YES  |     | NULL    |                |
+| comment  | char(150)  | YES  |     | NULL    |                |
+| homedir  | char(150)  | YES  |     | NULL    |                |
+| shell    | char(30)   | YES  |     | NULL    |                |
+
+mysql> select id,name,age,uid,gid,shell from db4.user4 ;
+Empty set (0.00 sec)
+
+mysql> select id,name,age,uid,gid,shell from db4.user3;
+| id | name                | age  | uid   | gid   | shell         |
+| 30 | nfsnobody           |   20 | 65534 | 65534 | /sbin/nologin |
+| 40 | lisi                |   20 |  1000 |  1000 | /bin/bash     |
+| 16 | polkitd             |   20 |   999 |   998 | /sbin/nologin |
+| 17 | libstoragemgmt      |   20 |   998 |   996 | /sbin/nologin |
+| 19 | colord              |   20 |   997 |   995 | /sbin/nologin |
+| 20 | saslauth            |   20 |   996 |    76 | /sbin/nologin |
+| 24 | chrony              |   20 |   995 |   993 | /sbin/nologin |
+| 27 | geoclue             |   20 |   994 |   991 | /sbin/nologin |
+| 31 | setroubleshoot      |   20 |   993 |   990 | /sbin/nologin |
+| 34 | gnome-initial-setup |   20 |   992 |   987 | /sbin/nologin |
+
+mysql> use db3;show tables;
+| Tables_in_db3 |
+| a             |
+| b             |
+| c             |
+| d             |
+| user          |
+mysql> create table t1
+    -> select name,uid,shell from user limit 3;
+
+mysql> select * from t1;
+| name   | uid  | shell         |
+| root   |    0 | /bin/bash     |
+| bin    |    1 | /sbin/nologin |
+| daemon |    2 | /sbin/nologin |
+
+mysql> create table t2
+    -> select name,gid,homedir from user limit 6;
+
+mysql> select * from t2;
+| name   | gid  | homedir        |
+| root   | 1088 | /root          |
+| bin    |    1 | /bin           |
+| daemon |    2 | /sbin          |
+| adm    |    4 | /var/adm       |
+| lp     |    7 | /var/spool/lpd |
+| sync   |    0 | /sbin          |
+mysql> desc user;
+| Field    | Type       | Null | Key | Default | Extra          |
+| id       | int(2)     | NO   | PRI | NULL    | auto_increment |
+| name     | char(30)   | YES  | MUL | NULL    |                |
+| age      | tinyint(1) | YES  |     | 18      |                |
+| password | char(1)    | YES  |     | NULL    |                |
+| uid      | int(2)     | YES  |     | NULL    |                |
+| gid      | int(2)     | YES  |     | NULL    |                |
+| comment  | char(150)  | YES  |     | NULL    |                |
+| homedir  | char(150)  | YES  |     | NULL    |                |
+| shell    | char(30)   | YES  |     | NULL    |                |
+
+
+mysql> select * from t1,t2;  //3*6=18
+| name   | uid  | shell         | name   | gid  | homedir        |
+| root   |    0 | /bin/bash     | root   | 1088 | /root          |
+| bin    |    1 | /sbin/nologin | root   | 1088 | /root          |
+| daemon |    2 | /sbin/nologin | root   | 1088 | /root          |
+| root   |    0 | /bin/bash     | bin    |    1 | /bin           |
+| bin    |    1 | /sbin/nologin | bin    |    1 | /bin           |
+| daemon |    2 | /sbin/nologin | bin    |    1 | /bin           |
+| root   |    0 | /bin/bash     | daemon |    2 | /sbin          |
+| bin    |    1 | /sbin/nologin | daemon |    2 | /sbin          |
+| daemon |    2 | /sbin/nologin | daemon |    2 | /sbin          |
+| root   |    0 | /bin/bash     | adm    |    4 | /var/adm       |
+| bin    |    1 | /sbin/nologin | adm    |    4 | /var/adm       |
+| daemon |    2 | /sbin/nologin | adm    |    4 | /var/adm       |
+| root   |    0 | /bin/bash     | lp     |    7 | /var/spool/lpd |
+| bin    |    1 | /sbin/nologin | lp     |    7 | /var/spool/lpd |
+| daemon |    2 | /sbin/nologin | lp     |    7 | /var/spool/lpd |
+| root   |    0 | /bin/bash     | sync   |    0 | /sbin          |
+| bin    |    1 | /sbin/nologin | sync   |    0 | /sbin          |
+| daemon |    2 | /sbin/nologin | sync   |    0 | /sbin          |
+
+18 rows in set (0.01 sec)   //3*6=18
+
+mysql> select t1.name,t1.uid,t2.* from t1,t2;
+| name   | uid  | name   | gid  | homedir        |
+| root   |    0 | root   | 1088 | /root          |
+| bin    |    1 | root   | 1088 | /root          |
+| daemon |    2 | root   | 1088 | /root          |
+| root   |    0 | bin    |    1 | /bin           |
+| bin    |    1 | bin    |    1 | /bin           |
+| daemon |    2 | bin    |    1 | /bin           |
+| root   |    0 | daemon |    2 | /sbin          |
+| bin    |    1 | daemon |    2 | /sbin          |
+| daemon |    2 | daemon |    2 | /sbin          |
+| root   |    0 | adm    |    4 | /var/adm       |
+| bin    |    1 | adm    |    4 | /var/adm       |
+| daemon |    2 | adm    |    4 | /var/adm       |
+| root   |    0 | lp     |    7 | /var/spool/lpd |
+| bin    |    1 | lp     |    7 | /var/spool/lpd |
+| daemon |    2 | lp     |    7 | /var/spool/lpd |
+| root   |    0 | sync   |    0 | /sbin          |
+| bin    |    1 | sync   |    0 | /sbin          |
+| daemon |    2 | sync   |    0 | /sbin          |
+
+18 rows in set (0.00 sec)
+
+mysql> select t1.name,t1.uid,t2.* from t1,t2
+    -> where t1.name="root";
+
+| name | uid  | name   | gid  | homedir        |
+| root |    0 | root   | 1088 | /root          |
+| root |    0 | bin    |    1 | /bin           |
+| root |    0 | daemon |    2 | /sbin          |
+| root |    0 | adm    |    4 | /var/adm       |
+| root |    0 | lp     |    7 | /var/spool/lpd |
+| root |    0 | sync   |    0 | /sbin          |
+
+6 rows in set (0.00 sec)
+
+mysql> select t1.name,t1.uid,t2.* from t1,t2 where t1.name=t2.name;
+
+| name   | uid  | name   | gid  | homedir |
+| root   |    0 | root   | 1088 | /root   |
+| bin    |    1 | bin    |    1 | /bin    |
+| daemon |    2 | daemon |    2 | /sbin   |
+
+mysql> select * from t1,t2 where t1.name=t2.name;
+| name   | uid  | shell         | name   | gid  | homedir |
+| root   |    0 | /bin/bash     | root   | 1088 | /root   |
+| bin    |    1 | /sbin/nologin | bin    |    1 | /bin    |
+| daemon |    2 | /sbin/nologin | daemon |    2 | /sbin   |
+
+mysql> select * from t1,t2,user where
+    -> t1.name=t2.name and t2.name='root' and user.name=t2.name;
+
+|name |uid|shell    |name |gid  |homedir| id| name|age| password|uid| gid |comment|homedir|shell    |
+|root | 0 |/bin/bash|root |1088 |/root  | 1 | root| 20| x       | 0 | 1088|root   |/root  |/bin/bash|
+
+mysql> desc db3.user;
+
+/**where嵌套查询
+mysql> select name,age,shell from db3.user where name 
+     > in (select  name from db4.user3 where shell='/bin/bash');
+
+| name | age  | shell     |
+| lisi |   20 | /bin/bash |
+
+/***条件成立时，以左边的表为主 显示查询结果  -----左连接查询 **/
+
+/***条件成立时，以右边的表为主 显示查询结果  -----右连接查询 **/
+mysql> create table  db3.t3
+    -> select name,uid,shell from user limit 5;
+
+mysql> create table db3.t4
+    -> select name,uid,shell from user limit 9;
+
+mysql> select * from t3;
+| name   | uid  | shell         |
+| root   |    0 | /bin/bash     |
+| bin    |    1 | /sbin/nologin |
+| daemon |    2 | /sbin/nologin |
+| adm    |    3 | /sbin/nologin |
+| lp     |    4 | /sbin/nologin |
+5 rows in set (0.00 sec)
+
+mysql> select * from t4;
+| name     | uid  | shell          |
+| root     |    0 | /bin/bash      |
+| bin      |    1 | /sbin/nologin  |
+| daemon   |    2 | /sbin/nologin  |
+| adm      |    3 | /sbin/nologin  |
+| lp       |    4 | /sbin/nologin  |
+| sync     |    5 | /bin/sync      |
+| shutdown |    6 | /sbin/shutdown |
+| halt     |    7 | /sbin/halt     |
+| mail     |    8 | /sbin/nologin  |
+9 rows in set (0.00 sec)
+
+mysql> select * from t3 left join t4
+    -> on t3.uid=t4.uid;
+| name   | uid  | shell         | name   | uid  | shell         |
+| root   |    0 | /bin/bash     | root   |    0 | /bin/bash     |
+| bin    |    1 | /sbin/nologin | bin    |    1 | /sbin/nologin |
+| daemon |    2 | /sbin/nologin | daemon |    2 | /sbin/nologin |
+| adm    |    3 | /sbin/nologin | adm    |    3 | /sbin/nologin |
+| lp     |    4 | /sbin/nologin | lp     |    4 | /sbin/nologin |
+5 rows in set (0.00 sec)
+/***left join 条件成立时，以左边的表为主 显示查询结果  -----左连接查询 **/
+****适用于表结构相同时，比较数据的差异
+/***right join 条件成立时，以右边的表为主 显示查询结果  -----右连接查询 **/
+mysql> select * from t3 right join t4
+    -> on t3.uid=t4.uid;
+| name   | uid  | shell         | name     | uid  | shell          |
+| root   |    0 | /bin/bash     | root     |    0 | /bin/bash      |
+| bin    |    1 | /sbin/nologin | bin      |    1 | /sbin/nologin  |
+| daemon |    2 | /sbin/nologin | daemon   |    2 | /sbin/nologin  |
+| adm    |    3 | /sbin/nologin | adm      |    3 | /sbin/nologin  |
+| lp     |    4 | /sbin/nologin | lp       |    4 | /sbin/nologin  |
+| NULL   | NULL | NULL          | sync     |    5 | /bin/sync      |
+| NULL   | NULL | NULL          | shutdown |    6 | /sbin/shutdown |
+| NULL   | NULL | NULL          | halt     |    7 | /sbin/halt     |
+| NULL   | NULL | NULL          | mail     |    8 | /sbin/nologin  |
+9 rows in set (0.00 sec)
+
+[root@room11pc06 ~]# scp '/root/桌面/phpMyAdmin-2.11.11-all-languages.tar.gz' root@192.168.4.51:/root/;\
+> scp '/root/桌面/phpMyAdmin-2.11.11-all-languages.tar.gz' root@192.168.4.52:/root/; \
+> scp '/root/桌面/phpMyAdmin-2.11.11-all-languages.tar.gz' root@192.168.4.53:/root/; \
+> scp '/root/桌面/phpMyAdmin-2.11.11-all-languages.tar.gz' root@192.168.4.54:/root/;
+[root@DB1 ~]# tar -xzPf phpMyAdmin-2.11.11-all-languages.tar.gz
+
+[root@DB1 ~]# ls phpMyAdmin-2.11.11-all-languages/ |wc -l
+90
+[root@DB1 ~]# ls phpMyAdmin-2.11.11-all-languages/ |head -3;
+browse_foreigners.php
+calendar.php
+ChangeLog
+[root@DB2 ~]# ls phpMyAdmin-2.11.11-all-languages/ | tail -3 
+translators.html
+user_password.php
+view_create.php
+mysql> system ls /root/phpMyAdmin-2.11.11-all-languages.tar.gz;
+
+mysql> system ls /root/phpMyAdmin-2.11.11-all-languages/ |head -3;
+
+-----------------------------------------------------------------
+
+[root@DB2 ~]# yum -y install httpd php php-mysql
+[root@DB2 ~]# rpm -q php php-mysql httpd
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64 
+httpd-2.4.6-67.el7.x86_64
+[root@DB2 ~]# tar -xzPf phpMyAdmin-2.11.11-all-languages.tar.gz  -C /var/www/html/
+[root@DB2 ~]# cd /var/www/html/;ls
+phpMyAdmin-2.11.11-all-languages
+[root@DB2 html]# mv phpMyAdmin-2.11.11-all-languages/  phpmyadmin/
+[root@DB2 html]# cd phpmyadmin/;ls |wc -l
+90
+[root@DB2 phpmyadmin]# cp config.sample.inc.php  config.inc.php
+
+[root@DB2 phpmyadmin]# vim config.inc.php
+
+/** 17 $cfg['blowfish_secret'] = '123';  ---192.168.4.51上的密码*/
+ 31 $cfg['Servers'][$i]['host'] = 'localhost';
+------------------------------------------------------192.168.4.52---------------------------------------------------------------------------------------------
+ 17 $cfg['blowfish_secret'] = 'plj123'; /* YOU MUST FILL IN THIS FOR COOKIE AUTH! */
+
+[root@DB2 phpmyadmin]# systemctl restart httpd && systemctl enable httpd
+
+[root@DB2 phpmyadmin]# firefox http://192.168.4.52/phpmyadmin
+------------------------------------------------------------------------------------------------------------------------------------
+[root@DB4 ~]# yum -y install httpd php php-mysql 【已经rpm方式安装mysql】
+[root@DB4 ~]# rpm -q php php-mysql httpd
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+[root@DB4 ~]# tar -xzPf phpMyAdmin-2.11.11-all-languages.tar.gz  -C \
+> /var/www/html/;
+[root@DB4 html]# mv phpMyAdmin-2.11.11-all-languages/  phpmyadmin/
+[root@DB4 html]# cd phpmyadmin/
+[root@DB4 phpmyadmin]# cp config.sample.inc.php  config.inc.php
+[root@DB4 phpmyadmin]# vim config.inc.php
+ 17 $cfg['blowfish_secret'] = '123'; /* YOU MUST FILL IN THIS FOR COOKI  E AUTH! */
+31 $cfg['Servers'][$i]['host'] = 'localhost';
+
+[root@DB4 phpmyadmin]# systemctl restart httpd && \
+> systemctl enable httpd;
+[root@DB4 phpmyadmin]# firefox http://192.168.4.54/phpmyadmin
+
+
+-------------------------------------------------
+root本机登陆密码恢复
+[root@DB2 ~]# systemctl stop mysqld;
+]# vim /etc/my.cnf
+  4 [mysqld]  运行启动的语句里增加--skip-grant-tables
+  5 skip-grant-tables
+  6 default-storage-engine=innodb
+  7 secure_file_priv="/mybak/"
+ 31 #validate_password_policy=0
+ 32 #validate_password_length=3
+:wq
+]# systemctl restart mysqld
+[root@DB2 ~]# mysql
+mysql> update mysql.user 
+    -> set authentication_string=password('Hiy53.es')
+    -> where user='root' and host='localhost';
+mysql> flush privileges;quit;
+[root@DB2 ~]# mysql -hlocalhost -uroot -pHiy53.es;
+[root@DB2 ~]# vim /etc/my.cnf
+  4 [mysqld]
+  5 #skip-grant-tables
+  6 default-storage-engine=innodb
+  7 secure_file_priv="/mybak/"
+[root@DB2 ~]# systemctl restart mysqld
+
+
+HiY53.es
+
+mysql> use mysql;show tables;
+| Tables_in_mysql|
+| columns_priv 存储授权用户对【 字段 】的访问权限
+| db           存储授权用户对【 数据库 】的访问权限          
+| tables_priv  存储授权用户对【 表 】的访问权限
+| user         存储授权用户 的【访问权限】
+
+
+mysql> use mysql;
+
+mysql> select host,user,authentication_string  from mysql.user;
+| host      | user      | authentication_string                     |
+| localhost | root      | *A4B6157319038724E3560894F7F932C8886EBFCF |
+| localhost | mysql.sys | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+
+mysql> update mysql.user set authentication_string=password("Hiy53.es")
+    -> where user="root" and host="localhost";
+Query OK,
+mysql> flush privileges;
+Query OK, 
+mysql> quit;
+Bye
+[root@DB1 phpmyadmin]# mysqladmin -hlocalhost -uroot -p password "Hiy53.es"
+Enter password:
+[root@DB1 phpmyadmin]# mysqladmin -hlocalhost -uroot -p password "新密码"
+Enter password: Hiy53.es【旧密码】
+mysqladmin: [Warning] Using a password on the command line interface can be insecure.
+Warning: Since password will be sent to server in plain text, use ssl connection to ensure password safety.
+
+[root@DB1 phpmyadmin]# pwd
+/var/www/html/phpmyadmin
+[root@DB1 ~]# mysql -uroot -pHiy53.es
+ 
+mysql> select password('Hiy53.es');查看加密后的密码
+| password('Hiy53.es')                      |
+| *4FF884565BA6D0801D0FDCA16FEDB540CE447FE9 |
+
+mysql> show grants;  显示当前用户的权限privileges(在192.168.4.51本地访问本机)
+| Grants for root@localhost                                           |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION        |
+
+/*** > grant 权限列表 on 库名.表名 to  用户名@‘匹配的客户端主机地址’
+     > identified by '给于客户的用户密码'
+     > with grant option ------是否有授权权限
+     【@‘%.baidu.com’匹配指定的域名】 【@'192.168.1.%'匹配指定的网段】
+mysql> grant all on *.* to mydba@"%" 【%表示匹配任意主机】
+    -> identified by "Hiy53.es"
+    -> with grant option;
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> desc mysql.user;
+mysql> select user,host from mysql.user;
+| user      | host         |
+| mydba     | %            |
+| admin     | 192.168.4.53 |
+| mysql.sys | localhost    |
+| root      | localhost    |
+
+/****show grants for  用户名@‘客户端地址’；
+mysql> show grants for mydba; 查看用户mydba的权限
+| Grants for mydba@%                                           |
+| GRANT ALL PRIVILEGES ON *.* TO 'mydba'@'%' WITH GRANT OPTION |
+
+/撤销用户权限 revoke 权限列表 on 数据库名.表名
+               from 用户名@‘客户端地址';
+mysql> revoke grant option on *.* from mydba@'%';
+
+mysql> show grants for mydba;
+| Grants for mydba@%                         |
+| GRANT ALL PRIVILEGES ON *.* TO 'mydba'@'%' |
+
+mysql>  revoke all on *.* from mydba@"%";
+
+mysql> show grants for mydba;
+| Grants for mydba@%                |
+| GRANT USAGE ON *.* TO 'mydba'@'%' |
+
+
+/****show grants for  用户名@‘客户端地址’；
+mysql> show grants for admin@'192.168.4.53'\G;
+*************************** 1. row ***************************
+Grants for admin@192.168.4.53: GRANT USAGE ON *.* TO 'admin'@'192.168.4.53'
+*************************** 2. row ***************************
+Grants for admin@192.168.4.53: GRANT SELECT, INSERT ON `db3`.* TO 'admin'@'192.168.4.53'
+2 rows in set (0.00 sec)
+
+
+
+
+
+[root@DB2 phpmyadmin]# mysql -h192.168.4.51 -umydba -p'Hiy53.es'
+mysql> select user();
+| user()             |
+| mydba@192.168.4.52 |
+
+mysql> select @@hostname;
+| @@hostname |
+| DB1        |
+
+mysql> show grants;  显示当前用户的权限(从192.168.4.52上访问主机192.168.4.51)
+| Grants for mydba@%                                           |
+| GRANT ALL PRIVILEGES ON *.* TO 'mydba'@'%' WITH GRANT OPTION |
+
+mysql> grant  select,insert on db3.* to 
+     > admin@'192.168.4.53' identified
+    -> by 'Hiy53.es';
+
+[root@DB3 ~]# mysql -h192.168.4.51 -uadmin -pHiy53.es
+mysql> select user();
+| user()             |
+| admin@192.168.4.53 |
+
+mysql> select @@hostname;
+| @@hostname |
+| DB1        |
+
+mysql> show grants;  显示当前用户的权限(从192.168.4.53上访问主机192.168.4.51)
+| Grants for admin@192.168.4.53                             |
+| GRANT USAGE ON *.* TO 'admin'@'192.168.4.53'              |
+| GRANT SELECT, INSERT ON `db3`.* TO 'admin'@'192.168.4.53' |
+
+2 rows in set (0.00 sec)
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db3                |
+2 rows in set (0.00 sec)
+
+/****grant授权列表
+命令        权限
+usage      无权限
+SELECT     查询表记录
+INSERT     插入表记录
+UPDATE     更新表记录
+DELETE     删除表记录
+CREATE     创建库、表
+DROP       删除库、表
+RELOAD     有重新载入授权 必须拥有reload权限，才可以执行flush [tables | logs | privileges] 
+SHUTDOWN   允许关闭mysql服务 使用mysqladmin shutdown 来关闭mysql
+PROCESS    允许查看用户登录数据库服务器的进程 （  show  processlist;  ）
+FILE       导入、导出数据
+
+
+
+
