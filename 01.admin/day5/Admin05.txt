@@ -1,0 +1,349 @@
+真机：还原三台虚拟机
+[root@room9pc13 ~]# rht-vmctl reset classroom  #先重置资源服务器
+[root@room9pc13 ~]# rht-vmctl reset server
+[root@room9pc13 ~]# rht-vmctl reset desktop   
+
+########################################################
+
+
+管道操作：将前面命令的输出结果,交由后面命令继续处理,作为后面命令的参数
+
+     显示/etc/passwd第8～12行？
+
+[root@server0 ~]# head -12 /etc/passwd
+
+[root@server0 ~]# head -12 /etc/passwd  | tail -5
+
+[root@server0 ~]# head -12 /etc/passwd  | tail -5 | cat -n
+
+[root@server0 ~]# cat -n /etc/passwd | head -12 | tail -5
+
+ 显示第一张网卡的IP地址
+[root@server0 ~]# ifconfig | head -2
+
+交互式计算器
+[root@server0 ~]# bc
+
+  加   +      减   -     乘   *     除   /       取余运算  %
+
+#######################################################
+
+用户与组的管理
+
+ 用户账户：1.可以登陆操作系统    2.实现访问控制，不同用户具备不同的权限
+
+  组：方便对用户的管理（权限方面）
+
+  唯一标识： UID  GID 
+
+  管理员的UID永远为0
+
+  组：基本组(私有组)     附加组(公共组  从属组)
+        一个用户至少属于一个组
+#####################################################
+用户基本信息存放在 /etc/passwd 文件（户口本）
+
+[root@server0 ~]# head  -1  /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+
+用户名:密码占位符:UID:基本组GID:用户描述信息:用户家目录:解器程序
+
+
+• 使用 useradd 命令
+– useradd [选项]... 用户名
+
+• 常用命令选项
+– -u 用户id、-d 家目录路径、-s 解释器程序、-G 附加组
+
+[root@server0 ~]# useradd nsd02
+[root@server0 ~]# grep nsd /etc/passwd
+
+[root@server0 ~]# useradd  -u 1200 nsd03   #指定UID
+[root@server0 ~]# grep nsd /etc/passwd
+
+[root@server0 ~]# useradd nsd04
+[root@server0 ~]# grep nsd /etc/passwd
+
+[root@server0 ~]# useradd -d /mnt/nsd05   nsd05  #指定家目录
+[root@server0 ~]# ls /mnt/
+[root@server0 ~]# grep nsd05 /etc/passwd
+
+[root@server0 ~]# id nsd02
+[root@server0 ~]# id nsd03
+[root@server0 ~]# id nsd04
+[root@server0 ~]# id nsd05
+
+/sbin/nologin : 禁止用户登陆系统
+
+[root@server0 ~]# useradd -s /sbin/nologin nsd07
+[root@server0 ~]# grep nsd07 /etc/passwd
+
+[root@server0 ~]# groupadd tarena           #创建tarena组
+[root@server0 ~]# useradd -G tarena  nsd08  #创建用户加入组
+[root@server0 ~]# id nsd08
+
+#######################################################
+
+• 使用 passwd 命令
+– passwd [用户名]
+
+
+
+[root@server0 ~]# passwd nsd02
+更改用户 nsd02 的密码 。
+新的 密码：                                              #设置密码
+无效的密码： 密码是一个回文
+重新输入新的 密码：                                 #重新输入密码
+passwd：所有的身份验证令牌已经成功更新。
+
+命令行临时切换用户身份：   su  -  用户名
+[root@server0 ~]# su  -  nsd02
+[nsd02@server0 ~]$ passwd 
+Changing password for user nsd02.
+Changing password for nsd02.
+(current) UNIX password:          #输入旧密码
+New password:                     #输入新密码
+Retype new password:              #再次输入新密码
+passwd: all authentication tokens updated successfully.
+[nsd02@server0 ~]$ exit
+
+非交互式设置密码
+– echo '密码'    |    passwd --stdin 用户名
+
+
+[root@server0 ~]# echo 123 | passwd --stdin nsd02
+
+[root@server0 ~]# echo 123456 | passwd --stdin nsd03
+
+#######################################################
+用户密码信息存放在 /etc/shadow 文件
+
+   用户名: 密码加密字符串:上一次修改密码的时间
+
+
+######################################################
+   
+
+修改用户属性
+• 使用 usermod 命令
+– usermod [选项]... 用户名
+
+• 常用命令选项
+– -u 用户id、-d 家目录路径、-s 登录Shell、-G 附加组
+
+[root@server0 ~]# useradd tom
+[root@server0 ~]# id tom
+[root@server0 ~]# grep tom /etc/passwd
+
+# usermod -u 1400 -d /mnt/test -s /sbin/nologin -G tarena tom
+
+[root@server0 ~]# grep tom /etc/passwd
+[root@server0 ~]# id tom
+
+#######################################################
+删除用户
+• 使用 userdel    命令
+– userdel  [-r]  用户名   #连同家目录一并删除
+
+[root@server0 ~]# userdel -r nsd03
+[root@server0 ~]# ls /home/
+
+
+#####################################################
+管理组账号
+
+组基本信息存放在 /etc/group 文件
+
+[root@server0 ~]# grep stugrp /etc/group
+ stugrp:x:1303:
+
+  组名:组密码占位符:GID:组成员列表
+
+
+添加组
+• 使用 groupadd 命令
+– groupadd [-g 组ID] 组名
+
+[root@server0 ~]# groupadd stugrp
+[root@server0 ~]# grep stugrp /etc/group
+stugrp:x:1303:
+
+[root@server0 ~]# useradd harry
+[root@server0 ~]# useradd natasha
+[root@server0 ~]# useradd kenji
+[root@server0 ~]# useradd jack
+
+
+使用 gpasswd 命令
+– gpasswd -a 用户名  组名
+– gpasswd -d 用户名  组名
+
+[root@server0 ~]# gpasswd -a harry stugrp
+[root@server0 ~]# grep stugrp /etc/group
+
+[root@server0 ~]# gpasswd -a kenji stugrp
+[root@server0 ~]# grep stugrp /etc/group
+
+[root@server0 ~]# gpasswd -d harry stugrp
+[root@server0 ~]# grep stugrp /etc/group
+
+[root@server0 ~]# gpasswd -a jack stugrp
+[root@server0 ~]# grep stugrp /etc/group
+
+[root@server0 ~]# gpasswd -d kenji stugrp
+[root@server0 ~]# grep stugrp /etc/group
+
+• 使用 groupdel 命令
+– groupdel 组名
+
+
+################################################
+tar备份与恢复 
+
+归档和压缩:  1.方便对零散文件的整理   2.减小磁盘空间的占用
+
+ 独有压缩格式： 
+           gzip -----》 .gz 
+           bzip2 -----》 .bz2
+           xz -----》 .xz
+
+• tar 集成备份工具
+– -c:创建归档
+– -x:释放归档
+– -f:指定归档文件名称
+– -z、-j、-J:调用 .gz、.bz2、.xz 格式的工具进行处理
+– -t:显示归档中的文件清单
+– -C:指定释放的位置
+
+
+
+命令格式
+ 打包：
+   tar  选项       /路径/压缩包的名字       /路径/被归档及压缩的源文件
+
+ 解包:
+   tar  选项       /路径/压缩包的名字     -C  /路径
+
+[root@server0 ~]# rm -rf /opt/*
+
+# tar -zcf /opt/file.tar.gz   /home/  /etc/passwd 
+[root@server0 ~]# ls /opt/
+
+# tar -jcf /opt/test.tar.bz2  /home/  /etc/passwd
+[root@server0 ~]# ls /opt/
+
+# tar -Jcf /opt/nsd.tar.xz  /home/  /etc/passwd
+[root@server0 ~]# ls /opt/
+
+[root@server0 ~]# tar -xf /opt/file.tar.gz -C /mnt/
+[root@server0 ~]# ls /mnt/
+[root@server0 ~]# ls /mnt/etc/
+[root@server0 ~]# ls /mnt/home/
+
+查看包里面内容
+[root@server0 ~]# tar -tf /opt/nsd.tar.xz 
+
+####################################################
+使用 tar 工具完成以下备份任务:
+– 创建一个名为 /root/backup.tar.bz2 的归档文件
+– 其中包含 /usr/local 目录中的内容
+– tar 归档必须使用 bzip2 进行压缩
+
+ # tar -jcf  /root/backup.tar.bz2   /usr/local/
+
+ # ls /root/
+
+ # tar -tf /root/backup.tar.bz2 
+
+#####################################################
+NTP时间同步
+
+• Network Time Protocol
+– NTP服务器为客户机提供标准时间
+– NTP客户机需要与NTP服务器保持沟通
+
+服务端：classroom.example.com
+
+客户端：虚拟机server
+
+1.安装同步时间软件chrony
+[root@server0 ~]# rpm -q chrony
+chrony-1.29.1-1.el7.x86_64
+
+2.修改配置/etc/chrony.conf
+ 在Linux中大多数配置文件中，以#开头的为注释内容
+
+ #server 0.rhel.pool.ntp.org iburst
+ #server 1.rhel.pool.ntp.org iburst
+ #server 2.rhel.pool.ntp.org iburst
+ server classroom.example.com iburst
+
+3.重起服务刷新配置
+   服务名：chronyd
+
+  daemon：守护进程
+
+[root@server0 ~]# systemctl restart chronyd  #重起服务
+[root@server0 ~]# systemctl enable chronyd  #开机自启动
+
+4.验证：
+[root@server0 ~]# date
+
+[root@server0 ~]# date -s "年-月-日  时:分:秒"
+[root@server0 ~]# date -s "2008-10-1 12:30"
+
+[root@server0 ~]# date
+[root@server0 ~]# systemctl restart chronyd
+[root@server0 ~]# date
+[root@server0 ~]# date
+
+###############################################
+cron计划任务
+
+• 用途:按照设置的时间间隔为用户反复执行某一项固定的系统任务
+
+• 软件包:cronie、crontabs
+• 系统服务:crond
+• 日志文件:/var/log/crond
+
+	 *: 匹配范围内任意时间
+	 ,: 分隔多个不连续的时间点
+	 -: 指定连续时间范围
+	/n: 指定时间频率,每n 
+
+
+       时间                       任务
+  分  时  日  月  周         任务命令行
+
+
+• 使用 crontab 命令
+– 编辑:crontab -e [-u 用户名]
+
+  每分钟记录系统时间，写入/opt/time.txt
+
+[root@server0 ~]# date  >>  /opt/time.txt
+[root@server0 ~]# cat  /opt/time.txt
+
+[root@server0 ~]# crontab  -e  -u  root   #编写计划任务
+*  *  *  *  *   date >> /opt/time.txt
+
+[root@server0 ~]# crontab  -l  -u  root   #查看计划任务
+
+[root@server0 ~]# cat   /opt/time.txt 
+
+######################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

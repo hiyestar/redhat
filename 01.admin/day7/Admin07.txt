@@ -1,0 +1,215 @@
+真机：还原三台虚拟机
+[root@room9pc13 ~]# rht-vmctl reset classroom  
+[root@room9pc13 ~]# rht-vmctl reset server
+[root@room9pc13 ~]# rht-vmctl reset desktop   
+
+########################################################
+grep文件内容过滤
+
+ 格式：  grep  '字符串'    /路径/文本文件
+
+[root@server0 ~]# grep  'root'  /etc/passwd
+[root@server0 ~]# grep  'bin'   /etc/passwd
+[root@server0 ~]# grep  'bash'  /etc/passwd
+   选项:   -i 忽略大小写
+[root@server0 ~]# grep -i 'man'  /etc/man_db.conf 
+[root@server0 ~]# grep -i 'ROOT' /etc/passwd
+   选项:   -v 取反
+[root@server0 ~]# grep -v 'root'  /etc/passwd
+
+  特殊的过滤条件
+         ^root   必须以root开头
+         root$   必须以root结尾
+                 ^$           匹配空行
+
+[root@server0 ~]# grep '^root' /etc/passwd
+[root@server0 ~]# grep 'bash$' /etc/passwd
+[root@server0 ~]# grep 'nologin$' /etc/passwd
+
+[root@server0 ~]# grep -v '^$'  /etc/default/useradd 
+
+     显示文本文件有效配置？（去除空行、去除注释行）
+# grep -v '^#' /etc/default/useradd   |  grep -v '^$'
+
+# grep -v '^#' /etc/login.defs  |  grep  -v '^$'
+
+###################################################
+ find 查找文档所在位置
+
+  格式：  find   查询路径     条件
+ 
+	– 常用条件表示:
+	 -type 类型(f 文件   d 目录   l 快捷方式)
+
+[root@server0 ~]# find /boot/ -type l
+[root@server0 ~]# ls /boot/grub/menu.lst 
+[root@server0 ~]# ls -l /boot/grub/menu.lst
+
+[root@server0 ~]# find /boot/ -type d
+
+[root@server0 ~]# find /boot/ -type f
+
+[root@server0 ~]# find /root -type d
+
+[root@server0 ~]# find /root -type f
+####################################################
+    -name  "名字"
+
+[root@server0 ~]# find /etc/  -name "passwd"
+
+[root@server0 ~]# find /etc/ -name  "*passwd*"
+
+[root@server0 ~]# find /boot/  -name  "vm*"
+
+[root@server0 ~]# find /etc/ -name  "*.conf"   #包含子目录
+
+#####################################################
+多条件的查找  -a 
+
+[root@server0 ~]# mkdir /root/nsd1805
+[root@server0 ~]# touch /root/nsd01.txt
+[root@server0 ~]# touch /root/nsd02.txt
+
+[root@server0 ~]# find /root/  -name  "nsd*"
+
+[root@server0 ~]# find /root/  -name  "nsd*"   -type f
+
+[root@server0 ~]# find /root/  -name  "nsd*"   -type d
+
+####################################################
+  -size +-大小   k M G     按大小查找
+  
+[root@server0 ~]# find  /boot/   -size +10M
+
+[root@server0 ~]# find  /boot/   -size -10M
+
+[root@server0 ~]# find  /boot/   -size +300k
+
+###################################################
+
+处理find查找的内容
+
+– find .. .. -exec  处理命令 {}    \;
+– 优势:以 {} 代替每一个结果,逐个处理,遇 \; 结束
+
+# find  /boot/  -size +10M 
+# find  /boot/  -size +10M   -exec cp  {}  /opt  \; 
+
+# find /root/ -name "nsd*"   -type f
+
+# find /root/ -name "nsd*"   -type f  -exec cp {}  /opt \;
+
+# find /boot/ -size +10M     -exec ls  -lh  {} \;
+#######################################################
+ 按照所有者查找
+
+  -user  zhangsan
+
+[root@server0 ~]# find /home -user student
+[root@server0 ~]# find / -user student
+[root@server0 ~]# find / -user student  -type f
+
+######################################################
+
+• 根据名称查找,忽略大小写
+– -iname
+
+[root@server0 ~]# find /etc/ -iname "passwd"
+
+[root@server0 ~]# find /etc/ -iname "Passwd"
+
+[root@server0 ~]# find /etc/ -iname "PASSWD"
+
+
+
+####################################################
+• 根据所属组查找
+  -group
+
+[root@server0 ~]# find /home/ -group student
+
+• 限制目录查找的深度(最大层数)
+– -maxdepth
+
+[root@server0 ~]# find /etc/  -maxdepth 1 -name "*.conf"
+ 
+[root@server0 ~]# find /etc/  -maxdepth 2 -name "*.conf"
+
+[root@server0 ~]# find /etc/  -maxdepth 3 -name "*.conf"
+
+
+
+• 根据文件修改时间，所有时间都是过去时间
+ -mtime +-天数
+
+ # find  /var/log/  -mtime +90    #90天之前
+
+ # find  /var/log/  -mtime -10    #最近10天之内
+
+######################################################
+• 使用find命令完成以下任务
+– 找出所有用户 student 拥有的文件
+– 把它们拷贝到 /root/findfiles/ 文件夹中
+
+# mkdir /root/findfiles
+# find / -user student -type f
+
+# find / -user student -type f  -exec cp  {}  /root/findfiles/   \;
+
+# ls -A /root/findfiles
+
+#####################################################
+Set UID
+• 附加在属主的 x 位上
+– 属主的权限标识会变为 s
+– 适用于可执行文件,Set UID可以让使用者具有文件属主的身份及部分权限
+– 传递所有者身份
+ 
+
+Sticky Bit
+• 附加在其他人的 x 位上
+– 其他人的权限标识会变为 t
+– 适用于开放w权限的目录,可以阻止用户滥用w写入权限(禁止操作别人的文档)
+
+[root@server0 ~]# mkdir /public
+[root@server0 ~]# chmod ugo=rwx /public
+[root@server0 ~]# ls -ld /public
+[root@server0 ~]# chmod o+t /public
+[root@server0 ~]# ls -ld /public
+
+####################################################
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,777 @@
+[root@room9pc01 ~]# rht-vmctl reset classroom
+classroom [OK]
+域 classroom 已开始
+
+[root@room9pc01 ~]# rht-vmctl reset server
+server [OK]
+域 server 已开始
+
+[root@room9pc01 ~]# rht-vmctl reset desktop
+desktop [OK]
+域 desktop 已开始
+
+[root@room9pc01 ~]# gos server
+ssh: connect to host 172.25.0.11 port 22: No route to host
+[root@room9pc01 ~]# gos 
+ssh: connect to host 172.25.0.11 port 22: No route to host
+[root@room9pc01 ~]# gos
+Last login: Fri Jan 12 18:54:14 2018 from 172.25.0.250
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@server0 ~]# yum -y install httpd
+已加载插件：langpacks
+rhel_dvd                                                                                  | 4.1 kB  00:00:00     
+(1/2): rhel_dvd/group_gz                                                                  | 134 kB  00:00:00     
+(2/2): rhel_dvd/primary_db                                                                | 3.4 MB  00:00:00     
+正在解决依赖关系
+--> 正在检查事务
+---> 软件包 httpd.x86_64.0.2.4.6-17.el7 将被 安装
+--> 正在处理依赖关系 httpd-tools = 2.4.6-17.el7，它被软件包 httpd-2.4.6-17.el7.x86_64 需要
+--> 正在处理依赖关系 /etc/mime.types，它被软件包 httpd-2.4.6-17.el7.x86_64 需要
+--> 正在处理依赖关系 libapr-1.so.0()(64bit)，它被软件包 httpd-2.4.6-17.el7.x86_64 需要
+--> 正在处理依赖关系 libaprutil-1.so.0()(64bit)，它被软件包 httpd-2.4.6-17.el7.x86_64 需要
+--> 正在检查事务
+---> 软件包 apr.x86_64.0.1.4.8-3.el7 将被 安装
+---> 软件包 apr-util.x86_64.0.1.5.2-6.el7 将被 安装
+---> 软件包 httpd-tools.x86_64.0.2.4.6-17.el7 将被 安装
+---> 软件包 mailcap.noarch.0.2.1.41-2.el7 将被 安装
+--> 解决依赖关系完成
+
+依赖关系解决
+
+=================================================================================================================
+ Package                     架构                   版本                          源                        大小
+=================================================================================================================
+正在安装:
+ httpd                       x86_64                 2.4.6-17.el7                  rhel_dvd                 1.2 M
+为依赖而安装:
+ apr                         x86_64                 1.4.8-3.el7                   rhel_dvd                 103 k
+ apr-util                    x86_64                 1.5.2-6.el7                   rhel_dvd                  92 k
+ httpd-tools                 x86_64                 2.4.6-17.el7                  rhel_dvd                  77 k
+ mailcap                     noarch                 2.1.41-2.el7                  rhel_dvd                  31 k
+
+事务概要
+=================================================================================================================
+安装  1 软件包 (+4 依赖软件包)
+
+总下载量：1.5 M
+安装大小：4.3 M
+Downloading packages:
+(1/5): apr-1.4.8-3.el7.x86_64.rpm                                                         | 103 kB  00:00:00     
+(2/5): apr-util-1.5.2-6.el7.x86_64.rpm                                                    |  92 kB  00:00:00     
+(3/5): httpd-2.4.6-17.el7.x86_64.rpm                                                      | 1.2 MB  00:00:00     
+(4/5): httpd-tools-2.4.6-17.el7.x86_64.rpm                                                |  77 kB  00:00:00     
+(5/5): mailcap-2.1.41-2.el7.noarch.rpm                                                    |  31 kB  00:00:00     
+-----------------------------------------------------------------------------------------------------------------
+总计                                                                             5.9 MB/s | 1.5 MB  00:00:00     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  正在安装    : apr-1.4.8-3.el7.x86_64                                                                       1/5 
+  正在安装    : apr-util-1.5.2-6.el7.x86_64                                                                  2/5 
+  正在安装    : httpd-tools-2.4.6-17.el7.x86_64                                                              3/5 
+  正在安装    : mailcap-2.1.41-2.el7.noarch                                                                  4/5 
+  正在安装    : httpd-2.4.6-17.el7.x86_64                                                                    5/5 
+  验证中      : mailcap-2.1.41-2.el7.noarch                                                                  1/5 
+  验证中      : httpd-tools-2.4.6-17.el7.x86_64                                                              2/5 
+  验证中      : apr-1.4.8-3.el7.x86_64                                                                       3/5 
+  验证中      : apr-util-1.5.2-6.el7.x86_64                                                                  4/5 
+  验证中      : httpd-2.4.6-17.el7.x86_64                                                                    5/5 
+
+已安装:
+  httpd.x86_64 0:2.4.6-17.el7                                                                                    
+
+作为依赖被安装:
+  apr.x86_64 0:1.4.8-3.el7            apr-util.x86_64 0:1.5.2-6.el7       httpd-tools.x86_64 0:2.4.6-17.el7      
+  mailcap.noarch 0:2.1.41-2.el7      
+
+完毕！
+[root@server0 ~]# rpm -q httpd
+httpd-2.4.6-17.el7.x86_64
+[root@server0 ~]# systemctl restart httpd
+[root@server0 ~]# firefox 172.25.0.11
+
+(process:29782): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+[root@server0 ~]# echo '<h1><font color=pink><marquee>nsd1805' > /var/www/html/index.html
+[root@server0 ~]# yum -y install vsftpd
+已加载插件：langpacks
+正在解决依赖关系
+--> 正在检查事务
+---> 软件包 vsftpd.x86_64.0.3.0.2-9.el7 将被 安装
+--> 解决依赖关系完成
+
+依赖关系解决
+
+=================================================================================================================
+ Package                 架构                    版本                            源                         大小
+=================================================================================================================
+正在安装:
+ vsftpd                  x86_64                  3.0.2-9.el7                     rhel_dvd                  166 k
+
+事务概要
+=================================================================================================================
+安装  1 软件包
+
+总下载量：166 k
+安装大小：343 k
+Downloading packages:
+vsftpd-3.0.2-9.el7.x86_64.rpm                                                             | 166 kB  00:00:00     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  正在安装    : vsftpd-3.0.2-9.el7.x86_64                                                                    1/1 
+  验证中      : vsftpd-3.0.2-9.el7.x86_64                                                                    1/1 
+
+已安装:
+  vsftpd.x86_64 0:3.0.2-9.el7                                                                                    
+
+完毕！
+[root@server0 ~]# systemctl restart vsftpd
+[root@server0 ~]# firefox ftp://172.25.0.11
+
+(process:29919): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# firewall-config
+
+** (firewall-config:29988): WARNING **: Couldn't connect to accessibility bus: Failed to connect to socket /tmp/dbus-Ez4TAaa3e9: 拒绝连接
+^C[root@server0 ~]# 
+
+==================================
+[root@room9pc01 ~]# god
+Last login: Fri Jan 12 18:54:00 2018 from 172.25.0.250
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+
+(process:1609): dconf-WARNING **: failed to commit changes to dconf: 无法连接：拒绝连接
+[root@desktop0 ~]# yum -y install httpd
+已加载插件：langpacks
+rhel_dvd                                                                | 4.1 kB  00:00:00     
+(1/2): rhel_dvd/group_gz                                                | 134 kB  00:00:00     
+(2/2): rhel_dvd/primary_db                                              | 3.4 MB  00:00:00     
+正在解决依赖关系
+--> 正在检查事务
+---> 软件包 httpd.x86_64.0.2.4.6-17.el7 将被 安装
+--> 正在处理依赖关系 httpd-tools = 2.4.6-17.el7，它被软件包 httpd-2.4.6-17.el7.x86_64 需要
+--> 正在处理依赖关系 /etc/mime.types，它被软件包 httpd-2.4.6-17.el7.x86_64 需要
+--> 正在处理依赖关系 libapr-1.so.0()(64bit)，它被软件包 httpd-2.4.6-17.el7.x86_64 需要
+--> 正在处理依赖关系 libaprutil-1.so.0()(64bit)，它被软件包 httpd-2.4.6-17.el7.x86_64 需要
+--> 正在检查事务
+---> 软件包 apr.x86_64.0.1.4.8-3.el7 将被 安装
+---> 软件包 apr-util.x86_64.0.1.5.2-6.el7 将被 安装
+---> 软件包 httpd-tools.x86_64.0.2.4.6-17.el7 将被 安装
+---> 软件包 mailcap.noarch.0.2.1.41-2.el7 将被 安装
+s--> 解决依赖关系完成
+
+依赖关系解决
+
+===============================================================================================
+ Package                架构              版本                       源                   大小
+===============================================================================================
+正在安装:
+ httpd                  x86_64            2.4.6-17.el7               rhel_dvd            1.2 M
+为依赖而安装:
+ apr                    x86_64            1.4.8-3.el7                rhel_dvd            103 k
+ apr-util               x86_64            1.5.2-6.el7                rhel_dvd             92 k
+ httpd-tools            x86_64            2.4.6-17.el7               rhel_dvd             77 k
+ mailcap                noarch            2.1.41-2.el7               rhel_dvd             31 k
+
+事务概要
+===============================================================================================
+安装  1 软件包 (+4 依赖软件包)
+
+总下载量：1.5 M
+安装大小：4.3 M
+Downloading packages:
+(1/5): apr-util-1.5.2-6.el7.x86_64.rpm                                  |  92 kB  00:00:00     
+(2/5): apr-1.4.8-3.el7.x86_64.rpm                                       | 103 kB  00:00:00     
+(3/5): httpd-tools-2.4.6-17.el7.x86_64.rpm                              |  77 kB  00:00:00     
+(4/5): httpd-2.4.6-17.el7.x86_64.rpm                                    | 1.2 MB  00:00:00     
+(5/5): mailcap-2.1.41-2.el7.noarch.rpm                                  |  31 kB  00:00:00     
+-----------------------------------------------------------------------------------------------
+总计                                                           4.3 MB/s | 1.5 MB  00:00:00     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  正在安装    : apr-1.4.8-3.el7.x86_64                                                     1/5 
+  正在安装    : apr-util-1.5.2-6.el7.x86_64                                                2/5 
+  正在安装    : httpd-tools-2.4.6-17.el7.x86_64                                            3/5 
+  正在安装    : mailcap-2.1.41-2.el7.noarch                                                4/5 
+  正在安装    : httpd-2.4.6-17.el7.x86_64                                                  5/5 
+  验证中      : mailcap-2.1.41-2.el7.noarch                                                1/5 
+  验证中      : httpd-tools-2.4.6-17.el7.x86_64                                            2/5 
+  验证中      : apr-1.4.8-3.el7.x86_64                                                     3/5 
+  验证中      : apr-util-1.5.2-6.el7.x86_64                                                4/5 
+  验证中      : httpd-2.4.6-17.el7.x86_64                                                  5/5 
+
+已安装:
+  httpd.x86_64 0:2.4.6-17.el7                                                                  
+
+作为依赖被安装:
+  apr.x86_64 0:1.4.8-3.el7                         apr-util.x86_64 0:1.5.2-6.el7               
+  httpd-tools.x86_64 0:2.4.6-17.el7                mailcap.noarch 0:2.1.41-2.el7               
+
+完毕！
+[root@desktop0 ~]# systemctl restart httpd
+[root@desktop0 ~]# mkdir  /var/www/html
+mkdir: 无法创建目录"/var/www/html": 文件已存在
+[root@desktop0 ~]# echo '<h1>My First Web' > /var/www/html/index.html
+[root@desktop0 ~]# firefox 172.25.0.11
+
+(process:29685): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+[root@desktop0 ~]# yum -y install vsftpd
+已加载插件：langpacks
+正在解决依赖关系
+--> 正在检查事务
+---> 软件包 vsftpd.x86_64.0.3.0.2-9.el7 将被 安装
+--> 解决依赖关系完成
+
+依赖关系解决
+
+===============================================================================================
+ Package             架构                版本                      源                     大小
+===============================================================================================
+正在安装:
+ vsftpd              x86_64              3.0.2-9.el7               rhel_dvd              166 k
+
+事务概要
+===============================================================================================
+安装  1 软件包
+
+总下载量：166 k
+安装大小：343 k
+Downloading packages:
+vsftpd-3.0.2-9.el7.x86_64.rpm                                           | 166 kB  00:00:00     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  正在安装    : vsftpd-3.0.2-9.el7.x86_64                                                  1/1 
+  验证中      : vsftpd-3.0.2-9.el7.x86_64                                                  1/1 
+
+已安装:
+  vsftpd.x86_64 0:3.0.2-9.el7                                                                  
+
+完毕！
+[root@desktop0 ~]# system restart vsftpd
+bash: system: 未找到命令...
+[root@desktop0 ~]# systemctl restart vsftpd
+[root@desktop0 ~]# firefox ftp://172.25.0.11
+
+(process:29826): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+[root@desktop0 ~]# firefox ftp://172.25.0.10
+
+(process:29898): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+[root@desktop0 ~]# 
+
+
+
+
+---------------------------------------^C[root@server0 ~]# ---------
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+public
+
+[root@server0 ~]# systemctl restart vsftpd
+[root@server0 ~]# firefox ftp://172.25.0.11
+
+(process:29919): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# firewall-config
+
+** (firewall-config:29988): WARNING **: Couldn't connect to accessibility bus: Failed to connect to socket /tmp/dbus-Ez4TAaa3e9: 拒绝连接
+^C[root@server0 ~]# 
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+public
+[root@server0 ~]# firewall-cmd --set-default-zone=block
+success
+[root@server0 ~]# firewall-cmd --set-default-zone=drop
+success
+[root@server0 ~]# firewall-cmd --set-default-zone
+usage: see firewall-cmd man page
+firewall-cmd: error: argument --set-default-zone: expected one argument
+[root@server0 ~]# firewall-cmd --set-default-zone=public 
+success
+[root@server0 ~]# firewall-cmd --get-default-zone
+public
+[root@server0 ~]# firewall-cmd --set-default-zone=block
+success
+[root@server0 ~]# firewall-cmd --get-default-zone
+block
+[root@server0 ~]# firewall-cmd --set-default-zone=drop
+success
+[root@server0 ~]# firewall-cmd --get-default-zone
+drop
+[root@server0 ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@server0 ~]# firewall-cmd --get-default-zone
+trusted
+
+
+[root@server0 ~]# firewall-cmd --zone=public  --list-all 
+public (default, active)
+  interfaces: eth0
+  sources: 
+  services: dhcpv6-client ssh
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+	
+[root@server0 ~]# firewall-cmd --zone=public  --add-service=http
+success
+[root@server0 ~]# firewall-cmd --zone=public  --list-all 
+public (default, active)
+  interfaces: eth0
+  sources: 
+  services: dhcpv6-client http ssh
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@server0 ~]# 
+[root@server0 ~]# firefox 172.25.0.11
+
+(process:31009): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# firefox ftp://172.25.0.11
+
+(process:31071): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# firewall-cmd --zone=public  --add-service=ftp
+success
+[root@server0 ~]# firewall-cmd --zone=public --list-all
+public (default, active)
+  interfaces: eth0
+  sources: 
+  services: dhcpv6-client ftp http ssh
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@server0 ~]# firefox ftp://172.25.0.11
+
+(process:31159): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@server0 ~]# 
+
+[root@desktop0 ~]# firefox ftp://172.25.0.11
+
+(process:30430): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+[root@desktop0 ~]# firefox http://172.25.0.11
+
+(process:30495): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@desktop0 ~]# firefox 172.25.0.11
+
+(process:30548): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+[root@desktop0 ~]# 
+
+
+	
+[root@server0 ~]# firewall-cmd --permanent --zone=public --add-service=http
+success
+[root@server0 ~]# reload
+bash: reload: 未找到命令...
+[root@server0 ~]# firewall-cmd  --reload 
+success
+[root@server0 ~]# firewall-cmd --zone=public --list-all 
+public (default, active)
+  interfaces: eth0
+  sources: 
+  services: dhcpv6-client http ssh
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@server0 ~]# firewall-cmd --permanent --zone=public --add-service=ftp
+success
+[root@server0 ~]# firewall-cmd  --reload 
+success
+[root@server0 ~]# firewall-cmd --zone=public --list-all 
+public (default, active)
+  interfaces: eth0
+  sources: 
+  services: dhcpv6-client ftp http ssh
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+	
+[root@server0 ~]# firewall-cmd  --permanent  --zone=public  --add-forward-port=port=5423:proto=tcp:toport=80
+success
+[root@server0 ~]# firewall-cmd --reload
+success
+[root@server0 ~]# firewall-cmd  --zone=public  --list-all 
+public (default, active)
+  interfaces: eth0
+  sources: 
+  services: dhcpv6-client ftp http ssh
+  ports: 
+  masquerade: no
+  forward-ports: port=5423:proto=tcp:toport=80:toaddr=
+  icmp-blocks: 
+  rich rules: 
+[root@desktop0 ~]# firefox 172.25.0.11:5423
+
+(process:31292): GLib-CRITICAL **: g_slice_set_config: assertion `sys_page_size == 0' failed
+^C
+
+[root@server0 ~]# firewall-cmd  --permanent --zone=public --remove-forward-port=port=5423:proto=tcp:toport=80
+success
+[root@server0 ~]# firewall-cmd --reload 
+success
+[root@server0 ~]# firewall-cmd  --zone=public  --list-all 
+public (default, active)
+  interfaces: eth0
+  sources: 
+  services: dhcpv6-client ftp http ssh
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@server0 ~]# firewall-cmd  --permanent  --zone=public  --add-forward-port=port=5423:proto=tcp:toport=80
+success
+[root@server0 ~]# firewall-cmd --reload 
+success
+[root@server0 ~]# firewall-cmd  --zone=public  --list-all 
+public (default, active)
+  interfaces: eth0
+  sources: 
+  services: dhcpv6-client ftp http ssh
+  ports: 
+  masquerade: no
+  forward-ports: port=5423:proto=tcp:toport=80:toaddr=
+  icmp-blocks: 
+  rich rules: 
+	
+[root@desktop0 ~]# firewall-cmd  --set-default-zone=trusted
+success
+[root@desktop0 ~]# firewall-cmd --zone=trusted  --list-all
+trusted (default, active)
+  interfaces: eth0
+  sources: 
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@server0 ~]# firewall-cmd --set-default-zone=trusted 
+success
+[root@server0 ~]#  firewall-cmd --zone=trusted  --list-all
+trusted (default, active)
+  interfaces: eth0
+  sources: 
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+[root@server0 ~]# yum -y install samba
+已安装:
+  samba.x86_64 0:4.1.1-31.el7                                                                                        
+
+完毕！
+[root@server0 ~]# rpm -q samba
+samba-4.1.1-31.el7.x86_64
+
+[root@server0 ~]# useradd harry
+[root@server0 ~]# pdbedit -a harry
+new password:
+
+[root@server0 ~]# useradd peri
+[root@server0 ~]# usermod -s /sbin/nologin kenji
+usermod：用户“kenji”不存在
+[root@server0 ~]# useradd -s /sbin/nologin kenji
+[root@server0 ~]# useradd -s /sbin/nologin  chihiro
+[root@server0 ~]# usermod -s /sbin/nologin harry
+[root@server0 ~]# grep harry /etc/passwd
+harry:x:1001:1001::/home/harry:/sbin/nologin
+[root@server0 ~]# pdbedit -a xxx
+new password:
+retype new password:
+Failed to add entry for user xxx.
+[root@server0 ~]# pdbedit -a peri
+new password:
+retype new password:
+Unix username:        peri
+NT username:          
+Account Flags:        [U          ]
+User SID:             S-1-5-21-1949903286-1276126327-1682030859-1001
+Primary Group SID:    S-1-5-21-1949903286-1276126327-1682030859-513
+Full Name:            
+Home Directory:       \\server0\peri
+HomeDir Drive:        
+Logon Script:         
+Profile Path:         \\server0\peri\profile
+Domain:               SERVER0
+Account desc:         
+Workstations:         
+Munged dial:          
+Logon time:           0
+Logoff time:          三, 06 2月 2036 23:06:39 CST
+Kickoff time:         三, 06 2月 2036 23:06:39 CST
+Password last set:    二, 12 6月 2018 12:38:01 CST
+Password can change:  二, 12 6月 2018 12:38:01 CST
+Password must change: never
+Last bad password   : 0
+Bad password count  : 0
+Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+[root@server0 ~]# 
+[root@server0 ~]# pdbedit -L peri
+peri:1002:
+[root@server0 ~]# pdbedit -L xxx
+Username not found!
+[root@server0 ~]# pdbedit -L harry
+harry:1001:
+[root@server0 ~]# grep peri /etc/passwd
+peri:x:1002:1002::/home/peri:/bin/bash
+[root@server0 ~]# grep harry /etc/passwd
+harry:x:1001:1001::/home/harry:/sbin/nologin
+
+[root@server0 ~]# mkdir /common
+[root@server0 ~]# echo 1234 > /common/1.txt
+[root@server0 ~]# ls /common/
+1.txt
+[root@server0 ~]# echo abcd > /common/x1.txt
+[root@server0 ~]# vim /etc/samba/smb.conf 
+
+[root@server0 ~]# systemctl restart smb
+
+[root@server0 ~]# systemctl enable smb
+ln -s '/usr/lib/systemd/system/smb.service' '/etc/systemd/system/multi-user.target.wants/smb.service'
+[root@server0 ~]# cat /etc/samba/smb.conf | tail -3
+
+[common]
+path = /common
+
+
+[root@desktop0 ~]# yum -y install samba-client
+已安装:
+  samba-client.x86_64 0:4.1.1-31.el7  
+
+[root@desktop0 ~]# smbclient -L //172.25.0.11/
+Enter root's password: 
+Anonymous login successful
+Domain=[MYGROUP] OS=[Unix] Server=[Samba 4.1.1]
+
+	Sharename       Type      Comment
+	---------       ----      -------
+	common          Disk      
+	IPC$            IPC       IPC Service (Samba Server Version 4.1.1)
+Anonymous login successful
+Domain=[MYGROUP] OS=[Unix] Server=[Samba 4.1.1]
+
+	Server               Comment
+	---------            -------
+
+	Workgroup            Master
+	---------            -------
+	---------            -------
+[root@desktop0 ~]# smbclient -U //172.25.0.11/
+用法: smbclient [-?EgBVNkPeC] [-?|--help] [--usage] [-R|--name-resolve NAME-RESOLVE-ORDER] [-M|--message HOST]
+        [-I|--ip-address IP] [-E|--stderr] [-L|--list HOST] [-m|--max-protocol LEVEL] [-T|--tar <c|x>IXFqgbNan]
+        [-D|--directory DIR] [-c|--command STRING] [-b|--send-buffer BYTES] [-t|--timeout SECONDS] [-p|--port PORT]
+        [-g|--grepable] [-B|--browse] [-d|--debuglevel DEBUGLEVEL] [-s|--configfile CONFIGFILE]
+        [-l|--log-basename LOGFILEBASE] [-V|--version] [--option=name=value] [-O|--socket-options SOCKETOPTIONS]
+        [-n|--netbiosname NETBIOSNAME] [-W|--workgroup WORKGROUP] [-i|--scope SCOPE] [-U|--user USERNAME]
+        [-N|--no-pass] [-k|--kerberos] [-A|--authentication-file FILE] [-S|--signing on|off|required]
+        [-P|--machine-pass] [-e|--encrypt] [-C|--use-ccache] [--pw-nt-hash] service <password>
+[root@desktop0 ~]# smbclient -U harry //172.25.0.11/common
+
+[root@desktop0 ~]# smbclient -U harry //172.25.0.11/common
+Enter harry's password: 
+Domain=[MYGROUP] OS=[Unix] Server=[Samba 4.1.1]
+smb: \> 
+smb: \> 
+[root@server0 ~]# getsebool -a | grep samba
+samba_create_home_dirs --> off
+samba_domain_controller --> off
+samba_enable_home_dirs --> off
+samba_export_all_ro --> off
+samba_export_all_rw --> off
+samba_portmapper --> off
+samba_run_unconfined --> off
+samba_share_fusefs --> off
+samba_share_nfs --> off
+sanlock_use_samba --> off
+use_samba_home_dirs --> off
+virt_sandbox_use_samba --> off
+virt_use_samba --> off
+[root@server0 ~]# setsebool samba_export_all_ro on
+[root@server0 ~]# getsebool -a | grep samba
+samba_create_home_dirs --> off
+samba_domain_controller --> off
+samba_enable_home_dirs --> off
+samba_export_all_ro --> on
+samba_export_all_rw --> off
+samba_portmapper --> off
+samba_run_unconfined --> off
+samba_share_fusefs --> off
+samba_share_nfs --> off
+sanlock_use_samba --> off
+use_samba_home_dirs --> off
+virt_sandbox_use_samba --> off
+virt_use_samba --> off
+
+[root@desktop0 ~]# smbclient -U harry //172.25.0.11/common
+Enter harry's password: 
+Domain=[MYGROUP] OS=[Unix] Server=[Samba 4.1.1]
+smb: \> ls
+  .                                   D        0  Tue Jun 12 14:21:56 2018
+  ..                                  D        0  Tue Jun 12 14:19:12 2018
+  1.txt                               N        5  Tue Jun 12 14:19:37 2018
+  x1.txt                              N        5  Tue Jun 12 14:21:56 2018
+
+		40913 blocks of size 262144. 28317 blocks available
+smb: \> 
+
+
+
+[root@desktop0 ~]# yum -y install cifs-utils
+已安装:
+  cifs-utils.x86_64 0:6.2-6.el7                                                                                      
+
+完毕！
+[root@desktop0 ~]# mkdir /mnt/nsd01
+[root@desktop0 ~]# mount -o username=harry,pass=123  //172.25.0.11/common  /mnt/nsd01/
+[root@desktop0 ~]# df -h
+文件系统              容量  已用  可用 已用% 挂载点
+/dev/vda1              10G  3.1G  7.0G   31% /
+devtmpfs              906M     0  906M    0% /dev
+tmpfs                 921M   80K  921M    1% /dev/shm
+tmpfs                 921M   17M  904M    2% /run
+tmpfs                 921M     0  921M    0% /sys/fs/cgroup
+//172.25.0.11/common   10G  3.1G  7.0G   31% /mnt/nsd01
+[root@desktop0 ~]# ls /mnt/nsd01/
+1.txt  x1.txt
+
+[root@desktop0 ~]# vim /etc/fstab
+[root@desktop0 ~]# cat /etc/fstab | tail -2
+UUID=9bf6b9f7-92ad-441b-848e-0257cbb883d1 /                       xfs     defaults        1 1
+//172.25.0.11/common /mnt/nsd01 cifs defaults,user=harry,pass=123,_netdev 0   0
+[root@desktop0 ~]# umount /mnt/nsd01
+[root@desktop0 ~]# df -h 
+文件系统        容量  已用  可用 已用% 挂载点
+/dev/vda1        10G  3.1G  7.0G   31% /
+devtmpfs        906M     0  906M    0% /dev
+tmpfs           921M   80K  921M    1% /dev/shm
+tmpfs           921M   17M  904M    2% /run
+tmpfs           921M     0  921M    0% /sys/fs/cgroup
+[root@desktop0 ~]# mount -a
+[root@desktop0 ~]# df -h 
+文件系统              容量  已用  可用 已用% 挂载点
+/dev/vda1              10G  3.1G  7.0G   31% /
+devtmpfs              906M     0  906M    0% /dev
+tmpfs                 921M   80K  921M    1% /dev/shm
+tmpfs                 921M   17M  904M    2% /run
+tmpfs                 921M     0  921M    0% /sys/fs/cgroup
+//172.25.0.11/common   10G  3.1G  7.0G   31% /mnt/nsd01
+[root@desktop0 ~]# 
+
+[root@server0 ~]# mkdir /devops
+[root@server0 ~]# vim /etc/samba/smb.con
+[root@server0 ~]# echo 12334 > /devops/x2.txt
+[root@server0 ~]# vim /etc/samba/smb.conf
+[root@server0 ~]# cat /etc/samba/smb.conf | tail -3
+[devops]
+path = /devops
+write list = chihiro
+[root@server0 ~]# C
+[root@desktop0 ~]# vim /etc/fstab
+[root@desktop0 ~]# cat /etc/fstab | tail -4
+UUID=9bf6b9f7-92ad-441b-848e-0257cbb883d1 /                       xfs     defaults        1 1
+//172.25.0.11/common /mnt/nsd01 cifs defaults,user=harry,pass=123,_netdev 0   0
+//172.25.0.11/devops /mnt/nsd02 cifs defaults,user=chihiro,pass=123,_netdev 0   0
+
+[root@desktop0 ~]# mkdir  /mnt/nsd02
+[root@desktop0 ~]# mount -a 
+
+[root@server0 ~]# setsebool samba_export_all_rw on
+[root@server0 ~]# getsebool -a | grep samba
+samba_create_home_dirs --> off
+samba_domain_controller --> off
+samba_enable_home_dirs --> off
+samba_export_all_ro --> on
+samba_export_all_rw --> on
+samba_portmapper --> off
+samba_run_unconfined --> off
+samba_share_fusefs --> off
+samba_share_nfs --> off
+sanlock_use_samba --> off
+use_samba_home_dirs --> off
+virt_sandbox_use_samba --> off
+virt_use_samba --> off
+[root@server0 ~]# vim /etc/samba/smb.conf
+[root@server0 ~]# systemctl restart smb
+
+[root@server0 ~]# setfacl -m u:chihiro:rwx /devops
+[root@server0 ~]# getfacl /devops
+getfacl: Removing leading '/' from absolute path names
+# file: devops
+# owner: root
+# group: root
+user::rwx
+user:chihiro:rwx
+group::r-x
+mask::rwx
+other::r-x
+
+[root@server0 ~]# firewall-cmd --get-default-zone 
+trusted
+[root@server0 ~]# cat /etc/selinux/config 
+
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=enforcing
+# SELINUXTYPE= can take one of these two values:
+#     targeted - Targeted processes are protected,
+#     minimum - Modification of targeted policy. Only selected processes are protected. 
+#     mls - Multi Level Security protection.
+SELINUXTYPE=targeted
+
+
+[root@server0 ~]# pdbedit -a chihiro
+[root@desktop0 ~]# mount -a
+[root@desktop0 ~]# df -h
+文件系统              容量  已用  可用 已用% 挂载点
+/dev/vda1              10G  3.1G  7.0G   31% /
+devtmpfs              906M     0  906M    0% /dev
+tmpfs                 921M   80K  921M    1% /dev/shm
+tmpfs                 921M   17M  904M    2% /run
+tmpfs                 921M     0  921M    0% /sys/fs/cgroup
+//172.25.0.11/common   10G  3.1G  7.0G   31% /mnt/nsd01
+//172.25.0.11/devops   10G  3.1G  7.0G   31% /mnt/nsd02
+
+[root@server0 ~]# pdbedit -L kenji
+kenji:1003:
+[root@server0 ~]# 
+
+
+
+
+
+
+
+
+
+

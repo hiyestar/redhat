@@ -1,0 +1,512 @@
+[root@room9pc01 ~]# systemctl status sshd
+● sshd.service - OpenSSH server daemon
+   Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled; vendor preset: enabled)
+   Active: active (running) since 二 2018-06-19 07:34:20 CST; 3h 3min ago
+     Docs: man:sshd(8)
+           man:sshd_config(5)
+ Main PID: 893 (sshd)
+   CGroup: /system.slice/sshd.service
+           └─893 /usr/sbin/sshd -D
+
+6月 19 07:34:20 room9pc01.tedu.cn systemd[1]: Starting OpenSSH server daemon...
+6月 19 07:34:20 room9pc01.tedu.cn sshd[893]: Server listening on 0.0.0.0 port 22.
+6月 19 07:34:20 room9pc01.tedu.cn sshd[893]: Server listening on :: port 22.
+6月 19 07:34:20 room9pc01.tedu.cn systemd[1]: Started OpenSSH server daemon.
+您在 /var/spool/mail/root 中有新邮件
+[root@room9pc01 ~]# scp -r /var/lib/libvirt/images/iso/
+CentOS-7-x86_64-DVD-1708.iso    rhel-server-6.7-x86_64-dvd.iso  .Trash-0/
+lost+found/                     rhel-server-7.4-x86_64-dvd.iso  Win10_Pro_X64_zh_CN.iso
+[root@room9pc01 ~]# scp -r /var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso root@176.121.209.134:/^C
+[root@room9pc01 ~]# scp -r /var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso root@176.121.209.134:/var/lib/libvirt/images/iso/
+root@176.121.209.134's password: 
+rhel-server-7.4-x86_64-dvd.iso    
+
+
+[root@pc207 ~]# yum clean all
+[root@pc207 ~]# yum repolist
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+rhel7                                                                                                 | 4.1 kB  00:00:00     
+(1/2): rhel7/group_gz                                                                                 | 137 kB  00:00:00     
+(2/2): rhel7/primary_db                                                                               | 4.0 MB  00:00:00     
+源标识                                                     源名称                                                       状态
+rhel7                                                      rhel7.4                                                      4,986
+repolist: 4,986
+
+[root@svr7 ~]# yum clean all
+[root@svr7 ~]# yum repolist
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+myrpm                                                                                                 | 2.9 kB  00:00:00     
+rhel7                                                                                                 | 4.1 kB  00:00:00     
+(1/3): myrpm/primary_db                                                                               | 4.8 kB  00:00:00     
+(2/3): rhel7/group_gz                                                                                 | 137 kB  00:00:00     
+(3/3): rhel7/primary_db                                                                               | 4.0 MB  00:00:00     
+源标识                                                     源名称                                                       状态
+myrpm                                                      myrpm                                                            5
+rhel7                                                      rhel7.4                                                      4,986
+repolist: 4,991
+
+
+
+[root@svr7 ~]# yum -y install bind-chroot
+[root@svr7 ~]# yum -y install bind
+[root@svr7 ~]# rpm -q bind
+bind-9.9.4-50.el7.x86_64
+[root@svr7 ~]# rpm -q bind-chroot
+bind-chroot-9.9.4-50.el7.x86_64
+
+[root@svr7 ~]# rpm -qa bind*
+bind-9.9.4-50.el7.x86_64
+bind-libs-lite-9.9.4-50.el7.x86_64
+bind-license-9.9.4-50.el7.noarch
+bind-chroot-9.9.4-50.el7.x86_64
+bind-utils-9.9.4-50.el7.x86_64
+bind-libs-9.9.4-50.el7.x86_64
+
+[root@svr7 ~]# cp /etc/named.conf /root/
+[root@svr7 ~]# ls /root/
+[root@svr7 ~]# vim /etc/named.conf
+[root@svr7 ~]# cat /etc/named.conf
+options {
+	directory 	"/var/named";
+
+};
+
+zone "tedu.cn" IN {
+	type master;
+	file "tedu.cn.zone";
+};
+
+
+[root@svr7 ~]# ls /var/named/
+chroot  data  dynamic  named.ca  named.empty  named.localhost  named.loopback  slaves
+
+[root@svr7 ~]# cp -p /var/named/named.localhost /var/named/tedu.cn.zone
+[root@svr7 ~]# ls -l /var/named/tedu.cn.zone
+-rw-r-----. 1 root named 152 6月  21 2007 /var/named/tedu.cn.zone
+[root@svr7 ~]# ls -l  /var/named/named.localhost 
+-rw-r-----. 1 root named 152 6月  21 2007 /var/named/named.localhost
+
+
+[root@svr7 ~]# vim /var/named/tedu.cn.zone
+[root@svr7 ~]# cat /var/named/tedu.cn.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+tedu.cn.	NS	svr7
+svr7		A	192.168.4.7
+www	 	A 	1.2.3.4
+ftp		A	5.6.7.8
+
+[root@svr7 ~]# systemctl restart named
+
+
+
+
+[root@svr7 ~]# vim /etc/named.conf
+[root@svr7 ~]# cat /etc/named.conf
+options {
+	directory 	"/var/named";
+
+};
+
+zone "tedu.cn" IN {
+	type master;
+	file "tedu.cn.zone";
+};
+zone "qq.com" IN {
+  	type master;
+	file "qq.com.zone";
+};
+[root@svr7 ~]# cp -p /var/named/tedu.cn.zone /var/named/qq.com.zone
+[root@svr7 ~]# vim /var/named/qq.com.zone
+[root@svr7 ~]# cat /var/named/qq.com.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr7
+svr7		A	192.168.4.7
+www	 	A 	1.2.3.4
+ftp		A	5.6.7.8
+[root@svr7 ~]# systemctl restart named
+
+[root@svr7 ~]# vim /var/named/tedu.cn.zone 
+[root@svr7 ~]# cat /var/named/tedu.cn.zone | tail -3
+ftp		A	5.6.7.8
+*		A	10.20.30.40
+tedu.cn.	A	50.60.70.80
+[root@svr7 ~]# systemctl restart named
+
+[root@svr7 ~]# echo '$GENERATE 1-50   stu$    A    192.168.19.$' >> /var/named/tedu.cn.zone
+[root@svr7 ~]# cat /var/named/tedu.cn.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+tedu.cn.	NS	svr7
+svr7		A	192.168.4.7
+www	 	A 	1.2.3.4
+ftp		A	5.6.7.8
+*		A	10.20.30.40
+tedu.cn.	A	50.60.70.80
+$GENERATE 1-50   stu$    A    192.168.19.$
+[root@svr7 ~]# systemctl restart named
+[root@svr7 ~]# vim /var/named/tedu.cn.zone
+[root@svr7 ~]# cat /var/named/tedu.cn.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+tedu.cn.	NS	svr7
+svr7		A	192.168.4.7
+www	 	A 	1.2.3.4
+ftp		A	5.6.7.8
+*		A	10.20.30.40
+tedu.cn.	A	50.60.70.80
+$GENERATE 1-50   stu$    A    192.168.10.$
+
+[root@svr7 ~]# vim /var/named/tedu.cn.zone
+[root@svr7 ~]# cat /var/named/tedu.cn.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+tedu.cn.	NS	svr7
+svr7		A	192.168.4.7
+www	 	A 	1.2.3.4
+ftp		A	5.6.7.8
+*		A	10.20.30.40
+tedu.cn.	A	50.60.70.80
+$GENERATE 1-50   stu$    A    192.168.10.$
+tts		CNAME	ftp
+[root@svr7 ~]# !sys
+systemctl restart named
+
+------------------------
+[root@svr7 ~]# vim /var/named/qq.com.zone
+[root@svr7 ~]# cat /var/named/qq.com.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr7
+bj.qq.com.	NS	pc207
+svr7		A	192.168.4.7
+pc207		A	192.168.4.207
+www	 	A 	1.2.3.4
+ftp		A	5.6.7.8
+[root@svr7 ~]# !sys
+systemctl restart named
+[root@svr7 ~]# nslookup www.bj.qq.com 192.168.4.7
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Non-authoritative answer:
+Name:	www.bj.qq.com
+Address: 192.168.20.1
+
+[root@svr7 ~]# vim /etc/hosts
+[root@svr7 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.4.230  www.360.com
+192.168.4.200  www.baidu.com
+[root@svr7 ~]# ping www.360.com
+PING www.360.com (192.168.4.230) 56(84) bytes of data.
+From svr7.tedu.cn (192.168.4.7) icmp_seq=1 Destination Host Unreachable
+
+[root@svr7 ~]# ping www.baidu.com
+PING www.baidu.com (192.168.4.200) 56(84) bytes of data.
+
+
+
+
+[root@svr7 ~]# echo 'nameserver 192.168.4.254' > /etc/resolv.conf 
+[root@svr7 ~]# cat /etc/resolv.conf
+nameserver 192.168.4.254
+
+#4.虚拟机A:验证
+[root@svr7 ~]# cat /etc/resolv.conf 
+nameserver 192.168.4.254
+[root@svr7 ~]# nslookup www.taobao.com
+Server:		192.168.4.254
+Address:	192.168.4.254#53
+
+Non-authoritative answer:
+www.taobao.com	canonical name = www.taobao.com.danuoyi.tbcache.com.
+Name:	www.taobao.com.danuoyi.tbcache.com
+Address: 220.170.91.114
+
+
+
+
+=======================pc207========================
+
+
+[root@pc207 ~]# getenforce
+Permissive
+[root@pc207 ~]# firewall-cmd
+usage: see firewall-cmd man page
+No option specified.
+[root@pc207 ~]# firewall-cmd --get-denot running
+^C
+[root@pc207 ~]# echo nameserver 192.168.4.7 > /etc/resolv.con
+[root@pc207 ~]# cat /etc/resolv.conf
+
+[root@pc207 ~]# echo nameserver 192.168.4.7 > /etc/resolv.conf
+[root@pc207 ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+
+[root@pc207 ~]# nslookup svr7.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	svr7.tedu.cn
+Address: 192.168.4.7
+
+[root@pc207 ~]# nslookup svr7.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	svr7.qq.com
+Address: 192.168.4.7
+
+[root@pc207 ~]# nslookup www.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	www.qq.com
+Address: 1.2.3.4
+
+[root@pc207 ~]# nslookup www.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	www.tedu.cn
+Address: 1.2.3.4
+
+
+
+[root@pc207 ~]# nslookup wwwww.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	wwwww.tedu.cn
+Address: 10.20.30.40
+
+[root@pc207 ~]# nslookup tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	tedu.cn
+Address: 50.60.70.80
+
+[root@pc207 ~]# nslookup stu12.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	stu12.tedu.cn
+Address: 192.168.19.12
+
+
+
+[root@pc207 ~]# nslookup tts.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+tts.tedu.cn	canonical name = ftp.tedu.cn.
+Name:	ftp.tedu.cn
+Address: 5.6.7.8
+
+-----------------------------
+[root@pc207 ~]# cp -p /etc/named.conf  /root/
+[root@pc207 ~]# ls /root
+anaconda-ks.cfg  initial-setup-ks.cfg  named.conf  公共  模板  视频  图片  文档  下载  音乐  桌面
+
+[root@pc207 ~]# ls /var/named/named.localhost 
+/var/named/named.localhost
+[root@pc207 ~]# cp -p /var/named/named.localhost /var/named/bj.qq.com.zone
+[root@pc207 ~]# vim /var/named/bj.qq.com.zone
+
+[root@pc207 ~]# vim /etc/named.conf
+[root@pc207 ~]# cat /etc/named.conf
+options {
+	directory 	"/var/named";
+};
+zone "bj.qq.com" IN {
+	type master;
+	file "bj.qq.com.zone";
+};
+
+
+[root@pc207 ~]# vim /var/named/bj.qq.com.zone 
+[root@pc207 ~]# cat /var/named/bj.qq.com.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+bj.qq.com.	NS	pc207
+pc207		A	192.168.4.207
+www		A	192.168.20.1
+[root@pc207 ~]# systemctl restart named
+
+
+[root@pc207 ~]# nslookup www.bj.qq.com 192.168.4.207
+Server:		192.168.4.207
+Address:	192.168.4.207#53
+
+Name:	www.bj.qq.com
+Address: 192.168.20.1
+
+
+[root@pc207 ~]# vim  /etc/resolv.conf
+[root@pc207 ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+#nameserver 192.168.4.207
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+=====================[root@room9pc01 ~]# 
+[root@room9pc01 ~]# ================================================================
+
+
+
+
+[root@room9pc01 ~]# cat /etc/resolv.conf 
+# Generated by NetworkManager
+search tedu.cn
+nameserver 176.121.0.100
+
+[root@room9pc01 ~]# cat /etc/resolv.conf 
+# Generated by NetworkManager
+search tedu.cn
+nameserver 176.121.0.100
+[root@room9pc01 ~]# cat /etc/redhat-release 
+CentOS Linux release 7.4.1708 (Core) 
+[root@room9pc01 ~]# mkdir /dvd/
+[root@room9pc01 ~]# mount 
+[root@room9pc01 ~]# mount /iso/CentOS-7-x86_64-DVD-1708.iso  /dvd/
+mount: /dev/loop1 写保护，将以只读方式挂载
+[root@room9pc01 ~]# ls /dvd/
+CentOS_BuildTag  EULA  images    LiveOS    repodata              RPM-GPG-KEY-CentOS-Testing-7
+EFI              GPL   isolinux  Packages  RPM-GPG-KEY-CentOS-7  TRANS.TBL
+[root@room9pc01 ~]# cd /etc/yum.repos.d/
+[root@room9pc01 yum.repos.d]# ls
+CentOS.repo  NSD-2018-1-12.tar.gz  packagekit-media.repo  repo  rpm.repo
+[root@room9pc01 yum.repos.d]# mkdir repo 
+mkdir: 无法创建目录"repo": 文件已存在
+[root@room9pc01 yum.repos.d]# ls repo
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Media.repo    CentOS-Vault.repo
+CentOS-CR.repo    CentOS-fasttrack.repo  CentOS-Sources.repo
+[root@room9pc01 yum.repos.d]# mv *.repo repo
+[root@room9pc01 yum.repos.d]# ls repo
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Media.repo  CentOS-Sources.repo  packagekit-media.repo
+CentOS-CR.repo    CentOS-fasttrack.repo  CentOS.repo        CentOS-Vault.repo    rpm.repo
+[root@room9pc01 yum.repos.d]# vim dvd.repo
+[root@room9pc01 yum.repos.d]# cat dvd.repo
+[dvd]
+name=CentOS7.4
+baseurl=file:///dvd
+enabled=1
+gpgcheck=0
+[root@room9pc01 yum.repos.d]# yum -y install bind bind-chroot
+
+已安装:
+  bind.x86_64 32:9.9.4-50.el7                             bind-chroot.x86_64 32:9.9.4-50.el7                            
+
+完毕！
+[root@room9pc01 yum.repos.d]# rpm -q bind
+bind-9.9.4-50.el7.x86_64
+[root@room9pc01 yum.repos.d]# rpm -q bind-chroot 
+bind-chroot-9.9.4-50.el7.x86_64
+[root@room9pc01 yum.repos.d]# systemctl restart named
+[root@room9pc01 yum.repos.d]# cp -p /etc/named.conf  ./
+[root@room9pc01 yum.repos.d]# ls
+dvd.repo  named.conf  NSD-2018-1-12.tar.gz  repo
+[root@room9pc01 yum.repos.d]# vim /etc/named.conf
+[root@room9pc01 yum.repos.d]# cat /etc/named.conf
+options {
+  	directory	"/var/named";
+	forwarders	{ 176.121.0.100 };
+};
+[root@room9pc01 yum.repos.d]# systemctl  restart named
+Job for named.service failed because the control process exited with error code. See "systemctl status named.service" and "journalctl -xe" for details.
+[root@room9pc01 yum.repos.d]# vim /etc/named.conf
+[root@room9pc01 yum.repos.d]# cat /etc/named.conf
+options {
+  	directory	"/var/named";
+	forwarders	{ 176.121.0.100; };
+};
+[root@room9pc01 yum.repos.d]# !sys
+systemctl  restart named
+[root@room9pc01 yum.repos.d]# head -5  named.conf 
+//
+// named.conf
+//
+// Provided by Red Hat bind package to configure the ISC BIND named(8) DNS
+// server as a caching only nameserver (as a localhost DNS resolver only).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

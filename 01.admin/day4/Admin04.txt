@@ -1,0 +1,267 @@
+
+使用教学虚拟机
+
+• 每个学员机上有三台预先配置好的虚拟机
+– server —— 作为练习用服务器
+– desktop —— 作为练习用客户机
+– classroom —— 提供网关/DNS/软件素材等资源
+
+
+优先开启classroom虚拟机
+
+1.真机：还原三台虚拟机
+[root@room9pc13 ~]# rht-vmctl reset classroom  #先重置资源服务器
+[root@room9pc13 ~]# rht-vmctl reset server
+[root@room9pc13 ~]# rht-vmctl reset desktop   
+
+2.  登陆虚拟机server与虚拟机desktop
+      用户名：root   密码: redhat
+
+ 虚拟机server
+        操作系统版本：RHEL 7.0
+        系统IP地址：172.25.0.11/24
+        主机名：server0.example.com
+
+
+ 虚拟机desktop
+        操作系统版本：RHEL 7.0
+        系统IP地址：172.25.0.10/24
+        主机名：desktop0.example.com
+
+##########################################################
+利用真机远程管理，两台虚拟机
+
+1.真机上操作：测试真机能否通信
+[root@room9pc01 ~]# ping 172.25.0.11
+[root@room9pc01 ~]# ping 172.25.0.10
+
+2.真机上操作：远程管理
+[root@room9pc01 ~]# ssh   用户名@对方的IP地址
+[root@room9pc01 ~]# ssh   root@172.25.0.11
+
+ Ctrl+shift+t : 可以再开一个新的终端
+
+[root@room9pc01 ~]# ssh   root@172.25.0.10
+
+[root@server0 ~]# exit
+登出
+Connection to 172.25.0.11 closed.
+
+3.运城管理打开对方的图形程序
+
+[root@room9pc01 ~]# ssh -X root@172.25.0.11
+
+[root@server0 ~]# firewall-config    #防火墙图形配置程序
+
+
+########################################################
+零散软件管理
+
+虚拟机Server
+1.关闭虚拟机添加光驱设备
+
+2.显示光盘内容
+[root@server0 ~]# mount /dev/cdrom  /dvd/
+mount: /dev/sr0 写保护，将以只读方式挂载
+
+[root@server0 ~]# ls /dvd/
+
+
+
+[root@server0 ~]# rpm  -q   软件名（程序名）
+ 
+[root@server0 ~]# rpm -q firefox    #检测程序是否安装
+firefox-24.5.0-1.el7.x86_64
+[root@server0 ~]# rpm -q zip
+[root@server0 ~]# rpm -q gcc
+[root@server0 ~]# rpm -q java
+[root@server0 ~]# rpm -q vsftpd
+未安装软件包 vsftpd 
+
+[root@server0 ~]# rpm -ivh /dvd/Packages/vsftpd-3.0.2-22.el7.x86_64.rpm                #安装软件包
+
+[root@server0 ~]# rpm -q vsftpd
+vsftpd-3.0.2-22.el7.x86_64
+[root@server0 ~]# rpm -e vsftpd               #卸载软件包
+[root@server0 ~]# rpm -q vsftpd
+未安装软件包 vsftpd 
+
+了解：系统导入红帽签名信息
+[root@server0 ~]# rpm --import /dvd/RPM-GPG-KEY-redhat-release 
+
+##########################################################
+安装软件包，产生依赖关系
+常见的提示
+错误：依赖检测失败：
+
+##########################################################
+自动解决依赖关系，安装软件  Yum软件包管理
+
+
+   DNS：域名解析，将域名解析为IP地址
+
+服务：为客户端安装软件
+
+ 服务端： classroom.example.com搭建Web服务，共享了7.0光盘所有内容
+
+              1.众多的软件包    2.仓库清单，仓库数据文件
+
+    测试： 
+    http://classroom.example.com/content/rhel7.0/x86_64/dvd/
+
+
+ 客户端：书写客户端配置文件
+       /etc/yum.repos.d/*.repo
+
+      错误的客户端配置文件与正确的客户端配置文件，会相互影响
+
+[root@server0 ~]# rm -rf /etc/yum.repos.d/*
+[root@server0 ~]# vim /etc/yum.repos.d/dvd.repo
+ [dvd]    #仓库标识
+ name=rhel7.0  #仓库描述信息
+ baseurl=http://classroom.example.com/content/rhel7.0/x86_64/dvd/    #指定Yum服务端位置
+
+ enabled=1   #启用此该文件
+ gpgcheck=0  #不做签名检查
+
+[root@server0 ~]# yum repolist    #列出仓库信息
+
+##########################################################
+Yum的使用：
+
+[root@server0 ~]# yum -y install sssd    #安装软件包
+[root@server0 ~]# yum -y install httpd   #安装软件包
+[root@server0 ~]# yum -y install gcc     #安装软件包
+
+[root@server0 ~]# yum clean all       #清空Yum缓存
+
+[root@server0 ~]# yum  remove  gcc     #卸载软件包
+
+[root@server0 ~]# yum  search  ftp     #查询软件包信息
+
+########################################################
+
+下载软件包
+
+使用wget下载工具
+– wget  软件包的URL网址
+– wget  软件包的URL网址    -O  /目录路径/新文件名
+
+
+虚拟机server
+
+ # wget http://classroom.example.com/content/rhel7.0/x86_64/errata/Packages/kernel-3.10.0-123.1.2.el7.x86_64.rpm
+
+ # rpm -ivh kernel-3.10.0-123.1.2.el7.x86_64.rpm 
+
+ # reboot 
+
+[root@room9pc01 ~]# ssh -X root@172.25.0.11
+Last login: Mon Jun  4 11:17:10 2018 from 172.25.0.250
+[root@server0 ~]# uname  -r
+3.10.0-123.1.2.el7.x86_64
+
+##########################################################
+配置网络
+ 
+1. 配置永久主机名
+[root@server0 ~]# vim  /etc/hostname
+nsd.tedu.com
+[root@server0 ~]# cat  /etc/hostname
+
+[root@server0 ~]# exit
+登出
+Connection to 172.25.0.11 closed.
+[root@room9pc01 ~]# ssh -X root@172.25.0.11
+Last login: Mon Jun  4 15:43:43 2018 from 172.25.0.250
+[root@nsd ~]# hostname
+nsd.tedu.com
+[root@nsd ~]# 
+
+
+
+2.  配置永久IP地址、永久子网掩码、永久网关地址
+
+   IP地址：互联网中计算机的唯一标识
+     子网掩码：区分网络位与主机位
+     网关地址：一个网络到另一个网络的关口
+
+   /etc/sysconfig/network-scripts/ifcfg-eth0  #网卡配置文件
+
+• 查看nmcli connection 识别网卡的名字
+[root@nsd ~]# nmcli connection show
+
+• 配置IP地址、子网掩码、网关地址
+[root@nsd ~]# nmcli   connection   modify   'System eth0'    
+ ipv4.method   manual  
+ ipv4.addresses  '172.25.0.100/24    172.25.0.254'
+ connection.autoconnect   yes
+
+[root@nsd ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0 
+
+    nmcli   connection   修改   '网卡名'
+    ipv4.方法   手工配置
+    ipv4.地址   'ip地址/子网掩码     网关地址'
+       每次开机自动启用
+
+• 激活配置
+[root@nsd ~]# nmcli connection up 'System eth0'
+[root@nsd ~]# route   #查看网关的指令    gateway
+
+
+3.永久DNS服务器地址
+[root@nsd ~]# vim /etc/resolv.conf
+nameserver  172.25.254.254
+
+[root@nsd ~]# cat /etc/resolv.conf
+
+[root@nsd ~]# nslookup server0.example.com    #测试解析
+[root@nsd ~]# nslookup desktop0.example.com   #测试解析
+
+
+#########################################################
+重定向输出:将前面命令的输出结果，写入到文本文件中
+
+     > :覆盖重定向
+     >> :追加重定向
+
+[root@nsd ~]# ls --help                   #查看命令的帮助信息
+[root@nsd ~]# ls --help > /opt/ls.txt   
+[root@nsd ~]# cat /opt/ls.txt
+
+[root@nsd ~]# hostname > /opt/ls.txt
+[root@nsd ~]# cat /opt/ls.txt 
+
+[root@nsd ~]# hostname >> /opt/ls.txt 
+[root@nsd ~]# cat /opt/ls.txt
+
+[root@nsd ~]# hostname >> /opt/ls.txt 
+[root@nsd ~]# cat /opt/ls.txt
+
+[root@nsd ~]# echo 123456789
+123456789
+[root@nsd ~]# echo 123456789   >>  /opt/ls.txt
+[root@nsd ~]# cat /opt/ls.txt
+
+[root@nsd ~]# echo A.tedu.com  >  /etc/hostname
+[root@nsd ~]# cat /etc/hostname
+
+# echo nameserver 172.25.254.254  > /etc/resolv.conf 
+# cat /etc/resolv.conf
+
+   非交互式
+
+######################################################3
+
+
+
+
+
+
+
+
+
+
+
+
+

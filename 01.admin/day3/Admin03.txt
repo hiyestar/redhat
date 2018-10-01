@@ -1,0 +1,380 @@
+ 牛犇
+#########################################
+
+命令行基础
+
+Linux命令
+– 用来实现某一类功能的指令或程序
+– Linux中的命令会有一个执行程序与之相对应
+
+– 命令的执行依赖于解释器(默认的解释器：/bin/bash)
+
+       用户-------->解释器------->内核----->调配所有的硬件
+
+########################################################
+
+• 基本用法
+– 命令字     [选项]...      [参数1]     [参数2]...
+   
+
+[root@server0 ~]# ls  -l  /root/
+
+
+Ctrl + c :结束正在运行的命令
+
+快速编辑技巧
+• Tab键自动补全
+– 可补齐命令字、选项、参数、文件路径、软件名、服务名
+
+	# if 连续按两次tab键
+	# ifco（tab）
+	
+	# cat  /et(tab)/red(tab)-r(tab)
+
+	# ls /et(tab)/sysco(tab)/netw(tab)-(tab)/ifc(tab)-e(tab)
+
+	# cat /et(tab)/sysco(tab)/netw(tab)-(tab)/ifc(tab)-e(tab)
+
+
+• 快捷键
+– Ctrl + l :清空整个屏幕
+– Esc + . 或 Alt  + . :粘贴上一个命令的参数
+– Ctrl + c :结束正在运行的命令
+[root@haha ~]# ls /etc/redhat-release 
+
+[root@haha ~]# ls -l  Alt  +  . 
+
+[root@haha ~]# cat   Alt  +  . 
+
+[root@haha ~]# ls -l /et(tab)/sysco(tab)/netw(tab)-(tab)/ifc(tab)-e(tab)
+
+[root@haha ~]# cat   Alt  +  . 
+
+[root@haha ~]# ping 127.0.0.1
+ 按Ctrl + c 
+
+
+– Ctrl + u : 清空至行首
+
+– Ctrl + w : 往回删除一个单词(以空格界定)
+
+
+######################################################
+mount挂载操作:提供设备资源访问点
+
+显示光盘内容
+
+Windows
+
+  光盘文件-------->光驱设备--------->CD驱动器(访问点)
+
+
+Linux
+
+  光盘文件-------->光驱设备---------->目录(访问点)
+             IDE:/dev/hdc
+             SCSI:/dev/sr0
+
+
+     煤矿------>洞口
+
+1.图形方式将光盘文件，放入虚拟机光驱设备
+
+2.Linux光驱设备
+
+蓝色：目录
+黑色：文本文件
+青色：快捷方式
+[root@haha ~]# ls  /dev/cdrom 
+[root@haha ~]# ls  -l  /dev/cdrom
+
+3.访问光盘设备内容
+• 使用mount命令
+– 格式:mount  设备路径   挂载点目录
+
+[root@haha ~]# mkdir /nsd       #创建访问点目录
+[root@haha ~]# ls /
+[root@haha ~]# ls /nsd
+
+[root@haha ~]# mount  /dev/cdrom  /nsd   #进行挂载,让nsd成为访问点
+mount: /dev/sr0 写保护，将以只读方式挂载
+
+[root@haha ~]# ls /nsd/
+
+[root@haha ~]# ls /nsd/Packages/    #查看光盘中的所有软件包
+
+4.卸载
+[root@haha ~]#  umount  /nsd
+[root@haha ~]#  ls /nsd
+
+
+注意：
+ 1.当有人正在访问挂载点
+[root@haha nsd]# umount /nsd
+  umount: /nsd：目标忙。
+        (有些情况下通过 lsof(8) 或 fuser(1) 可以
+         找到有关使用该设备的进程的有用信息)
+
+ 2.挂载时，尽量使用自己创建的目录
+
+#######################################################
+• cd — Change Directory
+– 用途:切换工作目录
+– 格式:cd   [目标文件夹位置]
+
+  cd  ..  :返回上一层
+
+    绝对路径：以/开始的路径
+    相对路径：不以/开始的路径
+
+     ~:用户家目录
+
+   ~user表示用户user的家目录
+
+   /root : 管理员root用户的家目录
+   /home : 存放所有普通用户家目录
+
+[root@haha ~]# useradd zhangsan    #创建普通用户为zhangsan
+[root@haha ~]# useradd dc          #创建普通用户为lisi
+
+[root@haha ~]# cd  ~zhangsan
+[root@haha zhangsan]# pwd
+
+[root@haha zhangsan]# cd  ~dc
+[root@haha dc]# pwd
+
+[root@haha ~]# cd   ~root
+[root@haha ~]# pwd
+
+########################################################
+
+• ls — List
+– 格式:ls [选项]... [目录或文件名]
+
+• 常用命令选项
+– -l :以长格式显示,显示详细属性
+– -h:提供易读的容量单位(K、M等)
+– -d:显示目录本身(而不是内容)的属性
+– -A:包括名称以 . 开头的隐藏文档
+
+[root@haha ~]# ls -ld  /boot/
+[root@haha ~]# ls -l  /boot/
+
+[root@haha ~]# ls -lh  /boot/
+
+[root@haha ~]# ls  /boot/
+[root@haha ~]# ls -lh  /root
+[root@haha ~]# ls -ld  /root
+
+[root@haha ~]# ls -lh  /etc
+[root@haha ~]# ls -ld  /etc
+
+#######################################################
+统计目录文件大小
+[root@haha ~]# du -sh   /root
+
+#######################################################
+使用通配符
+• 针对不确定的文档名称,以特殊字符表示
+  – *:任意多个任意字符
+  – ?:单个字符
+
+[root@haha /]# ls  /etc/*tab
+[root@haha /]# ls  /boot/vm*
+[root@haha /]# ls  /etc/*.conf
+[root@haha /]# ls  /dev/tty*
+
+[root@haha /]# ls  /dev/tty?
+[root@haha /]# ls  /dev/tty??
+
+
+• 针对不确定的文档名称,以特殊字符表示
+– [a-z]:多个字符或连续范围中的一个,若无则忽略
+– {a,min,xy}:多组不同的字符串,全匹配
+
+[root@haha /]# ls  /dev/tty[1-3]
+
+[root@haha /]# ls  /dev/tty[2-9]
+
+[root@haha /]# ls  /dev/tty{1,3,7,9,S0}
+
+###################################################
+   请显示/dev/的tty设备，tty20～tty30 ?
+
+[root@haha /]# ls  /dev/tty{2[0-9],30}
+ 
+[root@haha /]# ls  /dev/tty{2?,30}
+
+####################################################
+  命令的别名：简化复杂的命令
+
+[root@haha /]# alias  别名='实际运行的命令'
+
+[root@haha /]# alias  hn='hostname'     #定义别名
+[root@haha /]# alias                    #显示当前生效的别名
+[root@haha /]# hn                       #运行成功
+
+[root@haha /]# unalias  hn               #删除别名
+[root@haha /]# hn                        #运行失败
+
+#######################################################
+
+ mkdir创建目录
+  -p:建立父目录，建立多级目录
+
+[root@haha /]# mkdir -p /opt/aa/bb/cc/dd
+[root@haha /]# ls /opt/aa
+
+[root@haha /]# mkdir /root/abc  /opt/test01  /mnt/file
+[root@haha /]# ls /root
+[root@haha /]# ls /opt
+[root@haha /]# ls /mnt
+
+######################################################
+rm 删除
+• rm — Remove
+– 格式:rm  [选项]...   文件或目录...
+
+• 常用命令选项
+– -r、-f:递归删除(含目录)、强制删除
+
+    递归:目录本身，以及目录下所有内容
+
+[root@haha /]# rm -rf  /root/abc  /opt/test01  /mnt/file
+
+#######################################################
+mv 移动/改名
+• mv — Move
+– 格式:mv   [选项]...   原文件...     目标路径
+
+[root@haha /]# rm -rf /opt/*
+[root@haha /]# mkdir  /opt/nsd01
+[root@haha /]# touch  /opt/1.txt
+[root@haha /]# ls /opt/
+
+[root@haha /]# mv /opt/1.txt  /opt/nsd01
+[root@haha /]# ls /opt/
+[root@haha /]# ls /opt/nsd01 
+
+重命名:路径不变的移动
+[root@haha /]# mv /opt/nsd01/  /opt/student
+[root@haha /]# ls /opt/
+
+[root@haha /]# mv /opt/student/   /opt/nsd02
+[root@haha /]# ls /opt/
+
+#######################################################
+cp 复制
+• cp — Copy
+
+– 格式:cp  [选项]...   原文件...      目标路径
+
+• 常用命令选项
+– -r:递归,复制目录时必须有此选项
+
+[root@haha /]# rm -rf  /opt/*
+[root@haha /]# touch  /opt/a.txt
+[root@haha /]# mkdir  /opt/nsd01
+[root@haha /]# ls  /opt/
+
+[root@haha /]# cp  /opt/a.txt  /opt/nsd01
+[root@haha /]# ls  /opt/
+[root@haha /]# ls  /opt/nsd01/
+
+[root@haha /]# cp  /etc/redhat-release  /opt/
+[root@haha /]# ls  /opt/
+[root@haha /]# cp  /etc/redhat-release  /opt/abc.txt
+[root@haha /]# ls  /opt/
+
+[root@haha /]# cp -r /boot/   /opt/
+[root@haha /]# ls  /opt/
+[root@haha /]# ls  /opt/boot/
+
+
+
+cp可以支持两个以上的参数，永远会把最后一个参数作为 目标，其他参数都是源
+
+ # cp -r   /etc/passwd    /etc/fstab   /boot/   /opt/
+
+ # ls /opt/
+
+ # rm -rf /opt/*
+ # ls /opt/
+ # mkdir /test03
+
+ #  cp -r /test03  /opt/dir   #将目录test03放入/opt命名为dir
+ #  ls /opt/
+
+ #  cp -r /test03  /opt/dir   #将目录test03放入/opt/dir中
+ #  ls /opt/
+ #  ls /opt/dir
+
+
+ 在本次操作，临时取消别名
+[root@haha /]# cp  -r  /boot/  /opt/
+[root@haha /]# cp  -r  /boot/  /opt/  
+[root@haha /]# \cp  -r  /boot/  /opt/     #取消覆盖的提示
+
+#######################################################
+ 
+使用vim创建/修改文件
+• vim文本编辑器
+– 格式:vim [[/目录/]文件名]
+
+– 若目标文件不存在,则新建空文件并编辑
+– 若目标文件已存在,则打开此文件并编辑      
+
+ 三个模式：命令模式     输入模式(插入模式)       末行模式
+
+[root@haha /]# vim  /opt/haix.txt
+         
+	命--------- i 键  -------------》输入模式(Esc 键可以返回命令模式）
+	令
+	模
+	式---------  :  键   -------------》末行模式(Esc 键可以返回命令模式）
+
+    末行模式 ：wq   保存并退出
+    末行模式 ：q！  强制不保存并退出
+
+##########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

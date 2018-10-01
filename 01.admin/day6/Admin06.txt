@@ -1,0 +1,305 @@
+真机：还原三台虚拟机
+[root@room9pc13 ~]# rht-vmctl reset classroom  
+[root@room9pc13 ~]# rht-vmctl reset server
+[root@room9pc13 ~]# rht-vmctl reset desktop   
+
+########################################################
+
+基本权限
+
+访问方式(权限)
+– 读取:允许查看内容-read  r
+– 写入:允许修改内容-write   w
+– 可执行:允许运行和切换-execute  x
+
+   对于文本文件:
+          r:  cat  less  head  tail 
+          w:  vim   重定向
+          x:  可以运行该文件
+
+
+ • 权限适用对象(归属)
+    – 所有者(属主):拥有此文件/目录的用户-user   u
+    – 所属组(属组):拥有此文件/目录的组-group    g
+    – 其他用户:除所有者、所属组以外的用户-other   o
+
+查看权限
+• 使用 ls -l 命令
+– ls -ld 文件或目录...
+
+   以  -  开头 ： 文本文件
+   以  d 开头 ： 目录
+   以  l 开头 ：快捷方式
+
+###############################################
+
+• 使用 chmod 命令
+– chmod [-R] 归属关系+-=权限类别    文档...
+        [-R] 递归设置权限
+
+
+[root@server0 /]# mkdir /nsd01
+[root@server0 /]# ls -ld /nsd01
+
+[root@server0 /]# chmod u-w /nsd01     #所有者去掉w权限
+[root@server0 /]# ls -ld /nsd01 
+
+[root@server0 /]# chmod g+w /nsd01     #所属组加上w权限
+[root@server0 /]# ls -ld /nsd01
+
+[root@server0 /]# chmod o=--- /nsd01   #修改其他人权限
+[root@server0 /]# ls -ld /nsd01
+
+[root@server0 /]# chmod u=rwx,g=rx,o=rx /nsd01
+[root@server0 /]# ls -ld /nsd01
+
+[root@server0 /]# chmod ugo=rwx /nsd01
+[root@server0 /]# ls -ld /nsd01
+
+###################################################
+如何判断用户的权限：              匹配及停止
+        1.判断用户的角色            所有者>所属组>其他人 
+        2.查看相应位置的权限
+
+
+常见的提示：
+ Permission denied :权限不足
+
+
+目录的 r 权限:能够 ls 浏览此目录内容
+目录的 w 权限:能够执行 rm/mv/cp/mkdir/touch/等更改目录内容的操作
+目录的 x 权限:能够 cd 切换到此目录
+
+#######################################################
+
+
+以root用户新建/nsddir/目录，在此目录下新建readme.txt文件，并进一步完成下列操作
+ 1）使用户lisi能够在此目录下创建子目录   切换用户  su  -  lisi
+     chmod o+w  /nsddir/
+
+ 2）使用户lisi不能够在此目录下创建子目录
+     chmod o-w  /nsddir/
+
+ 3）使用户lisi能够修改readme.txt文件
+     chmod o+w  /nsddir/readme.txt
+
+ 4）调整此目录的权限，使所有用户都不能cd进入此目录
+     chmod u-x,g-x,o-x  /nsddir/   
+
+ 5）为此目录及其下所有文档设置权限 rwxr-x---
+     chmod -R  u=rwx,g=rx,o=---  /nsddir/
+
+####################################################
+
+• 使用 chown 命令
+– chown [-R] 属主         文档...
+– chown [-R] :属组       文档...
+– chown [-R] 属主:属组  文档...
+        [-R]  递归修改归属关系
+
+[root@server0 /]# mkdir /nsd03
+[root@server0 /]# ls -ld /nsd03
+[root@server0 /]# groupadd tarena
+[root@server0 /]# chown lisi:tarena  /nsd03 
+[root@server0 /]# ls -ld /nsd03
+
+[root@server0 /]# chown zhangsan /nsd03   #修改所有者
+[root@server0 /]# ls -ld /nsd03
+
+[root@server0 /]# chown :root /nsd03   #修改所属组
+[root@server0 /]# ls -ld /nsd03
+
+#####################################################
+附加权限(特殊权限)
+
+Set GID
+• 附加在属组的 x 位上
+– 属组的权限标识会变为 s
+– 适用于目录,Set GID可以使目录下新增的文档自动设置与父目录相同的属组
+– 传递所属组身份
+
+[root@server0 ~]# mkdir /nsd06
+[root@server0 ~]# chown :tarena /nsd06
+[root@server0 ~]# ls -ld /nsd06
+
+[root@server0 ~]# mkdir /nsd06/test01
+[root@server0 ~]# ls -ld /nsd06/test01
+
+[root@server0 ~]# chmod g+s /nsd06
+[root@server0 ~]# ls -ld /nsd06
+
+[root@server0 ~]# mkdir /nsd06/test02
+[root@server0 ~]# ls -ld /nsd06/test02   #所属组会继承父目录
+
+[root@server0 ~]# ls -ld /nsd06/test01
+
+#######################################################
+acl访问控制列表
+
+• 文档归属的局限性
+– 任何人只属于三种角色:属主、属组、其他人
+– 无法实现更精细的控制
+
+• acl访问策略
+– 能够对个别用户、个别组设置独立的权限
+– 大多数挂载的EXT3/4、XFS文件系统默认已支持
+
+
+[root@server0 ~]# mkdir /nsd07
+[root@server0 ~]# chmod o=--- /nsd07
+[root@server0 ~]# ls -ld /nsd07
+
+[root@server0 ~]# su - lisi
+[lisi@server0 ~]$ cd /nsd07
+-bash: cd: /nsd07: Permission denied
+[lisi@server0 ~]$ exit
+[root@server0 ~]# setfacl -m u:lisi:rx /nsd07
+[root@server0 ~]# getfacl  /nsd07
+
+[root@server0 ~]# su - lisi
+[lisi@server0 ~]$ cd /nsd07
+[lisi@server0 nsd07]$ pwd
+[lisi@server0 nsd07]$ exit
+[root@server0 ~]# 
+
+
+• 使用 getfacl、setfacl 命令
+– getfacl 文档....
+– setfacl [-R] -m  u:用户名:权限类别   文档...
+– setfacl [-R] -m  g:组名:权限类别   文档...
+– setfacl [-R] -b  文档...      #清空所有的ACL策略
+– setfacl [-R] -x  文档...      #删除指定的ACL策略
+
+
+[root@server0 ~]# mkdir /nsd08
+[root@server0 ~]# setfacl -m u:zhangsan:rwx  /nsd08
+[root@server0 ~]# setfacl -m u:lisi:rx  /nsd08
+[root@server0 ~]# setfacl -m u:dc:rx  /nsd08
+[root@server0 ~]# getfacl /nsd08
+
+[root@server0 ~]# setfacl -x u:lisi  /nsd08  #删除指定ACL
+[root@server0 ~]# getfacl /nsd08
+
+[root@server0 ~]# setfacl -b /nsd08   #清空所有的ACL
+[root@server0 ~]# getfacl /nsd08
+
+
+[root@server0 ~]# mkdir  /public
+[root@server0 ~]# chmod  ugo=rwx /public
+[root@server0 ~]# ls  -ld  /public
+
+[root@server0 ~]# setfacl  -m  u:lisi:---  /public
+[root@server0 ~]# getfacl  /public
+
+####################################################
+使用LDAP认证
+
+  LDAP服务器： 网络用户认证       放到网络中LDAP服务器
+    本地用户：  /etc/passwd
+
+                 
+  LDAP服务器：classroom.example.com
+
+
+    客户端：虚拟机Server
+    1.安装sssd软件包  与LDAP服务器沟通
+  [root@server0 ~]# yum -y install sssd
+  [root@server0 ~]# rpm -q sssd
+
+    2.图形的配置工具authconfig-gtk软件  修改sssd配置
+
+  [root@server0 ~]# yum -y install authconfig-gtk
+ 
+
+  3.运行图形的工具进行配置 
+  [root@server0 ~]# authconfig-gtk 
+
+    选择LDAP
+      dc=example,dc=com             #指定服务端域名
+      classroom.example.com         #指定服务端主机名
+
+   勾选TLS加密
+   使用证书加密: http://classroom.example.com/pub/example-ca.crt
+
+     选择LDAP密码
+
+  4.重起sssd服务验证
+  [root@server0 ~]# systemctl restart sssd
+  [root@server0 ~]# systemctl enable sssd   #设置开机自启动
+  [root@server0 ~]# grep ldapuser0 /etc/passwd
+  [root@server0 ~]# id ldapuser0
+########################################################
+家目录漫游
+
+什么是NFS共享
+• Network File System,网络文件系统
+– 由NFS服务器将指定的文件夹共享给客户机
+– 客户机将此共享目录 mount 到本地目录,访问此共享
+资源就像访问本地目录一样方便
+– 类似于 EXT4、XFS等类型,只不过资源在网上
+
+ NFS服务器：classroom.example.com
+
+  客户端：虚拟机Server
+
+   1.查看服务端共享 
+ [root@server0 ~]# showmount -e classroom.example.com
+ Export list for classroom.example.com:
+ /home/guests 172.25.0.0/255.255.0.0
+
+   2.访问共享
+ # mount  classroom.example.com:/home/guests   /mnt
+ # ls /mnt/
+
+ # mkdir /home/guests
+ # ls  /home/guests
+ # umount  /mnt/
+# mount classroom.example.com:/home/guests/  /home/guests/
+ # ls /home/guests/
+
+######################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

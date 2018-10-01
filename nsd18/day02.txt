@@ -1,0 +1,690 @@
+[root@server0 ~]# chmod +x /root/hello.sh
+[root@server0 ~]# ls /root/hello.sh
+/root/hello.sh
+[root@server0 ~]# /root/hello.sh
+Hello World
+[root@server0 ~]# vim /root/hello.sh
+[root@server0 ~]# cat /root/hello.sh
+echo Hello Worl
+echo peri belle 
+[root@server0 ~]# chmod ugo=rwx /root/hello.sh
+[root@server0 ~]# ls /root/hello.sh
+/root/hello.sh
+[root@server0 ~]# /root/hello.sh
+Hello Worl
+peri belle
+[root@server0 ~]# vim /root/hello.sh
+[root@server0 ~]# cat /root/hello.sh
+#!/bin/bash
+echo Hello Worl
+echo peri belle 
+peri belle
+[root@server0 ~]# vim /root/hello.sh
+[root@server0 ~]# cat /root/hello.sh
+#!/bin/bash
+echo Hello Worl
+echo peri belle 
+[root@server0 ~]# vim /root/system.sh
+[root@server0 ~]# chmod +x /root/system.sh
+[root@server0 ~]# /root/system.sh
+Red Hat Enterprise Linux Server release 7.0 (Maipo)
+3.10.0-123.el7.x86_64
+server0.example.com
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.25.0.11  netmask 255.255.255.0  broadcast 172.25.0.255
+[root@server0 ~]# cat /root/system.sh
+#!/bin/bash
+cat /etc/redhat-release
+uname -r
+hostname
+ifconfig | head -2
+[root@server0 ~]# 
+[root@server0 ~]# echo 123 > /opt/x1.txt
+[root@server0 ~]# cat /opt/x1.txt
+123
+[root@server0 ~]# cat /opt/x1.txt  /etc
+123
+cat: /etc: 是一个目录
+[root@server0 ~]# cat /opt/x1.txt  /etc >  /mnt/a1.txt
+cat: /etc: 是一个目录
+[root@server0 ~]# cat /mnt/a1.txt
+123
+[root@server0 ~]# cat /opt/x1.txt  /etc 2>  /mnt/a1.txt
+123
+[root@server0 ~]# cat /mnt/a1.txt
+cat: /etc: 是一个目录
+[root@server0 ~]# cat /opt/x1.txt  /etc &>  /mnt/a1.txt
+[root@server0 ~]# cat /mnt/a1.txt
+123
+cat: /etc: 是一个目录
+
+[root@server0 ~]# vim /root/user.sh
+[root@server0 ~]# chmod +x /root/user.sh
+[root@server0 ~]# /root/user.sh
+nsd01 ok
+nsd01 passwd ok
+[root@server0 ~]# cat /root/user.sh
+#!/bin/bash
+useradd nsd01 &> /dev/null
+echo nsd01 ok
+echo 123 | passwd --stdin  nsd01 &> /dev/null
+echo nsd01 passwd ok
+[root@server0 ~]# abc=100
+[root@server0 ~]# 
+[root@server0 ~]# echo abc
+abc
+[root@server0 ~]# echo $abc
+100
+[root@server0 ~]# abc=222
+[root@server0 ~]# echo $abc
+222
+[root@server0 ~]# abc=redhat
+[root@server0 ~]# echo $abc
+redhat
+
+[root@server0 ~]# vim /root/user.sh
+[root@server0 ~]# chmod +x /root/user.sh
+[root@server0 ~]# /root/user.sh
+nsd01 ok
+nsd01 passwd ok
+[root@server0 ~]# cat /root/user.sh
+#!/bin/bash
+a=nsd01
+useradd $a  &> /dev/null
+echo $a ok
+echo 123 | passwd --stdin  $a  &> /dev/null
+echo $a passwd ok
+
+[root@server0 ~]# vim /root/user.sh
+[root@server0 ~]# /root/user.sh
+nsd121 ok
+nsd121 passwd ok
+[root@server0 ~]# cat /root/user.sh
+#!/bin/bash
+a=nsd121
+useradd $a  &> /dev/null
+echo $a ok
+echo 123 | passwd --stdin  $a  &> /dev/null
+echo $a passwd ok
+
+[root@server0 ~]# vim /root/user.sh
+[root@server0 ~]# /root/user.sh 
+请输入你要创建的用古名 belle
+belle ok
+belle passwd ok
+[root@server0 ~]# cat /root/user.sh
+#!/bin/bash
+
+read -p  '请输入你要创建的用古名 ' a 
+useradd $a  &> /dev/null
+echo $a ok
+echo 123 | passwd --stdin  $a  &> /dev/null
+echo $a passwd ok
+[root@server0 ~]# 12ssa=12
+bash: 12ssa=12: 未找到命令...
+[root@server0 ~]# ssa12=12
+[root@server0 ~]# a-b=100
+bash: a-b=100: 未找到命令...
+[root@server0 ~]# a_b=100
+[root@server0 ~]# 
+[root@server0 ~]# q 1=12
+bash: q: 未找到命令...
+[root@server0 ~]# q =22
+bash: q: 未找到命令...
+[root@server0 ~]# 
+
+root@server0 ~]# a=100
+[root@server0 ~]# echo a
+a
+[root@server0 ~]# echo $a
+100
+[root@server0 ~]# a=200
+[root@server0 ~]# echo $a
+200
+[root@server0 ~]# a=100
+[root@server0 ~]# echo ${a}
+100
+[root@server0 ~]# a=rhel
+[root@server0 ~]# echo ${a}
+rhel
+[root@server0 ~]# echo $a7
+
+[root@server0 ~]# echo ${a}7
+rhel7
+
+[root@server0 ~]# $[2+3]
+bash: 5: 未找到命令...
+[root@server0 ~]# echo $[2+3]
+5
+[root@server0 ~]# echo $[3*8]
+24
+[root@server0 ~]# echo $[10/3]
+3
+[root@server0 ~]# echo $[4-3]
+1
+[root@server0 ~]# echo $[3-4]
+-1
+[root@server0 ~]# echo $[10%3]
+1
+[root@server0 ~]# 
+
+
+[root@server0 ~]# date
+2018年 06月 09日 星期六 11:44:01 CST
+[root@server0 ~]# date +%F
+2018-06-09
+[root@server0 ~]# mkdir dir-$(date) +%F
+[root@server0 ~]# ls
+06月      anaconda-ks.cfg  dir-2018年  +%F       Pictures   Templates  星期六
+09日      CST              Documents   hello.sh  Public     user.sh
+11:46:19  Desktop          Downloads   Music     system.sh  Videos
+[root@server0 ~]# mkdir dir-$(date +%F)
+[root@server0 ~]# ls
+06月      anaconda-ks.cfg  dir-2018-06-09  Downloads  Music     system.sh  Videos
+09日      CST              dir-2018年      +%F        Pictures  Templates  星期六
+11:46:19  Desktop          Documents       hello.sh   Public    user.sh
+[root@server0 ~]# mkdir $(hostname)-$(date +%F)
+[root@server0 ~]# ls
+06月             Desktop         +%F       server0.example.com-2018-06-09  星期六
+09日             dir-2018-06-09  hello.sh  system.sh
+11:46:19         dir-2018年      Music     Templates
+anaconda-ks.cfg  Documents       Pictures  user.sh
+CST              Downloads       Public    Videos
+[root@server0 ~]# 
+[root@server0 ~]# mkdir `hostname'2345
+> 
+> ^C
+[root@server0 ~]# mkdir `hostname`
+[root@server0 ~]# ls
+06月             Desktop         +%F       server0.example.com             Videos
+09日             dir-2018-06-09  hello.sh  server0.example.com-2018-06-09  星期六
+11:46:19         dir-2018年      Music     system.sh
+anaconda-ks.cfg  Documents       Pictures  Templates
+CST              Downloads       Public    user.sh
+[root@server0 ~]# 
+[root@server0 ~]# echo '*/$&'
+*/$&
+[root@server0 ~]# echo '$a'
+$a
+[root@server0 ~]# random
+bash: random: 未找到命令...
+[root@server0 ~]# RANDOM
+bash: RANDOM: 未找到命令...
+[root@server0 ~]# echo $RANDOM
+15542
+[root@server0 ~]# echo $RANDOM
+15542
+[root@server0 ~]# echo $[$RANDOM%10]
+8
+[root@server0 ~]# echo $[$RANDOM%100】
+> ^C
+[root@server0 ~]# echo $[$RANDOM%100]
+22
+[root@server0 ~]# echo $[$RANDOM%1000]
+756
+[root@server0 ~]# 
+
+[root@server0 ~]# useradd lisi
+[root@server0 ~]# ls /home
+lisi  student
+[root@server0 ~]# echo $USER
+root
+[root@server0 ~]# su lisi
+
+[lisi@server0 root]$ echo $USER
+lisi
+[lisi@server0 root]$ exit
+exit
+[root@server0 ~]# 
+
+
+
+[root@server0 ~]# chmod +x /root/user.sh
+[root@server0 ~]# /root/user.sh
+请输入你要创建的用古名 qqq
+qqq ok
+qqq passwd ok
+[root@server0 ~]# cat /root/user.sh
+#!/bin/bash
+
+read -p  '请输入你要创建的用古名 ' a 
+useradd $a  &> /dev/null
+echo $a ok
+echo 123 | passwd --stdin  $a  &> /dev/null
+echo $a passwd ok
+[root@server0 ~]# vim /root/user.sh
+[root@server0 ~]# chmod +x /root/user.sh
+[root@server0 ~]# /root/user.sh aa bb cc dd
+aa ok
+aa passwd ok
+bb
+cc
+[root@server0 ~]# /root/user.sh aa bb cc dd ee
+aa ok
+aa passwd ok
+bb
+cc
+[root@server0 ~]# cat /root/user.sh
+#!/bin/bash
+
+#read -p  '请输入你要创建的用古名 ' a 
+useradd $1  &> /dev/null
+echo $1 ok
+echo 123 | passwd --stdin  $1  &> /dev/null
+echo $1 passwd ok
+echo $2
+echo $3
+[root@server0 ~]# vim /root/catx.sh
+[root@server0 ~]# /root/catx.sh  /etc/passwd 2
+-bash: /root/catx.sh: 权限不够
+[root@server0 ~]# chmod +x /root/catx.sh
+[root@server0 ~]# /root/catx.sh  /etc/passwd 2
+     1	root:x:0:0:root:/root:/bin/bash
+     2	bin:x:1:1:bin:/bin:/sbin/nologin
+[root@server0 ~]# cat /root/catx.sh
+#!/bin/bash
+cat -n $1 | head -$2
+[root@server0 ~]# 
+
+[root@server0 ~]# vim /root/x1.sh
+[root@server0 ~]# chmod +x /root/x1.sh
+[root@server0 ~]# /root/x1.sh
+0
+[root@server0 ~]# /root/x1.sh aa dd ggg weer dd fgdgf
+/root/x1.sh:行2: aa: 未找到命令
+^C记录了0+0 的读入
+记录了0+0 的写出
+0字节(0 B)已复制，18.7018 秒，0.0 kB/秒
+
+[root@server0 ~]# vim /root/x1.sh
+[root@server0 ~]# /root/x1.sh
+
+
+
+0
+
+[root@server0 ~]# /root/x1.sh aa bb cc dd ee fff gg hhhhh jjj
+aa
+bb
+cc
+9
+aa bb cc dd ee fff gg hhhhh jjj
+[root@server0 ~]# cat  /root/x1.sh
+#!/bin/bash
+echo $1
+echo $2
+echo $3
+echo $#
+echo $*
+
+[root@server0 ~]# ls /home
+aa  lisi  qqq  student
+[root@server0 ~]# id aa
+uid=1003(aa) gid=1003(aa) 组=1003(aa)
+[root@server0 ~]# ping -c 2 127.0.0.1
+PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
+64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.054 ms
+64 bytes from 127.0.0.1: icmp_seq=2 ttl=64 time=0.062 ms
+
+--- 127.0.0.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 999ms
+rtt min/avg/max/mdev = 0.054/0.058/0.062/0.004 ms
+[root@server0 ~]# useradd aa
+useradd：用户“aa”已存在
+[root@server0 ~]# echo $?
+9
+[root@server0 ~]# useradd peri
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# useradd lisi
+useradd：用户“lisi”已存在
+[root@server0 ~]# echo$?
+bash: echo9: 未找到命令...
+相似命令是： 'echo'
+[root@server0 ~]# echo $?
+127
+[root@server0 ~]# ping -c 1 127.0.0.1
+PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
+64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.051 ms
+
+--- 127.0.0.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.051/0.051/0.051/0.000 ms
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# 
+
+[root@server0 ~]# ls /home
+aa  lisi  peri  qqq  student
+[root@server0 ~]# userdel -rf aa qqq
+用法：userdel [选项] 登录
+
+选项：
+  -f, --force                   force some actions that would fail otherwise
+                                e.g. removal of user still logged in
+                                or files, even if not owned by the user
+  -h, --help                    显示此帮助信息并推出
+  -r, --remove                  删除主目录和邮件池
+  -R, --root CHROOT_DIR         chroot 到的目录
+  -Z, --selinux-user            为用户删除所有的 SELinux 用户映射
+
+
+[root@server0 ~]# userdel -rf aa 
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# userdel -r qqq
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# ls /home
+lisi  peri  student
+[root@server0 ~]# 
+[root@server0 ~]# [ -e /etc ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ -e /abc ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ -d /etc ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ -d  /etc/passwd ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ -f /etc/passwd ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# 
+
+
+[root@server0 ~]# 
+[root@server0 ~]# [ -e /etc ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ -e /abc ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ -d /etc ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ -d  /etc/passwd ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ -f /etc/passwd ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ -e /etc ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ -d /etc/passwd ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ 1  -eq 1 ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [
+[root@server0 ~]# [ 1 -gt 2 ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ 1 -lt 2 ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ 1 -gt 1 ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ 1 -lt 1 ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# 
+[root@server0 ~]# [1 -ge 1 ]
+bash: [1: 未找到命令...
+[root@server0 ~]# [1 -ge 1 ]
+bash: [1: 未找到命令...
+[root@server0 ~]# [ 1 -ge 1 ]
+[root@server0 ~]# [ 1 -ge 1 ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# 
+
+[root@server0 ~]# [1 -ge 1 ]
+bash: [1: 未找到命令...
+[root@server0 ~]# [1 -ge 1 ]
+bash: [1: 未找到命令...
+[root@server0 ~]# [ 1 -ge 1 ]
+[root@server0 ~]# [ 1 -ge 1 ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ root == student ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# [ root == root ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# 
+[root@server0 ~]# [ root != student ]
+[root@server0 ~]# echo $?
+0
+[root@server0 ~]# [ root != root ]
+[root@server0 ~]# echo $?
+1
+[root@server0 ~]# 
+
+[root@server0 ~]# /root/ifel.sh
+输入测试的IP地址: 127.0.0.1
+127.0.0.1 ========
+====hello=======
+[root@server0 ~]# /root/ifel.sh
+输入测试的IP地址: 127.0.1.1
+127.0.1.1 ========
+====hello=======
+[root@server0 ~]# /root/ifel.sh
+输入测试的IP地址: 127.1.1.1
+127.1.1.1 ========
+====hello=======
+[root@server0 ~]# /root/ifel.sh
+输入测试的IP地址: 111.11.11.1
+111.11.11.1 不可通信!--------------------
+[root@server0 ~]# cat /root/ifel.sh
+#!/bin/bash
+read -p '输入测试的IP地址: ' ip
+ping -c  1  $ip &>  /dev/null 
+if  [ $? -eq  0  ];then
+  echo  $ip  '========
+====hello======='
+else 
+ echo  $ip 不可通信!--------------------
+fi
+
+[root@server0 ~]# a=100
+[root@server0 ~]# echo $a
+100
+[root@server0 ~]# read   a
+200
+[root@server0 ~]# echo $a
+200
+[root@server0 ~]# vim /root/ifel.sh
+[root@server0 ~]# /root/ifel.sh
+输入测试的IP地址: 127.0.0.1
+PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
+64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.055 ms
+
+--- 127.0.0.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.055/0.055/0.055/0.000 ms
+127.0.0.1 ========
+====hello=======
+[root@server0 ~]# cat /root/ifel.sh
+#!/bin/bash
+read -p '输入测试的IP地址: ' ip
+ping -c  1  $ip  # &>  /dev/null 
+if  [ $? -eq  0  ];then
+  echo  $ip  '========
+====hello======='
+else 
+ echo  $ip 不可通信!--------------------
+fi
+
+[root@server0 ~]# vim /opt/text.sh
+[root@server0 ~]# cat /opt/text.sh
+#!/bin/bash
+
+read -p '===========' num1
+num2=$[ $RANDOM%2 ]
+  if [ $nmu2 -eq $num1 ];then
+     echo 'yes'
+  else
+     echo  'sxxrong'
+  fi
+
+[root@server0 ~]# vim /opt/text.sh
+[root@server0 ~]# /opt/text.sh
+===========:89
+ok2
+[root@server0 ~]# /opt/text.sh
+===========:79
+yes
+[root@server0 ~]# /opt/text.sh
+===========:69
+sxxrong
+[root@server0 ~]# /opt/text.sh
+===========:71
+yes
+[root@server0 ~]# /opt/text.sh
+===========:70
+yes
+[root@server0 ~]# /opt/text.sh
+===========:50
+sxxrong
+[root@server0 ~]# cat /opt/text.sh
+#!/bin/bash
+
+read -p '===========': num
+  if [ $num -ge 90 ];then
+    echo  ok1
+  elif [ $num -ge 80 ];then
+    echo ok2 
+  elif [ $num -ge 70 ];then
+     echo 'yes'
+  else
+     echo  'sxxrong'
+  fi
+
+[root@server0 ~]# echo $[$RANDOM%3]
+2
+[root@server0 ~]# echo $[$RANDOM%3]
+0
+[root@server0 ~]# echo $[$RANDOM%3]
+1
+[root@server0 ~]# echo $[$RANDOM%3]
+2
+[root@server0 ~]# 
+[root@server0 ~]# echo $[$RANDOM%3 ]
+1
+[root@server0 ~]# echo $[ $RANDOM%3 ]
+1
+[root@server0 ~]# echo $[ $RANDOM%3 ]
+1
+
+[root@server0 ~]# vim /opt/text.sh
+[root@server0 ~]# /opt/text.sh
+===========:2
+猜测大了
+[root@server0 ~]# /opt/text.sh
+===========:2
+猜测大了
+[root@server0 ~]# /opt/text.sh
+===========:1
+猜测小了
+[root@server0 ~]# /opt/text.sh
+===========:2
+ok
+[root@server0 ~]# cat /opt/text.sh
+#!/bin/bash
+
+read -p '===========': num1
+num2=$[$RANDOM%3]
+  if [ $num1 -gt $num2 ];then
+    echo  猜测大了
+  elif [ $num1 -eq $num2 ];then
+    echo ok
+  else
+     echo '猜测小了'
+  fi
+
+
+[root@server0 ~]# a=100
+[root@server0 ~]# echo $a
+100
+[root@server0 ~]# read   a
+200
+[root@server0 ~]# echo $a
+200
+[root@server0 ~]# touch /opt/tes2.txt
+[root@server0 ~]# vim /opt/tes2.txt
+[root@server0 ~]# /opt/tes2.txt
+-bash: /opt/tes2.txt: 权限不够
+[root@server0 ~]# chmod +x /opt/tes2.txt
+[root@server0 ~]# /opt/tes2.txt
+lili===创建成功======
+lis===创建成功======
+lis3===创建成功======
+[root@server0 ~]# cat /opt/tes2.txt
+#!/bin/bash
+
+ for a in lili lis lis3
+ do
+  useradd $a &> /dev/null
+  echo $a'===创建成功======'
+ done
+
+[root@server0 ~]# vim /opt/tes3.txt
+[root@server0 ~]# touch /opt/{1..9}.txt
+[root@server0 ~]# ls /opt/
+1.txt  3.txt  5.txt  7.txt  9.txt  tes2.txt  text.sh
+2.txt  4.txt  6.txt  8.txt  rh     tes3.txt
+[root@server0 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
