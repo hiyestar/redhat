@@ -1,0 +1,255 @@
+庞丽静   静静
+
+知识多 练习时间少 命令多 理论多
+
+08:30
+ 9:00 - 12:00   40  15
+ 10:00 -18:00
+ 18:40- 20:45
+                              comment-dayX.txt 
+172.40.50.117    2018/notedir/command-dayX.txt tmooc
+                      PPT/
+                      soft/
+++++++++++++++++++++++++++++++++++++++++++++
+panglj@tedu.cn  
+Linux系统管理
+
+第三阶段15天  数据库管理   工作岗位  DBA  8K+
+DBA基础 5天
+DBA进阶 5天
+NoSQL   5天
+
+ssh  172.40.55.X
+++++++++++++++++++++++++++++++++++
+DBA1 day01
+一搭建数据库服务器
+二数据库服务的基本使用
+三MySQL数据类型
+
+一搭建数据库服务器 
+在IP地址是192.168.4.50 主机 上运行mysql数据库服务。
+
+服务器CPU  内存  存储
+操作系统的版本：W   L    U
+                  rhel7
+5.7
+装包: 源码  RPM  包的来源   软件的版本
+
+                    RDBMS   NoSQL Redis Mongodb
+主流数据库服务软件：Oracle  DB2   MySQL  MariaDB  
+                   SQL SERVER 
+开源软件
+商业软件
+跨平台
+
+]#scp mysql-5.7.17.tar  192.168.4.50:/root/
+]#tar -xf mysql-5.7.17.tar
+]# ls *.rpm
+]#yum  -y  install  perl-JSON
+]#rpm  -Uvh  mysql-community-*.rpm
+]#rpm  -qa  |  grep  -i   mysql
+
+修改配置文件  /etc/my.cnf
+
+数据库目录  /var/lib/mysql/
+
+启动服务
+systemctl   start   mysqld
+
+
+
+
+tar -xvf  xxx.tar
+
+rm -rf 
+mysql-community-server-minimal-5.7.17-1.el7.x86_64.rpm
+
+yum  -y  install  perl-JSON
+rpm  -Uvh  mysql-community-*.rpm
+
+systemctl   start   mysqld
+
+
+ 
+
+
+
+    php 	  java
+
+Nginx    apache   tomcat
+
+LNMP	LAMP       
+
+           mysql  Mongodb
+
+游戏   购物    论坛   金融
+
+xxxx.php
+
+MySQL-5.7
+
+把数据存储到数据库服务器上过程
+
+1 连接数据库服务器 （命令连接   图形工具）
+]#mysql  -hlocalhost  -uroot  -p密码
+
+]#grep  password  /var/log/mysqld.log
+]#mysql -hlocalhost -uroot -p'k2T_SH0Jx%MB'
+
+mysql> set global validate_password_policy=0; 
+mysql> set global validate_password_length=6;
+mysql> alter user root@"localhost" identified by "123456";
+
+mysql> quit
+]#mysql -hlocalhost -uroot -p123456
+mysql> show databases;
+mysql> create database db1;
+
+]# ls /var/lib/mysql/ 会多出一个与库名同名的文件夹db1
+
+
+
+50  51 - 55     56
+
+sql
+;
+
+2 选择库  （文件夹） 
+
+3 建表     （文件）
+
+create table  t1(
+li
+
+
+);
+
+
+4 插入记录 （行）
+
+5 断开连接
+
+
+
+字段
+
+姓名  性别   年龄
+plj   girl    80
+
+
+
+create  database 学生库；
+show databases;
+use 学生库；
+create  table 学生信息表(
+姓名  char(15),
+班级  char(7)
+)；
+
+show  tables;
+
+desc 学生信息表;
+
+insert into 学生信息表 values("崔志伟","nsd1802");
+ 
+
+create  table 学生信息表2(
+姓名  char(15),
+班级  char(7)
+) DEFAULT CHARSET=utf8；  字符集
+
+
+insert into 学生信息表2 values("崔志伟","nsd1802");
+
+select  *  from  学生信息表2 ;
+
+MySQL数据类型
+
+11
++11
+
+-9
+
+整型       18.45
+
+0  1 2 
+
+-1
+
+age
+-1
+0
+浮点型
++++++++++++++++++++++++++
+       n     m
+整数.小数  总位数
+1098.88    6  
+
+字段名   类型
+         float(m,n)
+         double(m,n)
+1000
+create table  db1.t4(
+pay  double(5,2)
+);
+xxx.xx
+999.99
+  0.00
+-999.99
+
+
+xxxxx.xx
+99999.99
+
+
+t1			t2
+name varchar       name  char
+lucy                  lili
+le		      le  
+a                     a  
+
+年   year    YYYY      2018
+日期 date    YYYYMMDD  20180614
+时间 time    HHMMSS    174258  
+
+日期时间类型 YYYYMMDDHHMMSS  20180614174258
+datetime 
+timestamp
+
+
+
+
+
+
+
+枚举类型    
+enum(值1，值2，值N)   单选
+set(值1，值2，值N)    多选
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

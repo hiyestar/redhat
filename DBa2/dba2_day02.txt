@@ -1,0 +1,308 @@
+主从配置常用参数 
+vim /etc/my.cnf
+[mysqld]
+选项
+选项=值
+:wq
+]# systemctl restart  mysqld
+
+写在主库配置文件里参数（对所有从库都有效）
+binlog_do_db=库名列表  //允许同步的库
+binlog_ignore_db=库名列表  //不允许同步的库
+
+写在从库配置文件里参数（只针对从库本机有效）
+log_slave_updates 允许链式复制
+
+replicate_do_db=库名列表   //指定只同步的库
+replicate_ignore_db=库名列表   //指定不同步的库
+
+
+
+++++++++++mysql主从同步数据复制模式++++++++++++++++++
+配置半同步复制模式  55
+
+查看当前的数据库服务是否支持动态加载模块
+mysql>show  variables  like  'have_dynamic_loading';
+
++----------------------+-------+
+| Variable_name        | Value |
++----------------------+-------+
+| have_dynamic_loading | YES   |
++----------------------+-------+
+
+使用命令安装模块
+mysql> 
+mysql> INSTALL PLUGIN rpl_semi_sync_master 
+    -> SONAME   'semisync_master.so';
+
+mysql> INSTALL PLUGIN rpl_semi_sync_slave 
+    ->  SONAME  'semisync_slave.so';
+
+查看模块状态
+mysql>
+SELECT  PLUGIN_NAME, PLUGIN_STATUS FROM INFORMATION_SCHEMA.PLUGINS  
+WHERE PLUGIN_NAME LIKE '%semi%';  	
++----------------------+---------------+
+| PLUGIN_NAME          | PLUGIN_STATUS |
++----------------------+---------------+
+| rpl_semi_sync_master | ACTIVE        |
+| rpl_semi_sync_slave  | ACTIVE        |
++----------------------+---------------+
+启用半同步复制
+mysql> SET GLOBAL rpl_semi_sync_master_enabled = 1;
+mysql> SET GLOBAL rpl_semi_sync_slave_enabled = 1;
+
+查看是否启用成功
+mysql>  show  variables  like  'rpl_semi_sync_%_enabled'; 
++------------------------------+-------+
+| Variable_name                | Value |
++------------------------------+-------+
+| rpl_semi_sync_master_enabled | ON    |
+| rpl_semi_sync_slave_enabled  | ON    |
++------------------------------+-------+
+
+把配置写进配置文件，使其永久生效
+vim /etc/my.cnf
+[mysqld]
+plugin-load = "rpl_semi_sync_master=semisync_master.so;
+rpl_semi_sync_slave=semisync_slave.so"
+
+rpl-semi-sync-master-enabled = 1
+rpl-semi-sync-slave-enabled = 1
+:wq
+
+]# systemctl  restart  mysqld
+
+查看模块状态
+mysql>
+SELECT  PLUGIN_NAME, PLUGIN_STATUS FROM INFORMATION_SCHEMA.PLUGINS  
+WHERE PLUGIN_NAME LIKE '%semi%'; 
+
+查看是否启用成功
+mysql>  show  variables  like  'rpl_semi_sync_%_enabled'; 
+
+++++++++++++++++++++++++++++
+dba2_day02
+mysql数据读写分离:把客户端查询数据的请求分别给不同的数据库
+服务器处理。
+
+   
+mysql  -h53  -u用户名  -p密码
+mysql> select ----> 从库51
+mysql> insert ----> 主库52
+         
+           client50
+               |
+          代理服务器53                     
+               |
+      ---------------------
+       |              |
+    INSERT          select
+    主库52          从库51                    
+
+能够实现数据读写分离软件有很多个
+（比如mycat  mysql-proxy  maxscale） 统称叫中间件
+
+
+配置MySQL数据读写分离结构
+1 配置MySQL 一主一从 同步结构：要求把51配置为52的从库
+
+2 准备代理服务器：
+把此 maxscale-2.1.2-1.rhel.7.x86_64.rpm 软件拷贝到53主机  
+给53主机 起名  proxy53
+停止MySQL数据库服务（现在使用53主机做代理服务器）
+
+
+3 配置代理服务器主机53
+3.1 装包
+]# rpm -ivh maxscale-2.1.2-1.rhel.7.x86_64.rpm
+
+3.2 修改主配置文件
+]# cp /etc/maxscale.cnf /root/
+]# vim /etc/maxscale.cnf
+
+  9 [maxscale]  #定义服务启动线程的数量
+ 10 threads=auto
+
+ 18 [server1]   #指定第1台数据库服务
+ 19 type=server
+ 20 address=192.168.4.51
+ 21 port=3306
+ 22 protocol=MySQLBackend
+
+ 24 [server2]  #指定第2台数据库服务
+ 25 type=server
+ 26 address=192.168.4.52
+ 27 port=3306
+ 28 protocol=MySQLBackend
+
+ 36 [MySQL Monitor]  #定义监控的数据库服务器
+ 37 type=monitor
+ 38 module=mysqlmon
+ 39 servers=server1, server2  //服务器列表
+ 40 user=scalemon      //用户名
+ 41 passwd=123qqq...A  //密码
+ 42 monitor_interval=10000
+
+ 53 #[Read-Only Service]  #不定义只读服务
+ 54 #type=service
+ 55 #router=readconnroute
+ 56 #servers=server1
+ 57 #user=myuser
+ 58 #passwd=mypwd
+ 59 #router_options=slave
+
+ 64 [Read-Write Service]  #定义读写分离服务
+ 65 type=service
+ 66 router=readwritesplit
+ 67 servers=server1, server2 #数据库服务器列表
+ 68 user=maxscale   #用户
+ 69 passwd=123qqq...A #密码
+ 70 max_slave_connections=100%
+
+ 76 [MaxAdmin Service]  定义管理服务
+ 77 type=service
+ 78 router=cli
+
+ 86 #[Read-Only Listener] 不定义只读服务
+ 87 #type=listener
+ 88 #service=Read-Only Service
+ 89 #protocol=MySQLClient
+ 90 #port=4008
+
+ 92 [Read-Write Listener] #定义读写分离服务使用的端口
+ 93 type=listener
+ 94 service=Read-Write Service
+ 95 protocol=MySQLClient
+ 96 port=4006
+
+ 98 [MaxAdmin Listener]  #定义管理服务使用的端口
+ 99 type=listener
+100 service=MaxAdmin Service
+101 protocol=maxscaled
+102 socket=default
+103 port=4016
+:wq
+
+3.3 根据配置文件的设置，在数据库服务器上添加
+对应的授权用户scalemon 和 maxscale
+
+在主库52 做用户授权，51主会自动把授权操作同步到本机。
+mysql>
+grant replication slave,replication client on *.* 
+to scalemon@"%"  identified by "123qqq...A";
+
+mysql> 
+grant select on mysql.* to maxscale@"%" 
+identified by  "123qqq...A";
+
+授权对数据有访问权限的用户
+mysql> create database db2;
+mysql> create table  db2.a(id int);
+mysql> grant  select,insert on  db2.*  to  webuser@"%"
+identified by  "123qqq...A";
+
+3.4 启动服务并查看服务信息
+[root@proxy53 ~]# maxscale  -f /etc/maxscale.cnf
+[root@proxy53 ~]# netstat -utnlp  | grep :4016
+[root@proxy53 ~]# netstat -utnlp  | grep :4006
+
+3.5 在53本机访问管理服务查看配置信息
+[root@proxy53 ~]# maxadmin -uadmin -pmariadb -P4016
+MaxScale> list servers
+Servers.
+-------------------+-----------------+-------+-------------+--------------------
+Server             | Address         | Port  | Connections | Status              
+-------------------+-----------------+-------+-------------+--------------------
+server1            | 192.168.4.51    |  3306 |           0 | Slave, Running
+server2            | 192.168.4.52    |  3306 |           0 | Master, Running
+-------------------+-----------------+-------+-------------+--------------------
+MaxScale> exit
+
+3.6 测试读写分离配置：在客户端50连接代理服务器，访问数据，
+能够实现数据读写分离功能
+
+client50]#
+mysql -h192.168.4.53 -P4006 -uwebuser  -p123qqq...A
+mysql> 执行select或insert操作
+
++++++++++MySQL多实例++++++++++++
+在主机50上做多实例实验
+把软件mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz 
+拷贝到主机50里  
+
+
+多实例：在1台服务上运行多个数据库服务器
+
+1、停止其他软件提供的MySQL服务
+client50 ~]# systemctl  stop mysqld
+]# mv /etc/my.cnf  /root/
+
+2、安装提供多实例服务的MySQL软件包
+client50 ~]# 
+tar -zxvf mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz
+
+client50 ~]# 
+mv mysql-5.7.20-linux-glibc2.12-x86_64 /usr/local/mysql
+
+
+3、创建主配置文件
+vim /etc/my.cnf
+[mysqld_multi]
+mysqld=/usr/local/mysql/bin/mysqld_safe
+mysqladmin=/usr/local/mysql/bin/mysqladmin
+user=root
+[mysqld1]
+datadir=/datadir3307
+socket=/datadir3307/mysql3307.sock
+port=3307
+log-error=/datadir3307/mysqld3307.log
+pid-file=/datadir3307/mysqld3307.pid
+[mysqld2]
+datadir=/datadir3308
+socket=/datadir3308/mysql3308.sock
+port=3308
+log-error=/datadir3308/mysqld3308.log
+pid-file=/datadir3308/mysqld3308.pid
+:wq
+[root@client50 mysql]# mkdir /datadir3307
+[root@client50 mysql]# mkdir /datadir3308
+
+4、启动多实例服务 并查看端口
+]#/usr/local/mysql/bin/mysqld_multi start 1
+最后1行会显示 首次登录密码
+
+]# netstat -utnlp  | grep  :3307
+
+5、访问多实例服务
+]# /usr/local/mysql/bin/mysql -uroot -p'hNwsD1Tmpo%Q' 
+-S /datadir3307/mysql3307.sock
+
+修改登录密码
+mysql> alter user root@"localhost" identified by "123456";
+
+使用修改后的密码登录
+]#/usr/local/mysql/bin/mysql -uroot -p123456 
+-S /datadir3307/mysql3307.sock
+
+建库 建表
+mysql> show databases;
+mysql> create database db2;
+mysql> exit
+
+查看数据库目录文件
+[root@client50 ~]# ls /datadir3307/
+
+
+6 启动多实例服务
+[root@client50 ~]# netstat -utnlp  | grep mysqld
+tcp6       0      0 :::3307                 :::*                    LISTEN      19273/mysqld        
+[root@client50 ~]# 
+[root@client50 ~]# /usr/local/mysql/bin/mysqld_multi  --user=root --password=123456 stop 1
+[root@client50 ~]# 
+[root@client50 ~]# netstat -utnlp  | grep mysqld
+
+
+
++++++++++++++MySQL性能调优 （理论）
+

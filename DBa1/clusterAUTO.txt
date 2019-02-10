@@ -1,0 +1,282 @@
+
+if [ $a -eq 1 -a $b -eq 1]----------# -a 并且      -o 或者  shell语言--------------]
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+
+[root@room9pc01 ~]# tail -1 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+[root@room9pc01 ~]# ls /var/ftp/rhel7/
+............
+EULA              isolinux  repodata
+..............
+[root@room9pc01 ~]# systemctl is-active vsftpd
+active
+[root@room9pc01 ~]# ls /etc/yum.repos.d/
+packagekit-media.repo  rhel7.repo
+[root@room9pc01 ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel7.4
+enabled=1
+baseurl=file:///var/ftp/rhel7
+gpgcheck=0
+[root@room9pc01 ~]# yum clean all  >/dev/null && yum repolist |tail -3
+源标识                               源名称                                状态
+rhel7                                rhel7.4                               4,986
+repolist: 4,986
+[root@room9pc01 ~]# rpm -q expect 
+expect-5.45-14.el7_1.x86_64
+
+[root@room9pc01 ~]# vim VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzip.txt
+
+[root@room9pc01 ~]# cat  VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzip.txt 
+rh7_node1:VMa10:VMb10:Host10:4.10:2.10:1.1.10:1.2.10:/root/桌面/lnmp_soft.tar.gz:/root/桌面/Cobbler.zip:/root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm:lnmp.sh
+rh7_node2:VMa11:VMb11:Host11:4.11:2.11:1.1.11:1.2.11:/root/桌面/lnmp_soft.tar.gz:/root/桌面/Cobbler.zip:/root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm:lnmp.sh
+rh7_node3:VMa12:VMb12:Host12:4.12:2.12:1.1.12:1.2.12:/root/桌面/lnmp_soft.tar.gz:/root/桌面/Cobbler.zip:/root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm:lnmp.sh
+[root@room9pc01 ~]# awk -F: '{print NR,NF}' /root/VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzip.txt
+1 12
+2 12
+3 12
+[root@room9pc01 ~]# for i in `cat /root/VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzip.txt`; do echo $i;done;
+rh7_node1:VMa10:VMb10:Host10:4.10:2.10:1.1.10:1.2.10:/root/桌面/lnmp_soft.tar.gz:/root/桌面/Cobbler.zip:/root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm:lnmp.sh
+rh7_node2:VMa11:VMb11:Host11:4.11:2.11:1.1.11:1.2.11:/root/桌面/lnmp_soft.tar.gz:/root/桌面/Cobbler.zip:/root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm:lnmp.sh
+rh7_node3:VMa12:VMb12:Host12:4.12:2.12:1.1.12:1.2.12:/root/桌面/lnmp_soft.tar.gz:/root/桌面/Cobbler.zip:/root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm:lnmp.sh
+[root@room9pc01 ~]# echo $i |awk -F: '{print $1}'
+rh7_node3
+[root@room9pc01 ~]# echo $i |awk -F: '{print $2}'
+VMa12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $3}'
+VMb12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $4}'
+Host12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $5}'
+4.12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $6}'
+2.12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $7}'
+1.1.12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $8}'
+1.2.12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $9}'
+/root/桌面/lnmp_soft.tar.gz
+[root@room9pc01 ~]# echo $i |awk -F: '{print $10}'
+/root/桌面/Cobbler.zip
+[root@room9pc01 ~]# echo $i |awk -F: '{print $11}'
+/root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm
+[root@room9pc01 ~]# echo $i |awk -F: '{print $12}'
+lnmp.sh
+[root@room9pc01 ~]# echo $i |awk -F: '{print $NF}'
+lnmp.sh
+[root@room9pc01 ~]# echo $i
+rh7_node3:VMa12:VMb12:Host12:4.12:2.12:1.1.12:1.2.12:/root/桌面/lnmp_soft.tar.gz:/root/桌面/Cobbler.zip:/root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm:lnmp.sh
+[root@room9pc01 ~]# VMname=$(echo $i |awk -F: '{print $1}');echo $VMname
+rh7_node3
+[root@room9pc01 ~]# VMnameA=$(echo $i |awk -F: '{print $2}');echo $VMnameA
+VMa12
+[root@room9pc01 ~]# VMnameB=$(echo $i |awk -F: '{print $3}');echo $VMnameB
+VMb12
+[root@room9pc01 ~]# hostname=$(echo $i |awk -F: '{print $4}');echo $hostname
+Host12
+[root@room9pc01 ~]# eth0=$(echo $i |awk -F: '{print $5}');echo $eth0
+4.12
+[root@room9pc01 ~]# eth1=$(echo $i |awk -F: '{print $6}');echo $eth1
+2.12
+[root@room9pc01 ~]# eth2=$(echo $i |awk -F: '{print $7}');echo $eth2
+1.1.12
+[root@room9pc01 ~]# eth3=$(echo $i |awk -F: '{print $8}');echo $eth3
+1.2.12
+[root@room9pc01 ~]# file=$(echo $i |awk -F: '{print $9,$10,$11,$12}');echo $file
+/root/桌面/lnmp_soft.tar.gz /root/桌面/Cobbler.zip /root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm lnmp.sh
+[root@room9pc01 ~]# 
+
+
+转到/etc/libvirt/qemu  目录下对原来的虚拟机配置进行导出
+[root@room9pc01 ~]# ls /var/lib/libvirt/images/
+
+[root@room9pc01 ~]# ls /etc/libvirt/qemu/
+
+[root@room9pc01 ~]# cd /etc/libvirt/qemu/
+[root@room9pc01 qemu]# virsh dumpxml  rh7_node1 >VMa10.xml
+[root@room9pc01 qemu]# virsh dumpxml  rh7_node2 >VMa11.xml
+
+[root@room9pc01 qemu]# virsh dumpxml  rh7_node3 >VMa12.xml
+
+-------------------注意 -n 's/... '也会修改内容,特殊点
+
+\ $ * + ( )
+去除其特殊含义，仅表示字面含义（字符串），
+就要在前面加转义符 \ 转义。
+写为 \\, \$, \*, \+, \(, \)。
+------------------------------导出之后我们需要将虚拟机的文件修改一下
+[root@room9pc01 qemu]# sed -i 's/rh7_node1/VMa10/p' VMa10.xml
+
+------------------------------导出之后我们需要将虚拟机的文件修改一下
+[root@room9pc01 qemu]# sed -i 's/rh7_node2/VMa11/p' VMa11.xml
+
+------------------------------导出之后我们需要将虚拟机的文件修改一下
+[root@room9pc01 qemu]# sed -i 's/rh7_node3/VMa11/p' VMa12.xml
+
+-------------------------------------------------使用virsh undefine 命令将之前的虚拟机删除
+[root@room9pc01 qemu]# virsh undefine  rh7_node1
+域 rh7_node1 已经被取消定义
+--------------------------------使用virsh undefine 命令将之前的虚拟机删除
+[root@room9pc01 qemu]# virsh undefine  rh7_node2
+域 rh7_node2 已经被取消定义
+
+[root@room9pc01 qemu]# virsh undefine  rh7_node3
+域 rh7_node3 已经被取消定义
+
+[root@room9pc01 qemu]# ls   ##rh7_node1 #rh7_node2 #rh7_node3 已经被删除
+
+使用virsh define 命令将重新定义新的虚拟机
+[root@room9pc01 qemu]# virsh define VMa10.xml 
+定义域 VMa10（从 VMa10.xml）
+
+[root@room9pc01 qemu]# virsh define VMa11.xml
+定义域 VMa11（从 VMa11.xml）
+
+[root@room9pc01 qemu]# virsh define VMa12.xml
+定义域 VMa12（从 VMa12.xml）
+
+[root@room9pc01 qemu]# ls
+
+[root@room9pc01 qemu]# ls /var/lib/libvirt/images/
+
+[root@room9pc01 qemu]# ls /var/lib/libvirt/images/qemu/
+networks  win2008.xml
+[root@room9pc01 qemu]# ls /var/lib/libvirt/images/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+[root@room9pc01 qemu]# ls /var/lib/libvirt/images/qemu/networks/autostart/
+private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@room9pc01 qemu]# 配置出错
+
+[root@room9pc01 ~]# ls /var/lib/libvirt/images/rh7_node2.img 
+/var/lib/libvirt/images/rh7_node2.img
+[root@room9pc01 ~]# rm -f  /var/lib/libvirt/images/rh7_node2.img  #猜想的解决办法
+[root@room9pc01 ~]# rm -f  /var/lib/libvirt/images/rh7_node3.img  #手动删除镜像
+[root@room9pc01 ~]# ls /var/lib/libvirt/images/
+[root@room9pc01 ~]# rm -f /var/lib/libvirt/images/rh7_node*
+
+[root@room9pc01 ~]# cat VMa10.xml
+<domain type='kvm'>
+  <name>rh7_node1</name>
+  <name>rh7_node1</name>
+  <name>rh7_node1</name>
+  <name>rh7_node1</name>
+[root@room9pc01 ~]# VMname=rh7_node1;VMnameA=VMa10; sed -i s/${VMname}/${VMnameA}/  ${VMnameA}.xml
+[root@room9pc01 ~]# cat VMa10.xml
+<domain type='kvm'>
+  <name>VMa10</name>
+  <name>VMa10</name>
+  <name>VMa10</name>
+  <name>VMa10</name>
+[root@room9pc01 ~]# 
+
+[root@room9pc01 ~]# vim cluster 
+[root@room9pc01 ~]# cat cluster
+#!/bin/bash
+password=123456;
+for i in `cat /root/VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzip.txt`
+do 
+  VMname=$(echo $i |awk -F: '{print $1}');
+  echo $VMname;
+  hostname=$(echo $i |awk -F: '{print $4}');  
+  echo $hostname;
+  eth0=$(echo $i |awk -F: '{print $5}');
+  echo "192.168.$eth0";
+  eth1=$(echo $i |awk -F: '{print $6}');
+  echo "192.168.$eth1";
+  eth2=$(echo $i |awk -F: '{print $7}');
+  echo "201.$eth2";
+  eth3=$(echo $i |awk -F: '{print $8}');
+  echo "201.$eth3";
+  file=$(echo $i |awk -F: '{print $9,$10,$11,$12}');
+  echo $file;
+  function  newVMnameA(){
+   VMnameA=$(echo $i |awk -F: '{print $2}');
+  }
+  function  newVMnameB(){
+   VMnameB=$(echo $i |awk -F: '{print $3}');
+  }
+  ipexp(){
+    expect  /root/clone.sh
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      echo clone ok;
+    else
+      echo "clone failed";
+      exit;
+    fi
+  }
+  newVM(){
+      ls /var/lib/libvirt/images/;
+      ls /etc/libvirt/qemu/;
+      cd /etc/libvirt/qemu/;
+      virsh dumpxml ${VMname} > ${VMnameA}.xml;
+
+      sed -i s/${VMname}/${VMnameA}/  ${VMnameA}.xml
+
+      virsh undefine  ${VMname}
+      virsh define ${VMnameA}.xml
+  }
+  case $1 in
+  clone)
+    ipexp  &
+    wait  %  $i;;
+  startA)
+    virsh start  $VMname;
+    if [ $? -ne 0 ];then
+     newVMnameA
+     virsh start $VMnameA;
+    fi;;
+  startB)
+    virsh start  $VMname;
+    if [ $? -ne 0 ];then
+     newVMnameB
+     virsh start $VMnameB;
+    fi;;
+  stopA)
+    virsh shutdown $VMname;
+    if [ $? -ne 0 ];then
+     newVMnameA
+     virsh shutdown $VMnameA;
+    fi;;
+  stopB)
+    virsh shutdown $VMname;
+    if [ $? -ne 0 ];then
+     newVMnameB
+     virsh shutdown $VMnameB;
+    fi;;
+  new)
+   newVM
+  ;;
+  *)
+    echo "input-Error";;
+  esac
+done
+echo  "Amazing !"
+[root@room9pc01 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

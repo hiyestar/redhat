@@ -1,0 +1,238 @@
+NoSQL_day02 部署redis集群
+
+配置redis集群步骤
+
+1 在6台redis服务器分别启用集群配置
+
+2 配置管理主机
+在集群管理主机51 上安装提供管理功能的软件包
+  153  yum  -y  install ruby  rubygems
+  154  ls /root/redis-cluster/
+  155  cd /root/redis-cluster/
+  156  rpm -ivh ruby-devel-2.0.0.648-30.el7.x86_64.rpm 
+  157  which gem
+  158  gem  install redis-3.2.1.gem 
+
+3 创建管理集群的命令  redis-trib.rb
+  159  cd /root/redis-4.0.8/
+  161  cd src/
+  163  ls *.rb
+  165  mkdir /root/bin
+  167  cp redis-trib.rb  /root/bin/
+
+]# redis-trib.rb  help  查看命令帮助信息
+ 
+4 创建集群
+[root@mysql51 ~]# redis-trib.rb create --replicas 1 \
+> 192.168.4.51:6351 192.168.4.52:6352 192.168.4.53:6353 \
+> 192.168.4.54:6354 192.168.4.55:6355 192.168.4.56:6356
+
+>>> Creating cluster
+>>> Performing hash slots allocation on 6 nodes...
+Using 3 masters:
+192.168.4.51:6351
+192.168.4.52:6352
+192.168.4.53:6353
+Adding replica 192.168.4.55:6355 to 192.168.4.51:6351
+Adding replica 192.168.4.56:6356 to 192.168.4.52:6352
+Adding replica 192.168.4.54:6354 to 192.168.4.53:6353
+M: bae38fb3033ff7e69a7dc65b137b3469e3bbe542 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+M: 9dc8d1aa7626583f03c1c19041cbbb9c4c437cb8 192.168.4.52:6352
+   slots:5461-10922 (5462 slots) master
+M: 0d57c2035f7b9003e652d4212574909a6ce0ff03 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+S: 16186a3b5fcc0734626ab04bacde570979c5684d 192.168.4.54:6354
+   replicates 0d57c2035f7b9003e652d4212574909a6ce0ff03
+S: 03b83c725769bf0fee7bc010085a9c2f978744b6 192.168.4.55:6355
+   replicates bae38fb3033ff7e69a7dc65b137b3469e3bbe542
+S: 180f07fa05f0870378b15ab425a2136358ddc007 192.168.4.56:6356
+   replicates 9dc8d1aa7626583f03c1c19041cbbb9c4c437cb8
+Can I set the above configuration? (type 'yes' to accept): yes
+>>> Nodes configuration updated
+>>> Assign a different config epoch to each node
+>>> Sending CLUSTER MEET messages to join the cluster
+Waiting for the cluster to join...
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: bae38fb3033ff7e69a7dc65b137b3469e3bbe542 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+   1 additional replica(s)
+S: 03b83c725769bf0fee7bc010085a9c2f978744b6 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates bae38fb3033ff7e69a7dc65b137b3469e3bbe542
+S: 16186a3b5fcc0734626ab04bacde570979c5684d 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 0d57c2035f7b9003e652d4212574909a6ce0ff03
+S: 180f07fa05f0870378b15ab425a2136358ddc007 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 9dc8d1aa7626583f03c1c19041cbbb9c4c437cb8
+M: 0d57c2035f7b9003e652d4212574909a6ce0ff03 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+   1 additional replica(s)
+M: 9dc8d1aa7626583f03c1c19041cbbb9c4c437cb8 192.168.4.52:6352
+   slots:5461-10922 (5462 slots) master
+   1 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@mysql51 ~]# 
+
+hash slot   0 ~  16383  共计16384
+
+
+
+5 查看集群信息（在任意1点redis服务上查看都可以）
+
+192.168.4.51:6351> cluster nodes
+b5df8da458c260eda6c3fc4cbbd8e051149b9b52 192.168.4.52:6352@16352 master - 0 1540867764613 2 connected 5461-10922
+d5280e340fb24e0058f2285e6f069762837b1bef 192.168.4.55:6355@16355 slave 65178dd92716341a00090433d3eac8b62bbca96a 0 1540867764000 5 connected
+d4fe308c8bc253586fc0f34bbefebb5874f6f8ab 192.168.4.53:6353@16353 master - 0 1540867766000 3 connected 10923-16383
+01845e85a616b46d9d6147162b70a82757a0abc5 192.168.4.54:6354@16354 slave d4fe308c8bc253586fc0f34bbefebb5874f6f8ab 0 1540867764513 4 connected
+79063951285a0b167fdd1de137ebcdf252579115 192.168.4.56:6356@16356 slave b5df8da458c260eda6c3fc4cbbd8e051149b9b52 0 1540867765514 6 connected
+65178dd92716341a00090433d3eac8b62bbca96a 192.168.4.51:6351@16351 myself,master - 0 1540867764000 1 connected 0-5460
+192.168.4.51:6351> 
+192.168.4.51:6351> 
+192.168.4.51:6351> cluster info
+cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:6
+cluster_size:3
+cluster_current_epoch:6
+cluster_my_epoch:1
+cluster_stats_messages_ping_sent:281
+cluster_stats_messages_pong_sent:371
+cluster_stats_messages_sent:652
+cluster_stats_messages_ping_received:366
+cluster_stats_messages_pong_received:281
+cluster_stats_messages_meet_received:5
+cluster_stats_messages_received:652
+192.168.4.51:6351> 
+
+
+6 在客户端50 主机连接 集群存储数据
+
+[root@client50 ~]# redis-cli -c  -h 192.168.4.52 -p 6352
+192.168.4.52:6352> 
+192.168.4.52:6352> set name bob
+OK
+192.168.4.52:6352> keys *
+1) "name"
+192.168.4.52:6352> get name
+"bob"
+192.168.4.52:6352> 
+192.168.4.52:6352> set age 21
+-> Redirected to slot [741] located at 192.168.4.51:6351
+OK
+192.168.4.51:6351> keys *
+1) "age"
+192.168.4.51:6351> set sex girl
+OK
+192.168.4.51:6351> set shcool tarena
+OK
+192.168.4.51:6351> set classs nsd1807
+-> Redirected to slot [16079] located at 192.168.4.53:6353
+OK
+192.168.4.53:6353> keys *
+1) "classs"
+192.168.4.53:6353> get name
+-> Redirected to slot [5798] located at 192.168.4.52:6352
+"bob"
+192.168.4.52:6352> keys *
+1) "name"
+192.168.4.52:6352> get age
+-> Redirected to slot [741] located at 192.168.4.51:6351
+"21"
+192.168.4.51:6351> 
+
+在管理主机上检查集群
+]#redis-trib.rb  check  192.168.4.51:6351
+
+6 测试高可用
+当前的主库宕机后，对应的从库会自动升级为主库。
+
+宕机的主库 启动后 ，自动配置为当前主库的从库 
+并自动同步宕机期间的数据到本机。
+
+++++++++++++++++++++++++++++++++++++++
+二、管理集群
+2.1 、向集群里添加新redis服务器57，角色是master ：配置步骤
+
+2.1.1 运行redis服务并启用的集群配置。
+2.1.2 在在管理主机上把服务器添加到集群里
+
+[root@mysql51 ~]# redis-trib.rb add-node 192.168.4.57:6357  192.168.4.51:6351 
+>>> Adding node 192.168.4.57:6357 to cluster 192.168.4.51:6351
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 65178dd92716341a00090433d3eac8b62bbca96a 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+   1 additional replica(s)
+S: b5df8da458c260eda6c3fc4cbbd8e051149b9b52 192.168.4.52:6352
+   slots: (0 slots) slave
+   replicates 79063951285a0b167fdd1de137ebcdf252579115
+S: d5280e340fb24e0058f2285e6f069762837b1bef 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 65178dd92716341a00090433d3eac8b62bbca96a
+M: d4fe308c8bc253586fc0f34bbefebb5874f6f8ab 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+   1 additional replica(s)
+S: 01845e85a616b46d9d6147162b70a82757a0abc5 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates d4fe308c8bc253586fc0f34bbefebb5874f6f8ab
+M: 79063951285a0b167fdd1de137ebcdf252579115 192.168.4.56:6356
+   slots:5461-10922 (5462 slots) master
+   1 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+>>> Send CLUSTER MEET to node 192.168.4.57:6357 to make it join the cluster.
+[OK] New node added correctly.
+[root@mysql51 ~]# 
+
+
+[root@mysql51 ~]# redis-trib.rb check 192.168.4.51:6351 
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+向集群里添加新主机192.168.4.50，角色是slave
+
+1 运行redis服务并启用的集群配置。
+
+2 在在管理主机上把服务器添加到集群里
+]# redis-trib.rb add-node --slave 192.168.4.50:6350 \
+192.168.4.51:6351
+
+]# redis-trib.rb  check  192.168.4.51:6351
+
+]# redis-cli  -h 192.168.4.50 -p 6350
+> keys *
+
+++++++++++++++++++++++++++++++
+三、从集群里删除主机：
+3.1 移出slave 角色的redis服务器。
+把主机50移出集群
+[root@mysql51 ~]# redis-trib.rb del-node 192.168.4.51:6351  \
+> 10be1da9bc700347fe82f55bc24bf5b334306520
+>>> Removing node 10be1da9bc700347fe82f55bc24bf5b334306520 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+[root@mysql51 ~]# 
+
+
+3.2 移出master 角色的redis服务器。
+把主机57移出集群
+
+]#redis-trib.rb reshard  192.168.4.51:6351
+]#redis-trib.rb check  192.168.4.51:6351
+
+]#redis-trib.rb del-node 192.168.4.51:6351 \
+54b03ec61f1515ee89a97ee1d95700a47d284b5d
+
+]#redis-trib.rb check  192.168.4.51:6351
+
+
++++++++++++++++++++++++++++++
+如何把移除的主库 再添加到集群里？

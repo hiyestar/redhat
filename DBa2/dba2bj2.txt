@@ -1,0 +1,1087 @@
+
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}';netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1030/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1041/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1030/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1045/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1349/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1030/memcached
+udp6  0  0  :::11211        :::*       1030/memcached
+[root@H50 ~]# mysql -uroot -p1234
+
+mysql> system ls /var/lib/mysql/
+auto.cnf  ib_buffer_pool  ib_logfile1  mysql.sock	   stut    testdb6
+db4	  ibdata1	  ibtmp1       mysql.sock.lock	   sys	   xtrabackup_binlog_pos_innodb
+db5	  ib_logfile0	  mysql        performance_schema  teadb2  xtrabackup_info
+
+mysql> show master status;
+
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000007 |      154 |              |                  |                   |
+
+mysql> system  sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+server_id=50
+#log_bin
+log_bin=/logdir/plj
+binlog_format="mixed"
+#skip_grant_tables
+mysql> system ls /logdir/
+plj.000001  plj.000002	plj.000003  plj.000004	plj.000005  plj.000006	plj.000007  plj.index
+
+mysql> purge master logs to "plj.000007";
+
+mysql> system ls /logdir/
+plj.000007  plj.index
+
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000007 |      154 |              |                  |                   |
+
+mysql> reset master;
+
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000001 |      154 |              |                  |                   |
+
+mysql> system ls /logdir/
+plj.000001  plj.index
+mysql> 
+mysql> show slave status;
+Empty set (0.00 sec)
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db4                |
+| db5                |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb2             |
+| testdb6            |
+
+mysql> select user();
+| user()         |
+| root@localhost |
+
+mysql> select @@hostname;
+| @@hostname |
+| H50        |
+
+mysql> 
+[root@H50 ~]# mysql -h192.168.4.53 -uwebuser -p1234 -P4006
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db2                |
+
+mysql> use db2;show tables;
+
+| Tables_in_db2 |
+| a             |
+
+mysql> desc db2.a;
+| Field | Type    | Null | Key | Default | Extra |
+| id    | int(11) | YES  |     | NULL    |       |
+
+mysql> insert into db2.a values(110);
+
+mysql> select * from db2.a;
+| id   |
+|  110 |
+|  666 |
+[root@H50 ~]# ls mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz 
+mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz
+[root@H50 ~]# ls mysql-5.7.*
+mysql-5.7.17-1.el7.x86_64.rpm-bundle.tar  mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz
+mysql-5.7.17.tar
+[root@H50 ~]# systemctl stop mysqld
+
+[root@H50 ~]# tar -zxvf mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz 
+mysql-5.7.20-linux-glibc2.12-x86_64/bin/myisam_ftdump
+mysql-5.7.20-linux-glibc2.12-x86_64/bin/myisamchk
+mysql-5.7.20-linux-glibc2.12-x86_64/support-files/mysql.server
+......................
+mysql-5.7.20-linux-glibc2.12-x86_64/docs/INFO_BIN
+mysql-5.7.20-linux-glibc2.12-x86_64/docs/INFO_SRC
+[root@H50 ~]# ls mysql-5.7.20-linux-glibc2.12-x86_64
+bin  COPYING  docs  include  lib  man  README  share  support-files
+
+[root@H50 ~]# mv mysql-5.7.20-linux-glibc2.12-x86_64
+mysql-5.7.20-linux-glibc2.12-x86_64/        mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz
+
+[root@H50 ~]# mv mysql-5.7.20-linux-glibc2.12-x86_64/ /usr/local/mysql
+
+[root@H50 ~]# ls /usr/local/mysql/
+bin  COPYING  docs  include  lib  man  README  share  support-files
+[root@H50 ~]# ls /usr/local/mysql/bin/
+innochecksum       mysqlcheck                  mysql_embedded             mysql_tzinfo_to_sql
+lz4_decompress     mysql_client_test_embedded  mysqlimport                mysql_upgrade
+myisamchk          mysql_config                mysql_install_db           mysqlxtest
+myisam_ftdump      mysql_config_editor         mysql_plugin               perror
+myisamlog          mysqld                      mysqlpump                  replace
+myisampack         mysqld-debug                mysql_secure_installation  resolveip
+my_print_defaults  mysqld_multi                mysqlshow                  resolve_stack_dump
+mysql              mysqld_safe                 mysqlslap                  zlib_decompress
+mysqladmin         mysqldump                   mysql_ssl_rsa_setup
+mysqlbinlog        mysqldumpslow               mysqltest_embedded
+[root@H50 ~]# ll /usr/local/mysql/bin/mysql_plugin
+-rwxr-xr-x. 1 7161 31415 5593471 9月  14 2017 /usr/local/mysql/bin/mysql_plugin
+
+[root@H50 ~]# ll /usr/local/mysql/bin/mysqld_multi 
+-rwxr-xr-x. 1 7161 31415 26738 9月  14 2017 /usr/local/mysql/bin/mysqld_multi
+[root@H50 ~]# cp /etc/my.cnf  /etc/my.cnf.old
+
+[root@H50 ~]# mv /etc/my.cnf /root/
+[root@H50 ~]# ls /etc/my.cnf.
+my.cnf.d/   my.cnf.old  
+[root@H50 ~]# 
+[root@H50 ~]# vim /etc/my.cnf
+[root@H50 ~]# cat /etc/my.cnf
+[mysqld_multi]
+mysqld = /usr/local/mysql/bin/mysqld_safe
+mysqladmin = /usr/local/mysql/bin/mysqladmin
+user = root
+
+[mysqld1]
+datadir=/datadir3307
+socket=/datadir3307/mysql3307.sock
+port=3307
+log-error=/datadir3307/mysqld3307.log
+pid-file=/datadir3307/mysqld3307.pid
+
+[mysqld2]
+datadir=/datadir3308
+socket=/datadir3308/mysql3308.sock
+port=3308
+log-error=/datadir3308/mysqld3308.log
+pid-file=/datadir3308/mysqld3308.pid
+[root@H50 ~]# mkdir /datadir330{7,8}
+[root@H50 ~]# ls /datadir330{7,8}
+/datadir3307:
+
+/datadir3308:
+[root@H50 ~]# ll /usr/local/mysql/bin/mysqld_safe
+-rwxr-xr-x. 1 7161 31415 28494 9月  14 2017 /usr/local/mysql/bin/mysqld_safe
+[root@H50 ~]# ll /usr/local/mysql/bin/mysqladmin
+-rwxr-xr-x. 1 7161 31415 9260348 9月  14 2017 /usr/local/mysql/bin/mysqladmin
+[root@H50 ~]# 
+[root@H50 ~]# /usr/local/mysql/bin/mysqld_multi  start 1
+
+
+Installing new database in /datadir3307
+............................
+2018-10-23T08:47:51.734711Z 1 [Note] A temporary password is generated for root@localhost: )1grguG6ljke
+[root@H50 ~]# ls
+[root@H50 ~]# ls /datadir3307
+auto.cnf        ib_logfile0  mysql                mysqld3307.log      sys
+ib_buffer_pool  ib_logfile1  mysql3307.sock       mysqld3307.pid
+ibdata1         ibtmp1       mysql3307.sock.lock  performance_schema
+[root@H50 ~]# netstat -anpult |grep 3307
+tcp6       0      0 :::3307                 :::*                    LISTEN      6700/mysqld         
+[root@H50 ~]# ll /usr/local/mysql/bin/mysql
+-rwxr-xr-x. 1 7161 31415 10340375 9月  14 2017 /usr/local/mysql/bin/mysql
+
+[root@H50 ~]# /usr/local/mysql/bin/mysql -uroot -p')1grguG6ljke' \
+> -S /datadir3307/mysql3307.sock
+
+mysql> alter user root@"localhost" identified by'1234';
+
+mysql> exit;
+Bye
+[root@H50 ~]# which mysql
+/usr/bin/mysql
+[root@H50 ~]# ll /usr/bin/mysql
+-rwxr-xr-x. 1 root root 11128612 11月 29 2016 /usr/bin/mysql
+[root@H50 ~]# ll /usr/local/mysql/bin/mysql
+-rwxr-xr-x. 1 7161 31415 10340375 9月  14 2017 /usr/local/mysql/bin/mysql
+[root@H50 ~]# /usr/local/mysql/bin/mysql -uroot -p1234  -S /datadir3307/mysql3307.sock
+
+mysql> create database db3307;
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db3307             |
+| mysql              |
+| performance_schema |
+| sys                |
+mysql> exit;
+Bye
+[root@H50 ~]# ll /usr/local/mysql/bin/mysqld_multi 
+-rwxr-xr-x. 1 7161 31415 26738 9月  14 2017 /usr/local/mysql/bin/mysqld_multi
+
+[root@H50 ~]# /usr/local/mysql/bin/mysqld_multi start  2
+.....................
+ 2018-10-23T09:12:23.171447Z 1 [Note] A temporary password is generated for root@localhost: 8<ArrXv)V,Qs
+
+[root@H50 ~]# ls /datadir3308/
+auto.cnf        ib_logfile0  mysql                mysqld3308.log      sys
+ib_buffer_pool  ib_logfile1  mysql3308.sock       mysqld3308.pid
+ibdata1         ibtmp1       mysql3308.sock.lock  performance_schema
+
+[root@H50 ~]# netstat -anpult |grep 3308 |column -t
+tcp6  0  0  :::3308  :::*  LISTEN  7169/mysqld
+
+[root@H50 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 6700 pts/1    00:00:01 mysqld
+ 7169 pts/0    00:00:00 mysqld
+[root@H50 ~]# /usr/local/mysql/bin/mysql
+mysql                       mysqld_multi                mysql_secure_installation
+mysqladmin                  mysqld_safe                 mysqlshow
+mysqlbinlog                 mysqldump                   mysqlslap
+mysqlcheck                  mysqldumpslow               mysql_ssl_rsa_setup
+mysql_client_test_embedded  mysql_embedded              mysqltest_embedded
+mysql_config                mysqlimport                 mysql_tzinfo_to_sql
+mysql_config_editor         mysql_install_db            mysql_upgrade
+mysqld                      mysql_plugin                mysqlxtest
+mysqld-debug                mysqlpump  
+                 
+[root@H50 ~]# /usr/local/mysql/bin/mysql -uroot -p'8<ArrXv)V,Qs'  \
+> -S /datadir3308/mysql3308.sock 
+
+/**********mysql> ALTER USER user() identified  by  "123456";
+mysql> select user();
+| user()         |
+| root@localhost |
+**********************************/
+mysql> alter user root@'localhost' identified by'1234';
+
+mysql> create database  db3308;
+
+mysql> exit;
+Bye
+[root@H50 ~]# /usr/local/mysql/bin/mysql -uroot -p1234 \
+> -S /datadir3308/mysql3308.sock
+
+mysql> show databases;
+| Database       |
+| information_schema |
+| db3308             |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> exit;
+Bye
+[root@H50 ~]# /usr/local/mysql/bin/mysqld_multi  --user=root \
+> --password=1234 stop 1
+[root@H50 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 7169 pts/0    00:00:00 mysqld
+[root@H50 ~]# netstat -anpult |grep mysqld
+tcp6       0      0 :::3308                 :::*      LISTEN      7169/mysqld         
+[root@H50 ~]# kill -9 7169
+[root@H50 ~]# netstat -anpult |grep mysqld
+tcp6       0      0 :::3308                 :::*     LISTEN      7415/mysqld         
+[root@H50 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 7415 pts/0    00:00:00 mysqld
+[root@H50 ~]# /usr/local/mysql/bin/mysqld_multi  --user=root --password=1234 stop 2
+[root@H50 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+[root@H50 ~]# netstat -anpult |grep mysqld
+[root@H50 ~]# vim /etc/my.cnf
+[root@H50 ~]# cat /etc/my.cnf
+[mysqld_multi]
+mysqld = /usr/local/mysql/bin/mysqld_safe
+mysqladmin = /usr/local/mysql/bin/mysqladmin
+user = root
+
+[mysqld1]
+datadir=/datadir3307
+socket=/datadir3307/mysql3307.sock
+port=3307
+log-error=/datadir3307/mysqld3307.log
+pid-file=/datadir3307/mysqld3307.pid
+
+[mysqld2]
+datadir=/datadir3308
+socket=/datadir3308/mysql3308.sock
+port=3308
+log-error=/datadir3308/mysqld3308.log
+pid-file=/datadir3308/mysqld3308.pid
+[mysqld3]
+datadir=/datadir3309
+socket=/datadir3309/mysql3309.sock
+port=3309
+log-error=/datadir3309/mysqld3309.log
+pid-file=/datadir3309/mysqld3309.pid
+[root@H50 ~]# 
+[root@H50 ~]# /usr/local/mysql/bin/mysqld_multi start 3
+
+
+Installing new database in /datadir3309
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}';netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+192.168.4.51
+192.168.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1083/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1089/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1083/memcached
+tcp6  0  0  :::3306         :::*       LISTEN          1599/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1083/memcached
+udp6  0  0  :::11211        :::*       1083/memcached
+
+[root@H51 ~]# mysql -uroot -p1234
+
+[root@H51 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+server_id=51
+#log_bin
+log_bin=mysql51
+binlog_format="mixed"
+validate_password_policy=0
+[root@H51 ~]# vim /etc/my.cnf
+[root@H51 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+server_id=51
+#log_bin
+#log_bin=mysql51
+#binlog_format="mixed"
+validate_password_policy=0
+[root@H51 ~]# systemctl restart mysqld
+ 
+ mysql> show slave status;
+Empty set (0.01 sec)
+
+mysql> drop database db1;
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+[root@H51 ~]# vim /etc/my.cnf
+
+[root@H51 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+log_slave_updates
+server_id=51
+#log_bin
+log_bin=slave51
+binlog_format="mixed"
+[root@H51 ~]# systemctl restart mysqld
+mysql> show slave status;
+Empty set (0.00 sec)
+
+mysql> change master to master_host="192.168.4.52",
+    -> master_log_file="master52.000001",
+    -> master_log_pos=443,
+    -> master_password='1234',
+    -> master_user="repluser51";
+Query OK, 0 rows affected, 2 warnings (0.30 sec)
+
+mysql> start slave;
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.52
+                  Master_User: repluser51
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: master52.000001
+          Read_Master_Log_Pos: 732
+               Relay_Log_File: H51-relay-bin.000002
+                Relay_Log_Pos: 608
+        Relay_Master_Log_File: master52.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB: 
+          Replicate_Ignore_DB: 
+           Replicate_Do_Table: 
+       Replicate_Ignore_Table: 
+      Replicate_Wild_Do_Table: 
+  Replicate_Wild_Ignore_Table: 
+                   Last_Errno: 0
+                   Last_Error: 
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 732
+              Relay_Log_Space: 813
+   
+
+mysql> 
+
+[root@H51 ~]# rm -rf /var/lib/mysql/mysql51.*
+[root@H51 ~]# ls /var/lib/mysql/
+auto.cnf              H51-relay-bin.index  master.info         relay-log.info
+ca-key.pem            ib_buffer_pool       mysql               server-cert.pem
+ca.pem                ibdata1              mysql.sock          server-key.pem
+client-cert.pem       ib_logfile0          mysql.sock.lock     slave51.000001
+client-key.pem        ib_logfile1          performance_schema  slave51.index
+H51-relay-bin.000001  ibtmp1               private_key.pem     sys
+H51-relay-bin.000002  l73vRKi              public_key.pem
+[root@H51 ~]# 
+[root@H51 ~]# mysql -uroot -p1234
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db2                |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> use db2;show tables;
+| Tables_in_db2 |
+| a             |
+
+mysql> desc db2.a;
+| Field | Type    | Null | Key | Default | Extra |
+| id    | int(11) | YES  |     | NULL    |       |
+
+mysql> select * from db2.a;
+| id   |
+|  110 |
+
+mysql> insert into db2.a values(666);
+
+mysql> select * from db2.a;
+| id   |
+|  110 |
+|  666 |
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}';netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+192.168.4.52
+192.168.2.52
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1071/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1067/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1071/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1135/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1651/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1071/memcached
+udp6  0  0  :::11211        :::*       1071/memcached
+[root@H52 ~]# mysql -uroot -p1234
+
+[root@H52 ~]# vim /etc/my.cnf
+
+[root@H52 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+#log_slave_updates
+server_id=52
+#log-bin=slave52
+#binlog_format="mixed"
+validate_password_policy=0
+[root@H52 ~]# systemctl restart mysqld
+
+mysql> show slave status;
+Empty set (0.00 sec)
+
+mysql> drop database db1;
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> show variables like 'have_dynamic_loading';
+| Variable_name        | Value |
+| have_dynamic_loading | YES   |
+
+[root@H52 ~]# vim /etc/my.cnf
+[root@H52 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+#log_slave_updates
+server_id=52
+log-bin=master52
+binlog_format="mixed"
+validate_password_policy=0
+[root@H52 ~]# systemctl restart mysqld
+
+mysql> grant replication slave on *.* to
+    -> repluser51@'%' identified by'1234';
+
+mysql> show grants for repluser51@'%';
+| Grants for repluser51@%               |
+| GRANT REPLICATION SLAVE ON *.* TO 'repluser51'@'%' |
+
+mysql> show grants;
+| Grants for root@localhost            |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION        |
+
+mysql> show master status;
+| File            | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| master52.000001 |      443 |              |                  |                   |
+
+mysql> select host,user from mysql.user where user like 'repl%';
+| host | user       |
+| %    | repluser2  |
+| %    | repluser51 |
+
+mysql> grant select,insert,update on *.* to admin@'%' identified by'1234';
+
+mysql> system ls /var/lib/mysql/
+
+[root@H52 ~]# rm -rf /var/lib/mysql/mysql52.* /var/lib/mysql/slave52.*
+[root@H52 ~]# ls /var/lib/mysql/
+auto.cnf              H52-relay-bin.000003  ibtmp1           performance_schema
+ca-key.pem            H52-relay-bin.000004  master52.000001  private_key.pem
+ca.pem                H52-relay-bin.index   master52.index   public_key.pem
+client-cert.pem       ib_buffer_pool        master.info      relay-log.info
+client-key.pem        ibdata1               mysql            server-cert.pem
+H52-relay-bin.000001  ib_logfile0           mysql.sock       server-key.pem
+H52-relay-bin.000002  ib_logfile1           mysql.sock.lock  sys
+[root@H52 ~]# 
+
+mysql> show slave status;
+Empty set (0.00 sec)
+
+mysql> create database db2;
+
+mysql> create table db2.a(id int);
+
+mysql> grant select,insert on db2.* to
+    -> webuser@'%' identified by'1234';  #访问数据用户webuser
+
+  //监控数据库服务器时，连接数据库服务器的用户
+mysql> grant replication slave,replication client on *.*
+    -> to scalemon@'%' identified by'1234';  #监控用户scalemon
+
+ //验证 访问数据时，连接数据库服务器使用的用户，是否在数据库服务器上存在的，连接用户
+mysql> grant select on mysql.* to maxscale@'%'
+    -> identified by'1234';  #路由用户maxscale 代理用户
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db2                |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> use db2;show tables;
+| Tables_in_db2 |
+| a             |
+
+mysql> select * from db2.a;
+| id   |
+|  110 |
+
+mysql> select * from db2.a;
+| id   |
+|  110 |
+
+mysql> select user,host from mysql.user;
+| user       | host      |
+| admin      | %         |
+| maxscale   | %         |
+| repluser2  | %         |
+| repluser51 | %         |
+| scalemon   | %         |
+| webuser    | %         |
+| mysql.sys  | localhost |
+| root       | localhost |
+
+mysql> show grants for maxscale@'%';
+| Grants for maxscale@%              |
+| GRANT USAGE ON *.* TO 'maxscale'@'%'        |
+| GRANT SELECT ON `mysql`.* TO 'maxscale'@'%' |
+
+mysql> show grants for scalemon@'%';
+| Grants for scalemon@%                            |
+| GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'scalemon'@'%' |
+
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}';netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+192.168.4.53
+192.168.2.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1071/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1070/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1071/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1103/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1746/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1071/memcached
+udp6  0  0  :::11211        :::*       1071/memcached
+
+[root@H53 ~]# mysql -uroot -p1234
+
+mysql> drop database db1;
+
+mysql> show databases;
+
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+[root@H53 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+server_id=53
+#log_bin=mysql53
+validate_password_policy=0
+validate_password_length=4
+
+[root@H53 ~]# 
+mysql> exit;
+Bye
+[root@H53 ~]# systemctl stop mysqld
+[root@H53 ~]# systemctl disable mysqld
+
+[root@H53 ~]# ll /var/lib/mysql/{master,relay-log}.info 
+-rw-r-----. 1 mysql mysql 48 10月 23 11:22 /var/lib/mysql/master.info
+-rw-r-----. 1 mysql mysql 37 10月 23 11:22 /var/lib/mysql/relay-log.info
+[root@H53 ~]# rm -rf /var/lib/mysql/{master,relay-log}.info
+
+[root@H53 ~]# ll /var/lib/mysql/H53-relay-bin.*
+-rw-r-----. 1 mysql mysql 177 10月 22 21:23 /var/lib/mysql/H53-relay-bin.000001
+-rw-r-----. 1 mysql mysql 177 10月 23 11:22 /var/lib/mysql/H53-relay-bin.000002
+-rw-r-----. 1 mysql mysql  46 10月 23 08:12 /var/lib/mysql/H53-relay-bin.index
+[root@H53 ~]# rm -rf /var/lib/mysql/H53-relay-bin.*
+
+[root@H53 ~]# ls /var/lib/mysql/
+auto.cnf    client-cert.pem  ibdata1      mysql           performance_schema  server-cert.pem
+ca-key.pem  client-key.pem   ib_logfile0  mysql53.000001  private_key.pem     server-key.pem
+ca.pem      ib_buffer_pool   ib_logfile1  mysql53.index   public_key.pem      sys
+[root@H53 ~]# 
+
+[root@room9pc01 ~]# scp '/root/桌面/09.dba2/maxscale-2.1.2-1.rhel.7.x86_64.rpm'  root@192.168.4.53:/root/
+
+[root@H53 ~]# ll maxscale-2.1.2-1.rhel.7.x86_64.rpm 
+-rw-r--r--. 1 root root 17333732 10月 23 11:21 maxscale-2.1.2-1.rhel.7.x86_64.rpm
+
+[root@H53 ~]# rpm -ivh maxscale-2.1.2-1.rhel.7.x86_64.rpm
+警告：maxscale-2.1.2-1.rhel.7.x86_64.rpm: 头V4 RSA/SHA1 Signature, 密钥 ID 8167ee24: NOKEY
+准备中...                          ################################# [100%]
+正在升级/安装...
+   1:maxscale-2.1.2-1                 ################################# [100%]
+    
+[root@H53 ~]# cp  /etc/maxscale.cnf /root/
+
+[root@H53 ~]# ll /root/maxscale.cnf 
+-rw-r--r--. 1 root root 2079 10月 23 11:27 /root/maxscale.cnf
+
+[root@H53 ~]# max
+maxadmin        maxavrocheck    maxbinlogcheck  maxkeys         maxpasswd       maxscale
+[root@H53 ~]# systemctl is-active  maxscale.service 
+unknown
+[root@H53 ~]# vim /etc/maxscale.
+maxscale.cnf           maxscale.cnf.template  maxscale.modules.d/
+[root@H53 ~]# vim /etc/maxscale.cnf
+  9 [maxscale]
+ 10 threads=auto   //运行的线程的数量
+
+ 18 [server1]
+ 19 type=server
+ 20 address=192.168.4.51   //数据库服务器的ip
+ 21 port=3306
+ 22 protocol=MySQLBackend  //后端数据库
+ 23 
+ 24 [server2]
+ 25 type=server
+ 26 address=192.168.4.52
+ 27 port=3306
+ 28 protocol=MySQLBackend
+
+ 35 [MySQL Monitor]   定义监控的数据库服务器
+ 36 type=monitor
+ 37 module=mysqlmon
+ 38 servers=server1,server2  服务器列表
+ 39 user=scalemon    ###监控用户scalemon //监视数据库服务器时连接的用户名scalemon
+ 40 passwd=1234
+ 41 monitor_interval=10000    //监视的频率 单位为秒
+
+ 52 #[Read-Only Service] 不定义只读服务
+ 53 #type=service
+ 54 #router=readconnroute
+ 55 #servers=server1
+ 56 #user=myuser
+ 57 #passwd=mypwd
+ 58 #router_options=slave
+
+ 63 [Read-Write Service] 定义读写分离服务
+ 64 type=service
+ 65 router=readwritesplit
+ 66 servers=server1,server2
+ 67 user=maxscale   ###路由用户maxscale代理用户 验证 连接 代理服务时 访问数据库服务器的用户是否存在
+ 68 passwd=1234
+ 69 max_slave_connections=100%
+
+ 75 [MaxAdmin Service]  定义管理服务
+ 76 type=service
+ 77 router=cli
+
+ 85 #[Read-Only Listener]   //不定义只读服务使用的端口号
+ 86 #type=listener
+ 87 #service=Read-Only Service
+ 88 #protocol=MySQLClient
+ 89 #port=4008
+
+ 91 [Read-Write Listener]  //定义读写服务使用的端口号
+ 92 type=listener
+ 93 service=Read-Write Service
+ 94 protocol=MySQLClient
+ 95 port=4006
+
+ 97 [MaxAdmin Listener]     //管理服务使用的端口号
+ 98 type=listener
+ 99 service=MaxAdmin Service
+100 protocol=maxscaled
+101 socket=default
+102 port=4016     //手动添加，不指定时使用的是默认端口在启动服务以后可以知道默认端口是多少
+[root@H53 ~]# tail -2 /etc/maxscale.cnf
+socket=default
+port=4016
+[root@H53 ~]# which maxscale 
+/usr/bin/maxscale
+[root@H53 ~]# maxscale -f  /etc/maxscale.cnf
+[root@H53 ~]# netstat -anpult |grep :4006
+tcp6       0      0 :::4006                 :::*    LISTEN      6177/maxscale       
+[root@H53 ~]# netstat -anpult |grep :4016
+tcp6       0      0 :::4016                 :::*     LISTEN      6177/maxscale       
+[root@H53 ~]# pkill -9 maxscale^C
+ 
+[root@H53 ~]# maxadmin  -uadmin -pmariadb -P4016
+MaxScale> list servers
+Servers.
+Server             | Address         | Port  | Connections | Status              
+server1            | 192.168.4.51    |  3306 |           1 | Slave, Running
+server2            | 192.168.4.52    |  3306 |           1 | Master, Running
+MaxScale> exit;
+[root@H53 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H54 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}';netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+192.168.4.54
+192.168.2.54
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1021/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1018/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1021/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1040/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1350/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1021/memcached
+udp6  0  0  :::11211        :::*       1021/memcached
+[root@H54 ~]# mysql -uroot -p1234
+
+mysql> show slave status;
+Empty set (0.01 sec)
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> show variables like 'have_dynamic_loading';
+| Variable_name        | Value |
+| have_dynamic_loading | YES   |
+
+mysql> install plugin rpl_semi_sync_master
+    -> soname  'semisync_master.so';
+
+mysql> install plugin rpl_semi_sync_slave soname  'semisync_slave.so';
+
+mysql> select plugin_name,plugin_status from 
+    -> information_schema.plugins where 
+    -> plugin_name like '%semi%';
+
+| plugin_name          | plugin_status |
+| rpl_semi_sync_master | ACTIVE        |
+| rpl_semi_sync_slave  | ACTIVE        |
+
+mysql> set global rpl_semi_sync_master_enabled = 1;
+
+mysql> set global rpl_semi_sync_slave_enabled = 1;
+
+mysql> show variables like 'rpl_semi_sync_%_enabled';
+
+| Variable_name                | Value |
+| rpl_semi_sync_master_enabled | ON    |
+| rpl_semi_sync_slave_enabled  | ON    |
+
+mysql> 
+[root@H54 ~]# vim /etc/my.cnf
+[root@H54 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+plugin-load="rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl_semi_sync_master_enabled=1
+rpl_semi_sync_slave_enabled=1
+validate_password_policy=0
+validate_password_length=4
+[root@H54 ~]# systemctl restart mysqld
+
+mysql> show variables like 'rpl_semi_sync_%_enabled';
+
+| Variable_name                | Value |
+| rpl_semi_sync_master_enabled | ON    |
+| rpl_semi_sync_slave_enabled  | ON    |
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}';netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+192.168.4.55
+192.168.2.55
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1021/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1016/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1021/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1036/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1330/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1021/memcached
+udp6  0  0  :::11211        :::*       1021/memcached
+[root@H55 ~]# mysql -uroot -p1234
+
+mysql> drop database teadb;
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> show variables like 'have_dynamic_loading';
+
+| Variable_name        | Value |
+| have_dynamic_loading | YES   |
+
+mysql> select plugin_name,plugin_status from
+    -> information_schema.plugins where
+    -> plugin_name like '%semi%';
+Empty set (0.01 sec)
+
+mysql> show variables like 'rpl_semi_sync_%_enabled';
+Empty set (0.01 sec)
+
+[root@H55 ~]# vim /etc/my.cnf
+[root@H55 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+plugin-load="rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl_semi_sync_master_enabled=1
+rpl_semi_sync_slave_enabled=1
+validate_password_policy=0
+validate_password_length=4
+[root@H55 ~]# systemctl restart mysqld
+
+mysql> select plugin_name,plugin_status from information_schema.plugins where plugin_name like '%semi%';
+
+| plugin_name          | plugin_status |
+| rpl_semi_sync_master | ACTIVE        |
+| rpl_semi_sync_slave  | ACTIVE        |
+
+mysql> show variables like 'rpl_semi_sync_%_enabled';  
+                                          
+| Variable_name                | Value |
+| rpl_semi_sync_master_enabled | ON    |
+| rpl_semi_sync_slave_enabled  | ON    |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H56 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}';netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+192.168.4.56
+192.168.2.56
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1020/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1029/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1020/memcached
+tcp6  0  0  :::3306         :::*       LISTEN          1324/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1020/memcached
+udp6  0  0  :::11211        :::*       1020/memcached
+[root@H56 ~]# mysql -uroot -p1234
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H57 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}';netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+192.168.4.57
+192.168.2.57
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1030/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1032/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1030/memcached
+tcp6  0  0  :::3306         :::*       LISTEN          1340/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1030/memcached
+udp6  0  0  :::11211        :::*       1030/memcached
+[root@H57 ~]# mysql -uroot -p1234
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,2655 @@
+
+[root@hiys ~]# for i in {0..7}; do scp -r '/root/桌面/redis' root@192.168.4.5$i:/root/; done
+
+[root@hiys ~]# for i in 192.168.4.5{0..7}; do scp -r '/root/桌面/mha-soft-student'  root@${i}:/root/; done
+
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.50
+192.168.2.50
+201.1.1.50
+201.1.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H50 ~]# cd redis/;ls
+index.html                             php-redis-2.2.4.tar.gz
+lnmp_soft.tar.gz                       redis-3.2.1.gem
+mongodb-linux-x86_64-rhel70-3.6.3.tgz  redis-4.0.8.tar.gz
+nginx-1.12.2.tar.gz                    redis.zip
+php-devel-5.4.16-42.el7.x86_64.rpm     reg.php
+php-fpm-5.4.16-42.el7.x86_64.rpm       ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H50 redis]# yum -y install  gcc |tail -2
+
+[root@H50 redis]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+
+[root@H50 redis]# cd
+[root@H50 ~]# tar -xzf  /root/redis/redis-4.0.8.tar.gz 
+[root@H50 ~]# cd redis-4.0.8/;ls
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+[root@H50 redis-4.0.8]# make >/dev/null  && make install >/dev/null    # [ 2 ] 初始化配置
+
+[root@H50 redis-4.0.8]# ls utils/install_server.sh 
+utils/install_server.sh
+[root@H50 redis-4.0.8]# ./utils/install_server.sh  ## [ 3 ]初始化  初始化配置
+.....................................
+
+Please select the redis port for this instance: [6379] 端口号[默认值 直接回车确认]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] 主配置文件 [默认值 直接回车确认]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] 日志文件 [默认值 直接回车确认]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录 [默认值 直接回车确认]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件[默认值 直接回车确认]
+
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli    命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. [默认值 直接回车确认]
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...  
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...  启动服务
+Installation successful!
+
+[root@H50 redis-4.0.8]# pwd
+/root/redis-4.0.8
+[root@H50 redis-4.0.8]# cd
+[root@H50 ~]# netstat -anpult |grep redis-server
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*      LISTEN      6620/redis-server 1 
+
+[root@H50 ~]# ls /root/redis-4.0.8/
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+
+[root@H50 ~]# ls /root/redis-4.0.8/utils/
+build-static-symbols.tcl  graphs             redis-copy.rb          speed-regression.tcl
+cluster_fail_time.tcl     hashtable          redis_init_script      whatisdoing.sh
+corrupt_rdb.c             hyperloglog        redis_init_script.tpl
+create-cluster            install_server.sh  redis-sha1.rb
+generate-command-help.rb  lru                releasetools
+
+[root@H50 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H50 ~]# vim /etc/redis/6379.conf 
+
+  70 bind 192.168.4.50
+ 93 port 6350
+ 137 daemonize yes
+ 501 # requirepass foobared
+ 815 cluster-enabled yes
+ 823 cluster-config-file nodes-6350.conf
+ 829 cluster-node-timeout 5000
+[root@H50 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.50
+    93	port 6350
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6350.conf
+   829	cluster-node-timeout 5000
+
+[root@H50 ~]# vim /etc/init.d/redis_6379 
+
+ 43          #   $CLIEXEC -p $REDISPORT shutdown
+ 44             $CLIEXEC  -h 192.168.4.50 -p 6350  shutdown
+
+[root@H50 ~]# sed -n '43,44p' /etc/init.d/redis_6379
+         #   $CLIEXEC -p $REDISPORT shutdown
+            $CLIEXEC  -h 192.168.4.50 -p 6350  shutdown
+
+[root@H50 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.50:6350       0.0.0.0:*               LISTEN      1225/redis-server 1 
+tcp        0      0 192.168.4.50:16350      0.0.0.0:*               LISTEN      1225/redis-server 1 
+[root@H50 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6350.conf
+[root@H50 ~]# redis-cli  -c -h 192.168.4.51 -p 6351
+192.168.4.51:6351> keys *
+(empty list or set)
+
+192.168.4.51:6351> set name  bob
+-> Redirected to slot [5798] located at 192.168.4.52:6352
+OK
+
+192.168.4.52:6352> set age 21
+-> Redirected to slot [741] located at 192.168.4.51:6351
+OK
+
+192.168.4.51:6351> set  xixi  hahaha
+-> Redirected to slot [15923] located at 192.168.4.53:6353
+OK
+
+192.168.4.53:6353> set xi  haha
+OK
+192.168.4.53:6353> get xi*
+-> Redirected to slot [1331] located at 192.168.4.51:6351
+(nil)
+
+192.168.4.51:6351> get age
+"21"
+192.168.4.51:6351> keys xi*
+(empty list or set)
+
+192.168.4.51:6351> keys *
+1) "age"
+
+192.168.4.51:6351> get xixi
+-> Redirected to slot [15923] located at 192.168.4.53:6353
+"hahaha"
+192.168.4.53:6353> keys x*
+1) "xi"
+2) "xixi"
+
+192.168.4.53:6353> keys xix*
+1) "xixi"
+
+192.168.4.53:6353> type xixi
+string
+
+192.168.4.53:6353> type age
+-> Redirected to slot [741] located at 192.168.4.51:6351
+string
+192.168.4.51:6351> type age
+string
+
+192.168.4.51:6351> keys *  ## 随着再次从新分配槽数,原有槽位的数据也会随之迁移到对应的主机数据库中
+1) "age"
+192.168.4.51:6351> get age
+"21"
+192.168.4.51:6351> save
+OK
+
+192.168.4.51:6351> exit
+[root@H50 ~]# 
+[root@H50 ~]# redis-cli -h 192.168.4.50 -p 6350
+192.168.4.50:6350> flushall
+OK
+192.168.4.50:6350> keys *
+(empty list or set)
+192.168.4.50:6350> cluster nodes
+e626cc6083b7fd18f9162c94ff8be924496a2b87 :6350@16350 myself,master - 0 0 0 connected
+192.168.4.50:6350> exit
+
+ [root@H50 ~]# redis-cli  -c -h 192.168.4.51 -p 6351
+192.168.4.51:6351> set yy yamelha
+-> Redirected to slot [7551] located at 192.168.4.52:6352
+OK
+192.168.4.52:6352> set v1 110
+-> Redirected to slot [1165] located at 192.168.4.57:6357
+OK
+192.168.4.57:6357> keys *   ## 随着再次从新分配槽数,原有槽位的数据也会随之迁移到对应的主机数据库中
+1) "name"
+2) "v1"
+3) "age"
+192.168.4.57:6357> get v1
+"110"
+192.168.4.57:6357> get name
+"bob"
+192.168.4.57:6357> exit
+[root@H50 ~]# 
+[root@H50 ~]# redis-cli  -h 192.168.4.50 -p 6350
+192.168.4.50:6350> keys *
+1) "age"
+2) "v1"
+3) "name"
+192.168.4.50:6350> get age
+(error) MOVED 741 192.168.4.57:6357
+192.168.4.50:6350> exit
+[root@H50 ~]# redis-cli -c -h 192.168.4.50 -p 6350
+192.168.4.50:6350> keys *
+1) "age"
+2) "v1"
+3) "name"
+192.168.4.50:6350> get age
+-> Redirected to slot [741] located at 192.168.4.57:6357
+"21"
+192.168.4.57:6357> get v1
+"110"
+192.168.4.57:6357> get name
+"bob"
+192.168.4.57:6357> exit
+[root@H50 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.50:6350       0.0.0.0:*               LISTEN      1225/redis-server 1 
+tcp        0      0 192.168.4.50:16350      0.0.0.0:*               LISTEN      1225/redis-server 1 
+tcp        0      0 192.168.4.50:35286      192.168.4.51:16351      ESTABLISHED 1225/redis-server 1 
+.......................................................................
+tcp        0      0 192.168.4.50:35770      192.168.4.55:16355      ESTABLISHED 1225/redis-server 1 
+[root@H50 ~]# 
+[root@H50 ~]# /etc/init.d/redis_6379  stop  ## 当从库被移除redis集群后,自动关闭 4.50的redis服务
+/var/run/redis_6379.pid does not exist, process is not running
+
+[root@H50 ~]# netstat -anpult |grep redis-server
+
+[root@H50 ~]# ls /var/lib/redis/6379/nodes-6350.conf 
+/var/lib/redis/6379/nodes-6350.conf
+                      #192.168.4.50 被 彻底 干净地 移除 redis集群
+[root@H50 ~]# rm -rf /var/lib/redis/6379/nodes-6350.conf
+
+[root@H50 ~]# /etc/init.d/redis_6379 start  ##重新启动服务
+Starting Redis server...
+
+[root@H50 ~]# redis-cli -h 192.168.4.50 -p 6350
+192.168.4.50:6350> keys *
+1) "name"
+2) "v1"
+3) "age"
+192.168.4.50:6350> get name
+(error) CLUSTERDOWN The cluster is down
+192.168.4.50:6350> exit
+[root@H50 ~]# redis-cli -h 192.168.4.57 -p 6357
+192.168.4.57:6357> keys *
+1) "name"
+2) "v1"
+3) "age"
+192.168.4.57:6357> get name
+"bob"
+192.168.4.57:6357> exit
+[root@H50 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.50:6350       0.0.0.0:*               LISTEN      5789/redis-server 1 
+tcp        0      0 192.168.4.50:16350      0.0.0.0:*               LISTEN      5789/redis-server 1 
+[root@H50 ~]# 
+[root@H50 ~]# ll /var/lib/redis/6379/nodes-6350.conf 
+-rw-r--r--. 1 root root 135 10月 31 15:16 /var/lib/redis/6379/nodes-6350.conf
+[root@H50 ~]# cat /var/lib/redis/6379/nodes-6350.conf
+7f5cb6e2927434b5c2a3125209d300b2d64384c6 :6350@16350 myself,master - 0 0 0 connected 741 1165 5798
+vars currentEpoch 0 lastVoteEpoch 0
+[root@H50 ~]# redis-cli -h 192.168.4.50 -p 6350
+192.168.4.50:6350> keys *
+1) "name"
+2) "v1"
+3) "age"
+192.168.4.50:6350> get name
+(error) CLUSTERDOWN The cluster is down
+192.168.4.50:6350> exit
+[root@H50 ~]# 
+[root@H50 ~]# vim /etc/redis/6379.conf 
+[root@H50 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.50
+    93	port 6350
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6350.conf
+   829	#cluster-node-timeout 5000
+[root@H50 ~]# redis-cli  -h 192.168.4.50 -p 6350 shutdown
+[root@H50 ~]# netstat -anpult |grep  redis-server
+[root@H50 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H50 ~]# netstat -anpult |grep  redis-server
+tcp        0      0 192.168.4.50:6350       0.0.0.0:*               LISTEN      6547/redis-server 1 
+[root@H50 ~]# redis-cli  -h 192.168.4.50 -p 6350
+192.168.4.50:6350> keys *
+1) "age"
+2) "v1"
+3) "name"
+192.168.4.50:6350> get age
+"21"
+192.168.4.50:6350> get v1
+"110"
+192.168.4.50:6350> get name
+"bob"
+192.168.4.50:6350> exit
+[root@H50 ~]# 
+                   ## 随着再次从新分配槽数,原有槽位的数据也会随之迁移到对应的主机数据库中
+
+[root@H50 ~]# redis-cli  -h 192.168.4.50 -p 6350
+192.168.4.50:6350> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.50:6350> cluster info
+ERR This instance has cluster support disabled
+192.168.4.50:6350> exit
+[root@H50 ~]# 
+
+
+
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.51
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H51 ~]# cd redis/;ls
+index.html                             php-redis-2.2.4.tar.gz
+lnmp_soft.tar.gz                       redis-3.2.1.gem
+mongodb-linux-x86_64-rhel70-3.6.3.tgz  redis-4.0.8.tar.gz
+nginx-1.12.2.tar.gz                    redis.zip
+php-devel-5.4.16-42.el7.x86_64.rpm     reg.php
+php-fpm-5.4.16-42.el7.x86_64.rpm       ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H51 redis]# yum -y install  gcc |tail -2
+
+[root@H51 redis]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+
+[root@H51 redis]# cd
+[root@H51 ~]# tar -xzf  /root/redis/redis-4.0.8.tar.gz 
+[root@H51 ~]# cd redis-4.0.8/;ls
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+[root@H51 redis-4.0.8]#  make >/dev/null  && make install >/dev/null    # [ 2 ] 初始化配置
+
+[root@H51 redis-4.0.8]# ls utils/install_server.sh 
+utils/install_server.sh
+[root@H51 redis-4.0.8]# ./utils/install_server.sh    ## [ 3 ]初始化  初始化配置
+.....................................
+
+Please select the redis port for this instance: [6379] 端口号[默认值 直接回车确认]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] 主配置文件 [默认值 直接回车确认]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] 日志文件 [默认值 直接回车确认]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录 [默认值 直接回车确认]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件[默认值 直接回车确认]
+
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli    命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. [默认值 直接回车确认]
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...  
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...  启动服务
+Installation successful!
+
+[root@H51 redis-4.0.8]# pwd;cd
+/root/redis-4.0.8
+[root@H51 ~]#  netstat -anpult |grep redis-server
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*               LISTEN      7224/redis-server 1 
+[root@H51 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H51 ~]#  vim /etc/redis/6379.conf 
+[root@H51 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.51
+    93	port 6351
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6351.conf
+   829	cluster-node-timeout 5000
+
+[root@H51 ~]# vim /etc/init.d/redis_6379 
+
+[root@H51 ~]# sed -n '43,44p' /etc/init.d/redis_6379
+#            $CLIEXEC -p $REDISPORT shutdown
+            $CLIEXEC -h 192.168.4.51 -p 6351 shutdown
+
+[root@H51 ~]# /etc/init.d/redis_6379 status
+Redis is running (1228)
+[root@H51 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.51:6351       0.0.0.0:*               LISTEN      1228/redis-server 1 
+tcp        0      0 192.168.4.51:16351      0.0.0.0:*               LISTEN      1228/redis-server 1 
+[root@H51 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6351.conf
+
+[root@H51 ~]# yum -y install ruby rubygems |tail -4
+  rubygem-psych.x86_64 0:2.0.0-30.el7                                           
+  rubygem-rdoc.noarch 0:4.0.0-30.el7                                            
+
+完毕！
+[root@H51 ~]# rpm -ivh redis/ruby-devel-2.0.0.648-30.el7.x86_64.rpm 
+警告：redis/ruby-devel-2.0.0.648-30.el7.x86_64.rpm: 头V3 RSA/SHA256 Signature, 密钥 ID f4a80eb5: NOKEY
+准备中...                          ################################# [100%]
+正在升级/安装...
+   1:ruby-devel-2.0.0.648-30.el7      ################################# [100%]
+
+[root@H51 ~]# ls redis/redis-3.2.1.gem 
+redis/redis-3.2.1.gem
+[root@H51 ~]# which gem
+/usr/bin/gem
+       
+[root@H51 ~]# yum provides /usr/bin/gem
+
+rubygems-2.0.14.1-30.el7.noarch : The Ruby standard for packaging ruby libraries
+源    ：rhel7
+匹配来源：
+文件名    ：/usr/bin/gem
+
+rubygems-2.0.14.1-30.el7.noarch : The Ruby standard for packaging ruby libraries
+源    ：rhel7-2
+匹配来源：
+文件名    ：/usr/bin/gem
+
+rubygems-2.0.14.1-30.el7.noarch : The Ruby standard for packaging ruby libraries
+源    ：@rhel7
+匹配来源：
+文件名    ：/usr/bin/gem
+
+[root@H51 ~]# rpm -q ruby  rubygems
+ruby-2.0.0.648-30.el7.x86_64
+rubygems-2.0.14.1-30.el7.noarch
+
+[root@H51 ~]# gem install redis/redis-3.2.1.gem 
+
+Successfully installed redis-3.2.1
+Parsing documentation for redis-3.2.1
+Installing ri documentation for redis-3.2.1
+1 gem installed
+
+[root@H51 ~]# ls redis-4.0.8/src/ |sed -n $=
+194
+[root@H51 ~]# ll redis-4.0.8/src/redis-trib.rb 
+-rwxrwxr-x. 1 root root 65991 2月   3 2018 redis-4.0.8/src/redis-trib.rb
+
+[root@H51 ~]# mkdir /root/bin
+[root@H51 ~]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@H51 ~]# cp  redis-4.0.8/src/redis-trib.rb  /root/bin/
+
+[root@H51 ~]# ls /root/bin/
+redis-trib.rb
+[root@H51 ~]# redis-trib.rb help 
+Usage: redis-trib <command> <options> <arguments ...>
+
+  create          host1:port1 ... hostN:portN
+                  --replicas <arg>
+  check           host:port
+  info            host:port
+  fix             host:port
+                  --timeout <arg>
+  reshard         host:port
+                  --from <arg>
+                  --to <arg>
+                  --slots <arg>
+                  --yes
+                  --timeout <arg>
+                  --pipeline <arg>
+  rebalance       host:port
+                  --weight <arg>
+                  --auto-weights
+                  --use-empty-masters
+                  --timeout <arg>
+                  --simulate
+                  --pipeline <arg>
+                  --threshold <arg>
+  add-node        new_host:new_port existing_host:existing_port
+                  --slave
+                  --master-id <arg>
+  del-node        host:port node_id
+  set-timeout     host:port milliseconds
+  call            host:port command arg arg .. arg
+  import          host:port
+                  --from <arg>
+                  --copy
+                  --replace
+  help            (show this help)
+
+                    #注意至少3个主库,这里是2主4从,只有2主,error, 如果有9台主机,则不报错
+[root@H51 ~]# redis-trib.rb  create --replicas 2  \ 
+> 192.168.4.51:6351  192.168.4.52:6352  \
+> 192.168.4.53:6353  192.168.4.54:6354  \
+> 192.168.4.55:6355  192.168.4.56:6356  
+>>> Creating cluster
+*** ERROR: Invalid configuration for cluster creation.
+*** Redis Cluster requires at least 3 master nodes.
+*** This is not possible with 6 nodes and 2 replicas per node.
+*** At least 9 nodes are required.  ##至少需要 9 台 主库
+------------------------------------ #注意至少3个主库,这里是3主3从-----------------------------------------
+[root@H51 ~]# redis-trib.rb  create --replicas 1  192.168.4.51:6351  192.168.4.52:6352  192.168.4.53:6353  192.168.4.54:6354  192.168.4.55:6355  192.168.4.56:6356  
+>>> Creating cluster
+>>> Performing hash slots allocation on 6 nodes...
+Using 3 masters:
+192.168.4.51:6351
+192.168.4.52:6352
+192.168.4.53:6353
+Adding replica 192.168.4.55:6355 to 192.168.4.51:6351
+Adding replica 192.168.4.56:6356 to 192.168.4.52:6352
+Adding replica 192.168.4.54:6354 to 192.168.4.53:6353
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:5461-10922 (5462 slots) master
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+Can I set the above configuration? (type 'yes' to accept): yes  ##注意输入yes
+....................................
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+   1 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:5461-10922 (5462 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+............................
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+/*********** 如果 报错,解决办法***********
+前提条件,所有配置修改正确后,再执行如下操作
+[root@H51 ~]# /etc/init.d/redis_6379 stop^C
+[root@H51 ~]# rm -rf /var/lib/redis/6379/*^C
+*****************/
+/****************************-------------------------------------------------
+Adding replica 192.168.4.55:6355 to 192.168.4.51:6351
+
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+----------------------------------------------------------------------------------------------
+Adding replica 192.168.4.56:6356 to 192.168.4.52:6352
+
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:5461-10922 (5462 slots) master
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+-----------------------------------------------------------------------------------------------
+Adding replica 192.168.4.54:6354 to 192.168.4.53:6353
+
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+-------------------------------------**************************************/
+[root@H51 ~]# echo 'scale=2;x=19;x/=3;x' |bc
+6.33
+[root@H51 ~]# echo 'scale=2;x=16384;x/=3;x' |bc
+5461.33
+[root@H51 ~]# echo 'scale=2;x=16383;x/=3;x' |bc
+5461.00
+[root@H51 ~]# echo 'scale=2;x=16383;x/=3;x*=2;x' |bc
+10922.00
+[root@H51 ~]# echo 'scale=2;x=16383;x/=3;x*=3;x' |bc
+16383.00
+[root@H51 ~]# redis-cli  -h 192.168.4.51  -p 6351
+
+192.168.4.51:6351> cluster info
+cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:6
+cluster_size:3
+cluster_current_epoch:6
+cluster_my_epoch:1
+cluster_stats_messages_ping_sent:3111
+cluster_stats_messages_pong_sent:3293
+cluster_stats_messages_sent:6404
+cluster_stats_messages_ping_received:3288
+cluster_stats_messages_pong_received:3111
+cluster_stats_messages_meet_received:5
+cluster_stats_messages_received:6404
+192.168.4.51:6351> 
+192.168.4.51:6351> cluster nodes
+
+9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353@16353 master - 0 1540952904283 3 connected 10923-16383
+2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352@16352 master - 0 1540952903281 2 connected 5461-10922
+2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354@16354 slave 9614f9ff7044a9316586b1e066b27d9f8641ffba 0 1540952903000 4 connected
+6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355@16355 slave 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 0 1540952903000 5 connected
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 myself,master - 0 1540952903000 1 connected 0-5460
+a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356@16356 slave 2414c86c27700d4f4924c37c842921da51c4b362 0 1540952903000 6 connected
+192.168.4.51:6351> 
+ 192.168.4.51:6351> keys *
+1) "age"
+192.168.4.51:6351> get age
+"21"
+192.168.4.51:6351>  exit
+[root@H51 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.51:6351       0.0.0.0:*               LISTEN      1228/redis-server 1 
+tcp        0      0 192.168.4.51:16351      0.0.0.0:*               LISTEN      1228/redis-server 1 
+...........................................................................
+tcp        0      0 192.168.4.51:38541      192.168.4.55:16355      ESTABLISHED 1228/redis-server 1 
+tcp     2568      0 192.168.4.51:38353      192.168.4.56:16356      ESTABLISHED 1228/redis-server 1 
+.................................................
+tcp        0      0 192.168.4.51:6351       192.168.4.55:40693      ESTABLISHED 1228/redis-server 1 
+[root@H51 ~]# 
+[root@H51 ~]# which redis-trib.rb
+/root/bin/redis-trib.rb
+[root@H51 ~]# yum  provides  /root/bin/redis-trib.rb
+...............................
+                               # [ 1 ]增加主数据库master node
+#  redis-trib.rb   add-node   new_host:new_port existing_host:existing_port
+#                  --slave
+[root@H51 ~]# redis-trib.rb  add-node  192.168.4.57:6357  192.168.4.51:6351  # [ 1 ]增加主数据库master node
+
+>>> Adding node 192.168.4.57:6357 to cluster 192.168.4.51:6351
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+   1 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:5461-10922 (5462 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+>>> Send CLUSTER MEET to node 192.168.4.57:6357 to make it join the cluster.
+[OK] New node added correctly.
+[root@H51 ~]# 
+
+[root@H51 ~]# redis-trib.rb  check 192.168.4.51:6351
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+   1 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots: (0 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:5461-10922 (5462 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+/****************************-------------------------------------------------
+Adding replica 192.168.4.55:6355 to 192.168.4.51:6351
+
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+----------------------------------------------------------------------------------------------
+Adding replica 192.168.4.56:6356 to 192.168.4.52:6352
+
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:5461-10922 (5462 slots) master
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+-----------------------------------------------------------------------------------------------
+Adding replica 192.168.4.54:6354 to 192.168.4.53:6353
+
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+-------------------------------------**************************************/
+[root@H51 ~]# echo 'scale=2;x=16383;x/=4;x' |bc
+4095.75
+[root@H51 ~]# echo 'scale=2;x=16384;x/=4;x' |bc
+4096.00
+[root@H51 ~]# echo 'scale=2;x=16384;x/=3;x' |bc
+5461.33
+[root@H51 ~]# echo 'scale=2;x=16383;x/=3;x' |bc
+5461.00
+[root@H51 ~]# echo 'scale=2;5461-4096' |bc
+1365
+[root@H51 ~]# echo 'scale=2;1365*3' |bc
+4095
+
+[root@H51 ~]# echo 'scale=2;16383-12288' |bc
+4095
+[root@H51 ~]# redis-trib.rb  reshard 192.168.4.51:6351    # [ 2 ] 重新分配槽数位
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+   1 additional replica(s)
+..................................
+How many slots do you want to move (from 1 to 16384)? 4096  #输入槽位数 4096
+/******************
+[root@H51 ~]# redis-trib.rb  check 192.168.4.51:6351
+...........................
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots: (0 slots) master
+********************************/ #输入接收192.168.4.57的id-hash值
+What is the receiving node ID? 43986a2440b360cbc1948adda56e92ffae975d81
+
+Please enter all the source node IDs.
+  Type 'all' to use all the nodes as source nodes for the hash slots.
+  Type 'done' once you entered all the source nodes IDs.
+
+                              ## 最好别用‘all’， 会造成slot 分割碎片。
+Source node #1:all   #输入 all ,3个主库平均分摊出 1365*3=4096 个槽位数给新的主库57使用
+
+Ready to move 4096 slots.
+  Source nodes:
+    M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-5460 (5461 slots) master
+   1 additional replica(s)
+    M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:10923-16383 (5461 slots) master
+   1 additional replica(s)
+    M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:5461-10922 (5462 slots) master
+   1 additional replica(s)
+  Destination node:
+    M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots: (0 slots) master
+   0 additional replica(s)
+...............................................
+您想继续执行拟议的RESART计划吗？
+Do you want to proceed with the proposed reshard plan (yes/no)? yes  #输入yes
+......................................................
+Moving slot 1364 from 192.168.4.51:6351 to 192.168.4.57:6357:
+
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351    ##检查 槽数位 4096
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:1365-5460 (4096 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-1364,5461-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+
+/******************
+[root@H51 ~]# redis-trib.rb  check 192.168.4.51:6351
+...........................
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots: (0 slots) master
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-1364,5461-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+[root@H51 ~]# echo 'scale=2;6826-5461' |bc
+1365
+[root@H51 ~]# echo 'scale=2;12287-10923' |bc
+1364
+[root@H51 ~]# echo 'scale=2;1365*3' |bc
+4095
+********************************/
+               # [ 1 ]增加 从 数据库 slave node 192.168.4.50:6350
+
+#  redis-trib.rb   add-node   new_host:new_port existing_host:existing_port
+#                  --slave
+[root@H51 ~]#  redis-trib.rb add-node  --slave  192.168.4.50:6350 192.168.4.51:6351
+
+>>> Adding node 192.168.4.50:6350 to cluster 192.168.4.51:6351
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:1365-5460 (4096 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-1364,5461-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+....................................
+[OK] All 16384 slots covered.
+Automatically selected master 192.168.4.57:6357
+>>> Send CLUSTER MEET to node 192.168.4.50:6350 to make it join the cluster.
+Waiting for the cluster to join.
+>>> Configure node as replica of 192.168.4.57:6357.
+[OK] New node added correctly.
+[root@H51 ~]# 
+
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351  #查看 自动为主库57 增加 从库 50
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:1365-5460 (4096 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-1364,5461-6826,10923-12287 (4096 slots) master
+   1 additional replica(s)
+
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+
+S: e626cc6083b7fd18f9162c94ff8be924496a2b87 192.168.4.50:6350
+   slots: (0 slots) slave
+   replicates 43986a2440b360cbc1948adda56e92ffae975d81
+
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> exit
+
+-----------------------------crc16 算法 x % 16384 [0-9] ---------------
+##  redis-trib.rb   del-node        host:port   node_id
+    # 移除从库 slave 192.168.4.50
+/**************  ## 先查找4.50 的 node_id 值 
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351  #查看
+S: e626cc6083b7fd18f9162c94ff8be924496a2b87 192.168.4.50:6350
+   slots: (0 slots) slave
+************/ redis-trib.rb  del-node  192.168.4.51:6351   ## 4.50 的 node_id 值
+                       # 移 除 从 库 slave   192.168.4.50
+
+[root@H51 ~]# redis-trib.rb  del-node  192.168.4.51:6351  e626cc6083b7fd18f9162c94ff8be924496a2b87
+
+>>> Removing node e626cc6083b7fd18f9162c94ff8be924496a2b87 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351  #查看#查看 4.50 已经成功移除
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:1365-5460 (4096 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-1364,5461-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+/******************移 除 主库 192.168.4.57:6357  [ 1 ]
+##  redis-trib.rb   del-node        host:port   node_id
+
+           # 先查找4.51  ,  4.57  的 node_id 值 
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351  #查看
+
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:1365-5460 (4096 slots) master
+
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-1364,5461-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+*****************/redis集群重新分片(reshard)*移 除 主库 192.168.4.57:6357  [ 1 ]
+    ## 随着再次从新分配槽数,192.168.4.57原有槽位的数据也会随之迁移到对应的主机 数据库中
+
+[root@H51 ~]# redis-trib.rb  reshard 192.168.4.51:6351  
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:1365-5460 (4096 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-1364,5461-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+How many slots do you want to move (from 1 to 16384)? 4096  #输入 192.168.4.57 (被删除master)的所有slot数量
+
+/**************# 先查找4.51  ,  4.57  的 node_id 值 
+
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351  #查看
+
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:1365-5460 (4096 slots) master
+
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-1364,5461-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+*****************/#输入 指定 接收 4096 节点slot的 的master( 192.168.4.51 )的node_id 值
+
+What is the receiving node ID? 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+
+Please enter all the source node IDs.
+  Type 'all' to use all the nodes as source nodes for the hash slots.
+  Type 'done' once you entered all the source nodes IDs.
+
+                     #输入 指定 将要 被 移除  192.168.4.57 的node_id 值
+Source node #1:43986a2440b360cbc1948adda56e92ffae975d81
+Source node #2:done  输入done
+............................................
+    Moving slot 12287 from 43986a2440b360cbc1948adda56e92ffae975d81
+
+Do you want to proceed with the proposed reshard plan (yes/no)? yes  #输入yes
+..........................
+Moving slot 12287 from 192.168.4.57:6357 to 192.168.4.51:6351: 
+
+       # 查看 槽数已经交接完成192.168.4.51:6351 slots:0-6826,10923-12287 (8192 slots)
+
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-6826,10923-12287 (8192 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots: (0 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+/******************移 除 主库 192.168.4.57:6357 [ 2 ]
+##  redis-trib.rb   del-node        host:port   node_id
+
+           # 先查找  4.57  的 node_id 值 
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351  #查看
+
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-1364,5461-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+************/ redis-trib.rb  del-node  192.168.4.51:6351   ## 4.57 的 node_id 值
+
+[root@H51 ~]# redis-trib.rb  del-node  192.168.4.51:6351  43986a2440b360cbc1948adda56e92ffae975d81
+
+>>> Removing node 43986a2440b360cbc1948adda56e92ffae975d81 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351  #查看 4.57 已经成功移除
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-6826,10923-12287 (8192 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+    ## 随着再次从新分配槽数,192.168.4.57原有槽位的数据也会随之迁移到对应的主机 数据库中
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351
+192.168.4.51:6351> keys *
+1) "age"    ## 未移 除主机 192.168.4.57 之前, 是57 主库的数据,随着再次从新分配槽数,现在转移到51主库中
+2) "v1"
+3) "name"
+192.168.4.51:6351> get age
+"21"
+192.168.4.51:6351> exit
+[root@H51 ~]# 
+                               # [ 1 ]再次 重新 增加主数据库master node
+#  redis-trib.rb   add-node   new_host:new_port existing_host:existing_port
+#                  --slave
+
+[root@H51 ~]# redis-trib.rb  add-node  192.168.4.57:6357  192.168.4.51:6351  # [ 1 ]增加主数据库master node
+
+>>> Adding node 192.168.4.57:6357 to cluster 192.168.4.51:6351
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+.....................................
+[OK] All 16384 slots covered.
+>>> Send CLUSTER MEET to node 192.168.4.57:6357 to make it join the cluster.
+[OK] New node added correctly.
+[root@H51 ~]# 
+
+[root@H51 ~]# redis-trib.rb  reshard  192.168.4.51:6351   ## 重新分配solt
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-6826,10923-12287 (8192 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots: (0 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+How many slots do you want to move (from 1 to 16384)? 4096  #输入槽位数 4096
+/******************M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots: (0 slots) master  **********/
+                                            #输入接收192.168.4.57的id-hash值
+What is the receiving node ID? 43986a2440b360cbc1948adda56e92ffae975d81
+
+/***************M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-6826,10923-12287 (8192 slots) master
+****************/    输入192.168.4.51 贡献槽位数的node_id值,分摊出 4096 个槽位数给新的主库57使用
+
+Source node #1: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec  ###输入 贡献槽位数的node_id值,分摊出 4096 个槽位数给新的主库57使用
+Source node #2:done  #输入done,表示完成
+.......................
+    Moving slot 4095 from 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+Do you want to proceed with the proposed reshard plan (yes/no)? yes #输入yes,确认重新分
+............................................
+
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351   ## 查看主库57 已经加入集群(分配了4096 slots)
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:4096-6826,10923-12287 (4096 slots) master
+   1 additional replica(s)
+
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-4095 (4096 slots) master
+   0 additional replica(s)
+
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+
+
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:4096-6826,10923-12287 (4096 slots) master
+   1 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   1 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-4095 (4096 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   1 additional replica(s)
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+   replicates 2414c86c27700d4f4924c37c842921da51c4b362
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+
+##  redis-trib.rb   del-node        host:port   node_id
+    # 移除从库 slave 192.168.4.54  192.168.4.55  192.168.4.56
+/**************  ## 先查找4.54 ,  4.55 ,  4.56 的 node_id 值 
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351  #查看
+
+S: 2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354
+   slots: (0 slots) slave
+   replicates 9614f9ff7044a9316586b1e066b27d9f8641ffba
+S: 6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355
+   slots: (0 slots) slave
+   replicates 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec
+S: a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356
+   slots: (0 slots) slave
+************/ redis-trib.rb  del-node  192.168.4.51:6351   ## 4.54 | 4.55 |4.56 的 node_id 值
+                       # 移 除 从 库 slave   192.168.4.5{4,5,6}
+   # redis-trib.rb  del-node 192.168.4.51:6351       4.54 | 4.55 |  4.56 的 node_id 值 
+
+[root@H51 ~]# redis-trib.rb  del-node 192.168.4.51:6351 2fd5be876888f719dc12096cf0ed515cac97a3c8
+>>> Removing node 2fd5be876888f719dc12096cf0ed515cac97a3c8 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+[root@H51 ~]# redis-trib.rb del-node 192.168.4.51:6351  6a61d8ef648a2621c5664b6d98177c8ba99b843f
+>>> Removing node 6a61d8ef648a2621c5664b6d98177c8ba99b843f from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+[root@H51 ~]# redis-trib.rb del-node 192.168.4.51:6351 a017e203f9100a4ccfb7372787a5a8d09400205e
+>>> Removing node a017e203f9100a4ccfb7372787a5a8d09400205e from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:4096-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   0 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-4095 (4096 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   0 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+
+[root@H51 ~]# redis-cli -h 192.168.4.51  -p 6351
+
+192.168.4.51:6351> keys *
+1) "name"
+192.168.4.51:6351> cluster nodes
+9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353@16353 master - 0 1540983050000 3 connected 12288-16383
+43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357@16357 master - 0 1540983050283 9 connected 0-4095
+2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352@16352 master - 0 1540983050784 2 connected 6827-10922
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 myself,master - 0 1540983049000 8 connected 4096-6826 10923-12287
+192.168.4.51:6351> exit
+[root@H51 ~]# 
+
+/******************移 除 主库 192.168.4.57:6357  [ 1 ]
+##  redis-trib.rb   del-node        host:port   node_id
+           # 先查找4.51  ,  4.57  的 node_id 值 
+[root@H51 ~]# redis-trib.rb check 192.168.4.51:6351  #查看
+
+*****************/redis集群重新分片(reshard)*移 除 主库 192.168.4.57:6357  [ 1 ]
+    ## 随着再次从新分配槽数,192.168.4.57原有槽位的数据也会随之迁移到对应的主机 数据库中
+**************/
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351 |sed -n '/192.168.4.57:6357/,+2p'
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-4095 (4096 slots) master
+   0 additional replica(s)
+[root@H51 ~]# 
+
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351 |sed -n '/192.168.4.51:6351/,+2p'
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:4096-6826,10923-12287 (4096 slots) master
+
+                                  **移 除 主库 192.168.4.5{7,3,2}
+[root@H51 ~]# redis-trib.rb  reshard  192.168.4.51:6351   ## 重新分配solt
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:4096-6826,10923-12287 (4096 slots) master
+   0 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots:12288-16383 (4096 slots) master
+   0 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots:0-4095 (4096 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots:6827-10922 (4096 slots) master
+   0 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+/**********************************
+[root@H51 ~]# echo 4096*3 |bc
+12288
+*********************/
+How many slots do you want to move (from 1 to 16384)? 12288  #输入槽位数12288 (被删除master)的所有slot数量
+
+            #输入 指定 接收 12288 节点slot的 的master( 192.168.4.51 )的node_id 值
+What is the receiving node ID? 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec  #接收12288 节点的 的master(192.168.4.51)
+Please enter all the source node IDs.
+  Type 'all' to use all the nodes as source nodes for the hash slots.
+  Type 'done' once you entered all the source nodes IDs.
+
+                         #输入 指定 将要 被 移除  192.168.4.57 的node_id 值
+                      #输入 指定 将要 被 移除  192.168.4.53 的node_id 值
+                      #输入 指定 将要 被 移除  192.168.4.52 的node_id 值
+Source node #1:43986a2440b360cbc1948adda56e92ffae975d81
+Source node #2:9614f9ff7044a9316586b1e066b27d9f8641ffba
+Source node #3:2414c86c27700d4f4924c37c842921da51c4b362
+Source node #4:done   #输入done,完成
+..........................
+  Moving slot 10922 from 2414c86c27700d4f4924c37c842921da51c4b362
+Do you want to proceed with the proposed reshard plan (yes/no)? yes #输入yes,确认重新分
+....................................................
+Moving slot 10922 from 192.168.4.52:6352 to 192.168.4.51:6351: 
+[root@H51 ~]# echo $?
+0
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351   ## 确认所有节点都集中到4.51 主库中
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-16383 (16384 slots) master
+   0 additional replica(s)
+M: 9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353
+   slots: (0 slots) master
+   0 additional replica(s)
+M: 43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357
+   slots: (0 slots) master
+   0 additional replica(s)
+M: 2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352
+   slots: (0 slots) master
+   0 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+                         ** **移 除 主库 192.168.4.5{7,3,2} #输入 指定 将要 被 移除  192.168.4.57 的node_id 值
+
+[root@H51 ~]# redis-trib.rb  del-node  192.168.4.51:6351 \
+> 43986a2440b360cbc1948adda56e92ffae975d81
+
+>>> Removing node 43986a2440b360cbc1948adda56e92ffae975d81 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+                      ** **移 除 主库 192.168.4.5{7,3,2} #输入 指定 将要 被 移除  192.168.4.53 的node_id 值
+
+[root@H51 ~]# redis-trib.rb  del-node  192.168.4.51:6351  9614f9ff7044a9316586b1e066b27d9f8641ffba
+
+>>> Removing node 9614f9ff7044a9316586b1e066b27d9f8641ffba from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+                   ** **移 除 主库 192.168.4.5{7,3,2} #输入 指定 将要 被 移除  192.168.4.52 的node_id 值
+
+[root@H51 ~]# redis-trib.rb  del-node  192.168.4.51:6351  2414c86c27700d4f4924c37c842921da51c4b362
+
+>>> Removing node 2414c86c27700d4f4924c37c842921da51c4b362 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351    ## 确认 只剩下 4.51 主库
+
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-16383 (16384 slots) master
+   0 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+[root@H51 ~]# redis-trib.rb  del-node  192.168.4.51:6351 \
+> 43986a2440b360cbc1948adda56e92ffae975d81
+>>> Removing node 43986a2440b360cbc1948adda56e92ffae975d81 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+[root@H51 ~]# redis-trib.rb  del-node  192.168.4.51:6351  9614f9ff7044a9316586b1e066b27d9f8641ffba
+>>> Removing node 9614f9ff7044a9316586b1e066b27d9f8641ffba from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+[root@H51 ~]# redis-trib.rb  del-node  192.168.4.51:6351  2414c86c27700d4f4924c37c842921da51c4b362
+>>> Removing node 2414c86c27700d4f4924c37c842921da51c4b362 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351 
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351
+   slots:0-16383 (16384 slots) master
+   0 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+[root@H51 ~]# 
+[root@H51 ~]# redis-cli -h 192.168.4.51  -p 6351
+192.168.4.51:6351> keys *
+1) "yy"
+2) "xi"
+3) "age"
+4) "v1"
+5) "name"
+6) "xixi"
+192.168.4.51:6351> get xi
+"haha"
+192.168.4.51:6351> get yy
+"yamelha"
+192.168.4.51:6351> get age
+"21"
+192.168.4.51:6351> get v1
+"110"
+192.168.4.51:6351> get xixi
+"hahaha"
+192.168.4.51:6351> get name
+"bob"
+192.168.4.51:6351> save
+OK
+192.168.4.51:6351> cluster nodes
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 myself,master - 0 1540989930000 10 connected 0-16383
+192.168.4.51:6351> cluster info
+cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:1
+cluster_size:1
+cluster_current_epoch:10
+cluster_my_epoch:10
+cluster_stats_messages_ping_sent:65913
+cluster_stats_messages_pong_sent:70659
+cluster_stats_messages_update_sent:35
+cluster_stats_messages_sent:136607
+cluster_stats_messages_ping_received:70651
+cluster_stats_messages_pong_received:65913
+cluster_stats_messages_meet_received:8
+cluster_stats_messages_received:136572
+192.168.4.51:6351> cluster reset
+(error) ERR CLUSTER RESET can't be called with master nodes containing keys
+192.168.4.51:6351> keys *
+1) "yy"
+2) "xi"
+3) "age"
+4) "v1"
+5) "name"
+6) "xixi"
+192.168.4.51:6351> get v1
+"110"
+192.168.4.51:6351> get age
+"21"
+192.168.4.51:6351> exit
+[root@H51 ~]# 
+[root@H51 ~]# vim  /etc/redis/6379.conf 
+
+[root@H51 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.51
+    93	port 6351
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6351.conf
+   829	#cluster-node-timeout 5000
+
+[root@H51 ~]# /etc/init.d/redis_6379 status
+Redis is running (1228)
+
+[root@H51 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+
+[root@H51 ~]# ll /var/lib/redis/6379/nodes-6351.conf 
+-rw-r--r--. 1 root root 155 10月 31 20:45 /var/lib/redis/6379/nodes-6351.conf
+[root@H51 ~]# > /var/lib/redis/6379/nodes-6351.conf
+[root@H51 ~]# ll /var/lib/redis/6379/nodes-6351.conf 
+-rw-r--r--. 1 root root 0 10月 31 21:05 /var/lib/redis/6379/nodes-6351.conf
+
+[root@H51 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+
+[root@H51 ~]# ll /var/lib/redis/6379/nodes-6351.conf 
+-rw-r--r--. 1 root root 0 10月 31 21:05 /var/lib/redis/6379/nodes-6351.conf
+
+[root@H51 ~]# redis-trib.rb  check  192.168.4.51:6351 
+[ERR] Node 192.168.4.51:6351 is not configured as a cluster node.
+
+[root@H51 ~]# redis-cli -h 192.168.4.51  -p 6351
+192.168.4.51:6351> keys *
+1) "xixi"
+2) "name"
+3) "v1"
+4) "age"
+5) "yy"
+6) "xi"
+192.168.4.51:6351> get xi
+"haha"
+192.168.4.51:6351> get name
+"bob"
+192.168.4.51:6351> cluster info
+ERR This instance has cluster support disabled
+
+192.168.4.51:6351> cluster nodes
+ERR This instance has cluster support disabled
+
+192.168.4.51:6351> exit
+[root@H51 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.51:6351       0.0.0.0:*               LISTEN      9267/redis-server 1 
+[root@H51 ~]# 
+
+
+
+
+
+
+
+
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.52
+192.168.2.52
+201.1.1.52
+201.1.2.52
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H52 ~]# cd redis/;ls
+index.html                             php-redis-2.2.4.tar.gz
+lnmp_soft.tar.gz                       redis-3.2.1.gem
+mongodb-linux-x86_64-rhel70-3.6.3.tgz  redis-4.0.8.tar.gz
+nginx-1.12.2.tar.gz                    redis.zip
+php-devel-5.4.16-42.el7.x86_64.rpm     reg.php
+php-fpm-5.4.16-42.el7.x86_64.rpm       ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H52 redis]# yum -y install  gcc |tail -2
+
+[root@H52 redis]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+[root@H52 redis]# cd
+[root@H52 ~]# tar -xzf  /root/redis/redis-4.0.8.tar.gz 
+[root@H52 ~]# cd redis-4.0.8/;ls
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+[root@H52 redis-4.0.8]# make >/dev/null  && make install >/dev/null    # [ 2 ] 初始化配置
+[root@H52 redis-4.0.8]# ls utils/install_server.sh 
+utils/install_server.sh
+[root@H52 redis-4.0.8]# ./utils/install_server.sh   ## [ 3 ]初始化  初始化配置
+.....................................
+
+Please select the redis port for this instance: [6379] 端口号[默认值 直接回车确认]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] 主配置文件 [默认值 直接回车确认]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] 日志文件 [默认值 直接回车确认]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录 [默认值 直接回车确认]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件[默认值 直接回车确认]
+
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli    命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. [默认值 直接回车确认]
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...  
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...  启动服务
+Installation successful!
+
+[root@H52 redis-4.0.8]# pwd;cd
+/root/redis-4.0.8
+[root@H52 ~]#  netstat -anpult |grep redis-server
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*               LISTEN      7226/redis-server 1 
+[root@H52 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H52 ~]#  vim /etc/redis/6379.conf 
+[root@H52 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.52
+    93	port 6352
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6352.conf
+   829	cluster-node-timeout 5000
+[root@H52 ~]# vim /etc/init.d/redis_6379 
+[root@H52 ~]# sed -n '43,44p' /etc/init.d/redis_6379
+#            $CLIEXEC -p $REDISPORT shutdown
+            $CLIEXEC  -h 192.168.4.52 -p 6352 shutdown
+[root@H52 ~]# 
+[root@H52 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.52:6352       0.0.0.0:*               LISTEN      1224/redis-server 1 
+tcp        0      0 192.168.4.52:16352      0.0.0.0:*               LISTEN      1224/redis-server 1 
+[root@H52 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6352.conf
+[root@H52 ~]# redis-cli  -h  192.168.4.52 -p 6352
+192.168.4.52:6352> keys *
+1) "name"
+192.168.4.52:6352> get name
+"bob"
+192.168.4.52:6352>  cluster nodes
+2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352@16352 myself,master - 0 1540955516000 2 connected 5461-10922
+2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354@16354 slave 9614f9ff7044a9316586b1e066b27d9f8641ffba 0 1540955516832 4 connected
+9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353@16353 master - 0 1540955517834 3 connected 10923-16383
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 master - 0 1540955518537 1 connected 0-5460
+a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356@16356 slave 2414c86c27700d4f4924c37c842921da51c4b362 0 1540955518537 6 connected
+6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355@16355 slave 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 0 1540955517333 5 connected
+192.168.4.52:6352> exit
+[root@H52 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.52:6352       0.0.0.0:*               LISTEN      1224/redis-server 1 
+tcp        0      0 192.168.4.52:16352      0.0.0.0:*               LISTEN      1224/redis-server 1 
+tcp        0      0 192.168.4.52:6352       192.168.4.56:37949      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:16352      192.168.4.56:37926      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:33415      192.168.4.53:16353      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:38759      192.168.4.51:16351      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:43255      192.168.4.55:16355      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:16352      192.168.4.55:44979      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:16352      192.168.4.53:36053      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:42581      192.168.4.54:16354      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:16352      192.168.4.51:42799      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:46270      192.168.4.56:16356      ESTABLISHED 1224/redis-server 1 
+tcp        0      0 192.168.4.52:16352      192.168.4.54:34155      ESTABLISHED 1224/redis-server 1 
+[root@H52 ~]# 
+
+[root@H52 ~]# netstat -anpult |grep redis-server
+
+[root@H52 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+
+[root@H52 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.52:6352       0.0.0.0:*               LISTEN      9082/redis-server 1 
+tcp        0      0 192.168.4.52:16352      0.0.0.0:*               LISTEN      9082/redis-server 1 
+
+[root@H52 ~]# redis-cli  -h 192.168.4.52  -p 6352
+192.168.4.52:6352> keys *
+(empty list or set)
+192.168.4.52:6352> cluster nodes
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 master,fail? - 1540991717117 1540991717116 10 disconnected 0-16383
+2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352@16352 myself,master - 0 1540991717116 2 connected
+192.168.4.52:6352> cluster info
+cluster_state:fail
+cluster_slots_assigned:16384
+cluster_slots_ok:0
+cluster_slots_pfail:16384
+cluster_slots_fail:0
+cluster_known_nodes:2
+cluster_size:1
+cluster_current_epoch:10
+cluster_my_epoch:2
+cluster_stats_messages_ping_sent:2836
+cluster_stats_messages_sent:2836
+cluster_stats_messages_received:0
+
+192.168.4.52:6352> cluster reset
+OK
+192.168.4.52:6352> exit
+[root@H52 ~]# redis-cli  -h 192.168.4.52  -p 6352  shutdown
+
+[root@H52 ~]# netstat -anpult |grep redis-server
+
+[root@H52 ~]# vim /etc/redis/6379.conf 
+
+[root@H52 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.52
+    93	port 6352
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6352.conf
+   829	#cluster-node-timeout 5000
+
+[root@H52 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+
+[root@H52 ~]# redis-cli  -h 192.168.4.52 -p 6352
+192.168.4.52:6352> keys *
+(empty list or set)
+192.168.4.52:6352> cluster info
+ERR This instance has cluster support disabled
+
+192.168.4.52:6352> cluster nodes
+ERR This instance has cluster support disabled
+
+192.168.4.52:6352> exit
+[root@H52 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.52:6352       0.0.0.0:*               LISTEN      9190/redis-server 1 
+[root@H52 ~]# 
+
+
+
+
+
+
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.53
+192.168.2.53
+201.1.1.53
+201.1.2.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H53 ~]# cd redis/;ls
+index.html                             php-redis-2.2.4.tar.gz
+lnmp_soft.tar.gz                       redis-3.2.1.gem
+mongodb-linux-x86_64-rhel70-3.6.3.tgz  redis-4.0.8.tar.gz
+nginx-1.12.2.tar.gz                    redis.zip
+php-devel-5.4.16-42.el7.x86_64.rpm     reg.php
+php-fpm-5.4.16-42.el7.x86_64.rpm       ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+
+[root@H53 redis]# yum -y install  gcc |tail -2
+
+[root@H53 redis]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+
+[root@H53 redis]# cd
+[root@H53 ~]# tar -xzf  /root/redis/redis-4.0.8.tar.gz 
+[root@H53 ~]# cd redis-4.0.8/;ls
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+[root@H53 redis-4.0.8]#  make >/dev/null  && make install >/dev/null    # [ 2 ] 初始化配置
+
+[root@H53 redis-4.0.8]# ls utils/install_server.sh 
+utils/install_server.sh
+[root@H53 redis-4.0.8]# ./utils/install_server.sh    ## [ 3 ]初始化  初始化配置
+.....................................
+
+Please select the redis port for this instance: [6379] 端口号[默认值 直接回车确认]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] 主配置文件 [默认值 直接回车确认]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] 日志文件 [默认值 直接回车确认]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录 [默认值 直接回车确认]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件[默认值 直接回车确认]
+
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli    命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. [默认值 直接回车确认]
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...  
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...  启动服务
+Installation successful!
+
+
+[root@H53 redis-4.0.8]# pwd;cd
+/root/redis-4.0.8
+[root@H53 ~]#  netstat -anpult |grep redis-server
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*               LISTEN      5908/redis-server 1 
+[root@H53 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H53 ~]#  vim /etc/redis/6379.conf 
+[root@H53 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.53
+    93	port 6353
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6353.conf
+   829	cluster-node-timeout 5000
+[root@H53 ~]# vim /etc/init.d/redis_6379 
+[root@H53 ~]# sed -n '43,44p' /etc/init.d/redis_6379
+#            $CLIEXEC -p $REDISPORT shutdown
+            $CLIEXEC -h 192.168.4.53 -p 6353 shutdown
+[root@H53 ~]# 
+[root@H53 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.53:6353       0.0.0.0:*               LISTEN      1219/redis-server 1 
+tcp        0      0 192.168.4.53:16353      0.0.0.0:*               LISTEN      1219/redis-server 1 
+[root@H53 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6353.conf
+[root@H53 ~]# redis-cli -h 192.168.4.53 -p 6353
+192.168.4.53:6353> keys *
+1) "xi"
+2) "xixi"
+192.168.4.53:6353> keys xix*
+1) "xixi"
+192.168.4.53:6353> get xixi
+"hahaha"
+192.168.4.53:6353> get xi
+"haha"
+192.168.4.53:6353>  cluster nodes
+6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355@16355 slave 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 0 1540955778626 5 connected
+2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352@16352 master - 0 1540955778626 2 connected 5461-10922
+9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353@16353 myself,master - 0 1540955779000 3 connected 10923-16383
+2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354@16354 slave 9614f9ff7044a9316586b1e066b27d9f8641ffba 0 1540955779628 4 connected
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 master - 0 1540955779000 1 connected 0-5460
+a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356@16356 slave 2414c86c27700d4f4924c37c842921da51c4b362 0 1540955778525 6 connected
+192.168.4.53:6353> exit
+[root@H53 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.53:6353       0.0.0.0:*               LISTEN      1219/redis-server 1 
+tcp        0      0 192.168.4.53:16353      0.0.0.0:*               LISTEN      1219/redis-server 1 
+tcp        0      0 192.168.4.53:36053      192.168.4.52:16352      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:42071      192.168.4.51:16351      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:16353      192.168.4.55:34260      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:33092      192.168.4.56:16356      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:16353      192.168.4.51:40946      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:16353      192.168.4.56:35465      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:16353      192.168.4.54:46642      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:16353      192.168.4.52:33415      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:6353       192.168.4.54:39952      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:34960      192.168.4.54:16354      ESTABLISHED 1219/redis-server 1 
+tcp        0      0 192.168.4.53:44054      192.168.4.55:16355      ESTABLISHED 1219/redis-server 1 
+[root@H53 ~]# 
+[root@H53 ~]# netstat -anpult |grep redis-server
+[root@H53 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H53 ~]# redis-cli  -h 192.168.4.53 -p 6353
+192.168.4.53:6353> keys *
+(empty list or set)
+192.168.4.53:6353> cluster nodes
+2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352@16352 master,fail? - 1540992548357 1540992548356 2 disconnected
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 master,fail? - 1540992548357 1540992548356 10 disconnected 0-16383
+9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353@16353 myself,master - 0 1540992548356 3 connected
+192.168.4.53:6353> cluster info
+cluster_state:fail
+cluster_slots_assigned:16384
+cluster_slots_ok:0
+cluster_slots_pfail:16384
+cluster_slots_fail:0
+cluster_known_nodes:3
+cluster_size:1
+cluster_current_epoch:10
+cluster_my_epoch:3
+cluster_stats_messages_ping_sent:1442
+cluster_stats_messages_sent:1442
+cluster_stats_messages_received:0
+192.168.4.53:6353> cluster reset
+OK
+192.168.4.53:6353> cluster info
+cluster_state:fail
+cluster_slots_assigned:0
+cluster_slots_ok:0
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:1
+cluster_size:0
+cluster_current_epoch:10
+cluster_my_epoch:3
+cluster_stats_messages_ping_sent:2032
+cluster_stats_messages_sent:2032
+cluster_stats_messages_received:0
+192.168.4.53:6353> exit
+[root@H53 ~]# vim /etc/redis/6379.conf 
+[root@H53 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.53
+    93	port 6353
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6353.conf
+   829	#cluster-node-timeout 5000
+[root@H53 ~]# redis-cli  -h 192.168.4.53 -p 6353  shutdown
+[root@H53 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H53 ~]# redis-cli  -h 192.168.4.53 -p 6353
+192.168.4.53:6353> keys *
+(empty list or set)
+192.168.4.53:6353> cluster info
+ERR This instance has cluster support disabled
+192.168.4.53:6353> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.53:6353> exit
+[root@H53 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.53:6353       0.0.0.0:*               LISTEN      9258/redis-server 1 
+[root@H53 ~]# 
+
+
+
+
+
+
+
+[root@H54 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.54
+192.168.2.54
+201.1.1.54
+201.1.2.54
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H54 ~]# cd redis/;ls
+index.html                             php-redis-2.2.4.tar.gz
+lnmp_soft.tar.gz                       redis-3.2.1.gem
+mongodb-linux-x86_64-rhel70-3.6.3.tgz  redis-4.0.8.tar.gz
+nginx-1.12.2.tar.gz                    redis.zip
+php-devel-5.4.16-42.el7.x86_64.rpm     reg.php
+php-fpm-5.4.16-42.el7.x86_64.rpm       ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+
+[root@H54 redis]# yum -y install  gcc |tail -2
+
+[root@H54 redis]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+[root@H54 redis]# cd
+[root@H54 ~]# tar -xzf  /root/redis/redis-4.0.8.tar.gz 
+[root@H54 ~]# cd redis-4.0.8/;ls
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+[root@H54 redis-4.0.8]# make >/dev/null  && make install >/dev/null    # [ 2 ] 初始化配置
+
+[root@H54 redis-4.0.8]# ls utils/install_server.sh 
+utils/install_server.sh
+[root@H54 redis-4.0.8]# ./utils/install_server.sh   ## [ 3 ]初始化  初始化配置
+.....................................
+
+Please select the redis port for this instance: [6379] 端口号[默认值 直接回车确认]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] 主配置文件 [默认值 直接回车确认]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] 日志文件 [默认值 直接回车确认]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录 [默认值 直接回车确认]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件[默认值 直接回车确认]
+
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli    命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. [默认值 直接回车确认]
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...  
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...  启动服务
+Installation successful!
+
+[root@H54 redis-4.0.8]# pwd;cd
+/root/redis-4.0.8
+[root@H54 ~]#  netstat -anpult |grep redis-server
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*               LISTEN      5919/redis-server 1 
+[root@H54 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H54 ~]#  vim /etc/redis/6379.conf 
+[root@H54 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.54
+    93	port 6354
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6354.conf
+   829	cluster-node-timeout 5000
+[root@H54 ~]# 
+[root@H54 ~]# vim /etc/init.d/redis_6379 
+[root@H54 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'; sed -n '43,44p' /etc/init.d/redis_6379
+    70	bind 192.168.4.54
+    93	port 6354
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6354.conf
+   829	cluster-node-timeout 5000
+#            $CLIEXEC -p $REDISPORT shutdown
+            $CLIEXEC -h 192.168.4.54 -p 6354 shutdown
+
+[root@H54 ~]# redis-cli  -h 192.168.4.54 -p 6354 shutdown
+
+[root@H54 ~]# netstat -anpult |grep redis-server
+
+[root@H54 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H54 ~]# /etc/init.d/redis_6379 status
+Redis is running (2180)
+
+[root@H54 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H54 ~]# netstat -anpult |grep redis-server
+[root@H54 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H54 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.54:6354       0.0.0.0:*               LISTEN      2230/redis-server 1 
+tcp        0      0 192.168.4.54:16354      0.0.0.0:*               LISTEN      2230/redis-server 1 
+[root@H54 ~]# 
+[root@H54 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6354.conf
+
+[root@H54 ~]# redis-cli  -h 192.168.4.54 -p 6354
+192.168.4.54:6354> keys *
+1) "xi"
+2) "xixi"
+192.168.4.54:6354> get xi
+(error) MOVED 15487 192.168.4.53:6353
+192.168.4.54:6354> exit
+
+[root@H54 ~]# redis-cli -c  -h 192.168.4.54 -p 6354
+192.168.4.54:6354> keys *
+1) "xi"
+2) "xixi"
+192.168.4.54:6354> get xi
+-> Redirected to slot [15487] located at 192.168.4.53:6353
+"haha"
+192.168.4.53:6353> get xixi
+"hahaha"
+192.168.4.53:6353> exit
+[root@H54 ~]# 
+[root@H54 ~]# redis-cli  -h 192.168.4.54 -p 6354
+192.168.4.54:6354> cluster nodes
+2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352@16352 master - 0 1540955831608 2 connected 5461-10922
+2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354@16354 myself,slave 9614f9ff7044a9316586b1e066b27d9f8641ffba 0 1540955831000 4 connected
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 master - 0 1540955831107 1 connected 0-5460
+6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355@16355 slave 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 0 1540955832109 5 connected
+9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353@16353 master - 0 1540955831106 3 connected 10923-16383
+a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356@16356 slave 2414c86c27700d4f4924c37c842921da51c4b362 0 1540955833112 6 connected
+192.168.4.54:6354> exit
+[root@H54 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.54:6354       0.0.0.0:*               LISTEN      2230/redis-server 1 
+tcp        0      0 192.168.4.54:16354      0.0.0.0:*               LISTEN      2230/redis-server 1 
+tcp        0      0 192.168.4.54:16354      192.168.4.52:42581      ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:34019      192.168.4.56:16356      ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:43212      192.168.4.55:16355      ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:46642      192.168.4.53:16353      ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:39952      192.168.4.53:6353       ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:16354      192.168.4.51:45019      ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:45342      192.168.4.51:16351      ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:16354      192.168.4.53:34960      ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:16354      192.168.4.55:40709      ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:34155      192.168.4.52:16352      ESTABLISHED 2230/redis-server 1 
+tcp        0      0 192.168.4.54:16354      192.168.4.56:43292      ESTABLISHED 2230/redis-server 1 
+[root@H54 ~]# 
+[root@H54 ~]# netstat -anpult |grep redis-server
+[root@H54 ~]# vim /etc/redis/6379.conf
+[root@H54 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.54
+    93	port 6354
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6354.conf
+   829	#cluster-node-timeout 5000
+[root@H54 ~]# 
+
+
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.55
+192.168.2.55
+201.1.1.55
+201.1.2.55
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H55 ~]# cd redis/;ls
+index.html                             php-redis-2.2.4.tar.gz
+lnmp_soft.tar.gz                       redis-3.2.1.gem
+mongodb-linux-x86_64-rhel70-3.6.3.tgz  redis-4.0.8.tar.gz
+nginx-1.12.2.tar.gz                    redis.zip
+php-devel-5.4.16-42.el7.x86_64.rpm     reg.php
+php-fpm-5.4.16-42.el7.x86_64.rpm       ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+
+[root@H55 redis]# yum -y install  gcc |tail -2
+
+[root@H55 redis]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+[root@H55 redis]# cd
+[root@H55 ~]# tar -xzf  /root/redis/redis-4.0.8.tar.gz 
+[root@H55 ~]# cd redis-4.0.8/;ls
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+
+[root@H55 redis-4.0.8]#  make >/dev/null  && make install >/dev/null    # [ 2 ] 初始化配置
+
+[root@H55 redis-4.0.8]# ls utils/install_server.sh 
+utils/install_server.sh
+[root@H55 redis-4.0.8]# ./utils/install_server.sh   ## [ 3 ]初始化  初始化配置
+.....................................
+
+Please select the redis port for this instance: [6379] 端口号[默认值 直接回车确认]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] 主配置文件 [默认值 直接回车确认]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] 日志文件 [默认值 直接回车确认]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录 [默认值 直接回车确认]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件[默认值 直接回车确认]
+
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli    命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. [默认值 直接回车确认]
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...  
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...  启动服务
+Installation successful!
+
+[root@H55 redis-4.0.8]# pwd;cd
+/root/redis-4.0.8
+[root@H55 ~]#  netstat -anpult |grep redis-server
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*               LISTEN      5910/redis-server 1 
+[root@H55 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H55 ~]#  vim /etc/redis/6379.conf 
+[root@H55 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.55
+    93	port 6355
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6355.conf
+   829	cluster-node-timeout 5000
+
+[root@H55 ~]# vim /etc/init.d/redis_6379 
+[root@H55 ~]# sed -n '43,44p' /etc/init.d/redis_6379
+#            $CLIEXEC -p $REDISPORT shutdown
+            $CLIEXEC -h 192.168.4.55 -p 6355 shutdown
+
+[root@H55 ~]# redis-cli -h 192.168.4.55 -p 6355 
+
+192.168.4.55:6355> keys *
+(empty list or set)
+192.168.4.55:6355> shutdown
+not connected> exit
+
+[root@H55 ~]# netstat -anpult |grep redis-server
+[root@H55 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H55 ~]# /etc/init.d/redis_6379 status
+Redis is running (2274)
+[root@H55 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H55 ~]# netstat -anpult |grep redis-server
+
+[root@H55 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H55 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.55:6355       0.0.0.0:*               LISTEN      2303/redis-server 1 
+tcp        0      0 192.168.4.55:16355      0.0.0.0:*               LISTEN      2303/redis-server 1 
+[root@H55 ~]# 
+[root@H55 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6355.conf
+[root@H55 ~]# redis-cli  -h 192.168.4.55 -p 6355
+192.168.4.55:6355> keys *
+1) "age"
+192.168.4.55:6355> get age
+(error) MOVED 741 192.168.4.51:6351
+
+192.168.4.55:6355> exit
+[root@H55 ~]# redis-cli -c -h 192.168.4.55 -p 6355
+192.168.4.55:6355> get age
+-> Redirected to slot [741] located at 192.168.4.51:6351
+"21"
+192.168.4.51:6351> keys *
+1) "age"
+192.168.4.51:6351> exit
+[root@H55 ~]# 
+[root@H55 ~]#  netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.55:6355       0.0.0.0:*               LISTEN      2303/redis-server 1 
+tcp        0      0 192.168.4.55:16355      0.0.0.0:*               LISTEN      2303/redis-server 1 
+tcp        0      0 192.168.4.55:33242      192.168.4.56:16356      ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:16355      192.168.4.56:36391      ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:34260      192.168.4.53:16353      ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:44265      192.168.4.51:16351      ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:16355      192.168.4.54:43212      ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:40693      192.168.4.51:6351       ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:16355      192.168.4.51:38541      ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:16355      192.168.4.52:43255      ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:40709      192.168.4.54:16354      ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:44979      192.168.4.52:16352      ESTABLISHED 2303/redis-server 1 
+tcp        0      0 192.168.4.55:16355      192.168.4.53:44054      ESTABLISHED 2303/redis-server 1 
+[root@H55 ~]# 
+[root@H55 ~]# vim /etc/redis/6379.conf 
+[root@H55 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.55
+    93	port 6355
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6355.conf
+   829	#cluster-node-timeout 5000
+[root@H55 ~]# 
+
+
+
+[root@H56 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.56
+192.168.2.56
+201.1.1.56
+201.1.2.56
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H56 ~]# cd redis/;ls
+index.html                             php-redis-2.2.4.tar.gz
+lnmp_soft.tar.gz                       redis-3.2.1.gem
+mongodb-linux-x86_64-rhel70-3.6.3.tgz  redis-4.0.8.tar.gz
+nginx-1.12.2.tar.gz                    redis.zip
+php-devel-5.4.16-42.el7.x86_64.rpm     reg.php
+php-fpm-5.4.16-42.el7.x86_64.rpm       ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+
+[root@H56 redis]# yum -y install  gcc |tail -2
+
+[root@H56 redis]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+
+[root@H56 redis]# cd
+[root@H56 ~]# tar -xzf  /root/redis/redis-4.0.8.tar.gz 
+[root@H56 ~]# cd redis-4.0.8/;ls
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+
+[root@H56 redis-4.0.8]# make >/dev/null  && make install >/dev/null    # [ 2 ] 初始化配置 
+
+[root@H56 redis-4.0.8]# ls utils/install_server.sh 
+utils/install_server.sh
+[root@H56 redis-4.0.8]# ./utils/install_server.sh    ## [ 3 ]初始化  初始化配置
+.....................................
+
+Please select the redis port for this instance: [6379] 端口号[默认值 直接回车确认]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] 主配置文件 [默认值 直接回车确认]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] 日志文件 [默认值 直接回车确认]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录 [默认值 直接回车确认]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件[默认值 直接回车确认]
+
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli    命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. [默认值 直接回车确认]
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...  
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...  启动服务
+Installation successful!
+
+
+[root@H56 redis-4.0.8]# pwd;cd
+/root/redis-4.0.8
+[root@H56 ~]#  netstat -anpult |grep redis-server
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*               LISTEN      7226/redis-server 1 
+[root@H56 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H56 ~]#  vim /etc/redis/6379.conf 
+[root@H56 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.56
+    93	port 6356
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6356.conf
+   829	cluster-node-timeout 5000
+[root@H56 ~]# 
+[root@H56 ~]# redis-cli -h 192.168.4.56 -p 6356 shutdown
+
+[root@H56 ~]# netstat -anpult |grep redis-server
+
+[root@H56 ~]# vim /etc/init.d/redis_6379 
+
+[root@H56 ~]# sed -n '43,44p' /etc/init.d/redis_6379
+#            $CLIEXEC -p $REDISPORT shutdown
+            $CLIEXEC  -h 192.168.4.56 -p 6356 shutdown
+[root@H56 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H56 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H56 ~]# netstat -anpult |grep redis-server
+[root@H56 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H56 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.56:6356       0.0.0.0:*               LISTEN      2405/redis-server 1 
+tcp        0      0 192.168.4.56:16356      0.0.0.0:*               LISTEN      2405/redis-server 1 
+[root@H56 ~]# 
+[root@H56 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6356.conf
+[root@H56 ~]# redis-cli  -h 192.168.4.56 -p 6356
+192.168.4.56:6356> keys *
+1) "name"
+192.168.4.56:6356> get name
+(error) MOVED 5798 192.168.4.52:6352
+192.168.4.56:6356> exit
+[root@H56 ~]# redis-cli -c  -h 192.168.4.56 -p 6356
+192.168.4.56:6356> keys *
+1) "name"
+192.168.4.56:6356> get name
+-> Redirected to slot [5798] located at 192.168.4.52:6352
+"bob"
+192.168.4.52:6352> keys *
+1) "name"
+192.168.4.52:6352> exit
+[root@H56 ~]# 
+[root@H56 ~]#  netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.56:6356       0.0.0.0:*               LISTEN      2405/redis-server 1 
+tcp        0      0 192.168.4.56:16356      0.0.0.0:*               LISTEN      2405/redis-server 1 
+tcp        0      0 192.168.4.56:43292      192.168.4.54:16354      ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:36391      192.168.4.55:16355      ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:16356      192.168.4.55:33242      ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:16356      192.168.4.51:38353      ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:16356      192.168.4.52:46270      ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:16356      192.168.4.54:34019      ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:37949      192.168.4.52:6352       ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:16356      192.168.4.53:33092      ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:39352      192.168.4.51:16351      ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:35465      192.168.4.53:16353      ESTABLISHED 2405/redis-server 1 
+tcp        0      0 192.168.4.56:37926      192.168.4.52:16352      ESTABLISHED 2405/redis-server 1 
+[root@H56 ~]# 
+[root@H56 ~]# ll /var/lib/redis/6379/nodes-6356.conf 
+-rw-r--r--. 1 root root 811 10月 31 16:02 /var/lib/redis/6379/nodes-6356.conf
+[root@H56 ~]# cat /var/lib/redis/6379/nodes-6356.conf
+a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356@16356 myself,slave 2414c86c27700d4f4924c37c842921da51c4b362 0 1540972920000 6 connected
+6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355@16355 slave 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 0 1540972921000 8 connected
+2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352@16352 master - 0 1540972922094 2 connected 6827-10922
+9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353@16353 master - 0 1540972922000 3 connected 12288-16383
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 master - 0 1540972921000 8 connected 0-6826 10923-12287
+2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354@16354 slave 9614f9ff7044a9316586b1e066b27d9f8641ffba 0 1540972922000 4 connected
+vars currentEpoch 8 lastVoteEpoch 0
+[root@H56 ~]# 
+[root@H56 ~]# vim /etc/redis/6379.conf 
+[root@H56 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.56
+    93	port 6356
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6356.conf
+   829	#cluster-node-timeout 5000
+[root@H56 ~]# 
+
+
+[root@H57 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.57
+192.168.2.57
+201.1.1.57
+201.1.2.57
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H57 ~]# cd redis/;ls
+index.html                             php-redis-2.2.4.tar.gz
+lnmp_soft.tar.gz                       redis-3.2.1.gem
+mongodb-linux-x86_64-rhel70-3.6.3.tgz  redis-4.0.8.tar.gz
+nginx-1.12.2.tar.gz                    redis.zip
+php-devel-5.4.16-42.el7.x86_64.rpm     reg.php
+php-fpm-5.4.16-42.el7.x86_64.rpm       ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+
+[root@H57 redis]# yum -y install  gcc |tail -2  # [ 1 ] 安装redis软件包
+
+[root@H57 redis]# rpm -q gcc
+gcc-4.8.5-16.el7.x86_64
+[root@H57 redis]# cd
+[root@H57 ~]# tar -xzf  /root/redis/redis-4.0.8.tar.gz   # [ 1 ] 安装redis软件包
+[root@H57 ~]# cd redis-4.0.8/;ls
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+[root@H57 redis-4.0.8]# 
+[root@H57 redis-4.0.8]# make >/dev/null  && make install >/dev/null    # [ 2 ] 初始化配置
+
+[root@H57 redis-4.0.8]# ls utils/install_server.sh 
+utils/install_server.sh
+[root@H57 redis-4.0.8]# ./utils/install_server.sh    ## [ 3 ]初始化  初始化配置
+.....................................
+
+Please select the redis port for this instance: [6379] 端口号[默认值 直接回车确认]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] 主配置文件 [默认值 直接回车确认]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] 日志文件 [默认值 直接回车确认]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录 [默认值 直接回车确认]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件[默认值 直接回车确认]
+
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli    命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. [默认值 直接回车确认]
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...  
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...  启动服务
+Installation successful!
+
+
+[root@H57 redis-4.0.8]# pwd;cd
+/root/redis-4.0.8
+[root@H57 ~]#  netstat -anpult |grep redis-server
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*               LISTEN      6864/redis-server 1 
+[root@H57 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H57 ~]#  vim /etc/redis/6379.conf 
+[root@H57 ~]# cat -n /etc/redis/6379.conf |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.57
+    93	port 6357
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6357.conf
+   829	cluster-node-timeout 5000
+[root@H57 ~]# 
+[root@H57 ~]# redis-cli -h 192.168.4.57 -p 6357 shutdown
+
+[root@H57 ~]# vim /etc/init.d/redis_6379 
+
+[root@H57 ~]# sed -n '43,44p' /etc/init.d/redis_6379
+#            $CLIEXEC -p $REDISPORT shutdown
+            $CLIEXEC  -h 192.168.4.57 -p 6357 shutdown
+
+[root@H57 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H57 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H57 ~]# netstat -anpult |grep redis-server
+
+[root@H57 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H57 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.57:6357       0.0.0.0:*               LISTEN      2460/redis-server 1 
+tcp        0      0 192.168.4.57:16357      0.0.0.0:*               LISTEN      2460/redis-server 1 
+[root@H57 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6357.conf
+[root@H57 ~]# redis-cli  -h 192.168.4.57 -p 6357
+192.168.4.57:6357> keys *
+(empty list or set)
+192.168.4.57:6357> flushall
+OK
+192.168.4.57:6357> keys *
+(empty list or set)
+192.168.4.57:6357> cluster nodes
+43986a2440b360cbc1948adda56e92ffae975d81 :6357@16357 myself,master - 0 0 0 connected
+
+192.168.4.57:6357> exit
+[root@H57 ~]# 
+[root@H57 ~]# redis-cli -h 192.168.4.57 -p 6357
+192.168.4.57:6357> cluster nodes
+6a61d8ef648a2621c5664b6d98177c8ba99b843f 192.168.4.55:6355@16355 slave 6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 0 1540966124407 1 connected
+43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357@16357 myself,master - 0 1540966124000 7 connected 0-1364 5461-6826 10923-12287
+2414c86c27700d4f4924c37c842921da51c4b362 192.168.4.52:6352@16352 master - 0 1540966125409 2 connected 6827-10922
+9614f9ff7044a9316586b1e066b27d9f8641ffba 192.168.4.53:6353@16353 master - 0 1540966126412 3 connected 12288-16383
+2fd5be876888f719dc12096cf0ed515cac97a3c8 192.168.4.54:6354@16354 slave 9614f9ff7044a9316586b1e066b27d9f8641ffba 0 1540966124507 3 connected
+a017e203f9100a4ccfb7372787a5a8d09400205e 192.168.4.56:6356@16356 slave 2414c86c27700d4f4924c37c842921da51c4b362 0 1540966124408 2 connected
+6c37ccb1c50f7bc74b347d9c45c2bbd03292daec 192.168.4.51:6351@16351 master - 0 1540966126512 1 connected 1365-5460
+192.168.4.57:6357> exit
+
+[root@H57 ~]# redis-cli -h 192.168.4.57 -p 6357
+192.168.4.57:6357> keys *
+1) "name"
+2) "v1"
+3) "age"
+192.168.4.57:6357> get name
+"bob"
+192.168.4.57:6357> get v1
+"110"
+192.168.4.57:6357> get ag*
+(error) MOVED 15310 192.168.4.53:6353
+192.168.4.57:6357> get age
+"21"
+192.168.4.57:6357> keys ag*
+1) "age"
+192.168.4.57:6357> exit
+[root@H57 ~]#  
+## 当192.168.4.57的 redis 主库 被移除redis集群后,自动关闭 4.57的redis服务
+
+[root@H57 ~]# /etc/init.d/redis_6379 status
+cat: /var/run/redis_6379.pid: 没有那个文件或目录
+Redis is running ()
+[root@H57 ~]# netstat -anpult |grep redis-server
+
+[root@H57 ~]# /etc/init.d/redis_6379 start  ## 重新开启服务
+Starting Redis server...
+
+[root@H57 ~]# redis-cli -h 192.168.4.57 -p 6357
+192.168.4.57:6357> keys *
+(empty list or set)
+
+192.168.4.57:6357> cluster info
+cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:7
+cluster_size:3
+cluster_current_epoch:8
+cluster_my_epoch:7
+cluster_stats_messages_ping_sent:636
+cluster_stats_messages_sent:636
+cluster_stats_messages_pong_received:636
+cluster_stats_messages_received:636
+192.168.4.57:6357> 
+
+192.168.4.57:6357> cluster reset   ## 等同与 清空记录 /var/lib/redis/6379/nodes-6357.conf
+OK
+192.168.4.57:6357> cluster info
+cluster_state:fail
+cluster_slots_assigned:0
+cluster_slots_ok:0
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:1
+cluster_size:0
+cluster_current_epoch:8
+cluster_my_epoch:7
+cluster_stats_messages_ping_sent:740
+cluster_stats_messages_sent:740
+cluster_stats_messages_pong_received:740
+cluster_stats_messages_received:740
+192.168.4.57:6357> 
+
+192.168.4.57:6357> cluster nodes
+43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357@16357 myself,master - 0 1540973373816 7 connected
+192.168.4.57:6357> keys *
+(empty list or set)
+192.168.4.57:6357> exit
+[root@H57 ~]# 
+[root@H57 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6357.conf
+[root@H57 ~]# ll /var/lib/redis/6379/nodes-6357.conf 
+-rw-r--r--. 1 root root 145 10月 31 16:14 /var/lib/redis/6379/nodes-6357.conf
+[root@H57 ~]# cat /var/lib/redis/6379/nodes-6357.conf
+43986a2440b360cbc1948adda56e92ffae975d81 192.168.4.57:6357@16357 myself,master - 0 1540973373816 7 connected
+vars currentEpoch 8 lastVoteEpoch 0
+[root@H57 ~]# 
+[root@H57 ~]# netstat -anpult |grep  redis-server
+tcp        0      0 192.168.4.57:6357       0.0.0.0:*               LISTEN      6340/redis-server 1 
+tcp        0      0 192.168.4.57:16357      0.0.0.0:*               LISTEN      6340/redis-server 1 
+[root@H57 ~]# 
+[root@H57 ~]# vim /etc/redis/6379.conf 
+
+[root@H57 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.57
+    93	port 6357
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6357.conf
+   829	#cluster-node-timeout 5000
+[root@H57 ~]# 
+
+
+
+
+
+
+
+
+

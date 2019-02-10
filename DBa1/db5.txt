@@ -1,0 +1,967 @@
+DB]# touch db{1..4}.txt
+
+-------------------------------------------------
+root本机登陆密码恢复
+[root@DB2 ~]# systemctl stop mysqld;
+]# vim /etc/my.cnf
+  4 [mysqld]  运行启动的语句里增加--skip-grant-tables
+  5 skip-grant-tables
+  6 default-storage-engine=innodb
+  7 secure_file_priv="/mybak/"
+ 31 #validate_password_policy=0
+ 32 #validate_password_length=3
+:wq
+]# systemctl restart mysqld
+[root@DB2 ~]# mysql
+mysql> update mysql.user 
+    -> set authentication_string=password('Hiy53.es')
+    -> where user='root' and host='localhost';
+mysql> flush privileges;quit;
+[root@DB2 ~]# mysql -hlocalhost -uroot -pHiy53.es;
+[root@DB2 ~]# vim /etc/my.cnf
+  4 [mysqld]
+  5 #skip-grant-tables
+  6 default-storage-engine=innodb
+  7 secure_file_priv="/mybak/"
+[root@DB2 ~]# systemctl restart mysqld
+
+mysql> use mysql;show tables;
+| Tables_in_mysql|
+| columns_priv 存储授权用户对【 字段 】的访问权限
+| db           存储授权用户对【 数据库 】的访问权限          
+| tables_priv  存储授权用户对【 表 】的访问权限
+| user         存储授权用户 的【访问权限】
+
+/*** > grant 权限列表 on 库名.表名 to  用户名@‘匹配的客户端主机地址’
+     > identified by '给于客户的用户密码'
+     > with grant option ------是否有授权权限
+     【@‘%.baidu.com’匹配指定的域名】 【@'192.168.1.%'匹配指定的网段】
+mysql> grant all on *.* to mydba@"%" 【%表示匹配任意主机】
+    -> identified by "Hiy53.es"
+    -> with grant option;
+
+/**mysql> revoke  update,delete  on *.*  from  mydba@'%';
+/**mysql> revoke  all  on *.*  from  mydba@'%';
+/**mysql> show grants for  mydba@'%';
+/**mysql> drop user  mydba@'%';
+
+mysql> grant all on db5.* to yaya@'192.168.4.52'
+     > identified by 'Hiy53.es' with grant option;
+
+mysql> grant insert on mysql.* to yaya@'192.168.4.52'
+    -> identified by 'Hiy53.es' with grant option;
+
+mysql> drop user yaya@'192.168.4.52';
+
+mysql> grant all on db5.* to yaya@'192.168.4.52'
+    -> identified by 'Hiy53.es' 
+    -> with grant option;
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> grant insert on mysql.* to yaya@'192.168.4.52'
+     -> ;
+mysql> show grants;
+| Grants for root@localhost                                           |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION        |
+
+mysql> show grants for yaya@'192.168.4.52';
+| Grants for yaya@192.168.4.52                                               |
+| GRANT USAGE ON *.* TO 'yaya'@'192.168.4.52'                                |
+| GRANT ALL PRIVILEGES ON `db5`.* TO 'yaya'@'192.168.4.52' WITH GRANT OPTION |
+| GRANT INSERT ON `mysql`.* TO 'yaya'@'192.168.4.52'                         |
+
+mysql> desc mysql.db;
+| Field                 | Type          | Null | Key | Default | Extra |
+| Host                  | char(60)      | NO   | PRI |         |       |
+| Db                    | char(64)      | NO   | PRI |         |       |
+| User                  | char(32)      | NO   | PRI |         |       |
+| Select_priv           | enum('N','Y') | NO   |     | N       |       |
+| Insert_priv           | enum('N','Y') | NO   |     | N       |       |
+| Update_priv           | enum('N','Y') | NO   |     | N       |       |
+
+mysql> select host,db,user from mysql.db;
+| host         | db    | user      |
+| 192.168.4.52 | db5   | yaya      |
+| 192.168.4.52 | mysql | yaya      |
+| 192.168.4.53 | db3   | admin     |
+| localhost    | sys   | mysql.sys |
+
+mysql> select * from mysql.db where
+    -> user='yaya'\G;
+*************************** 1. row ***************************
+                 Host: 192.168.4.52
+                   Db: mysql
+                 User: yaya
+          Select_priv: N
+          Insert_priv: Y
+          Update_priv: N
+*************************** 2. row ***************************
+                 Host: 192.168.4.52
+                   Db: db5
+                 User: yaya
+          Select_priv: Y
+          Insert_priv: Y
+          Update_priv: Y
+          Delete_priv: Y
+          Create_priv: Y
+            Drop_priv: Y
+
+mysql> select * from mysql.db where user='yaya' and db='db5'\G;
+*************************** 1. row ***************************
+                 Host: 192.168.4.52
+                   Db: db5
+                 User: yaya
+          Select_priv: Y
+          Insert_priv: Y
+          Update_priv: Y
+          Delete_priv: Y
+/****mysql> revoke update on db5.* from \c
+**/
+mysql> desc db3.user;
+| Field    | Type       | Null | Key | Default | Extra          |
+| id       | int(2)     | NO   | PRI | NULL    | auto_increment |
+| name     | char(30)   | YES  | MUL | NULL    |                |
+| age      | tinyint(1) | YES  |     | 18      |                |
+.................
+9 rows in set (0.00 sec)
+
+mysql> grant select,update(name,age),insert on db3.user 
+    -> to yaya6@'192.168.4.52' identified by 'Hiy53.es';
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> select * from mysql.columns_priv\G; 存储授权用户对【 字段 】的访问权限
+*************************** 1. row ***************************
+       Host: 192.168.4.52
+         Db: db3
+       User: yaya6
+ Table_name: user
+Column_name: name
+  Timestamp: 0000-00-00 00:00:00
+Column_priv: Update
+*************************** 2. row ***************************
+       Host: 192.168.4.52
+         Db: db3
+       User: yaya6
+ Table_name: user
+Column_name: age
+  Timestamp: 0000-00-00 00:00:00
+Column_priv: Update
+2 rows in set (0.00 sec)
+
+ERROR: 
+No query specified
+
+=====================================
+day05数据备份与恢复
+一数据备份相关概念
+1.1 数据备份的目的？  数据被误删除 或 设备损害导致数据丢失 ，是备份文件恢复数据。
+1.2数据备份方式？
+物理备份： 指定备份库和表对应的文件
+51
+cp   -r   /var/lib/mysql   /opt/mysql.bak
+cp  -r  /var/lib/mysql/bbsdb   /opt/bbsdb.bak
+
+rm -rf  /var/lib/mysql/bbsdb
+cp   -r  /opt/bbsdb.bak    /var/lib/mysql/bbsdb
+chown  -R  mysql:mysql   /var/lib/mysql/bbsdb
+systemctl  restart  mysqld
+
+51  scp  /opt/mysql.bak   root@192.168.4.51:/root/
+
+52  rm  -rf /var/lib/mysql
+      cp   -r  /root/mysql.bak   /var/lib/mysql
+      chown  -R  mysql:mysql   /var/lib/mysql
+      systemctl  restart  mysqld
+
+逻辑备份： 在执行备份命令时，根据备份的库表及数据生成对应的sql命令，把sql存储到指定的文件里。
+
+1.3数据备份策略？
+完全备份  备份所有数据（一张表的所有数据  一个库的所有数据  一台数据库的所有数据）
+
+备份新产生数据（差异备份 和 增量备份  都备份新产生的数据 ）
+差异备份 备份自完全备份后，所有新产生的数据。
+增量备份 备份自上次备份后，所有新产生的数据。
+
+1.4工作中如何对数据做备份？
+1.4.1  选择备份策略：
+                             完全备份+差异备份
+                             完全备份+增量备份
+1.4.2  数据备份时间    数据服务器访问量少的时候执行备份
+1.4.3  数据备份频率    根据数据产生量，决定备份频率
+1.4.4 备份文件的命名   库名-日期.sql
+1.4.5 备份文件的存储设置  准备独立的存储设备存储备份文件
+1.4.6 如何执行备份  使用周期性计划任务执行本机脚本
+
+完全备份+差异备份
+   06:00    t1    文件名    数据
+1   完全        10      1.sql	 10
+2   差异        3	2.sql	 3
+3           5	3.sql   8
+4		2	4.sql	 10
+5		7	5.sql	 17
+6		4	6.sql	 21
+7 差异          1	7.sql	 22    	
+
+完全备份+增量备份
+    06:00    t1	文件名      数据
+1   完全         10     1.sql	   10
+2   增量        3       2.sql	   3
+3            5	3.sql    5
+4		2	4.sql	   2
+5		7	5.sql	   7
+6		4	6.sql	   4
+7  增量         1	7.sql	   1  
++++++++++++++++++++++++++++++
+二完全备份与完全恢复
+2.1 完全备份数据
+]# mkdir  -p /mydatabak
+]# mysqldump -uroot -p654321  studb > /mydatabak/studb.sql
+]# mysqldump -uroot -p654321  db3 user3 > /mydatabak/db3-user3.sql
+
+]#cat /mydatabak/studb.sql
+]#cat  /mydatabak/db3-user3.sql
+
+2.3 完全恢复数据
+先建 空库 studb,再导入库 studb
+mysql > create database studb;
+]# mysql -uroot -p654321  studb  < /mydatabak/studb.sql 
+先建 空库 db3,再把数据/mydatabak/db3-user3.sql 导入库 db3
+]# mysql -uroot -p654321  db3   < /mydatabak/db3-user3.sql
+
+使用source 命令恢复数据
+mysql> create database  bbsdb;先建 空库bbsdb
+
+mysql> use bbsdb; 再把数据/mydatabak/studb.sql 导入库bbsdb
+mysql> source  /mydatabak/studb.sql  ##注意这里不要加分号【；】
+
+
+每周一晚上18:00备份studb库的所有数据到本机的/dbbak目录下，备份文件名称要求如下  日期_库名.sql。
+
+]#vim /root/bakstudb.sh
+#!/bin/bash
+day=`date +%F`
+if [ ! -e /dbbak  ];then
+     mkdir /dbbak
+fi
+mysqldump  -uroot  -p654321  studb  >  /dbbak/${day}_studb.sql
+:wq
+]# chmod   +x   /root/bakstudb.sh
+]#/root/bakstudb.sh
+]# ls /dbbak/*.sql
+
+]#crontab  -e
+00  18   *  *  1        /root/bakstudb.sh  &> /dev/null
+:wq
+
+[root@DB2 ~]# vim /root/bakstudb.sh
+[root@DB2 ~]# chmod +x /root/bakstudb.sh
+[root@DB2 ~]# cat /root/bakstudb.sh
+#!/bin/bash
+day=`date +%F`
+if [ ! -e /dbbak ];then
+  mkdir  /dbbak
+fi
+mysqldump -uroot -pHiy53.es db3 > /dbbak/${day}_db3.sql
+[root@DB2 ~]# /root/bakstudb.sh
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@DB2 ~]# ll /dbbak/2018-09-13_db3.sql 
+-rw-r--r--. 1 root root 4723 9月  13 20:18 /dbbak/2018-09-13_db3.sql
+
+[root@DB2 ~]# mkdir /crondx
+
+[root@DB2 ~]# crontab -e  -u root
+crontab: installing new crontab
+
+[root@DB2 ~]# systemctl restart crond
+[root@DB2 ~]# crontab -l -u root
+05 21 * * *  /root/bakstudb.sh && echo hello >> /crondx/sql.txt
+
+[root@DB2 ~]# ll /dbbak/*.sql >> /crondx/sql2.txt
+[root@DB2 ~]# cat /crondx/sql2.txt
+-rw-r--r--. 1 root root 4723 9月  13 20:54 /dbbak/2018-09-13_db3.sql
+
+[root@DB2 ~]# cat /crondx/sql.txt 
+hello
+您在 /var/spool/mail/root 中有新邮件
+
+3.1  启动mysql数据库服务的binlog日志文件 实现实时增量备份
+3.1.1 binlog日志介绍：是mysql数据库服务日志文件的一种，默认没有启用。记录除查询之外的sql命令。
+查询命令例如： select   show   desc  
+写命令例如： insert   update   delete   create  drop 
+
+3.1.2 启用binlog日志
+]#vim /etc/my.cnf
+[mysqld]
+server_id=51
+log-bin
+binlog-format="mixed"
+:wq
+]# systemctl  restart  mysqld
+
+]# ls /var/lib/mysql/主机名-bin.000001
+]# cat  /var/lib/mysql/主机名-bin.index
+
+3.1.3 查看binlog日志文件内容
+]#mysqlbinlog   /var/lib/mysql/mysql51-bin.000001
+
+****可以自定义binlog日志文件存储的位置和文件名称
+]#mkdir  /mylog
+]#chown   mysql   /mylog
+]#setenforce  0 
+
+]#vim /etc/my.cnf
+[mysqld]
+server_id=51
+#log_bin
+log_bin=/mylog/plj
+binlog_format="mixed"
+:wq
+
+]# systemctl  restart  mysqld
+]#ls /mylog/plj.*
+plj.000001   plj.index
+
+3.1.4 手动生成新的日志文件方法
+*默认日志文件大于500M时自动创建新日志文件
+
+]# systemctl  restart mysqld
+
+mysql> flush logs;
+
+]# mysql -uroot -p密码 -e "flush logs"
+
+]# mysqldump  -uroot -p密码  --flush-logs  库名  > 目录/xx.sql
+
+使用一个新的日志文件 记录 新创建的webdb库的初始操作。
+mysql> flush  logs;
+mysql> create database webdb; create table webdb.a(id int);
+mysql> insert into webdb.a values(100);
+mysql> insert into webdb.a values(101);
+mysql> flush logs;
+删除webdb库，使用 binlog日志文件恢复webdb库的数据。
+mysql>  drop   database  webdb;
+
+3.1.7 使用binlog日志恢复数据
+]#mysqlbinlog  /mylog/plj.000008   |  mysql  -uroot  -p654321 
+
+3.1.5 删除已有的binlog日志文件
+
+mysql> purge  master  logs  to  "binlog文件名; 
+             删除指定日志文件之前的日志文件
+mysql> purge  master  logs  to  "plj.000005";
+
+mysql>  reset master ;  删除所有的日志文件重新生成第一个日志文件
+mysql> show master status;  显示当前正在使用的binlog日志信息
+
+]#mysqlbinlog   日志文件名；
+
+3.1.6 binlog日志记录sql命令方式
+记录方式有2种：  偏移量   、记录sql命令执行的时间
+
+指定偏移量范围选项 
+--start-position=偏移量的值  
+--stop-position=偏移量的值
+
+指定时间范围选项
+--start-datetime="yyyy-mm-dd  hh:mm:ss"  
+--stop-position="yyyy-mm-dd  hh:mm:ss" 
+ ++++++++++++++++++++++++
+读取日志文件指定范围内的sql命令恢复数据。
+]# mysqlbinlog  --start-position=293  --stop-position=1450   plj.000001   |
+  mysql  -uroot  -p654321
+++++++++++++++++++++++++++++
+
+]#mysqldump  -uroot  -p654321  --flush-logs  db3.user3  >  /root/user3.sql
+
+mysql> insert into db3.user3 values("a","b","c");
+mysql> insert into db3.user3 values("aa","b","c");
+mysql> insert into db3.user3 values("ab","b","c");
+mysql> insert into db3.user3 values("ac","b","c");
+
+mysql> delete from  db3.users;
+mysql> select  * from  db3.user3;
+
+]#mysql  -uroot  -p654321  db3  <  /root/user3.sql
+mysql> select  * from  db3.user3;
+
+]#mysqlbinlog    --start-position=偏移量的值  
+--stop-position=偏移量的值  日志文件名 |  mysql  -uroot  -p654321 
+
+mysql> select  * from  db3.user3;
++++++++++++++++++++++++++++++++++
+3.2  安装第3方软件提供备份命令，对数据做增量备份
+软件介绍 Percona 开源软件  在线热备不锁表  适用于生成环境。
+
+安装软件
+]# rpm -ivh  libev-4.15-1.el6.rf.x86_64.rpm
+]# yum -y  install   perl-DBD-mysql   perl-Digest-MD5
+]# rpm  -ivh  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+]# rpm  -ql  percona-xtrabackup-24
+
+提供2个备份命令
+/usr/bin/innobackupex命令集成了命令xtrabackup，所以可以支持MYISAM存储引擎
+
+/usr/bin/xtrabackup命令仅支持InnoDB和XtraDB存储引擎的表
+
+innobackupex备份命令的使用格式？
+]#innobackupex  <选项>
+]# man  innobackupex
+
+常用选项？
+--user  用户名
+--password  密码
+--databases="库名"     
+                     "库名1  库名2"
+                     "库名.表名"
+--no-timestamp  不使用时间戳做备份文件的子目录名
+
++++++++++++++++innobackupex完全备份 与 完全恢复
+]# innobackupex  --user  root   --password   654321  \
+--databases="mysql   performance_schema  sys   gamedb"   /allbak  --no-timestamp
+
+++++++++++++++完全恢复   
+--copy-back
+
+]# rm   -rf  /var/lib/mysql
+]# mkdir  /var/lib/mysql
+]# innobackupex  --user root --password 654321  --copy-back  /allbak 
+]# chown  -R  mysql:mysql  /var/lib/mysql
+]#  systemctl  restart  mysqld
+]#mysql   -uroot  -p654321
+mysql> show  databases;
+mysql> select  * from  gmaedb.t1;
+++++++++++++++++++++++++++++++++++++++++++++++++++
+事务日志文件
+LSN    日志序列号
+
+增量备份的工作过程？
+每一个备份目录下，都有记录当前目录备份信息的配置文件
+]# cat   备份目录名/xtrabackup_checkpoints   (记录备份类型 和lsn范围)
+
++++++++++innobackupex增量备份与恢复
+--incremental  目录名                   #增量备份
+--incremental-basedir=目录名    #增量备份时，指定上一次备份文件存储的目录名
+
+先要有一次完全备份  存放目录 /fullbak
+]# innobackupex  --user   root   --password  654321   \
+--databases="gamedb  mysql  performance_schema  sys"  \
+/fullbak  --no-timestamp
+
+插入新记录，执行增量备份    存放目录 /new1bak
+mysql> insert  into  gamedb.t1  values(8080),(8080);
+]# innobackupex  --user   root   --password  654321   \
+--databases="gamedb  mysql  performance_schema  sys"  \
+--incremental    /new1dir    --incremental-basedir=/fullbak     --no-timestamp
+
+
+插入新记录，执行增量备份    存放目录 /new2bak
+mysql> insert  into  gamedb.t1  values(8099),(8099);
+]# innobackupex  --user   root   --password  654321   \
+--databases="gamedb  mysql  performance_schema  sys"  \
+--incremental   /new2dir   --incremental-basedir=/new1dir   --no-timestamp
+
+
+++++++++++++++增量恢复
+--apply-log   准备恢复数据
+--redo-only  合并日志
+--incremental-dir=目录名   #增量恢复数据时，指定备份目录名称
+--copy-back 恢复数据
+
+清空数据库目录
+]# rm   -rf   /var/lib/mysql
+]# mkdir   /var/lib/mysql
+
+准备恢复数据
+]# innobackupex  --user   root   --password  654321   \
+--databases="gamedb  mysql  performance_schema  sys"  \
+--apply-log    --redo-only    /fullbak
+
+合并日志
+]# innobackupex  --user   root   --password  654321   \
+--databases="gamedb  mysql  performance_schema  sys"  \
+--apply-log    --redo-only    /fullbak   --incremental-dir=/new1dir
+
+]# innobackupex  --user   root   --password  654321   \
+--databases="gamedb  mysql  performance_schema  sys"  \
+--apply-log    --redo-only    /fullbak   --incremental-dir=/new2dir
+
+拷贝备份文件到数据库目录
+]# innobackupex  --user   root   --password  654321   \
+--databases="gamedb  mysql  performance_schema  sys"  \
+--copy-back   /fullbak
+]# ls  /var/lib/mysql   -l
+
+修改文件的所有者/组mysql
+]# chown  -R  mysql:mysql  /var/lib/mysql
+
+重启数据库服务
+]# systemctl   restart  mysqld
+]# mysql   -uroot   -p654321
+
++++++++++++++++++++++使用完全备份文件恢复单个表
+--export  导出表信息
+mysql> alter  table  库.表   discard  tablespace;   删除表空间
+mysql> alter  table  库.表  import  tablespace;  导入表空间
+
+1完全备份
+]#  innobackupex   --user   root    --password   654321   \
+--databases="studb"    /allbakstudb    --no-timestamp
+
+2查看备份目录文件列表
+]# ls   /allbakstudb
+]# ls   /allbakstudb/studb
+
+3误删除a表:    mysql>  drop   table   studb.a;
+
+4 使用完全备份文件恢复单个表
+4.1  按照备份时的表结构创建删除的表
+create   table  studb.a(name char(10));
+
+4.2  删除创建表的表空间文件
+mysql> alter  table studb.a  discard  tablespace; 
+
+4.3  使用备份文件导出表信息
+]#innobackupex --user root --password 654321   \
+--databases="studb"  --apply-log   --export   /allbakstudb
+
+4.4  把导出的表信息文件，拷贝到对应的数据库目录下，并修改所有者和组为mysql
+]# cp /allbakstudb/studb/a.{cfg,exp,ibd}   /var/lib/mysql/studb/
+]# chown mysql:mysql /var/lib/mysql/studb/a.*
+
+4.5  导入表空间
+mysql>  alter  table  studb.a  import  tablespace; 
+
+[root@mysql51 ~]# rm  -rf /var/lib/mysql/studb/a.cfg 
+[root@mysql51 ~]# rm  -rf /var/lib/mysql/studb/a.exp
+
+4.6  查看记录
+mysql> select   * from  studb.a;
+
+========================================
+
+[root@DB1 ~]# mkdir /bakdb
+[root@DB1 ~]# cp -r /var/lib/mysql /bakdb/db.bak
+[root@DB1 ~]# ls -ld /bakdb/db.bak/
+drwxr-x--x. 12 root root 4096 9月  13 10:25 /bakdb/db.bak/
+[root@DB1 ~]# tar -zcf /bakdb/mysql.tar.gz  /bakdb/db.bak/
+tar: 从成员名中删除开头的“/”
+tar: /bakdb/db.bak/mysql.sock: 忽略套接字(socket)
+[root@DB1 ~]# ls /bakdb/
+db.bak  mysql.tar.gz
+
+[root@DB3 ~]# systemctl stop mysqld
+[root@DB3 ~]# ls /var/lib/mysql
+mysql/         mysql-files/   mysql-keyring/ 
+[root@DB3 ~]# ls /var/lib/mysql/
+auto.cnf         ib_buffer_pool  performance_schema  sys
+ca-key.pem       ibdata1         private_key.pem     teadb
+.......
+[root@DB3 ~]# rm -rf /var/lib/mysql/*
+/***删除之前一定先备份，可能实验会失败，可以重新从备份数据恢复
+[root@DB3 ~]# ls /var/lib/mysql/
+
+[root@DB1 ~]# scp  -r  /bakdb/db.bak/ root@192.168.4.53:/root/
+
+[root@DB3 ~]# ls -ld /root/db.bak/
+drwxr-x--x. 12 root root 4096 9月  13 10:44 /root/db.bak/
+[root@DB3 ~]# mv /root/db.bak/ /var/lib/mysql
+[root@DB3 ~]# chown -R mysql:mysql /var/lib/mysql
+[root@DB3 ~]# ls -ld /var/lib/mysql
+drwxr-x--x. 3 mysql mysql 20 9月  13 10:45 /var/lib/mysql
+[root@DB3 ~]# systemctl restart mysqld
+Job for mysqld.service failed because the control process exited with error code. See "systemctl status mysqld.service" and "journalctl -xe" for details.
+=====================================================
+[root@DB3 ~]# systemctl stop mysqld
+[root@DB3 ~]# rm -rf /var/lib/mysql/*
+[root@DB3 ~]# ls /var/lib/mysql/*
+ls: 无法访问/var/lib/mysql/*: 没有那个文件或目录
+[root@DB3 ~]# ls /var/lib/mysql/
+[root@DB3 ~]# systemctl start mysqld
+[root@DB3 ~]# ls -ld /var/lib/mysql/
+drwxr-x--x. 5 mysql mysql 4096 9月  13 10:56 /var/lib/mysql/
+[root@DB3 ~]# awk '/root@localhost/{print $NF}' /var/log/mysqld.log 
+Fi?=aRYj6-)M
+rwRiayOT=2s#
+[root@DB3 ~]# mysql -hlocalhost -uroot -p'rwRiayOT=2s#'
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> alter user root@'localhost' identified by 'Hiy53.es';
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+4 rows in set (0.00 sec)
+mysql> quit;
+[root@DB3 ~]# 
+增量以        当天                做时间参考点
+差异以 曾经做过完全备份的时间点 做时间参考点
+
+[root@DB3 ~]# mkdir /mydata
+[root@DB3 ~]# mysqldump -uroot -pHiy53.es -A > /mydata/all.sql
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@DB3 ~]# ll /mydata/all.sql
+-rw-r--r--. 1 root root 774650 9月  13 11:47 /mydata/all.sql
+
+
+mysql> create database db3;
+
+mysql> use db3;
+
+mysql> create table t3(intx int(2));
+
+mysql> quit;                               /** 备份数据库db3
+[root@DB2 ~]# mysqldump -uroot -pHiy53.es db3 > /mydata/db3.sql
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+
+[root@DB2 ~]# ls /mydata/
+all.sql  db3.sql                            /**导入 备份数据库
+[root@DB2 ~]# mysqldump -uroot -pHiy53.es db3 < /mydata/db3.sql
+
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+-- MySQL dump 10.13  Distrib 5.7.17, for Linux (x86_64)
+--
+-- Host: localhost    Database: db3
+-- ------------------------------------------------------
+-- Server version	5.7.17
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+....................................
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2018-09-13 12:04:03
+[root@DB2 ~]# 
+
+mysql> use db2;show tables;
+| Tables_in_db2 |
++---------------+
+| jfb           |
+| t221          |
+| xfb           |
+| xsb           |
++---------------+                                       /** 备份数据库db2
+[root@DB2 ~]# mysqldump -uroot -pHiy53.es  db2 >/mydata/db2.sql
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@DB2 ~]# ll /mydata/db2.sql
+-rw-r--r--. 1 root root 3914 9月  13 14:14 /mydata/db2.sql
+
+mysql> drop database db2;
+
+mysql> create database db2;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> use db2;  /***必须先指定数据库名 db2 ，否则数据导入失败，数据是空的
+Database changed                 /**导入 备份数据库db2
+mysql> source /mydata/db2.sql 【没有分号；注意】
+
+mysql> show tables;
++---------------+
+| Tables_in_db2 |
++---------------+
+| jfb           |
+| t221          |
+| xfb           |
+| xsb           |
++---------------+
+4 rows in set (0.00 sec)
+
+[root@DB1 ~]# man mysqldump -B
+--tables
+           Override the --databases or -B option.  mysqldump regards
+           all name arguments following the option as table names.
+
+                                  /****   备份表db2.t221
+[root@DB2 ~]# mysqldump -uroot -pHiy53.es  db2 t221 >/mydata/db2.t221.sql
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@DB2 ~]# ll /mydata/db2.t221.sql
+-rw-r--r--. 1 root root 1937 9月  13 14:37 /mydata/db2.t221.sql
+
+mysql> select count(*) from db2.t221;
+| count(*) |
+|        3     |
+mysql> drop table db2.t221;
+
+mysql> show tables;
+| Tables_in_db2 |
+| jfb           |
+| xfb           |
+| xsb           |    /**** 导入  备份表db2.t221
+mysql> source /mydata/db2.t221.sql  【没有分号；注意】
+Query OK,
+mysql> show tables;
+| Tables_in_db2 |
+| jfb           |
+| t221          |
+| xfb           |
+| xsb           |
+
+mysql> show variables like 'binlog_format';
+| Variable_name | Value |
+| binlog_format | ROW   |
+/** [mysqld]
+   log-bin=db51
+   default-storage-engine=myisam
+   secure_file_priv=/myload   **/
+
+[root@DB1 ~]# vim /etc/my.cnf
+  4 [mysqld]
+  5 server_id=51
+  6 log-bin
+  7 binlog_format='mixed'
+  8 default-storage-engine=myisam
+  9 secure_file_priv=/myload
+[root@DB1 ~]# systemctl restart mysqld
+
+[root@DB1 ~]# ll /var/lib/mysql/DB1-bin.000001 
+-rw-r-----. 1 mysql mysql 154 9月  13 14:59 /var/lib/mysql/DB1-bin.000001
+[root@DB1 ~]# ll /var/lib/mysql/DB1-bin.index 
+-rw-r-----. 1 mysql mysql 17 9月  13 14:59 /var/lib/mysql/DB1-bin.index
+
+[root@DB1 mysql]# tail -1 /var/lib/mysql/DB1-bin.000001
+????????????????????????????????????
+
+[root@DB1 mysql]# mysql -uroot -pHiy53.es
+mysql> use db3;show tables;
+mysql> desc db3.user;
+
+mysql> insert into db3.user(name,uid)values('bob',99),
+    -> ('lucy',89),('lili',88),('lisi',79);
+
+mysql> select count(*) from user;
+| count(*) |
+|       48 |
+
+[root@DB1 mysql]# mysqlbinlog /var/lib/mysql/DB1-bin.000001 |grep insert
+insert into db3.user(name,uid)values('bob',99),
+
+mysql> delete from db3.user where name in('bob','lucy','lisi');
+
+[root@DB1 mysql]# mysqlbinlog /var/lib/mysql/DB1-bin.000001
+# at 296
+# at 328
+#180913 15:31:41 server id 51  end_log_pos 328 CRC32 0x79e0e29c 	Intvar
+SET INSERT_ID=49/*!*/;
+#180913 15:31:41 server id 51  end_log_pos 483 CRC32 0x6c9f3c22 	Querythread_id=4	exec_time=0	error_code=0
+use `db3`/*!*/;
+SET TIMESTAMP=1536823901/*!*/;
+insert into db3.user(name,uid)values('bob',99),
+('lucy',89),('lili',88),('lisi',79)
+/*!*/;
+# at 483
+#180913 15:31:41 server id 51  end_log_pos 561 CRC32 0x94a75a31 	Querythread_id=4	exec_time=0	error_code=0
+SET TIMESTAMP=1536823901/*!*/;
+COMMIT    [commit 即回车]
+/*!*/;
+# at 561                               [commit 即回车，以回车为结束点]
+[root@DB1 mysql]# mysqlbinlog --start-position=328  --stop-position=561  /var/lib/mysql/DB1-bin.000001  |mysql -uroot -pHiy53.es
+mysql: [Warning] Using a password on the command line interface can be insecure.
+
+mysql> select count(*) from user;
+| count(*) |
+|       48 |
+mysql> select name,uid from db3.user where name in('bob','lucy','lisi');
+| name | uid  |
+| bob  |   99 |
+| lisi |   79 |
+| lucy |   89 |
+
+-----------------------------------------------------------------------------------------------------
+[root@DB1 mysql]# mkdir /mylog/ ;chown mysql /mylog/; 
+[root@DB1 mysql]# ls -ld /mylog/
+drwxr-xr-x. 2 mysql root 6 9月  13 16:30 /mylog/
+[root@DB1 mysql]# vim /etc/my.cnf
+  4 [mysqld]
+  5 server_id=51
+  6 #log-bin
+  7 log-bin=/mylog/plj
+  8 binlog_format='mixed'
+[root@DB1 mysql]# systemctl restart mysqld
+[root@DB1 mysql]# ls /mylog/
+plj.000001  plj.index
+[root@DB1 mysql]# cat /mylog/plj.index 
+/mylog/plj.000001
+mysql> use db3;show tables;
+
+mysql> show master status;
+
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000001 |      154 |              |                  |                   |
+
+mysql> flush logs;
+Query OK, 
+
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000002 |      154 |              |                  |                   |
+
+[root@DB1 mysql]# ls /mylog/
+plj.000001  plj.000002  plj.index
+[root@DB1 mysql]# ll /mylog/plj.000001
+-rw-r-----. 1 mysql mysql 195 9月  13 16:40 /mylog/plj.000001
+[root@DB1 mysql]# ll /mylog/plj.000002
+-rw-r-----. 1 mysql mysql 154 9月  13 16:40 /mylog/plj.000002
+[root@DB1 mysql]# cat /mylog/plj.index 
+/mylog/plj.000001
+/mylog/plj.000002
+[root@DB1 mysql]# systemctl restart mysqld
+
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000003 |      154 |              |                  |                   |
+
+[root@DB1 mysql]# cat /mylog/plj.index 
+/mylog/plj.000001
+/mylog/plj.000002
+/mylog/plj.000003
+[root@DB1 mysql]# mysql -uroot -pHiy53.es db3  -e 'flush logs'
+mysql: [Warning] Using a password on the command line interface can be insecure.
+[root@DB1 mysql]# cat /mylog/plj.index 
+/mylog/plj.000001
+/mylog/plj.000002
+/mylog/plj.000003
+/mylog/plj.000004
+[root@DB1 mysql]# ls /mylog/
+plj.000001  plj.000002  plj.000003  plj.000004  plj.index
+
+[root@DB1 mysql]# mysqldump  -uroot -pHiy53.es --flush-logs db3 user > \
+> /mydata/db3.user2.sql;
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@DB1 mysql]# ls /mylog/
+plj.000001  plj.000002  plj.000003  plj.000004  plj.000005  plj.index
+[root@DB1 mysql]# 
+[root@DB1 mysql]# cat /mylog/plj.index 
+/mylog/plj.000001
+/mylog/plj.000002
+/mylog/plj.000003
+/mylog/plj.000004
+/mylog/plj.000005
+
+mysql> reset master;
+Query OK,
+
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000001 |      154 |              |                  |                   |
+
+mysql> flush logs;
+Query OK
+
+mysql> flush logs;
+Query OK
+
+mysql> flush logs;
+Query OK
+
+mysql> flush logs;
+Query OK
+
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000005 |      154 |              |                  |                   |
+
+[root@DB1 mysql]# cat /mylog/plj.index 
+/mylog/plj.000001
+/mylog/plj.000002
+/mylog/plj.000003
+/mylog/plj.000004
+/mylog/plj.000005
+
+mysql> purge master logs to 'plj.000003';
+Query OK, 0 rows affected (0.12 sec)
+
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000005 |      154 |              |                  |                   |
+
+[root@DB1 mysql]# cat /mylog/plj.index 
+/mylog/plj.000003
+/mylog/plj.000004
+/mylog/plj.000005
+[root@DB1 mysql]# ls /mylog/
+plj.000003  plj.000004  plj.000005  plj.index
+
+
+[root@DB1 ~]# scp libev-4.15-1.el6.rf.x86_64.rpm   \
+> percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm  root@192.168.4.52:/root/
+
+[root@DB1 ~]# yum -y install /root/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm  /root/libev-4.15-1.el6.rf.x86_64.rpm 
+已安装:
+  libev.x86_64 0:4.15-1.el6.rf      percona-xtrabackup-24.x86_64 0:2.4.7-1.el7     
+
+作为依赖被安装:
+  perl-DBD-MySQL.x86_64 0:4.023-5.el7       perl-Digest.noarch 0:1.17-245.el7      
+  perl-Digest-MD5.x86_64 0:2.52-3.el7      
+
+完毕！
+[root@DB1 ~]# man innobackupex 在线热备份，支持myisam，innodb和xtradb存储引擎，完全备份，
+[root@DB1 ~]# man xtrabackup  在线热备份,支持innodb和xtradb存储引擎
+/**innobackupex 在线热备份，支持myisam，innodb和xtradb存储引擎，完全备份
+增量备份于恢复
+[root@DB1 ~]# innobackupex --user root  --password Hiy53.es /allbak
+[root@DB1 ~]# ls /allbak/2018-09-13_17-36-52/
+backup-my.cnf  ib_buffer_pool      sys
+bbs            ibdata1             xtrabackup_binlog_info
+db1            mysql               xtrabackup_checkpoints
+db3            perdb               xtrabackup_info
+db4            performance_schema  xtrabackup_logfile
+gamedb         studb
+[root@DB1 ~]# rm -rf /allbak/
+[root@DB1 ~]# innobackupex --user root  --password Hiy53.es /allbak  --no-timestamp
+
+[root@DB1 ~]# ls /allbak/
+backup-my.cnf  ib_buffer_pool      sys
+bbs            ibdata1             xtrabackup_binlog_info
+db1            mysql               xtrabackup_checkpoints
+db3            perdb               xtrabackup_info
+db4            performance_schema  xtrabackup_logfile
+gamedb         studb
+[root@DB1 ~]# systemctl stop mysqld
+[root@DB1 ~]# mkdir /var/lib/mysql2/
+[root@DB1 ~]# cp -r /var/lib/mysql/* /var/lib/mysql2/
+[root@DB1 ~]# rm -rf /var/lib/mysql/*
+[root@DB1 ~]# innobackupex --user root --password Hiy53.es \
+> --apply-log /allbak              /***  准备恢复数据，还原（回滚日志）
+
+[root@DB1 ~]# innobackupex --user root --password Hiy53.es 
+> --copy-back  /allbak          /***恢复数据
+
+[root@DB1 ~]# chown -R mysql:mysql /var/lib/mysql
+[root@DB1 ~]# systemctl restart mysqld
+[root@DB1 ~]# mysql -uroot -pHiy53.es
+mysql> show databases;
+| Database           |
++--------------------+
+| information_schema |
+| bbs                |
+| db1                |
+| db3                |
+| db4                |
+| gamedb             |
+| mysql              |
+| perdb              |
+| performance_schema |
+| studb              |
+| sys                |
+
+
+
+
+
+
+
+
+
+
+[root@DB2 ~]# yum -y install /root/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm  /root/libev-4.15-1.el6.rf.x86_64.rpm 
+
+
+
+[root@DB3 ~]# yum -y install /root/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm  /root/libev-4.15-1.el6.rf.x86_64.rpm 
+[root@DB4 ~]# yum -y install /root/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm  /root/libev-4.15-1.el6.rf.x86_64.rpm 
+
+
+
+

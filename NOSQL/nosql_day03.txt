@@ -1,0 +1,225 @@
+主从同步配置命令
+info  replication
+slaveof  master_ip   master_port
+slaveof no one
+
+哨兵服务
+master51---->slave52----->slave53
+
+slave52 运行哨兵服务监控主库 master51
+
+]# vim /etc/sentinel.conf
+sentinel monitor redis51 192.168.4.51 6351 1
+sentinel auth-pass redis51 123456
+:wq
+
+]#redis-sentinel /etc/sentinel.conf
+
+
+
+redis数据类型：
+字符串类型  string 
+
+192.168.4.51:6351> set name lucy
+OK
+192.168.4.51:6351> get name
+"lucy"
+192.168.4.51:6351> SETRANGE name 1 **
+(integer) 4
+192.168.4.51:6351> get name
+"l**y"
+192.168.4.51:6351> 
+
+192.168.4.51:6351> STRLEN name
+(integer) 4
+192.168.4.51:6351> 
+
+192.168.4.51:6351> set name pang
+OK
+192.168.4.51:6351> get name
+"pang"
+192.168.4.51:6351> APPEND name jing
+(integer) 8
+192.168.4.51:6351> get name
+"pangjing"
+192.168.4.51:6351> 
+192.168.4.51:6351> APPEND name2 jing
+(integer) 4
+192.168.4.51:6351> get name2
+"jing"
+192.168.4.51:6351>
+
+192.168.4.51:6351> setbit lucy 1 0
+(integer) 0
+192.168.4.51:6351> setbit lucy 2 1
+(integer) 0
+192.168.4.51:6351> setbit lucy 3 1
+(integer) 0
+192.168.4.51:6351> setbit lucy 4 1
+(integer) 0
+192.168.4.51:6351> setbit lucy 5 0
+(integer) 0
+192.168.4.51:6351> setbit lucy 6 0
+(integer) 0
+192.168.4.51:6351> setbit lucy 7 0
+(integer) 0
+192.168.4.51:6351> BITCOUNT lucy
+(integer) 3
+
+
+192.168.4.51:6351> set x 10
+OK
+192.168.4.51:6351> decr x
+(integer) 9
+192.168.4.51:6351> decr x
+(integer) 8
+192.168.4.51:6351> get x
+"8"
+192.168.4.51:6351> DECRBY x 3
+(integer) 5
+192.168.4.51:6351> get x
+"5"
+192.168.4.51:6351> DECRBY x 2
+(integer) 3
+192.168.4.51:6351> get x
+"3"
+192.168.4.51:6351>
+
+192.168.4.51:6351> set y 7
+OK
+192.168.4.51:6351> INCR y
+(integer) 8
+192.168.4.51:6351> INCR y
+(integer) 9
+192.168.4.51:6351> get y
+"9"
+192.168.4.51:6351> INCRBY y 2
+(integer) 11
+192.168.4.51:6351> INCRBY y 5
+(integer) 16
+192.168.4.51:6351> get y
+"16"
+192.168.4.51:6351> 
+
+
+192.168.4.51:6351> get x a7
+(error) ERR wrong number of arguments for 'get' command
+192.168.4.51:6351> 
+192.168.4.51:6351> mget x a7
+1) "3"
+2) "999"
+192.168.4.51:6351> get x 
+"3"
+192.168.4.51:6351> get age
+(nil)
+192.168.4.51:6351>
+
+192.168.4.51:6351> set x 9  y 10  z 11
+(error) ERR syntax error
+192.168.4.51:6351> 
+192.168.4.51:6351> 
+192.168.4.51:6351> mset x 9  y 10  z 11
+OK
+192.168.4.51:6351> 
+192.168.4.51:6351> mget x  y  z
+1) "9"
+2) "10"
+3) "11"
+192.168.4.51:6351>
+
+192.168.4.51:6351> set name panglijing
+OK
+192.168.4.51:6351> get name
+"panglijing"
+192.168.4.51:6351> GETRANGE name -2 -1
+"ng"
+192.168.4.51:6351> 
+192.168.4.51:6351> GETRANGE name -3 -1
+"ing"
+192.168.4.51:6351> GETRANGE name 1 4
+"angl"
+192.168.4.51:6351> GETRANGE name 0 4
+"pangl"
+192.168.4.51:6351> GETRANGE name 0 3
+"pang"
+192.168.4.51:6351> GETRANGE name 0 1
+"pa"
+192.168.4.51:6351> 
+
+192.168.4.51:6351> INCRBY y 0.5
+(error) ERR value is not an integer or out of range
+192.168.4.51:6351> 
+192.168.4.51:6351> INCRBYFLOAT y 0.5
+"16.5"
+192.168.4.51:6351> INCRBYFLOAT y 0.5
+"17"
+192.168.4.51:6351> get y
+"17"
+192.168.4.51:6351> 
+
+192.168.4.51:6351> LPUSH grpname lucy lili tom jim
+(integer) 4
+192.168.4.51:6351> type grpname
+list
+
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "jim"
+2) "tom"
+3) "lili"
+4) "lucy"
+192.168.4.51:6351> LRANGE grpname 0 2
+1) "jim"
+2) "tom"
+3) "lili"
+192.168.4.51:6351> LRANGE grpname -2 -1
+1) "lili"
+2) "lucy"
+192.168.4.51:6351> 
+
+
+192.168.4.51:6351> lpop grpname
+"jim"
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "tom"
+2) "lili"
+3) "lucy"
+192.168.4.51:6351>
+
+192.168.4.51:6351> LLEN grpname
+(integer) 3
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "tom"
+2) "lili"
+3) "lucy"
+192.168.4.51:6351> 
+
+
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "tom"
+2) "lili"
+3) "lucy"
+192.168.4.51:6351> LINDEX grpname 0
+"tom"
+192.168.4.51:6351> LINDEX grpname 2
+"lucy"
+192.168.4.51:6351> LINDEX grpname 1
+"lili"
+192.168.4.51:6351>
+
+192.168.4.51:6351> lset grpname 0  jerry
+OK
+192.168.4.51:6351> LINDEX grpname 0
+"jerry"
+192.168.4.51:6351> lset grpname 3  jack
+(error) ERR index out of range
+192.168.4.51:6351>
+
+
+
+09:40 南京校区掉线 
+休息到 9:55
+休息到 10:55
+休息到 11：45
+休息到 15:15
+练习到 15：50
+15：50 成都断网，  休息到16：05

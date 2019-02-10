@@ -1,0 +1,1848 @@
+
+[root@room9pc01 ISO]# pwd
+/run/user/0/gvfs/ftp:host=176.121.0.120/software/ISO
+[root@room9pc01 ISO]# ls
+CentOS-7-x86_64-DVD-1708.iso         rhel-server-7.2-x86_64-dvd.iso
+CentOS-7-x86_64-Everything-1511.iso  rhel-server-7.4-x86_64-dvd.iso
+CentOS-7-x86_64-Everything-1708.iso  Win10_Pro_X64_zh_CN.iso
+rhel-server-6.7-x86_64-dvd.iso       超级急救.ISO
+[root@room9pc01 ISO]# 
+
+mysql 官方网站 http://dev.mysql.com/doc/refman/5.7/en/server-configuration-defaults.html
+
+DB]# touch db{1..4}.txt
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+[root@room9pc01 ~]# for i in  {50..57};  do  scp  -o   StrictHostKeyChecking=no   '/root/桌面/08.dba1/mysql-5.7.17.tar'   '/root/桌面/08.dba1/phpMyAdmin-2.11.11-all-languages.tar.gz'   '/root/桌面/08.dba1/mysql-5.7.17-1.el7.x86_64.rpm-bundle.tar'   root@192.168.4.$i:/root/; done;
+========================================
+[root@H50 ~]# mysql -uroot -p1234
+
+mysql> show databases;
+| Database           |
+| information_schema |  ## information_schema 内存映射的,不占用物理磁盘空间
+| mysql              |
+| performance_schema |  #performance_schema sys 系统库，存放已有的表信息
+| sys                |
+
+查看   select   *  from   库名.表名   ; 
+插入   insert    into   库名.表名  values(字段值列表);
+删除   delete  from   库名.表名;
+修改  update  库名.表名  set   字段名=值 where  条件；
+mysql> update game.t1 set age=21 where name="a";
+
+mysql> use teadb;show tables;
+
+| Tables_in_teadb |
+| 学生表          |
+| t3              |
+| t4              |
+| t5              |
+| t6              |
+| test            |
+
+mysql> select now();   获取当前系统的日期年月日时刻时分秒
+| now()               |
+| 2018-10-16 09:15:41 |
+
+mysql> select year(now());
+| year(now()) |
+|        2018 |
+
+mysql> select time(now());
+| time(now()) |
+| 09:16:21    |
+
+mysql> select month(now());
+| month(now()) |
+|           10 |
+
+mysql> select day(now());
+| day(now()) |
+|         16 |
+
+mysql> select date(now());
+| date(now()) |
+| 2018-10-16  |
+
+mysql> select curtime(); 获取当前系统的时刻时分秒
+| curtime() |
+| 09:17:13  |
+
+mysql> select curdate(); 获取当前系统的日期年月日
+| curdate()  |
+| 2018-10-16 |
+
+mysql> select sleep(3); 休眠3秒
+
+| sleep(3) |
+|        0 |
+
+1、sleep的精度是秒
+2、usleep的精度是微秒，不精确
+3、select的精度是微秒，精确
+select(0, NULL,NULL, NULL, &delay);
+
+
+mysql> select database();
+| database() |
+| teadb      |
+
+mysql> desc t3;
+| Field | Type                | Null | Key | Default | Extra |
+| age   | tinyint(3) unsigned | YES  |     | NULL    |       |
+| pay   | float(7,2)          | YES  |     | NULL    |       |
+
+mysql> desc t4;
+| Field   | Type       | Null | Key | Default | Extra |
+| name    | char(4)    | YES  |     | NULL    |       |
+| homedir | varchar(3) | YES  |     | NULL    |       |
+
+mysql> desc t5;
+| Field    | Type     | Null | Key | Default | Extra |
+| name     | char(10) | YES  |     | NULL    |       |
+| birthday | date     | YES  |     | NULL    |       |
+| start    | year(4)  | YES  |     | NULL    |       |
+| uptime   | time     | YES  |     | NULL    |       |
+| party    | datetime | YES  |     | NULL    |       |
+
+mysql> desc t6;
+| Field | Type                      | Null | Key | Default | Extra |
+| name  | char(10)                  | YES  |     | NULL    |       |
+| likes | set('eat','sleep','film') | YES  |     | NULL    |       |
+| sex   | enum('boy','girl','no')   | YES  |     | NULL    |       |
+
+mysql> insert  into teadb.t5 values("lucy",date(now()),year(19901008),curtime(),20021211083030);
+
+mysql> select * from teadb.t5;
+| name | birthday   | start | uptime   | party               |
+| bob  | 2018-11-22 |  1990 | 08:30:00 | 2018-12-24 20:30:18 |
+| tom  | 2018-12-24 |  1989 | 08:30:30 | 2018-12-25 21:30:00 |
+| lucy | 2018-10-16 |  1990 | 09:25:14 | 2002-12-11 08:30:30 |
+
+mysql> create table t7(party datetime,meetting timestamp);
+
+mysql> desc t7;
+| Field    | Type      | Null | Key | Default           | Extra                       |
+| party    | datetime  | YES  |     | NULL              |                             |
+| meetting | timestamp | NO   |     | CURRENT_TIMESTAMP | on update CURRENT_TIMESTAMP |
+
+/***timestamp有时间范围的限制，目前1970年之前月2037年之后的时间都不能使用timestamp.
+而dateTime 支持的范围是'1000-01-01 00:00:00'到'9999-12-31 23:59:59' **/
+
+TIMESTAMP列用于INSERT或UPDATE操作时记录日期和时间。
+如果你不分配一个值，
+表中的第一个TIMESTAMP列自动设置为最近操作的日期和时间。
+
+也可以通过分配一个NULL值，将TIMESTAMP列设置为当前的日期和时间。
+
+TIMESTAMP值返回后显示为'YYYY-MM-DD HH:MM:SS'格式的字符串，
+显示宽度固定为19个字符。空格也是一个字符。
+
+如果想要获得数字值，应在TIMESTAMP 列添加+0
+
+/**insert into 表名(字段列名)  values(now());
+
+             字段类型 datetime  默认赋值 NULL 
+
+             字段类型 timestamp 默认赋值当前时间   **/
+
+mysql> insert into t7 values(now(),now());
+
+mysql> insert into teadb.t7(meetting) values(now());
+
+mysql> insert into teadb.t7(party) values(20181015113030);
+
+mysql> select * from t7;
+| party               | meetting            |
+| 2018-10-16 09:33:28 | 2018-10-16 09:33:28 |
+| NULL                | 2018-10-16 09:34:09 |
+| 2018-10-15 11:30:30 | 2018-10-16 09:35:12 |
+
+mysql> desc teadb.t5;
+| Field    | Type     | Null | Key | Default | Extra |
+| name     | char(10) | YES  |     | NULL    |       |
+| birthday | date     | YES  |     | NULL    |       |
+| start    | year(4)  | YES  |     | NULL    |       |
+| uptime   | time     | YES  |     | NULL    |       |
+| party    | datetime | YES  |     | NULL    |       |
+/************
+date       2018-09-06
+datetime   2018-09-06 20:30:10
+now() ------------ 2018-09-06 20:30:10
+ year(4)   1990
+ time      08:30:55
+
+##~~19700101   year年份处理默认 70~99==1970~1999  01~69==2001~2069
+*********/
+
+mysql> select * from teadb.t5;
+| name | birthday   | start | uptime   | party               |
+| bob  | 2018-11-22 |  1990 | 08:30:00 | 2018-12-24 20:30:18 |
+| tom  | 2018-12-24 |  1989 | 08:30:30 | 2018-12-25 21:30:00 |
+| lucy | 2018-10-16 |  1990 | 09:25:14 | 2002-12-11 08:30:30 |
+
+mysql> insert into teadb.t5(name,start)values("tom2",50);
+
+datetime  占用8个字节 1000-01-01 00:00:00.000000
+                      ～ 9999-12-31 23:59:59.999999
+##~~19700101   year年份处理默认 70~99==1970~1999  01~69==2001~2069
+timestamp 占用4个字节 1970-01-01 00:00:00.000000
+                      ～  2038-01-19 03:14:07.999999
+
+mysql> insert into teadb.t5(name,start)values("lucy2",77);
+
+mysql> select * from teadb.t5;
+| name  | birthday   | start | uptime   | party               |
+| bob   | 2018-11-22 |  1990 | 08:30:00 | 2018-12-24 20:30:18 |
+| tom   | 2018-12-24 |  1989 | 08:30:30 | 2018-12-25 21:30:00 |
+| lucy  | 2018-10-16 |  1990 | 09:25:14 | 2002-12-11 08:30:30 |
+| tom2  | NULL       |  2050 | NULL     | NULL                |
+| lucy2 | NULL       |  1977 | NULL     | NULL                |
+##~~19700101   year年份处理默认 70~99==1970~1999  01~69==2001~2069
+timestamp 占用4个字节 1970-01-01 00:00:00.000000
+                      ～  2038-01-19 03:14:07.999999
+date    占用4个字节 1000-01-01  ～ 9999-12-31
+year    占用1个字节  1901~2155
+time    占用3个字节 HH:MM:SS
+
+mysql> create table teadb.t8(name char(3),level int(3) unsigned zerofill);
+
+mysql> desc teadb.t8;
+| Field | Type                     | Null | Key | Default | Extra |
+| name  | char(3)                  | YES  |     | NULL    |       |
+| level | int(3) unsigned zerofill | YES  |     | NULL    |       |
+
+mysql> insert into t8 values("tom",13),("jim",29),("lee",129),("bob",1129);
+查看   select   *  from   库名.表名   ; 
+插入   insert    into   库名.表名  values(字段值列表);
+删除   delete  from   库名.表名;
+修改  update  库名.表名  set   字段名=值 where  条件；
+-----------------------辨別ZeroFill：当宣告关键字ZeroFill为自动填满0，如 000021
+mysql> select * from teadb.t8;  ##zerofille 自动补足数字 的 进制位个数 [ 012,  029 ] 
+| name | level |  
+| tom  |   013 |
+| jim  |   029 |
+| lee  |   129 |
+| bob  |  1129 |
+
+mysql> desc mysql.user;
+| Field                  | Type     | Null | Key | Default  | Extra |
+| Host                   | char(60)      | NO   | PRI |     |    |
+| User                   | char(32)        | NO   | PRI |    |    |
+| Create_tablespace_priv | enum('N','Y')      | NO   |     | N |   |
+| ssl_type               | enum('','ANY','X509','SPECIFIED') | NO  |  |   |  |
+| ssl_cipher             | blob              | NO   |     | NULL  |  |
+| max_user_connections   | int(11) unsigned  | NO   |     | 0     |  |
+| plugin                 | char(64)        | NO   |     | mysql_native_password |  |
+| authentication_string  | text            | YES  |     | NULL   |  |
+| password_expired       | enum('N','Y')   | NO   |     | N      |  |
+| password_last_changed  | timestamp          | YES  |     | NULL   |  |
+| password_lifetime      | smallint(5) unsigned    | YES  |   | NULL   |  |
+| account_locked         | enum('N','Y')   | NO   |   | N     |  |
+45 rows in set (0.01 sec)
+
+mysql> create table db1.t6(name char(5),
+    -> sex enum("boy","girl","no"),
+    -> likes set("eat","sleep","game","it"));
+
+mysql> desc db1.t6;
+| Field | Type                           | Null | Key | Default | Extra |
+| name  | char(5)                        | YES  |     | NULL    |       |
+| sex   | enum('boy','girl','no')        | YES  |     | NULL    |       |
+| likes | set('eat','sleep','game','it') | YES  |     | NULL    |       |
+
+mysql> insert into db1.t6 values("bob","boy","eat,sleep,it");
+
+mysql> select * from db1.t6;
+| name | sex  | likes        |
+| bob  | boy  | eat,sleep,it |
+
+mysql> create table teadb.t9(
+    -> name char(10) not null,
+    -> age tinyint(2) unsigned default  19,
+    -> likes  set("eat","sleep","game","film") not null default "eat,sleep");
+
+mysql> desc teadb.t9;
+| Field | Type                             | Null | Key | Default   | Extra |
+| name  | char(10)                         | NO   |     | NULL      |       |
+| age   | tinyint(2) unsigned              | YES  |     | 19        |       |
+| likes | set('eat','sleep','game','film') | NO   |     | eat,sleep |       |
+
+mysql> insert into  teadb.t9(name)values("bob");
+
+mysql> insert into teadb.t9 values(null,21,"game,film");
+ERROR 1048 (23000): Column 'name' cannot be null
+mysql> insert into teadb.t9  values("NULL",21,"game,film");
+
+mysql> select * from teadb.t9;
+| name | age  | likes     |
+| bob  |   19 | eat,sleep |
+| NULL |   21 | game,film |
+
+mysql> 
+/**
+# bc
+2^8
+256
+2^16
+6 5536
+2^15
+3 2768
+2^24
+1677 7216
+2^23
+838 8608
+2^31
+21 4748 3648
+2^32
+42 9496 7296
+2^64
+1844 67440737 09551616
+2^63
+922 33720368 54775808
+quit
+
+tinyint   1Byte=[8bit =2^8 =256] -128 ~0+127 默认 tinyint(4) 
+取消符号tinyint unsigned 0~255 微小整数tinyint(3)
+
+smallint  2Byte=[16b=2^16=65536] -32768~32767  unsigned 0~65535 小整数
+mediumint 3B=[24b=2^24] -8388608~838 8607  unsigned 0~1677 7215 中整数
+
+int  4B=[32b=2^32] -2^31 ~ 2^31-1  默认int(11)
+取消符号 int unsigned  0 ~ 42 9496 7295大整数int(10)
+
+bigint    8B=[64bit=2^64] -2^63 ~ 2^63-1 unsigned 0 ~ 2^64-1 极其大整数
+float     4B=[2^32bit]          单精度浮点数
+double    8B=[2^64bit]          双精度浮点数
+decimal   decimal(m,d) m有效位数，d小数位数，m位数>d位数， 占用M+2字节
+unsigned  使用无符号存储范围
+/**
+datetime  占用8个字节 1000-01-01 00:00:00.000000
+                      ～ 9999-12-31 23:59:59.999999
+mysql> insert into db1.t5 values
+    -> ("peri",20180909,20181012101030,1992,093000);
+
+datetime 20181012101030  2018-10-12 10:10:30 
+date     20180909        2018-09-09 
+time     093000                     09:30:00
+
+timestamp 占用4个字节 1970-01-01 00:00:00.000000
+                      ～  2038-01-19 03:14:07.999999
+date    占用4个字节 1000-01-01  ～ 9999-12-31
+year    占用1个字节  1901~2155
+time    占用3个字节 HH:MM:SS
+*一个汉字占用2或3个字节，一个英文字母占用一个字节
+如果数据表只有一个varchar字段且该字段DEFAULT NULL，
+那么该varchar字段的最大长度为65532个字节，即65535-2-1=65532 byte。
+
+字符类型若为gbk，每个字符最多占2个字节，最大长度不能超过32766;
+字符类型若为utf8，每个字符最多占3个字节，最大长度不能超过21845。
+DEFAULT CHARSET=latin1 //CHARSET=utf8 //CHARSET=gbk
+##> create table 表名(字段名 类型，字段名2 类型2) DEFAULT CHARSET=utf8;
+
+*char(字符数），最大长度255字符（英文字母），127个汉字
+mysql> create table db1.t3(name char(256),homeaddr varchar(65529)); 
+ERROR 1074 (42000): Column length too big for column 'name' (max = 255); 
+use BLOB or TEXT instead
+*变长varchar(字符数)，字符数超出范围不能写入。
+mysql> create table db1.t3(name char(3),homeaddr varchar(65529));
+Query OK, 
+*大文本类型：text/blob
+*字符数大于65535时，使用，影响数据库读写速度
+**/
+
+一、数字类型
+
+类型
+范围
+说明
+ 
+Char(N) [binary]	N=1~255 个字元
+binary ：分辨大小写	固定长度	std_name cahr(32) not null
+VarChar(N) [binary]	N=1~255 个字元
+binary ：分辨大小写	可变长度	std_address varchar(256)
+TinyBlob	最大长度255个字元(2^8-1)	
+Blob (Binary large objects)储存二进位资料，且有分大小写
+
+memo text not null
+TinyText	最大长度255个字元(2^8-1)
+Blob	最大长度65535个字元(2^16-1)
+Text	最大长度65535个字元(2^16-1)
+MediumBlob	最大长度 16777215 个字元(2^24-1)
+MediumText	最大长度 16777215 个字元(2^24-1)
+LongBlob	最大长度4294967295个字元 (2^32-1)
+LongText	最大长度4294967295个字元 (2^32-1)
+Enum	集合最大数目为65535	列举(Enumeration)，Enum单选、Set复选	sex enum(1,0)
+habby set(‘玩电玩’,'睡觉’,'看电影’,'听音乐’)
+Set	集合最大数目为64
+辨別Null与Not Null ：Null为允许储存空值(Null)
+
+二、数值
+类型                   范围     说明     例如
+TinyInt[M]    -128~127
+           UNSIGNED ： 0~255	 num tinyint unsigned
+SmallInt[M]   -32768~32767
+           UNSIGNED ：0~ 65535	 	 
+MediumInt[M]    -8388608~8388607
+           UNSIGNED ：0~16777215	 	 
+Int[M]         -2^31~2^31-1
+           UNSIGNED ： 0~2^32	 	 
+BigInt[M]      -2^63~2^63-1
+           UNSIGNED ： 0~2^64	 	 
+Float [(M,D)]	-3.4E+38~3.4E+38( 约 )
+注： M 为长度， D 为小数,Float 4 bytes,Double 8 bytes	 
+Double [(M,D)]	-1.79E+308~1.79E+308( 约 )
+Decimal [(M,D)]	 
+辨別ZeroFill：当宣告关键字ZeroFill为自动填满0，如 000021
+mysql> create table int_12(id int(12) zerofill);
+mysql> desc int_12;
+| Field | Type                      | Null | Key | Default | Extra |
+| id    | int(12) unsigned zerofill | YES  |     | NULL    |       |
+
+mysql> insert into int_12(id) values(123456);
+mysql> insert into int_12(id) values(4294967296);
+ERROR 1264 (22003): Out of range value for column 'id' at row 1
+mysql> insert into int_12(id) values(4294967295);
+Query OK
+mysql> select * from int_12;
+| id           |
+| 000000123456 |
+| 004294967295 |
+三、日期时间
+类型    范围    说明
+Date	日期   (yyyy-mm-dd)	 
+Time	时间   (hh:mm:ss)	 
+DateTime	日期与时间組合(yyyy-mm-dd hh:mm:ss)	 
+TimeStamp	yyyymmddhhmmss	 
+Year	年份    yyyy
+/**
+mysql> delete from db1.t1 where age=24 or age=99;
+mysql> delete from db1.t1 where age=-1 and pay=33200.88;
+*查看   select   *  from   库名.表名   ; 
+*插入   insert    into   库名.表名  values(字段值列表);
+*删除   delete  from   库名.表名;
+*修改  update  库名.表名  set   字段名=值 where  条件；
+     /**修表结构命令的格式?
+/* alter table 表名  执行动作
+  增加add 列名email 字段类型varchar(50) dafault '默认值' ，
+  增加add 列名tel 字段类型 char(11) ; **/
+
+  /* alter table 表名  执行动作
+             增加add  列名  字段类型   dafault '默认值'  插入位置first; **/
+  /* alter table 表名  执行动作
+              增加add  列名  字段类型   dafault '默认值'  插入位置after 字段列名; **/
+/* alter table 表名  执行动作
+ 修改modify  列名  字段类型  是否允许空值not null
+ dafault '默认值'  插入位置after 字段列名 ; **/
+
+ /*  alter table 表名  执行动作
+    改变change  旧列名  换成新列名 字段类型  【是否允许空值not null】
+   dafault '默认值'  【插入位置after 字段列名 】; **/
+ /*  alter table 表名  执行动作
+        删除drop  旧列名 ; **/
+
+     /**修改表名
+ /*  alter  table  旧表名  rename 新表名； **/
+mysql> alter table  t6  rename  stuinfo; 
+
+          /** mysql -h服务器名     -u用户名  -p密码   数据库名*/
+[root@DB1 ~]# mysql -h127.0.0.1 -uroot  -p1234  db1
+
+扩展：
+1.InnoDB，是MySQL的数据库引擎之一，为MySQL AB发布binary的标准之一。
+2.AUTO_INCREMENT会在新记录插入表中时生成一个唯一的数字。
+希望在每次插入新记录时，自动地创建主键字段的值，
+可以在表中创建一个 auto_increment 字段。
+ENGINE=InnoDB 表示将数据库的引擎设置为InnoDB,
+从MySQL 5.6开始默认使用该引擎。
+DEFAULT CHARSET=utf8 表示设置数据库的默认字符集为utf8
+AUTO_INCREMENT=1 表示自动增长的起始值为1
+
+***mysql这里varchar 和 char 都不支持中文 写入，原因：DEFAULT CHARSET=latin1 
+##> create table 表名(字段名 类型，字段名2 类型2) DEFAULT CHARSET=utf8;
+**这时候可以输入中文。
+*/
+
+mysql> select sleep(3); 休眠3秒
++----------+
+| sleep(3) |
++----------+
+|        0 |
++----------+
+1 row in set (3.00 sec)
+1、sleep的精度是秒
+2、usleep的精度是微秒，不精确
+3、select的精度是微秒，精确
+select(0, NULL,NULL, NULL, &delay);
+****************/
+
+mysql> show create table t4;
+
+| Table | Create Table     |
+
+| t4    | CREATE TABLE `t4` (
+  `name` char(4) DEFAULT NULL,
+  `homedir` varchar(3) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 |
+
+mysql> desc teadb.t4;
+| Field   | Type       | Null | Key | Default | Extra |
+| name    | char(4)    | YES  |     | NULL    |       |
+| homedir | varchar(3) | YES  |     | NULL    |       |
+
+     /**修表结构命令的格式?
+/* alter table 表名  执行动作
+  增加add 列名email 字段类型varchar(50) dafault '默认值' ，
+  增加add 列名tel 字段类型 char(11) ; **/
+
+mysql> alter  table teadb.t4  add mail char(50)   after name;
+
+mysql> alter  table teadb.t4  add stu_num char(10) first;
+
+mysql> desc teadb.t4;
+| Field   | Type       | Null | Key | Default | Extra |
+| stu_num | char(10)   | YES  |     | NULL    |       |
+| name    | char(4)    | YES  |     | NULL    |       |
+| mail    | char(50)   | YES  |     | NULL    |       |
+| homedir | varchar(3) | YES  |     | NULL    |       |
+
+mysql> alter  table teadb.t4 add age int(2) default 19;
+
+mysql> desc teadb.t4;
+| Field   | Type       | Null | Key | Default | Extra |
+| stu_num | char(10)   | YES  |     | NULL    |       |
+| name    | char(4)    | YES  |     | NULL    |       |
+| mail    | char(50)   | YES  |     | NULL    |       |
+| homedir | varchar(3) | YES  |     | NULL    |       |
+| age     | int(2)     | YES  |     | 19      |       |
+
+mysql> alter table teadb.t4  modify name char(15);
+
+mysql> desc teadb.t4;
+| Field   | Type       | Null | Key | Default | Extra |
+| stu_num | char(10)   | YES  |     | NULL    |       |
+| name    | char(15)   | YES  |     | NULL    |       |
+| mail    | char(50)   | YES  |     | NULL    |       |
+| homedir | varchar(3) | YES  |     | NULL    |       |
+| age     | int(2)     | YES  |     | 19      |       |
+
+mysql> alter table t4  modify age int(2) default 19  after name;
+
+mysql> desc teadb.t4;
+| Field   | Type       | Null | Key | Default | Extra |
+| stu_num | char(10)   | YES  |     | NULL    |       |
+| name    | char(15)   | YES  |     | NULL    |       |
+| age     | int(2)     | YES  |     | 19      |       |
+| mail    | char(50)   | YES  |     | NULL    |       |
+| homedir | varchar(3) | YES  |     | NULL    |       |
+
+mysql> select * from teadb.t4;
+| stu_num | name | age  | mail | homedir |
+| NULL    | jack |   19 | NULL | USA     |
+| NULL    | tom  |   19 | NULL | xjp     |
+
+mysql> desc teadb.t5;
+| Field    | Type     | Null | Key | Default | Extra |
+| name     | char(10) | YES  |     | NULL    |       |
+| birthday | date     | YES  |     | NULL    |       |
+| start    | year(4)  | YES  |     | NULL    |       |
+| uptime   | time     | YES  |     | NULL    |       |
+| party    | datetime | YES  |     | NULL    |       |
+
+date       2018-09-06
+datetime   2018-09-06 20:30:10
+ year(4)   1990
+ time      08:30:55
+
+mysql> select * from teadb.t5;
+| name  | birthday   | start | uptime   | party               |
+| bob   | 2018-11-22 |  1990 | 08:30:00 | 2018-12-24 20:30:18 |
+| tom   | 2018-12-24 |  1989 | 08:30:30 | 2018-12-25 21:30:00 |
+| lucy  | 2018-10-16 |  1990 | 09:25:14 | 2002-12-11 08:30:30 |
+| tom2  | NULL       |  2050 | NULL     | NULL                |
+| lucy2 | NULL       |  1977 | NULL     | NULL                |
+
+
+mysql> alter table teadb.t5  drop  start,drop name;
+
+mysql> select * from teadb.t5;
+| birthday   | uptime   | party               |
+| 2018-11-22 | 08:30:00 | 2018-12-24 20:30:18 |
+| 2018-12-24 | 08:30:30 | 2018-12-25 21:30:00 |
+| 2018-10-16 | 09:25:14 | 2002-12-11 08:30:30 |
+| NULL       | NULL     | NULL                |
+| NULL       | NULL     | NULL                |
+
+mysql> desc teadb.t5;
+| Field    | Type     | Null | Key | Default | Extra |
+| birthday | date     | YES  |     | NULL    |       |
+| uptime   | time     | YES  |     | NULL    |       |
+| party    | datetime | YES  |     | NULL    |       |
+
+mysql> desc teadb.t4;
+| Field   | Type       | Null | Key | Default | Extra |
+| stu_num | char(10)   | YES  |     | NULL    |       |
+| name    | char(15)   | YES  |     | NULL    |       |
+| age     | int(2)     | YES  |     | 19      |       |
+| mail    | char(50)   | YES  |     | NULL    |       |
+| homedir | varchar(3) | YES  |     | NULL    |       |
+
+mysql> alter table t4  change stu_num  stuid  char(10);
+
+mysql> desc teadb.t4;
+| Field   | Type       | Null | Key | Default | Extra |
+| stuid   | char(10)   | YES  |     | NULL    |       |
+| name    | char(15)   | YES  |     | NULL    |       |
+| age     | int(2)     | YES  |     | 19      |       |
+| mail    | char(50)   | YES  |     | NULL    |       |
+| homedir | varchar(3) | YES  |     | NULL    |       |
+如果数据表只有一个varchar字段且该字段DEFAULT NULL，
+那么该varchar字段的最大长度为65532个字节，即65535-2-1=65532 byte。
+字符类型若为gbk，每个字符最多占2个字节，最大长度不能超过32766;
+字符类型若为utf8，每个字符最多占3个字节，最大长度不能超过21845。
+
+-------------------------------------------------------------------------------
+mysql> create database perdb;
+
+mysql> use perdb;
+
+mysql> select database();
+| database() |
+| perdb      |
+mysql> create table perdb.perinfo(name char(8),age tinyint unsigned,
+    -> pay float(8,2),birthday date,meetting datetime,
+    -> start year,listen time,
+    -> sex enum("boy","girl","no"),
+    -> hobby set("eat","sleep","music","peri"));
+Query OK, 0 rows affected (0.31 sec)
+
+mysql> desc perdb.perinfo;
+| Field    | Type                              | Null | Key | Default | Extra |
+| name     | char(8)                           | YES  |     | NULL    |       |
+| age      | tinyint(3) unsigned               | YES  |     | NULL    |       |
+| pay      | float(8,2)                        | YES  |     | NULL    |       |
+| birthday | date                              | YES  |     | NULL    |       |
+| meetting | datetime                          | YES  |     | NULL    |       |
+| start    | year(4)                           | YES  |     | NULL    |       |
+| listen   | time                              | YES  |     | NULL    |       |
+| sex      | enum('boy','girl','no')           | YES  |     | NULL    |       |
+| hobby    | set('eat','sleep','music','peri') | YES  |     | NULL    |       |
+/***timestamp有时间范围的限制，目前1970年之前月2037年之后的时间都不能使用timestamp.
+而dateTime 支持的范围是'1000-01-01 00:00:00'到'9999-12-31 23:59:59' **/
+
+TIMESTAMP列用于INSERT或UPDATE操作时记录日期和时间。
+
+如果你不分配一个值，
+表中的第一个TIMESTAMP列自动设置为最近操作的日期和时间。
+
+也可以通过分配一个NULL值，将TIMESTAMP列设置为当前的日期和时间。
+
+TIMESTAMP值返回后显示为'YYYY-MM-DD HH:MM:SS'格式的字符串，
+
+显示宽度固定为19个字符。空格也是一个字符。
+
+如果想要获得数字值，应在TIMESTAMP 列添加+0
+
+/**insert into 表名(字段列名)  values(now());
+             字段类型 datetime  默认赋值 NULL 
+             字段类型 timestamp 默认赋值当前时间   **/
+ date       2018-09-06
+ datetime   2018-09-06 20:30:10
+ year(4)   1990
+ time      08:30:55
+mysql> insert into perdb.perinfo values ("lily",255,108888.66,19900612,20021211083030,2002,092920,"girl","sleep,music,peri");
+
+mysql> select * from perdb.perinfo;
+| name | age  | pay       | birthday   | meetting            | start | listen   | sex  | hobby            |
+| lily |  255 | 108888.66 | 1990-06-12 | 2002-12-11 08:30:30 |  2002 | 09:29:20 | girl | sleep,music,peri |
+
+--------------------------------------------------------------------------------
+mysql> show tables;
+| Tables_in_teadb |
+| 学生表          |
+| t3              |
+| t4              |
+| t5              |
+| t6              |
+| t7              |
+| t8              |
+| t9              |
+| test            |
+
+mysql> desc teadb.t9;
+| Field | Type                             | Null | Key | Default   | Extra |
+| name  | char(10)                         | NO   |     | NULL      |       |
+| age   | tinyint(2) unsigned              | YES  |     | 19        |       |
+| likes | set('eat','sleep','game','film') | NO   |     | eat,sleep |       |
+
+mysql> alter table teadb.t9 rename  teadb.stuinfo;
+
+mysql> show tables;
+| Tables_in_teadb |
+| 学生表          |
+| stuinfo         |
+| t3              |
+| t4              |
+| t5              |
+| t6              |
+| t7              |
+| t8              |
+| test            |
+
+mysql> desc stuinfo;
+| Field | Type                             | Null | Key | Default   | Extra |
+| name  | char(10)                         | NO   |     | NULL      |       |
+| age   | tinyint(2) unsigned              | YES  |     | 19        |       |
+| likes | set('eat','sleep','game','film') | NO   |     | eat,sleep |       |
+
+mysql> select * from stuinfo;
+| name | age  | likes     |
+| bob  |   19 | eat,sleep |
+| NULL |   21 | game,film |
+
+mysql> desc t4;
+| Field   | Type       | Null | Key | Default | Extra |
+| stuid   | char(10)   | YES  |     | NULL    |       |
+| name    | char(15)   | YES  |     | NULL    |       |
+| age     | int(2)     | YES  |     | 19      |       |
+| mail    | char(50)   | YES  |     | NULL    |       |
+| homedir | varchar(3) | YES  |     | NULL    |       |
+
+mysql> alter table t4  modify name varchar(3);
+ERROR 1406 (22001): Data too long for column 'name' at row 1
+mysql> alter table t4 modify name varchar(15);
+
+mysql> alter table t4  modify age int(2)  default  19 after name;
+
+mysql> desc t5;
+| Field    | Type     | Null | Key | Default | Extra |
+| birthday | date     | YES  |     | NULL    |       |
+| uptime   | time     | YES  |     | NULL    |       |
+| party    | datetime | YES  |     | NULL    |       |
+
+mysql> desc teadb.t4;
+| Field   | Type        | Null | Key | Default | Extra |
+| stuid   | char(10)    | YES  |     | NULL    |       |
+| name    | varchar(15) | YES  |     | NULL    |       |
+| age     | int(2)      | YES  |     | 19      |       |
+| mail    | char(50)    | YES  |     | NULL    |       |
+| homedir | varchar(3)  | YES  |     | NULL    |       |
+
+mysql> alter table  teadb.t4  change stuid  stu_id  char(10);
+
+       /**建表时创建索引  
+/**  create table 表名（index（用于索引的字段名）,index（用于索引的字段名 ）)； */
+
+mysql> create table teadb.t21(
+    ->  name char(10),sex enum("boy","girl"),
+    -> class char(7),age int(2),
+    -> index(name),index(sex));
+
+mysql> desc teadb.t21;
+| Field | Type               | Null | Key | Default | Extra |
+| name  | char(10)           | YES  | MUL | NULL    |       |
+| sex   | enum('boy','girl') | YES  | MUL | NULL    |       |
+| class | char(7)            | YES  |     | NULL    |       |
+| age   | int(2)             | YES  |     | NULL    |       |
+
+mysql> show index from teadb.t21\G;
+*************************** 1. row ***************************
+        Table: t21
+   Non_unique: 1
+     Key_name: name
+ Seq_in_index: 1
+  Column_name: name
+    Collation: A
+  Cardinality: 0
+     Sub_part: NULL
+       Packed: NULL
+         Null: YES
+   Index_type: BTREE
+
+*************************** 2. row ***************************
+        Table: t21
+   Non_unique: 1
+     Key_name: sex
+ Seq_in_index: 1
+  Column_name: sex
+   Index_type: BTREE
+
+
+mysql> drop index name on teadb.t21;
+
+mysql> desc teadb.t21;
+| Field | Type               | Null | Key | Default | Extra |
+| name  | char(10)           | YES  |     | NULL    |       |
+| sex   | enum('boy','girl') | YES  | MUL | NULL    |       |
+| class | char(7)            | YES  |     | NULL    |       |
+| age   | int(2)             | YES  |     | NULL    |       |
+
+mysql> show index  from teadb.t21\G;
+*************************** 1. row ***************************
+        Table: t21
+   Non_unique: 1
+     Key_name: sex
+ Seq_in_index: 1
+  Column_name: sex
+   Index_type: BTREE
+
+       /**  查询该sql语句的执行计划 */
+mysql> explain select * from db1.xsb where xname="tom"\G;
+*************************** 1. row ***************************
+
+mysql> explain select * from t5 where name="lucy"\G;
+*************************** 1. row *******************
+           id: 1           #id:每个select子句的标识id
+  select_type: SIMPLE      #select_type:select语句的类型
+        table: t5        #table:当前表名
+   partitions: NULL 
+         type: ref       #type：当前表内访问方式
+possible_keys: suoyin    #possible_keys:可能使用到的索引
+          key: suoyin    #key:经过优化器评估最终使用的索引
+      key_len: 11        #key_length:使用到的索引长度
+          ref: const     #ref:引用到的上一个表的列
+         rows: 1        #rows:rows_examined，要得到最终记录索要扫描经过的记录数
+     filtered: 100.00
+        Extra: NULL    #Extra:额外的信息说明
+filtered:表示存储引擎返回的数据在server层过滤后，剩下多少满足查询的记录数量的比例，注意是百分比，不是具体记录数。
+
+MySQL中explain执行计划中额外信息字段(Extra)详解
+
+SQL执行计划是经过优化器决策，产生的SQL在数据库内部执行的访问路径计划； 
+由如下语法得到：
+
+explain select col1,col2 from t1..;
+desc select col1,col2 from t1..;
+
+id:每个select子句的标识id
+select_type:select语句的类型
+table:当前表名
+显示查询将访问的分区，如果你的查询是基于分区表
+type：当前表内访问方式
+possible_keys:可能使用到的索引
+key:经过优化器评估最终使用的索引
+key_length:使用到的索引长度
+ref:引用到的上一个表的列
+rows:rows_examined，要得到最终记录索要扫描经过的记录数
+filtered:表示存储引擎返回的数据在server层过滤后，剩下多少满足查询的记录数量的比例，注意是百分比，不是具体记录数。
+Extra:额外的信息说明
+         id: 1
+  select_type: SIMPLE
+        table: baba
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 2
+        Extra: Using where
+
+1 row in set (0.00 sec)  //该条sql语句没有走索引
+
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+/** sql命令分类? DDL   DML    DTL    DCL **/
+    /**添加主键方式一 create table 表名（字段名  字段类型 primary key,列名  属性类型,...);   
+ /**添加主键方式二 create table 表名(字段名  字段类型,列名 属性类型,..,primary key(要添加主键的字段名));
+
+  // 给已有表创建index字段
+/** create index 索引名自定义 on  库名.表名（用于索引的字段列名）**/
+mysql> create index suoyin on db1.t5(name);
+
+mysql> create index name on teadb.t21(name);
+
+mysql> desc teadb.t21;
+| Field | Type               | Null | Key | Default | Extra |
+| name  | char(10)           | YES  | MUL | NULL    |       |
+| sex   | enum('boy','girl') | YES  | MUL | NULL    |       |
+| class | char(7)            | YES  |     | NULL    |       |
+| age   | int(2)             | YES  |     | NULL    |       |
+
+mysql> insert into teadb.t21 values("bob",'boy',"nsd1806",19);
+
+mysql> select * from teadb.t21 where name like 'b_b';
+| name | sex  | class   | age  |
+| bob  | boy  | nsd1806 |   19 |
+
+mysql> insert into teadb.t21 values("bob",'boy',"nsd1806",19);
+
+mysql> select * from teadb.t21 where name like 'b_b';
+| name | sex  | class   | age  |
+| bob  | boy  | nsd1806 |   19 |
+
+mysql> \c
+mysql> create table teadb.t22(
+    -> name char(10),
+    -> stu_num char(9),
+    -> primary key(stu_num));
+
+mysql> create table teadb.t23(
+    -> name char(10) primary key,
+    -> stu_num char(9));
+
+mysql> desc teadb.t22;
+| Field   | Type     | Null | Key | Default | Extra |
+| name    | char(10) | YES  |     | NULL    |       |
+| stu_num | char(9)  | NO   | PRI | NULL    |       |
+
+mysql> desc teadb.t23;
+| Field   | Type     | Null | Key | Default | Extra |
+| name    | char(10) | NO   | PRI | NULL    |       |
+| stu_num | char(9)  | YES  |     | NULL    |       |
+
+mysql> insert into teadb.t22 values("bob","nsd180708"),
+    -> ("bob","nsd180709");
+
+mysql> select * from teadb.t22;
+| name | stu_num   |
+| bob  | nsd180708 |
+| bob  | nsd180709 |
+
+mysql> insert into t22 values("lucy","nsd180708");
+ERROR 1062 (23000): Duplicate entry 'nsd180708' for key 'PRIMARY'
+mysql> insert into teadb.t22 values("lucy",null);
+ERROR 1048 (23000): Column 'stu_num' cannot be null
+mysql> 
+
+mysql> create table teadb.t24(
+    -> cip char(15) not null,
+    -> sport smallint(2) not null,
+    -> status enum("deny","allow"));
+
+mysql> desc teadb.t24;
+| Field  | Type                 | Null | Key | Default | Extra |
+| cip    | char(15)             | NO   |     | NULL    |       |
+| sport  | smallint(2)          | NO   |     | NULL    |       |
+| status | enum('deny','allow') | YES  |     | NULL    |       |
+
+mysql> drop table teadb.t24;
+
+/**多个字段都是primary key 称为复合主键，必须一起同时创建，
+通常与 auto_increment 连用
+
+mysql> create table teadb.t24(
+    -> cip char(15),
+    -> sport  smallint(2),
+    -> status enum("deny","allow"),
+    -> primary key(cip,sport));
+
+mysql> desc teadb.t24;
+| Field  | Type                 | Null | Key | Default | Extra |
+| cip    | char(15)             | NO   | PRI | NULL    |       |
+| sport  | smallint(2)          | NO   | PRI | NULL    |       |
+| status | enum('deny','allow') | YES  |     | NULL    |       |
+
+mysql> insert into teadb.t24 values("192.168.4.1",21,"deny");
+
+mysql> insert into teadb.t24 values("192.168.4.1",21,"allow");
+ERROR 1062 (23000): Duplicate entry '192.168.4.1-21' for key 'PRIMARY'
+mysql> insert into teadb.t24 values("192.168.4.2",21,"allow"),("192.168.4.2",23,"deny");
+
+mysql> select * from teadb.t24;
+| cip         | sport | status |
+| 192.168.4.1 |    21 | deny   |
+| 192.168.4.2 |    21 | allow  |
+| 192.168.4.2 |    23 | deny   |
+
+
+
+mysql> desc mysql.db;
+| Field                 | Type          | Null | Key | Default | Extra |
+| Host                  | char(60)      | NO   | PRI |         |       |
+| Db                    | char(64)      | NO   | PRI |         |       |
+| User                  | char(32)      | NO   | PRI |         |       |
+| Select_priv           | enum('N','Y') | NO   |     | N       |       |
+| Insert_priv           | enum('N','Y') | NO   |     | N       |       |
+| Update_priv           | enum('N','Y') | NO   |     | N       |       |
+| Delete_priv           | enum('N','Y') | NO   |     | N       |       |
+| Create_priv           | enum('N','Y') | NO   |     | N       |       |
+| Drop_priv             | enum('N','Y') | NO   |     | N       |       |
+| Grant_priv            | enum('N','Y') | NO   |     | N       |       |
+| References_priv       | enum('N','Y') | NO   |     | N       |       |
+| Index_priv            | enum('N','Y') | NO   |     | N       |       |
+| Alter_priv            | enum('N','Y') | NO   |     | N       |       |
+| Create_tmp_table_priv | enum('N','Y') | NO   |     | N       |       |
+| Lock_tables_priv      | enum('N','Y') | NO   |     | N       |       |
+| Create_view_priv      | enum('N','Y') | NO   |     | N       |       |
+| Show_view_priv        | enum('N','Y') | NO   |     | N       |       |
+| Create_routine_priv   | enum('N','Y') | NO   |     | N       |       |
+| Alter_routine_priv    | enum('N','Y') | NO   |     | N       |       |
+| Execute_priv          | enum('N','Y') | NO   |     | N       |       |
+| Event_priv            | enum('N','Y') | NO   |     | N       |       |
+| Trigger_priv          | enum('N','Y') | NO   |     | N       |       |
+
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+
+mysql> desc mysql.tables_priv;
+
+| Field       | Type   | Null | Key | Default | Extra  |
+| Host        | char(60) | NO   | PRI |  |  |
+| Db          | char(64) | NO   | PRI |  |  |
+| User        | char(32)   | NO   | PRI |   |    |
+| Table_name  | char(64)   | NO   | PRI |   |    |
+| Grantor     | char(93)   | NO   | MUL |   |    |
+| Timestamp   | timestamp  | NO   |     | CURRENT_TIMESTAMP | on update CURRENT_TIMESTAMP |
+| Table_priv  | set('Select','Insert','Update','Delete','Create','Drop','Grant','References','Index','Alter','Create View','Show view','Trigger') | NO   |  |  |  |
+| Column_priv | set('Select','Insert','Update','References')   | NO   |  |  |  |
+
+mysql> select database();
+
+mysql> desc teadb.t24;
+| Field  | Type                 | Null | Key | Default | Extra |
+| cip    | char(15)             | NO   | PRI | NULL    |       |
+| sport  | smallint(2)          | NO   | PRI | NULL    |       |
+| status | enum('deny','allow') | YES  |     | NULL    |       |
+
+mysql> alter table teadb.t24 drop primary key;
+
+mysql> desc teadb.t24;
+| Field  | Type                 | Null | Key | Default | Extra |
+| cip    | char(15)             | NO   |     | NULL    |       |
+| sport  | smallint(2)          | NO   |     | NULL    |       |
+| status | enum('deny','allow') | YES  |     | NULL    |       |
+
+mysql> desc teadb.t22;
+| Field   | Type     | Null | Key | Default | Extra |
+| name    | char(10) | YES  |     | NULL    |       |
+| stu_num | char(9)  | NO   | PRI | NULL    |       |
+
+mysql> alter table teadb.t22 drop  primary key;
+
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> select * from t24;
+| cip         | sport | status |
+| 192.168.4.1 |    21 | deny   |
+| 192.168.4.2 |    21 | allow  |
+| 192.168.4.2 |    23 | deny   |
+
+mysql> insert into teadb.t24 values("192.168.4.2",23,"deny");
+
+mysql> select * from teadb.t24;
+| cip         | sport | status |
+| 192.168.4.1 |    21 | deny   |
+| 192.168.4.2 |    21 | allow  |
+| 192.168.4.2 |    23 | deny   |
+| 192.168.4.2 |    23 | deny   |
+
+mysql> desc teadb.t24;
+| Field  | Type                 | Null | Key | Default | Extra |
+| cip    | char(15)             | NO   |     | NULL    |       |
+| sport  | smallint(2)          | NO   |     | NULL    |       |
+| status | enum('deny','allow') | YES  |     | NULL    |       |
+
+mysql> alter table teadb.t24 add primary  key(cip,sport);
+ERROR 1062 (23000): Duplicate entry '192.168.4.2-23' for key 'PRIMARY'
+
+mysql> delete from teadb.t24;
+
+mysql> alter table teadb.t24 add primary key(cip,sport);
+
+mysql> ~^[[2~     \c
+mysql> 
+/**多个字段都是primary key 称为复合主键，必须一起同时创建，
+
+通常与 auto_increment 连用
+
+1.InnoDB，是MySQL的数据库引擎之一，为MySQL AB发布binary的标准之一。
+2.AUTO_INCREMENT会在新记录插入表中时生成一个唯一的数字。
+希望在每次插入新记录时，自动地创建主键字段的值，
+可以在表中创建一个 auto_increment 字段。
+ENGINE=InnoDB 表示将数据库的引擎设置为InnoDB,
+从MySQL 5.6开始默认使用该引擎。
+DEFAULT CHARSET=utf8 表示设置数据库的默认字符集为utf8
+AUTO_INCREMENT=1 表示自动增长的起始值为1
+*****************8/
+
+mysql> create table t25(
+    -> stu_id  int(2) primary key auto_increment,
+    -> name char(5),
+    -> age tinyint(2) unsigned);
+
+mysql> desc teadb.t25;
+| Field  | Type                | Null | Key | Default | Extra          |
+| stu_id | int(2)              | NO   | PRI | NULL    | auto_increment |
+| name   | char(5)             | YES  |     | NULL    |                |
+| age    | tinyint(2) unsigned | YES  |     | NULL    |                |
+
+mysql> insert into t25(name,age)values("bob",19);
+
+mysql> insert into t25(name,age) values("tom",29);
+
+mysql> select * from teadb.t25;
+| stu_id | name | age  |
+|      1 | bob  |   19 |
+|      2 | tom  |   29 |
+
+mysql> insert into teadb.t25  values(null,"tom",29);
+
+mysql> select * from teadb.t25;
+| stu_id | name | age  |
+|      1 | bob  |   19 |
+|      2 | tom  |   29 |
+|      3 | tom  |   29 |
+
+mysql> insert into teadb.t25(name,age)  values("jerry",29);
+
+mysql> select * from teadb.t25;
+| stu_id | name  | age  |
+|      1 | bob   |   19 |
+|      2 | tom   |   29 |
+|      3 | tom   |   29 |
+|      4 | jerry |   29 |
+
+mysql> delete from t25;
+
+mysql> insert into teadb.t25(name,age)  values("jack",19);
+
+mysql> select * from teadb.t25;
+| stu_id | name | age  |
+|      5 | jack |   19 |
+
+mysql> desc teadb.t25;
+| Field  | Type                | Null | Key | Default | Extra          |
+| stu_id | int(2)              | NO   | PRI | NULL    | auto_increment |
+| name   | char(5)             | YES  |     | NULL    |                |
+| age    | tinyint(2) unsigned | YES  |     | NULL    |                |
+
+mysql> show tables;
+| Tables_in_teadb |
+| 学生表          |
+| stuinfo         |
+| t21             |
+| t22             |
+| t23             |
+| t24             |
+| t25             |
+| t3              |
+| t4              |
+| t5              |
+| t6              |
+| t7              |
+| t8              |
+| test            |
+
+mysql> desc stuinfo;
+| Field | Type                             | Null | Key | Default   | Extra |
+| name  | char(10)                         | NO   |     | NULL      |       |
+| age   | tinyint(2) unsigned              | YES  |     | 19        |       |
+| likes | set('eat','sleep','game','film') | NO   |     | eat,sleep |       |
+
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+
+mysql> alter table teadb.stuinfo add id int(2) zerofill primary key auto_increment first;
+
+mysql> desc teadb.stuinfo;
+| Field | Type                             | Null | Key | Default   | Extra          |
+| id    | int(2) unsigned zerofill         | NO   | PRI | NULL      | auto_increment |
+| name  | char(10)                         | NO   |     | NULL      |                |
+| age   | tinyint(2) unsigned              | YES  |     | 19        |                |
+| likes | set('eat','sleep','game','film') | NO   |     | eat,sleep |                |
+
+mysql> select * from stuinfo;
+| id | name | age  | likes     |
+| 01 | bob  |   19 | eat,sleep |
+| 02 | NULL |   21 | game,film |
+/****Alter table tb change id id int(10);//删除自增长
+mysql> 想删除主键,必须先删除自动增长
+
+mysql> desc teadb.t25;
+| Field  | Type                | Null | Key | Default | Extra          |
+| stu_id | int(2)              | NO   | PRI | NULL    | auto_increment |
+| name   | char(5)             | YES  |     | NULL    |                |
+| age    | tinyint(2) unsigned | YES  |     | NULL    |                |
+
+mysql> alter table teadb.t25 drop primary key;
+ERROR 1075 (42000): Incorrect table definition; there can be only one auto column and it must be defined as a key
+改结构：
+/***当需要修改字段名称时使用change；
+alter table t1 change oldlie  newlie  char(7);
+当需要修改字段类型时使用modify，
+modify还是比change少写个字段名称的
+alter table t25 change  old-column  new-column   int(2) not null
+alter table t25 change stu_id  stu_id  int(2) not null
+change 重命名时，需给定 旧的 和 新的 列名称 和 列当前的类型。
+
+/***    ALTER  TABLE  表名  MODIFY   列名   要改成的数据类型
+mysql> alter table teadb.t25 modify stu_id int(2) not null;
+使用MODIFY来改变列的类型，此时不需要重命名
+mysql> alter table teadb.t25  drop  primary key; 想删除主键,必须先删除自动增长
+
+mysql> desc teadb.t25;
+| Field  | Type                | Null | Key | Default | Extra |
+| stu_id | int(2)              | NO   |     | NULL    |       |
+| name   | char(5)             | YES  |     | NULL    |       |
+| age    | tinyint(2) unsigned | YES  |     | NULL    |       |
+
+mysql> 
+mysql> show create table  teadb.t25;
+
+| Table | Create Table   |
+| t25   | CREATE TABLE `t25` (
+  `stu_id` int(2) NOT NULL,
+  `name` char(5) DEFAULT NULL,
+  `age` tinyint(2) unsigned DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 |
+---------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+mysql> create table ygtab(
+    -> yg_id int(2) primary key auto_increment,
+    -> name char(10)
+    -> )engine=innodb;
+
+mysql> desc teadb.ygtab;
+
+| Field | Type     | Null | Key | Default | Extra     |
+| yg_id | int(2)   | NO   | PRI | NULL    | auto_increment |
+| name  | char(10) | YES  |     | NULL    |                |
+
+mysql> insert into ygtab(name) values("bob");
+mysql> insert into ygtab(name) values("tom");
+
+mysql> create table teadb.gztab(
+    -> gz_id  int(2),pay float(7,2),
+    -> foreign key(gz_id) 
+    -> references ygtab(yg_id)
+    -> on update cascade 
+    -> on delete cascade)engine=innodb;
+
+mysql> show create table teadb.gztab;
+
+| Table  |     CreateTable   |
+| gztab | CREATE TABLE `gztab` (
+  `gz_id` int(2) DEFAULT NULL,
+  `pay` float(7,2) DEFAULT NULL,
+  KEY `gz_id` (`gz_id`),
+  CONSTRAINT `gztab_ibfk_1` FOREIGN KEY (`gz_id`) REFERENCES `ygtab` (`yg_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 |
+
+mysql> select * from ygtab;
+| yg_id | name |
+|     1 | bob  |
+|     2 | tom  |
+
+mysql> insert into gztab values(1,28000),(2,38000);
+
+mysql> desc teadb.gztab;
+| Field | Type       | Null | Key | Default | Extra |
+| gz_id | int(2)     | YES  | MUL | NULL    |       |
+| pay   | float(7,2) | YES  |     | NULL    |       |
+
+mysql> select * from teadb.gztab;
+| gz_id | pay      |
+|     1 | 28000.00 |
+|     2 | 38000.00 |
+mysql> update ygtab set yg_id=8  where name="tom";
+
+mysql> select * from teadb.ygtab;
+| yg_id | name |
+|     1 | bob  |
+|     8 | tom  |
+
+mysql> select * from teadb.gztab;
+| gz_id | pay      |
+|     1 | 28000.00 |
+|     8 | 38000.00 |
+
+mysql> delete from ygtab where yg_id=8;
+
+mysql> select * from teadb.ygtab;
+| yg_id | name |
+|     1 | bob  |
+
+mysql> select * from teadb.gztab;
+| gz_id | pay      |
+|     1 | 28000.00 |
+
+mysql> insert into gztab values(null,28000);
+
+mysql> select * from teadb.gztab;
+| gz_id | pay      |
+|     1 | 28000.00 |
+|  NULL | 28000.00 |
+
+mysql> insert into gztab values(1,28000);
+
+mysql> select * from teadb.gztab;
+| gz_id | pay      |
+|     1 | 28000.00 |
+|  NULL | 28000.00 |
+|     1 | 28000.00 |
+
+mysql> select * from teadb.ygtab;
+| yg_id | name |
+|     1 | bob  |
+
+mysql> delete from gztab;
+
+mysql> select * from teadb.gztab;
+Empty set (0.00 sec)
+
+mysql> desc teadb.gztab;
+| Field | Type       | Null | Key | Default | Extra |
+| gz_id | int(2)     | YES  | MUL | NULL    |       |
+| pay   | float(7,2) | YES  |     | NULL    |       |
+
+mysql> alter table teadb.gztab add primary key(gz_id);
+
+mysql> desc teadb.gztab;
+| Field | Type       | Null | Key | Default | Extra |
+| gz_id | int(2)     | NO   | PRI | NULL    |       |
+| pay   | float(7,2) | YES  |     | NULL    |       |
+
+mysql> insert into gztab values(1,28000);
+Query OK, 1 row affected (0.04 sec)
+
+mysql> insert into gztab values(1,28000);
+ERROR 1062 (23000): Duplicate entry '1' for key 'PRIMARY'
+
+mysql> select * from teadb.gztab;
+| gz_id | pay      |
+|     1 | 28000.00 |
+
+mysql> insert into gztab values(null,28000);
+ERROR 1048 (23000): Column 'gz_id' cannot be null
+mysql> 
+mysql> show create table teadb.gztab\G;
+*************************** 1. row ***************************
+       Table: gztab
+Create Table: CREATE TABLE `gztab` (
+  `gz_id` int(2) NOT NULL,
+  `pay` float(7,2) DEFAULT NULL,
+  PRIMARY KEY (`gz_id`),
+  CONSTRAINT `gztab_ibfk_1` FOREIGN KEY (`gz_id`) REFERENCES `ygtab` (`yg_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
+
+mysql> desc teadb.gztab;
+| Field | Type       | Null | Key | Default | Extra |
+| gz_id | int(2)     | NO   | PRI | NULL    |       |
+| pay   | float(7,2) | YES  |     | NULL    |       |
+
+mysql> alter  table  teadb.gztab drop foreign key gztab_ibfk_1;  #删除外键 constraint `gztab_ibfk_1`
+
+mysql> desc teadb.gztab;
+| Field | Type       | Null | Key | Default | Extra |
+| gz_id | int(2)     | NO   | PRI | NULL    |       |
+| pay   | float(7,2) | YES  |     | NULL    |       |
+
+mysql> show create table teadb.gztab\G;
+*************************** 1. row ***************************
+       Table: gztab
+Create Table: CREATE TABLE `gztab` (
+  `gz_id` int(2) NOT NULL,
+  `pay` float(7,2) DEFAULT NULL,
+  PRIMARY KEY (`gz_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
+
+mysql> alter table teadb.gztab drop primary key;
+
+mysql> desc teadb.gztab;
+
+| Field | Type       | Null | Key | Default | Extra |
+| gz_id | int(2)     | NO   |     | NULL    |       |
+| pay   | float(7,2) | YES  |     | NULL    |       |
+
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+mysql> show variables like 'validate_password%';
+
+| validate_password_length             | 8      |
+| validate_password_mixed_case_count   | 1      |
+| validate_password_number_count       | 1      |
+| validate_password_policy             | MEDIUM |
+validate_password_policy=0  LOW   只验证长度
+validate_password_policy=1  MEDIUM 验证长度;数字,小/大写,特殊字符
+validate_password_policy=2  STRONG 验证长度;数字,小/大写,特殊字符;字典文件
+mysql> set global validate_password_policy=0;   
+
+mysql> set  global  validate_password_length=4;
+
+mysql> show variables like 'validate_password_______';
+
+| Variable_name            | Value |
+| validate_password_length | 4     |
+| validate_password_policy | LOW   |
+validate_password_policy=0  LOW   只验证长度
+
+
+[root@H54 ~]# route -n |awk 'NR<6{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+[root@H54 ~]# mysql -uroot -pHiy53.es
+mysql> quit;
+Bye
+[root@H54 ~]# for i in `echo Hiy53.es`
+> do
+>  mysql -uroot -p${i}  -e "set global validate_password_policy=0;" -b --connect-expired-password
+>  mysql -uroot -p${i}  -e "set global validate_password_length=4;" -b --connect-expired-password
+>  mysql -uroot -p${i}  -e "alter user 'root'@'localhost' identified by'1234';" -b --connect-expired-password
+> mysql -uroot -p'1234' -b --connect-expired-password
+> mysql -uroot -p'1234' -e "show databases;"
+> echo "mysql is ok"
+> done
+
+mysql>  show variables like 'validate_password%';
+
+| Variable_name                        | Value |
+| validate_password_check_user_name    | OFF   |
+| validate_password_dictionary_file    |       |
+| validate_password_length             | 4     |
+| validate_password_mixed_case_count   | 1     |
+| validate_password_number_count       | 1     |
+| validate_password_policy             | LOW   |
+| validate_password_special_char_count | 1     |
+
+mysql> flush privileges;
+
+/**
+flush privileges 命令本质上的作用是
+将当前user和privilige表中的用户信息/权限设置
+从mysql库(MySQL数据库的内置库)中提取到内存里。
+MySQL用户数据和权限有修改后，希望在”不重启MySQL服务”的情况下直接生效，
+那么就需要执行这个命令。通常是在修改ROOT帐号的设置后，
+怕重启后无法再登录进来，那么直接flush之后就可以看权限设置是否生效
+**/
+
+mysql> quit;
+Bye
+mysql: [Warning] Using a password on the command line interface can be insecure.
+
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+mysql is ok
+[root@H54 ~]# mysql -uroot -p1234  # # -e 执行 msyql的SQL 语句.
+mysql> exit;
+Bye
+[root@H54 ~]# 
+[root@H54 ~]# mysql -uroot -p1234  -e  "show databases"; #-e, --execute=name  //执行mysql的sql语句
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+[root@H54 ~]# mysql -uroot -p'1234' -b --connect-expired-password
+mysql: [Warning] Using a password on the command line interface can be insecure. 
+
+mysql> show variables like 'validate_password_______';
++--------------------------+-------+
+| Variable_name            | Value |
++--------------------------+-------+
+| validate_password_length | 4     |
+| validate_password_policy | LOW   |
++--------------------------+-------+
+2 rows in set (0.00 sec)
+
+mysql> exit;
+Bye
+[root@H54 ~]# sed -n '/\[mysqld\]/,+1p' /etc/my.cnf
+[mysqld]
+#
+[root@H54 ~]# sed -i '/\[mysqld\]/a validate_password_policy=0\nvalidate_password_length=4'  /etc/my.cnf
+[root@H54 ~]# sed -n '/\[mysqld\]/,+3p' /etc/my.cnf
+[mysqld]
+validate_password_policy=0
+validate_password_length=4
+#
+[root@H54 ~]# systemctl restart mysqld
+[root@H54 ~]# reboot
+
+
+[root@H54 ~]# mysql -uroot -p1234
+
+mysql> show variables like 'validate_password_______';
++--------------------------+-------+
+| Variable_name            | Value |
++--------------------------+-------+
+| validate_password_length | 4     |
+| validate_password_policy | LOW   |
++--------------------------+-------+
+2 rows in set (0.00 sec)
+
+mysql> quit;
+Bye
+[root@H54 ~]#
+[root@DB2 ~]#mysql -h127.0.0.1   -uroot  -p1234  mysql
+          /** mysql -h服务器名     -u用户名  -p密码   数据库名*/
+
+
+
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.55
+192.168.2.55
+127.0.0.1
+192.168.122.1
+[root@H55 ~]# yum clean all >/dev/null && yum repolist |tail -10
+源标识                              源名称                                 状态
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H55 ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+
+name=rhel7.4
+
+enabled=1
+
+gpgcheck=0
+
+baseurl=ftp://192.168.4.254/rhel7
+
+[rhel7-2]
+
+name=rhel7.4-2
+
+baseurl=ftp://192.168.2.254/rhel7
+
+gpgcheck=0
+
+enabled=1 
+[root@H55 ~]# route -n |awk 'NR>1&&NR<7{print $2}'
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H55 ~]# rpm -qa |grep -i mariadb
+
+mariadb-server-5.5.56-2.el7.x86_64
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+[root@H55 ~]# systemctl stop mariadb;systemctl disable mariadb;
+Removed symlink /etc/systemd/system/multi-user.target.wants/mariadb.service.
+
+[root@H55 ~]# ss -anpult |grep :3306
+
+[root@H55 ~]# rpm  -e  --nodeps  mariadb-server  mariadb
+警告：/var/log/mariadb/mariadb.log 已另存为 /var/log/mariadb/mariadb.log.rpmsave
+
+[root@H55 ~]# rm -rf /var/lib/mysql/
+[root@H55 ~]# rm -rf /etc/my.cnf*
+
+[root@H55 ~]# yum -y install perl-JSON 
+
+警告：RPM 数据库已被非 yum 程序修改。
+  perl-JSON.noarch 0:2.59-2.el7                                                 
+
+完毕！
+[root@H55 ~]# rpm -q perl-JSON 
+perl-JSON-2.59-2.el7.noarch
+[root@H55 ~]# tar -xf mysql-5.7.17.tar 
+[root@H55 ~]# ls mysql-community-*.rpm
+mysql-community-client-5.7.17-1.el7.x86_64.rpm
+mysql-community-common-5.7.17-1.el7.x86_64.rpm
+mysql-community-devel-5.7.17-1.el7.x86_64.rpm
+mysql-community-embedded-5.7.17-1.el7.x86_64.rpm
+mysql-community-embedded-compat-5.7.17-1.el7.x86_64.rpm
+mysql-community-embedded-devel-5.7.17-1.el7.x86_64.rpm
+mysql-community-libs-5.7.17-1.el7.x86_64.rpm
+mysql-community-libs-compat-5.7.17-1.el7.x86_64.rpm
+mysql-community-minimal-debuginfo-5.7.17-1.el7.x86_64.rpm
+mysql-community-server-5.7.17-1.el7.x86_64.rpm
+mysql-community-test-5.7.17-1.el7.x86_64.rpm
+[root@H55 ~]# 
+[root@H55 ~]# rpm -Uvh mysql-community-*.rpm
+
+[root@H55 ~]# sleep 10;
+[root@H55 ~]# rpm -qa |grep -i mariadb
+
+[root@H55 ~]# rpm -qa |grep -i mysql
+
+[root@H55 ~]# systemctl start mysqld  && systemctl enable mysqld
+[root@H55 ~]# sleep 5
+[root@H55 ~]# ps  -C mysqld
+  PID TTY          TIME CMD
+ 8198 ?        00:00:00 mysqld
+[root@H55 ~]# netstat -anpult |grep mysqld |column -t
+tcp6  0  0  :::3306  :::*  LISTEN  8198/mysqld
+[root@H55 ~]# 
+[root@H55 ~]# for i in `awk '/root@localhost/{print $NF}' /var/log/mysqld.log`
+> do
+> mysql -uroot -p${i}  -e "set global validate_password_policy=0;" -b --connect-expired-password
+> mysql -uroot -p${i}  -e "set global validate_password_length=4;" -b --connect-expired-password
+> mysql -uroot -p${i}  -e "alter user 'root'@'localhost' identified by'1234';" -b --connect-expired-password
+> mysql -uroot -p'1234' -e "flush privileges;"
+> mysql -uroot -p'1234' -e  "show variables like 'validate_password%';"
+> echo "mysql-Password has been set 1234"
+> done
+mysql: [Warning] Using a password on the command line interface can be insecure.
+mysql: [Warning] Using a password on the command line interface can be insecure.
+mysql: [Warning] Using a password on the command line interface can be insecure.
+mysql: [Warning] Using a password on the command line interface can be insecure.
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------------------------+-------+
+| Variable_name                        | Value |
++--------------------------------------+-------+
+| validate_password_check_user_name    | OFF   |
+| validate_password_dictionary_file    |       |
+| validate_password_length             | 4     |
+| validate_password_mixed_case_count   | 1     |
+| validate_password_number_count       | 1     |
+| validate_password_policy             | LOW   |
+| validate_password_special_char_count | 1     |
++--------------------------------------+-------+
+mysql-Password has been set 1234
+/*****************
+[root@H55 ~]# for i in `awk '/root@localhost/{print $NF}' /var/log/mysqld.log`; do mysql -uroot -p${i}  -e "set global validate_password_policy=0;" -b --connect-expired-password; mysql -uroot -p${i}  -e "set global validate_password_length=4;" -b --connect-expired-password; mysql -uroot -p${i}  -e "alter user 'root'@'localhost' identified by'1234';" -b --connect-expired-password; mysql -uroot -p'1234' -e "flush privileges;"; mysql -uroot -p'1234' -e  "show variables like 'validate_password%';"; echo "mysql-Password has been set 1234"; done;
+***************/
+
+[root@H55 ~]# sed -n '/\[mysqld\]/,+1p' /etc/my.cnf
+[mysqld]
+#
+[root@H55 ~]# sed -i '/\[mysqld\]/a validate_password_policy=0\nvalidate_password_length=4'  /etc/my.cnf
+[root@H55 ~]# sed -n '/\[mysqld\]/,+3p' /etc/my.cnf
+[mysqld]
+validate_password_policy=0
+validate_password_length=4
+#
+[root@H55 ~]# systemctl restart mysqld
+[root@H55 ~]# sleep 3
+[root@H55 ~]# mysql -uroot -p1234 -e "show databases;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+[root@H55 ~]# 
+====================================================
+[root@H56 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.56
+192.168.2.56
+127.0.0.1
+192.168.122.1
+[root@H56 ~]# route -n |awk 'NR>1&&NR<7{print $2}'
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H56 ~]# vim MySQLsetup.sh
+[root@H56 ~]# cat MySQLsetup.sh
+#!/bin/bash
+rpm -qa |grep -i mariadb
+systemctl stop mariadb;systemctl disable mariadb;
+ss -anpult |grep :3306
+rpm  -e  --nodeps  mariadb-server  mariadb
+rm -rf /var/lib/mysql/
+rm -rf /etc/my.cnf*
+yum -y install perl-JSON 
+rpm -q perl-JSON 
+tar -xvf mysql-5.7.17.tar
+rpm -Uvh mysql-community-*.rpm
+sleep 10;
+rpm -qa |grep -i mariadb
+rpm -qa |grep -i mysql
+systemctl start mysqld  && systemctl enable mysqld
+sleep 5;
+ps  -C mysqld
+netstat -anpult |grep mysqld 
+for i in `awk '/root@localhost/{print $NF}' /var/log/mysqld.log`
+do
+ mysql -uroot -p${i}  -e "set global validate_password_policy=0;" -b --connect-expired-password
+ mysql -uroot -p${i}  -e "set global validate_password_length=4;" -b --connect-expired-password
+ mysql -uroot -p${i}  -e "alter user 'root'@'localhost' identified by'1234';" -b --connect-expired-password
+ mysql -uroot -p'1234' -e "flush privileges;"
+ mysql -uroot -p'1234' -e  "show variables like 'validate_password%';"
+ echo "mysql-Password has been set 1234"
+done
+
+sed -n '/\[mysqld\]/,+1p' /etc/my.cnf
+sed -i '/\[mysqld\]/a validate_password_policy=0\nvalidate_password_length=4'  /etc/my.cnf
+sed -n '/\[mysqld\]/,+3p' /etc/my.cnf
+systemctl restart mysqld
+sleep 3
+mysql -uroot -p1234 -e "show databases;"
+[root@H56 ~]# 
+
+
+
+[root@H57 ~]# cat MySQLsetup.sh
+#!/bin/bash
+rpm -qa |grep -i mariadb
+systemctl stop mariadb;systemctl disable mariadb;
+ss -anpult |grep :3306
+rpm  -e  --nodeps  mariadb-server  mariadb
+rm -rf /var/lib/mysql/
+rm -rf /etc/my.cnf*
+yum -y install perl-JSON 
+rpm -q perl-JSON 
+tar -xvf mysql-5.7.17.tar
+rpm -Uvh mysql-community-*.rpm
+sleep 10;
+rpm -qa |grep -i mariadb
+rpm -qa |grep -i mysql
+systemctl start mysqld  && systemctl enable mysqld
+sleep 5;
+ps  -C mysqld
+netstat -anpult |grep mysqld 
+for i in `awk '/root@localhost/{print $NF}' /var/log/mysqld.log`
+do
+ mysql -uroot -p${i}  -e "set global validate_password_policy=0;" -b --connect-expired-password
+ mysql -uroot -p${i}  -e "set global validate_password_length=4;" -b --connect-expired-password
+ mysql -uroot -p${i}  -e "alter user 'root'@'localhost' identified by'1234';" -b --connect-expired-password
+ mysql -uroot -p'1234' -e "flush privileges;"
+ mysql -uroot -p'1234' -e  "show variables like 'validate_password%';"
+ echo "mysql-Password has been set 1234"
+done
+
+sed -n '/\[mysqld\]/,+1p' /etc/my.cnf
+sed -i '/\[mysqld\]/a validate_password_policy=0\nvalidate_password_length=4'  /etc/my.cnf
+sed -n '/\[mysqld\]/,+3p' /etc/my.cnf
+systemctl restart mysqld
+sleep 3
+mysql -uroot -p1234 -e "show databases;"
+[root@H57 ~]# 
+
+
+
+
+
+
+/*****从MySQL 5.6.6以后，安装rpm之后，
+root用户会被分配一个随机密码，
+同时在mysql.user表中新增了一个password expired字段，
+任何客户端首次连接后必须首先修改密码才能做下面的操作。
+这是因为在rpm的spec脚本中，初始化数据库的脚本改为
+/usr/bin/mysql_install_db --rpm --user=mysql --random-passwords
+新增了--random-passwords参数
+
+密码重置成功。
+echo "SET PASSWORD  = PASSWORD('');" | mysql -u root --password='u0jt49zWghGMOalT' -b --connect-expired-password
+
+mysql命令行各个参数解释
+
+Usage: mysql [OPTIONS] [database]   //命令方式
+
+ --auto-rehash       //自动补全功能，就像linux里面，按Tab键出提示差不多，下面有例子
+ -A, --no-auto-rehash  //默认状态是没有自动补全功能的。-A就是不要自动补全功能
+ -B, --batch         //ysql不使用历史文件，禁用交互
+ (Enables --silent)
+ --character-sets-dir=name   //字体集的安装目录                    
+ --default-character-set=name    //设置数据库的默认字符集
+ -C, --compress      //在客户端和服务器端传递信息时使用压缩
+ -#, --debug[=#]     //bug调用功能
+ -D, --database=name //使用哪个数据库
+ --delimiter=name    //mysql默认命令结束符是分号，下面有例子
+ -e, --execute=name  //执行mysql的sql语句
+ -E, --vertical      //垂直打印查询输出
+ -f, --force         //如果有错误跳过去，继续执行下面的
+ -G, --named-commands
+ -g, --no-named-commands
+ -i, --ignore-spaces //忽视函数名后面的空格.
+ --local-infile      //启动/禁用 LOAD DATA LOCAL INFILE.
+ -b, --no-beep       //sql错误时，禁止嘟的一声
+ -h, --host=name     //设置连接的服务器名或者Ip
+ -H, --html          //以html的方式输出
+ -X, --xml           //以xml的方式输出
+ --line-numbers      //显示错误的行号
+ -L, --skip-line-numbers  //忽略错误的行号
+ -n, --unbuffered    //每执行一次sql后，刷新缓存
+ --column-names      //查寻时显示列信息，默认是加上的
+ -N, --skip-column-names  //不显示列信息
+ -O, --set-variable=name  //设置变量用法是--set-variable=var_name=var_value
+ --sigint-ignore     //忽视SIGINT符号(登录退出时Control-C的结果)
+ -o, --one-database  //忽视除了为命令行中命名的默认数据库的语句。可以帮跳过日志中的其它数据库的更新。
+ --pager[=name]      //使用分页器来显示查询输出，这个要在linux可以用more,less等。
+ --no-pager          //不使用分页器来显示查询输出。
+ -p, --password[=name] //输入密码
+ -P, --port=#        //设置端口
+ --prompt=name       //设置mysql提示符
+ --protocol=name     //使用什么协议
+ -q, --quick         //不缓存查询的结果，顺序打印每一行。如果输出被挂起，服务器会慢下来，mysql不使用历史文件。
+ -r, --raw           //写列的值而不转义转换。通常结合--batch选项使用。
+ --reconnect         //如果与服务器之间的连接断开，自动尝试重新连接。禁止重新连接，使用--disable-reconnect。
+ -s, --silent        //一行一行输出，中间有tab分隔
+ -S, --socket=name   //连接服务器的sockey文件
+ --ssl               //激活ssl连接，不激活--skip-ssl
+ --ssl-ca=name       //CA证书
+ --ssl-capath=name   //CA路径
+ --ssl-cert=name     //X509 证书
+ --ssl-cipher=name   //SSL cipher to use (implies --ssl).
+ --ssl-key=name      //X509 密钥名
+ --ssl-verify-server-cert //连接时审核服务器的证书
+ -t, --table         //以表格的形势输出
+ --tee=name          //将输出拷贝添加到给定的文件中，禁时用--disable-tee
+ --no-tee            //根--disable-tee功能一样
+ -u, --user=name     //用户名
+ -U, --safe-updates  //Only allow UPDATE and DELETE that uses keys.
+ -U, --i-am-a-dummy  //Synonym for option --safe-updates, -U.
+ -v, --verbose       //输出mysql执行的语句
+ -V, --version       //版本信息
+ -w, --wait          //服务器down后，等待到重起的时间
+ --connect_timeout=# //连接前要等待的时间
+ --max_allowed_packet=# //服务器接收／发送包的最大长度
+ --net_buffer_length=# //TCP / IP和套接字通信缓冲区大小。
+ --select_limit=#    //使用--safe-updates时SELECT语句的自动限制
+ --max_join_size=#   //使用--safe-updates时联接中的行的自动限制
+ --secure-auth       //拒绝用(pre-4.1.1)的方式连接到数据库
+ --server-arg=name   //Send embedded server this as a parameter.
+ --show-warnings     //显示警告
+
+
+

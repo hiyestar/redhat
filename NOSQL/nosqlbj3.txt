@@ -1,0 +1,2332 @@
+
+
+
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.50
+192.168.2.50
+201.1.1.50
+201.1.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H50 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.50
+    93	port 6350
+   137	daemonize yes
+   501	 #requirepass 1234
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6350.conf
+   829	#cluster-node-timeout 5000
+[root@H50 ~]# /etc/init.d/redis_6379  stop && sleep 3 ; /etc/init.d/redis_6379  start
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+Starting Redis server...
+[root@H50 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.50:6350       0.0.0.0:*               LISTEN      1856/redis-server 1 
+[root@H50 ~]# redis-cli -h 192.168.4.50 -p 6350
+192.168.4.50:6350> cluster info
+ERR This instance has cluster support disabled
+192.168.4.50:6350> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.50:6350> keys *
+1) "age"
+2) "v1"
+3) "name"
+192.168.4.50:6350> flushall
+OK
+192.168.4.50:6350> keys *
+(empty list or set)
+192.168.4.50:6350> exit
+[root@H50 ~]# 
+[root@H50 ~]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H50 ~]# redis-cli -h 192.168.4.51 -p 6351
+192.168.4.51:6351> keys *
+1) "v3"
+2) "v2"
+3) "v1"
+192.168.4.51:6351> set v4 40
+OK
+192.168.4.51:6351> set v5 50
+OK
+192.168.4.51:6351> keys *
+1) "v5"
+2) "v3"
+3) "v1"
+4) "v2"
+5) "v4"
+192.168.4.51:6351> get v1
+"10"
+192.168.4.51:6351> get v5
+"50"
+192.168.4.51:6351> exit
+
+[root@H50 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> keys *
+1) "v4"
+2) "v5"
+3) "v2"
+4) "v3"
+5) "v1"
+192.168.4.52:6352> get v5
+"50"
+192.168.4.52:6352> get v1
+"10"
+192.168.4.52:6352> set v6 60
+(error) READONLY You can't write against a read only slave.
+192.168.4.52:6352> exit
+
+[root@H50 ~]# 
+
+[root@H50 ~]# redis-cli -h 192.168.4.51  -p 6351
+192.168.4.51:6351> keys *
+(error) NOAUTH Authentication required.
+192.168.4.51:6351> auth 123
+OK
+192.168.4.51:6351> keys *
+1) "v1"
+2) "v3"
+3) "v5"
+4) "v2"
+5) "v4"
+192.168.4.51:6351> exit
+[root@H50 ~]# redis-cli -h 192.168.4.51  -p 6351 -a  123
+192.168.4.51:6351> keys *
+1) "v1"
+2) "v3"
+3) "v5"
+4) "v2"
+5) "v4"
+192.168.4.51:6351> set v8
+(error) ERR wrong number of arguments for 'set' command
+192.168.4.51:6351> set v8 80
+OK
+192.168.4.51:6351> get v8
+"80"
+192.168.4.51:6351> exit
+[root@H50 ~]# redis-cli -h 192.168.4.51  -p 6351 -a  123
+Could not connect to Redis at 192.168.4.51:6351: Connection refused
+Could not connect to Redis at 192.168.4.51:6351: Connection refused
+not connected> exit
+[root@H50 ~]# redis-cli -h 192.168.4.51  -p 6351 -a  123
+192.168.4.51:6351> set xxxx xxx
+OK
+192.168.4.51:6351> keys *
+1) "v2"
+2) "v5"
+3) "v3"
+4) "v1"
+5) "xxxx"
+6) "v4"
+7) "v8"
+192.168.4.51:6351> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H51 ~]# redis-trib.rb  del-node 192.168.4.51:6351  5967a0733068a912856486c701e8b1e62beedba2
+>>> Removing node 5967a0733068a912856486c701e8b1e62beedba2 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+[root@H51 ~]# redis-trib.rb  del-node 192.168.4.51:6351  d7b4e3a5edb1def64a19a9f37c40d35836f99888
+>>> Removing node d7b4e3a5edb1def64a19a9f37c40d35836f99888 from cluster 192.168.4.51:6351
+>>> Sending CLUSTER FORGET messages to the cluster...
+>>> SHUTDOWN the node.
+[root@H51 ~]# clear
+[root@H51 ~]# redis-trib.rb  check 192.168.4.51:6351
+>>> Performing Cluster Check (using node 192.168.4.51:6351)
+M: 2c5c93ffcdd42bdf6e3a7e62ef808dc2d4a6f60a 192.168.4.51:6351
+   slots:0-16383 (16384 slots) master
+   0 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+[root@H51 ~]# 
+[root@H51 ~]# ls /var/lib/redis/6379/nodes-6351.conf 
+/var/lib/redis/6379/nodes-6351.conf
+
+[root@H51 ~]# rm -f /var/lib/redis/6379/nodes-6351.conf
+[root@H51 ~]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H51 ~]#
+[root@H51 ~]# vim /etc/redis/6379.conf 
+[root@H51 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.51
+    93	port 6351
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6351.conf
+   829	#cluster-node-timeout 5000
+[root@H51 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.51:6351       0.0.0.0:*               LISTEN      1915/redis-server 1 
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351
+192.168.4.51:6351> keys *
+ 1) "name"
+ 2) "school"
+ 3) "yy"
+ 4) "xixi"
+ 5) "age"
+ 6) "v2"
+ 7) "pay4"
+ 8) "sex"
+ 9) "pay"
+10) "pay3"
+11) "pay2"
+12) "v1"
+13) "x2"
+192.168.4.51:6351> flushall
+OK
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> cluster info
+ERR This instance has cluster support disabled
+192.168.4.51:6351> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.51:6351> exit
+[root@H51 ~]# 
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351
+192.168.4.51:6351> set v1 10
+OK
+192.168.4.51:6351> set v2 20
+OK
+192.168.4.51:6351> set v3 30
+OK
+192.168.4.51:6351> keys *
+1) "v3"
+2) "v2"
+3) "v1"
+192.168.4.51:6351> info replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:ca3194df165498475fc7a5976a97f07c9bcef823
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.51:6351> info replication
+# Replication
+role:master
+connected_slaves:1
+slave0:ip=192.168.4.52,port=6352,state=online,offset=991,lag=1
+master_replid:4fb0b403ffca137603d99d9b9c2c2161f10cea5b
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:991
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:991
+192.168.4.51:6351> exit
+[root@H51 ~]# 
+[root@H51 ~]# /etc/init.d/redis_6379  stop && sleep 3 ; /etc/init.d/redis_6379  start
+Stopping ...
+Redis stopped
+Starting Redis server...
+[root@H51 ~]# ls /var/lib/redis/6379/nodes-6351.conf 
+/var/lib/redis/6379/nodes-6351.conf
+[root@H51 ~]# rm -f /var/lib/redis/6379/nodes-6351.conf
+[root@H51 ~]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H51 ~]# /etc/init.d/redis_6379  stop
+Stopping ...
+Redis stopped
+[root@H51 ~]# vim /etc/redis/6379.conf 
+
+[root@H51 ~]# sed -n 501p /etc/redis/6379.conf
+requirepass 123
+
+[root@H51 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# vim /etc/init.d/redis_6379 
+[root@H51 ~]# sed -n '43,44p' /etc/init.d/redis_6379
+     #       $CLIEXEC -p $REDISPORT shutdown
+          $CLIEXEC -h 192.168.4.51  -p 6351 -a 123 shutdown
+[root@H51 ~]# /etc/init.d/redis_6379  stop 
+Stopping ...
+Redis stopped
+[root@H51 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# 
+[root@H51 ~]# /etc/init.d/redis_6379  stop && sleep 3 ; /etc/init.d/redis_6379  start
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+Starting Redis server...
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351
+192.168.4.51:6351> info replication
+NOAUTH Authentication required.
+192.168.4.51:6351> auth 123
+OK
+192.168.4.51:6351> info replication
+# Replication
+role:master
+connected_slaves:2
+slave0:ip=192.168.4.52,port=6352,state=online,offset=28,lag=1
+slave1:ip=192.168.4.53,port=6353,state=online,offset=28,lag=1
+master_replid:6b4595ae876ac8a162e464c0a791d02526c422df
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:28
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:28
+192.168.4.51:6351> shutdown
+not connected> exit
+[root@H51 ~]#  /etc/init.d/redis_6379  start
+Starting Redis server...
+
+[root@H51 ~]# 
+[root@H51 ~]# sed -n '43,44p' /etc/init.d/redis_6379
+     #       $CLIEXEC -p $REDISPORT shutdown
+          $CLIEXEC -h 192.168.4.51  -p 6351 -a 123 shutdown
+[root@H51 ~]# /etc/init.d/redis_6379  stop 
+Stopping ...
+Redis stopped
+[root@H51 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.51:6351       0.0.0.0:*               LISTEN      3193/redis-server 1 
+tcp        0      0 192.168.4.51:6351       192.168.4.52:58250      ESTABLISHED 3193/redis-server 1 
+tcp        0      0 192.168.4.51:6351       192.168.4.52:36774      ESTABLISHED 3193/redis-server 1 
+tcp        0      0 192.168.4.51:6351       192.168.4.50:49638      ESTABLISHED 3193/redis-server 1 
+tcp        0      0 192.168.4.51:6351       192.168.4.52:58252      ESTABLISHED 3193/redis-server 1 
+[root@H51 ~]# /etc/init.d/redis_6379  stop 
+Stopping ...
+Redis stopped
+[root@H51 ~]# netstat -anpult |grep redis-server
+[root@H51 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# 
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351
+192.168.4.51:6351> info replication
+NOAUTH Authentication required.
+192.168.4.51:6351> auth 123
+OK
+192.168.4.51:6351> info replication
+# Replication
+role:slave
+master_host:192.168.4.52
+master_port:6352
+master_link_status:up
+master_last_io_seconds_ago:9
+master_sync_in_progress:0
+slave_repl_offset:51809
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:2cd25fc40212359200a7d1615a2dc16554040f04
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:51809
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:33773
+repl_backlog_histlen:18037
+192.168.4.51:6351> 
+192.168.4.51:6351> slaveof no one
+OK
+192.168.4.51:6351> 
+192.168.4.51:6351> info replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:b298e554f665dd8e064e4d8b08ac8341a8b6f9aa
+master_replid2:2cd25fc40212359200a7d1615a2dc16554040f04
+master_repl_offset:52257
+second_repl_offset:52258
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:33773
+repl_backlog_histlen:18485
+192.168.4.51:6351> exit
+[root@H51 ~]#  /etc/init.d/redis_6379  stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H51 ~]#  /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 -a 123
+192.168.4.51:6351> info replication
+# Replication
+role:slave
+master_host:192.168.4.52
+master_port:6352
+master_link_status:up
+master_last_io_seconds_ago:8
+master_sync_in_progress:0
+slave_repl_offset:52313
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:2cd25fc40212359200a7d1615a2dc16554040f04
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:52313
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:52300
+repl_backlog_histlen:14
+192.168.4.51:6351> exit
+[root@H51 ~]# 
+[root@H51 ~]# tail -2 /etc/redis/6379.conf 
+# Generated by CONFIG REWRITE
+slaveof 192.168.4.52 6352
+[root@H51 ~]#  /etc/init.d/redis_6379  stop
+Stopping ...
+Redis stopped
+[root@H51 ~]# vim  /etc/redis/6379.conf 
+[root@H51 ~]# sed -n '501p' /etc/redis/6379.conf
+#requirepass "123"
+
+[root@H51 ~]# cat -n /etc/redis/6379.conf |tail -1
+  1310	#slaveof 192.168.4.52 6352
+
+[root@H51 ~]#  /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+1) "v3"
+2) "v8"
+3) "v5"
+4) "v1"
+5) "xxxx"
+6) "v4"
+7) "v2"
+192.168.4.51:6351> get v8
+"80"
+192.168.4.51:6351>  exit
+[root@H51 ~]# vim /etc/init.d/redis_6379 
+[root@H51 ~]# sed -n 44p /etc/init.d/redis_6379
+          $CLIEXEC -h 192.168.4.51  -p 6351  shutdown
+[root@H51 ~]#  /etc/init.d/redis_6379  stop
+Stopping ...
+Redis stopped
+[root@H51 ~]# 
+[root@H51 ~]# netstat -anpult |grep redis-server
+
+[root@H51 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# 
+[root@H51 ~]# cd /var/lib/redis/6379/;ls
+dump.rdb
+[root@H51 6379]# rm -rf dump.rdb 
+[root@H51 6379]# ls
+dump.rdb
+[root@H51 6379]# rm -rf dump.rdb 
+[root@H51 6379]# ls
+[root@H51 6379]# 
+[root@H51 ~]# tail -1 /etc/redis/6379.conf 
+#slaveof 192.168.4.52 6352
+[root@H51 ~]#  /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> info replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:1e65072fbbf1ff8ebefef61314ad67e1c7421e79
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.51:6351>  shutdown
+not connected> exit
+[root@H51 ~]#  /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H51 ~]# tail -2 /etc/redis/6379.conf
+# Generated by CONFIG REWRITE
+#slaveof 192.168.4.52 6352
+[root@H51 ~]# 
+[root@H51 ~]# sed -n '219,+2p' /etc/redis/6379.conf
+save 900 1
+save 300 10
+save 60 10000
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> set v21 100
+OK
+192.168.4.51:6351> set v22 200
+OK
+192.168.4.51:6351> save
+OK
+192.168.4.51:6351> exit
+[root@H51 ~]# vim /etc/redis/6379.conf
+[root@H51 ~]#  /etc/init.d/redis_6379  stop
+Stopping ...
+Redis stopped
+[root@H51 ~]# rm -f /var/lib/redis/6379/dump.rdb 
+[root@H51 ~]# vim /etc/redis/6379.conf
+
+步骤一：使用RDB文件恢复数据
+
+RDB介绍：
+Redis数据库文件，全称Reids DataBase
+数据持久化方式之一
+在指定时间间隔内，将内存中的数据集快照写入硬盘
+术语叫Snapshot快照
+恢复时，将快照文件直接读到内存里
+相关配置参数
+文件名
+dbfilename “dump.rdb” 文件名
+save “” 禁用RDB
+数据从内存保存到硬盘的频率
+save 900 1 900秒内且有1次修改
+save 300 10 300秒内且有10次修改
+save 60 10000 60秒内且有10000修改
+
+[root@H51 ~]# sed -n '219,+2p' /etc/redis/6379.conf
+save 900 1
+save 100 4
+save 60 10000
+[root@H51 ~]#  /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> set v1 1
+OK
+192.168.4.51:6351> set v2  2
+OK
+192.168.4.51:6351> set v3  3
+OK
+192.168.4.51:6351> set v4  40
+OK
+192.168.4.51:6351> set v5 50
+OK
+192.168.4.51:6351> set v6 6
+OK
+192.168.4.51:6351> set v7 7
+OK
+192.168.4.51:6351> set v8 8 
+OK
+192.168.4.51:6351> set v9 90
+OK
+192.168.4.51:6351> exit
+[root@H51 ~]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H51 ~]# 
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+1) "v9"
+2) "v6"
+3) "v8"
+4) "v2"
+5) "v1"
+6) "v7"
+7) "v3"
+8) "v5"
+9) "v4"
+192.168.4.51:6351> flushall
+OK
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> shutdown 
+not connected> exit
+
+[root@H51 ~]#  /etc/init.d/redis_6379  start
+Starting Redis server...
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> set v1 10
+OK
+192.168.4.51:6351> set v2 20
+OK
+192.168.4.51:6351> save
+OK
+192.168.4.51:6351> exit
+[root@H51 ~]# cp /var/lib/redis/6379/dump.rdb  /root/
+[root@H51 ~]# ls /root/dump.rdb 
+/root/dump.rdb
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+1) "v2"
+2) "v1"
+192.168.4.51:6351> flushall
+OK
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> save
+OK
+192.168.4.51:6351> shutdown
+not connected> exit
+[root@H51 ~]#  /etc/init.d/redis_6379  start
+Starting Redis server...
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> exit
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 shutdown
+
+[root@H51 ~]# \cp  /root/dump.rdb  /var/lib/redis/6379/
+
+[root@H51 ~]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H51 ~]# ll /var/lib/redis/6379/
+总用量 4
+-rw-r--r--. 1 root root 109 11月  1 15:04 dump.rdb
+
+[root@H51 ~]#  /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+1) "v1"
+2) "v2"
+192.168.4.51:6351> get v2
+"20"
+192.168.4.51:6351> exit
+[root@H51 ~]# 
+
+步骤一：使用AOF文件恢复数据
+
+1）AOF介绍
+只做追加操作的文件，Append Only File
+记录redis服务所有写操作
+不断的将新的写操作，追加到文件的末尾
+使用cat命令可以查看文件内容
+2）参数配置
+文件名
+appendfilename "appendonly.aof" 指定文件名
+appendonly yes 启用aof ，默认no
+AOF文件记录写操作的方式
+appendfsync always 有新写操作立即记录
+appendfsync everysec 每秒记录一次
+appendfsync no 从不记录
+
+[root@H51 ~]# vim /etc/redis/6379.conf
+
+ 673 appendonly yes
+ 674 
+ 675 # The name of the append only file (default: "appendonly.aof")
+ 676 
+ 677 appendfilename "appendonly.aof"
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> set a1  10
+OK
+192.168.4.51:6351> set a2  20
+OK
+192.168.4.51:6351> keys *
+1) "a1"
+2) "v1"
+3) "v2"
+4) "a2"
+192.168.4.51:6351> shutdown
+not connected> exit
+
+[root@H51 ~]# vim /etc/redis/6379.conf
+[root@H51 ~]# /etc/init.d/redis_6379  status
+cat: /var/run/redis_6379.pid: 没有那个文件或目录
+Redis is running ()
+
+[root@H51 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+
+[root@H51 ~]# ls /var/lib/redis/6379/
+appendonly.aof  dump.rdb
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> exit
+[root@H51 ~]# cp  /var/lib/redis/6379/appendonly.aof  /root/
+
+[root@H51 ~]# ls /root/appendonly.aof 
+/root/appendonly.aof
+
+[root@H51 ~]# vim /root/appendonly.aof
+[root@H51 ~]# ll /root/appendonly.aof
+-rw-r--r--. 1 root root 0 11月  1 15:41 /root/appendonly.aof
+[root@H51 ~]# 
+[root@H51 6379]# cat -n   /etc/redis/6379.conf  | sed -n '/appendonly\|appendfilename/p'
+   673	appendonly yes
+   675	# The name of the append only file (default: "appendonly.aof")
+   677	appendfilename "appendonly.aof"
+
+[root@H51 6379]# cat -n   /etc/redis/6379.conf  | sed -n '/appendonly|appendfilename/p'
+
+[root@H51 6379]# cat -n   /etc/redis/6379.conf  | sed -rn '/appendonly|appendfilename/p'
+   673	appendonly yes
+   675	# The name of the append only file (default: "appendonly.aof")
+   677	appendfilename "appendonly.aof"
+[root@H51 6379]# 
+
+[root@H51 ~]# redis-cli  -h 192.168.4.51 -p 6351
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> set v1 10
+OK
+192.168.4.51:6351> set v12 20
+OK
+192.168.4.51:6351> set v3 30
+OK
+192.168.4.51:6351> set v4  40
+OK
+192.168.4.51:6351> set v5 50
+OK
+192.168.4.51:6351> save
+OK
+192.168.4.51:6351> exit
+[root@H51 ~]# cat /var/lib/redis/6379/appendonly.aof 
+*2
+$6
+SELECT
+$1
+0
+*3
+$3
+set
+$2
+v1
+$2
+10
+*3
+$3
+set
+$3
+v12
+$2
+20
+*3
+$3
+set
+$2
+v3
+$2
+30
+*3
+$3
+set
+$2
+v4
+$2
+40
+*3
+$3
+set
+$2
+v5
+$2
+50
+[root@H51 ~]# \cp /var/lib/redis/6379/appendonly.aof  /root/
+[root@H51 ~]# ll /root/appendonly.aof 
+-rw-r--r--. 1 root root 169 11月  1 16:02 /root/appendonly.aof
+[root@H51 ~]# 
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 shutdown
+
+[root@H51 ~]# rm -rf  /var/lib/redis/6379/appendonly.aof 
+
+[root@H51 ~]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H51 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> exit
+
+[root@H51 ~]# cp /root/appendonly.aof  /var/lib/redis/6379/
+cp：是否覆盖"/var/lib/redis/6379/appendonly.aof"？ y
+
+[root@H51 ~]# ll /var/lib/redis/6379/appendonly.aof 
+-rw-r--r--. 1 root root 169 11月  1 16:08 /var/lib/redis/6379/appendonly.aof
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+(empty list or set)
+192.168.4.51:6351> shutdown
+not connected> exit
+
+[root@H51 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> keys *
+1) "v1"
+2) "v3"
+3) "v4"
+4) "v12"
+5) "v5"
+192.168.4.51:6351> get v123
+(nil)
+192.168.4.51:6351> get v12
+"20"
+192.168.4.51:6351> exit
+[root@H51 ~]# 
+
+[root@H51 ~]# vim  /etc/redis/6379.conf
+
+ 703 appendfsync everysec  每秒记录一次
+
+[root@H51 ~]# redis-check-aof  --fix  /var/lib/redis/6379/appendonly.aof
+AOF analyzed: size=169, ok_up_to=169, diff=0
+AOF is valid
+[root@H51 ~]# vim /var/lib/redis/6379/appendonly.aof
+[root@H51 ~]# tail -3 /var/lib/redis/6379/appendonly.aof
+50
+xxxxxxxxxx
+yyyyyyyyyyyyy
+[root@H51 ~]# redis-check-aof  --fix  /var/lib/redis/6379/appendonly.aof
+0x              a9: Expected prefix '*', got: 'x'
+AOF analyzed: size=196, ok_up_to=169, diff=27
+This will shrink the AOF from 196 bytes, with 27 bytes, to 169 bytes
+Continue? [y/N]: y
+Successfully truncated AOF
+[root@H51 ~]# tail -3 /var/lib/redis/6379/appendonly.aof
+v5
+$2
+50
+[root@H51 ~]# 
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351 
+192.168.4.51:6351> 
+192.168.4.51:6351> keys *
+1) "v1"
+2) "v3"
+3) "v4"
+4) "v12"
+5) "v5"
+192.168.4.51:6351> type v5
+string
+192.168.4.51:6351> get v5
+"50"
+
+String字符串
+set key value [ex seconds] [px milliseconds] [nx|xx]
+设置key及值，过期时间可以使用秒或毫秒为单位
+setrange key offset value
+从偏移量开始复写key的特定位的值
+
+192.168.4.51:6351> set x 7 ex 10  ## ex 秒为单位
+OK
+192.168.4.51:6351> ttl x
+(integer) 5
+192.168.4.51:6351> ttl x
+(integer) -2
+192.168.4.51:6351> set x 7 px 2000  ## px 毫秒为单位
+OK
+192.168.4.51:6351> ttl x
+(integer) 0
+192.168.4.51:6351> ttl x
+(integer) -2
+192.168.4.51:6351> keys *
+1) "v1"
+2) "v3"
+3) "v4"
+4) "v12"
+5) "v5"
+192.168.4.51:6351> set v1 88
+OK
+192.168.4.51:6351> get v1
+"88"
+192.168.4.51:6351> set v3 33 nx
+(nil)
+192.168.4.51:6351> get v3
+"30"
+192.168.4.51:6351> set x  33 nx
+OK
+192.168.4.51:6351> get x
+"33"
+192.168.4.51:6351> set yy 100 xx
+(nil)
+192.168.4.51:6351> set yy 100 nx
+OK
+192.168.4.51:6351> get yy
+"100"
+192.168.4.51:6351> set v5 100 nx
+(nil)
+192.168.4.51:6351> get v5
+"50"
+192.168.4.51:6351> set v5 100 xx
+OK
+192.168.4.51:6351> get v5
+"100"
+192.168.4.51:6351> keys *
+1) "v1"
+2) "v3"
+3) "yy"
+4) "v4"
+5) "x"
+6) "v12"
+7) "v5"
+192.168.4.51:6351> set tel 1870086549
+OK
+192.168.4.51:6351> get tel
+"1870086549"
+192.168.4.51:6351> setrange tel 3 ***
+(integer) 10
+192.168.4.51:6351> get tel
+"187***6549"
+192.168.4.51:6351> setrange tel  1  x  # 从偏移量开始复写 tel 的特定位 1 的值(默认从 0 起 标示)
+(integer) 10
+192.168.4.51:6351> get tel
+"1x7***6549"
+192.168.4.51:6351> set name lucy
+OK
+192.168.4.51:6351> setrange  name 1 **
+(integer) 4
+192.168.4.51:6351> get name
+"l**y"
+192.168.4.51:6351> set name pang
+OK
+192.168.4.51:6351> append anme jing
+(integer) 4
+192.168.4.51:6351> get name
+"pang"
+192.168.4.51:6351> append name jing
+(integer) 8
+192.168.4.51:6351> get name
+"pangjing"
+192.168.4.51:6351> get anme
+"jing"
+192.168.4.51:6351> append  name2 jingjing
+(integer) 8
+192.168.4.51:6351> get name2
+"jingjing"
+192.168.4.51:6351> 
+192.168.4.51:6351> exit
+[root@H51 ~]# clear
+[root@H51 ~]# redis-cli -h 192.168.4.51 -p 6351192.168.4.51:6351> keys *
+ 1) "anme"
+ 2) "v3"
+ 3) "v4"
+ 4) "yy"
+ 5) "tel"
+ 6) "name"
+ 7) "v12"
+ 8) "v1"
+ 9) "x"
+10) "v5"
+11) "name2"             # 位 只能是0 或 1
+192.168.4.51:6351> setbit yay 0 1  //设置 yay 第 0 位为 1
+(integer) 0
+## setbit key offset value 对key所存储字串，设置或清除特定偏移量上的位(bit)，
+ value值可以为1或0，offset为0~2^32之间，key不存在，则创建新key
+/************
+[root@H51 ~]# echo  $[80*365]
+29200
+[root@H51 ~]# echo  $[110*365]
+40150
+[root@H51 ~]# echo  $[90*365]
+32850
+[root@H51 ~]# echo  $[30000/365]
+82
+[root@H51 ~]# echo  $[30001/365]
+82
+[root@H51 ~]# echo  $[30000%365]
+70
+[root@H51 ~]# echo  $[365/8]
+45
+***********************/
+## setbit key offset value 对key所存储字串，设置或清除特定偏移量上的位(bit)，
+ value值可以为1或0，offset为0~2^32之间，key不存在，则创建新key
+
+192.168.4.51:6351> setbit yay 1 0  //设置 yay 第 1 位为 0
+(integer) 0
+192.168.4.51:6351> setbit yay 2 1
+(integer) 0
+192.168.4.51:6351> setbit yay 3 1
+(integer) 0
+192.168.4.51:6351> setbit yay 4 0
+(integer) 0
+192.168.4.51:6351> setbit yay 5 0
+(integer) 0
+192.168.4.51:6351> setbit yay 6  1
+(integer) 0
+192.168.4.51:6351> bitcount yay
+(integer) 4
+192.168.4.51:6351> setbit yay 7 1
+(integer) 0
+192.168.4.51:6351> bitcount yay  # bitcount key 统计字串中被设置为1的比特位数量
+(integer) 5
+192.168.4.51:6351> setbit yay 8 0
+(integer) 0
+192.168.4.51:6351> bitcount yay
+(integer) 5
+192.168.4.51:6351>   set x 8
+OK
+  # decr key 将key中的值减1，key不存在则先初始化为0，再减1
+192.168.4.51:6351> decr x
+(integer) 7
+192.168.4.51:6351> decr x
+(integer) 6
+192.168.4.51:6351> get x
+"6"
+192.168.4.51:6351> decrby x 2
+(integer) 4
+192.168.4.51:6351> get x
+"4"
+192.168.4.51:6351> decrby  x  3
+(integer) 1
+192.168.4.51:6351> get x
+"1"
+192.168.4.51:6351> decrby  x  2
+(integer) -1
+192.168.4.51:6351> get x
+"-1"
+192.168.4.51:6351> decrby  x  3  //定义每次减少3（步长）
+(integer) -4
+192.168.4.51:6351> get x
+"-4"
+192.168.4.51:6351> decrby  x  -9
+(integer) 5
+192.168.4.51:6351> get x
+"5"
+192.168.4.51:6351> decrby  x  -9.3
+(error) ERR value is not an integer or out of range
+192.168.4.51:6351> decrby  x  9.3
+(error) ERR value is not an integer or out of range
+192.168.4.51:6351> get x
+"5"
+    ## mset key value [key value …] 设置多个key及值，空格分隔，具有原子性
+192.168.4.51:6351>  mset x 9 y 90 z 100
+OK
+192.168.4.51:6351> mget x y z
+1) "9"
+2) "90"
+3) "100"
+192.168.4.51:6351> set name pangjingjing
+OK
+  ## getrange key start end 返回字串值中的子字串，截取范围为start和end，
+          负数偏移量表示从末尾开始计数，-1表示最后一个字符，-2表示倒数第二个字符
+192.168.4.51:6351> getrange  name  -2 -1
+"ng"
+192.168.4.51:6351> getrange  name  -3 -1
+"ing"
+192.168.4.51:6351> getrange  name  1 4
+"angj"
+192.168.4.51:6351> getrange  name  0 4
+"pangj"
+192.168.4.51:6351> getrange  name  0 3
+"pang"
+192.168.4.51:6351> set ss 10
+OK
+192.168.4.51:6351> decr ss
+(integer) 9
+192.168.4.51:6351> get ss
+"9"
+192.168.4.51:6351> decr ss 5
+(error) ERR wrong number of arguments for 'decr' command
+192.168.4.51:6351> decr ss 
+(integer) 8
+192.168.4.51:6351> get ss
+"8"                      ##incrby key increment 将key的值增加increment
+192.168.4.51:6351> incrby ss 10
+(integer) 18
+192.168.4.51:6351> get ss
+"18"
+192.168.4.51:6351> incrby ss
+(error) ERR wrong number of arguments for 'incrby' command
+192.168.4.51:6351> incrby ss 1
+(integer) 19
+192.168.4.51:6351> get ss
+"19"
+  ## incrbyfloat key increment 为key中所储存的值加上浮点数增量 increment
+
+192.168.4.51:6351> incrbyfloat y 0.5   ### incrbyfloat key increment 为key中所储存的值加上浮点数增量 increment
+"90.5"
+192.168.4.51:6351> get y
+"90.5"
+192.168.4.51:6351> set namegrp lucy lili liy tom
+(error) ERR syntax error
+
+# list列表
+Redis的list是一个字符队列，先进后出，一个key可以有多个值
+lpush key value [value…] 将一个或多个值value插入到列表key的表头，Key不存在，则创建key
+
+192.168.4.51:6351> lpush  namegrp lucy lili liy tom
+(integer) 4
+192.168.4.51:6351> type namegrp
+list
+192.168.4.51:6351> lpush grpname lili yaya haha jack lily
+(integer) 5
+192.168.4.51:6351> type grpname
+list
+
+  # lrange key start stop 从开始位置读取key的值到stop结束
+
+192.168.4.51:6351> lrange  grpname 0 -1
+1) "lily"
+2) "jack"
+3) "haha"
+4) "yaya"
+5) "lili"
+192.168.4.51:6351> lrange  namegrp  0  -1
+1) "tom"
+2) "liy"
+3) "lili"
+4) "lucy"
+192.168.4.51:6351> lrange  namegrp  0  2  //从0位开始，读到2位为止
+1) "tom"
+2) "liy"
+3) "lili"
+192.168.4.51:6351> lrange  namegrp  -3 -1
+1) "liy"
+2) "lili"
+3) "lucy"
+192.168.4.51:6351>  lrange  namegrp  0  -1   //从开始读到结束为止
+1) "tom"
+2) "liy"
+3) "lili"
+4) "lucy"
+192.168.4.51:6351> lpop  namegrp
+"tom"
+192.168.4.51:6351> lrange  namegrp  0  -1   //从开始读到结束为止
+1) "liy"
+2) "lili"
+3) "lucy"
+192.168.4.51:6351> llen  namegrp # llen key 返回列表key的长度
+(integer) 3
+192.168.4.51:6351> llen  grpname
+(integer) 5
+192.168.4.51:6351> lrange grpname  0 -1   //从开始读到结束为止
+1) "lily"
+2) "jack"
+3) "haha"
+4) "yaya"
+5) "lili"
+192.168.4.51:6351> lindex grpname  0  # lindex key index 返回列表中第index个值
+"lily"
+192.168.4.51:6351> lindex grpname  -1  # lindex key -1 返回列表中最后一个值
+"lili"
+192.168.4.51:6351> lindex grpname  3
+"yaya"
+192.168.4.51:6351> lindex grpname  4
+"lili"
+192.168.4.51:6351> lindex grpname  -2  # lindex key -2 返回列表中 倒数 第二 个值
+"yaya"
+
+   ## lset key index value 将key中index位置的值修改为value
+
+192.168.4.51:6351> lset  grpname 0 jerry #将列表grpname 中 第一个位置的值修改为jerry
+OK
+192.168.4.51:6351> lindex grpname 0
+"jerry"
+192.168.4.51:6351>  del grpname
+(integer) 1
+192.168.4.51:6351> lrange grpname  0 -1
+(empty list or set)
+192.168.4.51:6351> keys *
+ 1) "v3"
+ 2) "yay"
+ 3) "v4"
+ 4) "y"
+ 5) "z"
+ 6) "anme"
+ 7) "yy"
+ 8) "tel"
+ 9) "name"
+10) "v12"
+11) "ss"
+12) "namegrp"
+13) "v1"
+14) "x"
+15) "v5"
+16) "name2"
+192.168.4.51:6351> lrange namegrp
+(error) ERR wrong number of arguments for 'lrange' command
+192.168.4.51:6351> lrange namegrp 0 -1
+1) "liy"
+2) "lili"
+3) "lucy"
+  ## incr key 将key的值加1，如果key不存在，则初始为0后再加1，主要应用为计数器
+192.168.4.51:6351>  incr page
+(integer) 1
+192.168.4.51:6351> get page
+"1"
+192.168.4.51:6351> incr page
+(integer) 2
+192.168.4.51:6351> get page
+"2"
+192.168.4.51:6351> get page2
+(nil)
+192.168.4.51:6351> incr page2
+(integer) 1
+192.168.4.51:6351> get page2
+"1"
+192.168.4.51:6351> 
+192.168.4.51:6351> get name
+"pangjingjing"
+192.168.4.51:6351> strlen name  ## strlen key，统计字串长度
+(integer) 12
+192.168.4.51:6351> append name 123  #append key value 存在则追加，不存在则创建key及value，返回key长度
+(integer) 15
+192.168.4.51:6351> strlen name
+(integer) 15
+192.168.4.51:6351> get name
+"pangjingjing123"
+192.168.4.51:6351> 
+get key 返回key存储的字符串值，若key不存在则返回nil，
+若key的值不是字串，则返回错误，get只能处理字串
+
+decr key 将key中的值减1，key不存在则先初始化为0，再减1
+
+192.168.4.51:6351> get qq
+(nil)
+192.168.4.51:6351> decr qq
+(integer) -1
+192.168.4.51:6351> get qq
+"-1"
+192.168.4.51:6351> decr qq
+(integer) -2
+192.168.4.51:6351> get qq
+"-2"
+192.168.4.51:6351> 
+
+## lpop key 移除并返回列表头元素数据，key不存在则返回nil [ 左头 右尾 ]
+
+192.168.4.51:6351> lpop  namegrp  # //删除表头元素，可以多次执行
+"liy"
+192.168.4.51:6351> lpop  namegrp
+"lili"
+192.168.4.51:6351> lpop  namegrp
+"lucy"
+192.168.4.51:6351> lpop  namegrp
+(nil)
+
+192.168.4.51:6351> lrange namegrp 0 -1
+(empty list or set)
+192.168.4.51:6351> lpush  namegrp name1 name2 name3 name4
+(integer) 4
+192.168.4.51:6351> type namegrp
+list
+192.168.4.51:6351> lrange namegrp  0  -1
+1) "name4"
+2) "name3"
+3) "name2"
+4) "name1"
+192.168.4.51:6351> lpop namegrp  # //删除表头元素，可以多次执行
+"name4"
+192.168.4.51:6351> lpop namegrp
+"name3"
+192.168.4.51:6351> lrange namegrp  0  -1
+1) "name2"
+2) "name1"
+192.168.4.51:6351> 
+192.168.4.51:6351> lrange namegrp  -1 0  ## 不符合语法 顺序[ 从左向右横向读取数据 ]
+(empty list or set)
+192.168.4.51:6351> lrange namegrp  -1  -2  ## 不符合语法 顺序
+(empty list or set)
+192.168.4.51:6351> lrange namegrp  -2 -1  # 从倒数第 2 位读到 倒 数 第 1 位值
+1) "name2"
+2) "name1"
+192.168.4.51:6351> 
+   ## rpush key value [value…] 将value插入到key的末尾
+192.168.4.51:6351> rpush namegrp end1 end2 end3
+(integer) 5
+
+192.168.4.51:6351> lrange namegrp 0 -1
+1) "name2"
+2) "name1"
+3) "end1"
+4) "end2"
+5) "end3"
+192.168.4.51:6351> lrange namegrp  -5 -1
+1) "name2"
+2) "name1"
+3) "end1"
+4) "end2"
+5) "end3"
+192.168.4.51:6351> 
+192.168.4.51:6351> lindex namegrp 0
+"name2"
+192.168.4.51:6351> lindex namegrp -5
+"name2"
+192.168.4.51:6351> lindex namegrp -1
+"end3"
+192.168.4.51:6351> lindex namegrp 1
+"name1"
+192.168.4.51:6351> lindex namegrp 4
+"end3"
+192.168.4.51:6351>
+
+## lpop key 移除并返回列表头元素数据，key不存在则返回nil [ 左头 右尾 ]
+
+192.168.4.51:6351> lpop namegrp
+"name2"
+192.168.4.51:6351> lrange namegrp 0 -1
+1) "name1"
+2) "end1"
+3) "end2"
+4) "end3"
+192.168.4.51:6351> 
+  ## rpop key 删除并返回key末尾的值
+192.168.4.51:6351> rpop namegrp
+"end3"
+192.168.4.51:6351> lrange namegrp 0 -1
+1) "name1"
+2) "end1"
+3) "end2"
+192.168.4.51:6351> 
+
+hash表
+ # hset key field value 将hash表中field值设置为value
+
+192.168.4.51:6351> hset hashbiao  ziduan "http://www.github.com/login"
+(integer) 1
+192.168.4.51:6351> hset hashbiao  google  "github.com/login"
+(integer) 1
+
+  # hget key filed 获取hash表中field的值
+
+192.168.4.51:6351> hget hashbiao google
+"github.com/login"
+192.168.4.51:6351> hget hashbiao ziduan
+"http://www.github.com/login"
+192.168.4.51:6351> 
+
+  ## hmset key field value [field value…] 同时给hash表中的多个field赋值
+
+192.168.4.51:6351> hmset hashba google  www.google.cn  baidu www.baidu.com  hiys  github.com
+OK
+
+  ## hmget key field [field…] 返回hash表中多个field的值
+
+192.168.4.51:6351> hmget hashba  google  hiys
+1) "www.google.cn"
+2) "github.com"
+192.168.4.51:6351> hmget hashba  google baidu  hiys
+1) "www.google.cn"
+2) "www.baidu.com"
+3) "github.com"
+192.168.4.51:6351> 
+
+  ## hkeys key 返回hash表中所有field名称
+
+192.168.4.51:6351> hkeys hashba
+1) "google"
+2) "baidu"
+3) "hiys"
+192.168.4.51:6351>
+
+  ## hgetall key 返回hash表中所有key名和对应的值列表
+
+192.168.4.51:6351> hgetall hashba
+1) "google"
+2) "www.google.cn"
+3) "baidu"
+4) "www.baidu.com"
+5) "hiys"
+6) "github.com"
+192.168.4.51:6351> 
+
+***********fe3630y**智慧连****
+  ## hvals key 返回hash表中所有key的值
+
+192.168.4.51:6351> hvals hashba
+1) "www.google.cn"
+2) "www.baidu.com"
+3) "github.com"
+
+192.168.4.51:6351> hvals hashbiao
+1) "http://www.github.com/login"
+2) "github.com/login"
+192.168.4.51:6351> 
+
+192.168.4.51:6351> hkeys hashba
+1) "google"
+2) "baidu"
+3) "hiys"
+
+  ##hdel key field [field…] 删除hash表中多个field的值，不存在则忽略
+
+192.168.4.51:6351> hdel  hashba  google  baidu
+(integer) 2
+
+192.168.4.51:6351> hkeys hashba
+1) "hiys"
+192.168.4.51:6351> 
+
+192.168.4.51:6351> hgetall hashba
+1) "hiys"
+2) "github.com"
+192.168.4.51:6351> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H52 ~]#  ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.52
+192.168.2.52
+201.1.1.52
+201.1.2.52
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H52 ~]# vim /etc/redis/6379.conf 
+[root@H52 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.52
+    93	port 6352
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6352.conf
+   829	#cluster-node-timeout 5000
+[root@H52 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.52:6352       0.0.0.0:*               LISTEN      1866/redis-server 1 
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> keys *
+1) "school"
+2) "yy"
+3) "pay4"
+4) "pay3"
+192.168.4.52:6352> flushall
+OK
+192.168.4.52:6352> keys *
+(empty list or set)
+192.168.4.52:6352> cluster info
+ERR This instance has cluster support disabled
+192.168.4.52:6352> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.52:6352> exit
+
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> info replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:c02a31f7a9cc7511eae8c77ed954f5cb1ad2040b
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.52:6352> 
+192.168.4.52:6352> keys *
+(empty list or set)
+192.168.4.52:6352> set  a1 99
+OK
+192.168.4.52:6352> set  a2  88
+OK
+192.168.4.52:6352> keys *
+1) "a1"
+2) "a2"
+192.168.4.52:6352> slaveof  192.168.4.51  6351
+OK
+192.168.4.52:6352> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:up
+master_last_io_seconds_ago:4
+master_sync_in_progress:0
+slave_repl_offset:14
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:4fb0b403ffca137603d99d9b9c2c2161f10cea5b
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:14
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:14
+192.168.4.52:6352> 
+192.168.4.52:6352> keys  *
+1) "v2"
+2) "v3"
+3) "v1"
+192.168.4.52:6352> keys  *
+1) "v4"
+2) "v5"
+3) "v2"
+4) "v3"
+5) "v1"
+192.168.4.52:6352> get v4
+"40"
+192.168.4.52:6352> get v5
+"50"
+192.168.4.52:6352> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:up
+master_last_io_seconds_ago:7
+master_sync_in_progress:0
+slave_repl_offset:795
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:4fb0b403ffca137603d99d9b9c2c2161f10cea5b
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:795
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:795
+192.168.4.52:6352> slaveof  no one
+OK
+192.168.4.52:6352> 
+192.168.4.52:6352> info replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:8cfd19d1a39ea1fa722ae8afa33b193b41002568
+master_replid2:4fb0b403ffca137603d99d9b9c2c2161f10cea5b
+master_repl_offset:1033
+second_repl_offset:1034
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:1033
+192.168.4.52:6352> keys *
+1) "v4"
+2) "v5"
+3) "v2"
+4) "v3"
+5) "v1"
+192.168.4.52:6352> get v4
+"40"
+192.168.4.52:6352> slaveof  192.168.4.51  6351
+OK
+192.168.4.52:6352> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:up
+master_last_io_seconds_ago:3
+master_sync_in_progress:0
+slave_repl_offset:1047
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:4fb0b403ffca137603d99d9b9c2c2161f10cea5b
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:1047
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1034
+repl_backlog_histlen:14
+192.168.4.52:6352>  exit
+[root@H52 ~]# /etc/init.d/redis_6379  stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H52 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> info replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:7e641d627f0a55d87bc3cffa6e805163bb1a7564
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.52:6352> keys *
+1) "v2"
+2) "v5"
+3) "v1"
+4) "v3"
+5) "v4"
+192.168.4.52:6352> exit
+[root@H52 ~]# 
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:up
+master_last_io_seconds_ago:6
+master_sync_in_progress:0
+slave_repl_offset:1257
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:4fb0b403ffca137603d99d9b9c2c2161f10cea5b
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:1257
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1230
+repl_backlog_histlen:28
+192.168.4.52:6352> exit
+[root@H52 ~]# vim /etc/redis/6379.conf 
+[root@H52 ~]# sed -n 289p /etc/redis/6379.conf
+masterauth 123
+[root@H52 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> keys *
+1) "v5"
+2) "v3"
+3) "v1"
+4) "v8"
+5) "v2"
+6) "v4"
+192.168.4.52:6352> get v8
+"80"
+192.168.4.52:6352> exit
+
+[root@H52 ~]# /etc/init.d/redis_6379  stop && sleep 3 ; /etc/init.d/redis_6379  start
+/var/run/redis_6379.pid does not exist, process is not running
+Starting Redis server...
+[root@H52 ~]# ls /var/lib/redis/6379/
+dump.rdb  nodes-6352.conf
+[root@H52 ~]# rm -f /var/lib/redis/6379/nodes-6352.conf 
+[root@H52 ~]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H52 ~]# vim /etc/redis/6379.conf 
+[root@H52 ~]# vim /etc/redis/6379.conf 
+[root@H52 ~]# sed -n '282,283p' /etc/redis/6379.conf
+# slaveof <masterip> <masterport>
+slaveof  192.168.4.51 6351
+[root@H52 ~]# /etc/init.d/redis_6379  stop && sleep 3 ; /etc/init.d/redis_6379  start
+Stopping ...
+Redis stopped
+Starting Redis server...
+[root@H52 ~]# vim /etc/redis/6379.conf 
+[root@H52 ~]# /etc/init.d/redis_6379  stop && sleep 3 
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H52 ~]# 
+[root@H52 ~]# /etc/init.d/redis_6379  status
+Redis is running (2648)
+[root@H52 ~]# /etc/init.d/redis_6379  stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H52 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:down
+master_last_io_seconds_ago:-1
+master_sync_in_progress:0
+slave_repl_offset:98
+master_link_down_since_seconds:1541039484
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:6b4595ae876ac8a162e464c0a791d02526c422df
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:98
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.52:6352> shutdown
+not connected> exit
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+Could not connect to Redis at 192.168.4.52:6352: Connection refused
+Could not connect to Redis at 192.168.4.52:6352: Connection refused
+not connected> exit
+[root@H52 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:down
+master_last_io_seconds_ago:-1
+master_sync_in_progress:0
+slave_repl_offset:98
+master_link_down_since_seconds:1541039664
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:6b4595ae876ac8a162e464c0a791d02526c422df
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:98
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.52:6352> keys *
+1) "v8"
+2) "v4"
+3) "v1"
+4) "v3"
+5) "v2"
+6) "v5"
+192.168.4.52:6352> set a1 99
+(error) READONLY You can't write against a read only slave.
+192.168.4.52:6352> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:down
+master_last_io_seconds_ago:-1
+master_sync_in_progress:0
+slave_repl_offset:98
+master_link_down_since_seconds:1541039823
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:6b4595ae876ac8a162e464c0a791d02526c422df
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:98
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.52:6352> shutdown
+not connected> exit
+[root@H52 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:down
+master_last_io_seconds_ago:-1
+master_sync_in_progress:0
+slave_repl_offset:98
+master_link_down_since_seconds:1541039953
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:6b4595ae876ac8a162e464c0a791d02526c422df
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:98
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.52:6352> exit
+[root@H52 ~]# /etc/init.d/redis_6379  status
+Redis is running (2961)
+[root@H52 ~]# 
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:up
+master_last_io_seconds_ago:5
+master_sync_in_progress:0
+slave_repl_offset:434
+slave_priority:100
+slave_read_only:1
+connected_slaves:1
+slave0:ip=192.168.4.53,port=6353,state=online,offset=434,lag=1
+master_replid:84b53e59f7649ebcc77e26415a6c4138079606b2
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:434
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:434
+192.168.4.52:6352> keys *
+1) "v5"
+2) "v2"
+3) "v1"
+4) "v4"
+5) "v3"
+6) "v8"
+192.168.4.52:6352> keys *
+1) "v5"
+2) "v2"
+3) "v1"
+4) "v4"
+5) "v3"
+6) "v8"
+7) "xxxx"
+192.168.4.52:6352> exit
+[root@H52 ~]# ls redis-4.0.8/
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+
+[root@H52 ~]# vim /etc/sentinel.conf
+
+[root@H52 ~]# cat /etc/sentinel.conf
+
+sentinel monitor redis51  192.168.4.51  6351  1
+sentinel auth-pass  redis51  123
+
+[root@H52 ~]# 
+
+[root@H52 ~]# redis-sentinel  /etc/sentinel.conf 
+3647:X 01 Nov 11:49:33.138 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+3647:X 01 Nov 11:49:33.138 # Redis version=4.0.8, bits=64, commit=00000000, modified=0, pid=3647, just started
+3647:X 01 Nov 11:49:33.138 # Configuration loaded
+3647:X 01 Nov 11:49:33.138 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+                _._                                                  
+           _.-``__ ''-._                                             
+      _.-``    `.  `_.  ''-._           Redis 4.0.8 (00000000/0) 64 bit
+  .-`` .-```.  ```\/    _.,_ ''-._                                   
+ (    '      ,       .-`  | `,    )     Running in sentinel mode
+ |`-._`-...-` __...-.``-._|'` _.-'|     Port: 26379
+ |    `-._   `._    /     _.-'    |     PID: 3647
+  `-._    `-._  `-./  _.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |           http://redis.io        
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |                                  
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+      `-._    `-.__.-'    _.-'                                       
+          `-._        _.-'                                           
+              `-.__.-'                                               
+
+3647:X 01 Nov 11:49:33.139 # WARNING: The TCP backlog setting of 511 cannot be enforced because /proc/sys/net/core/somaxconn is set to the lower value of 128.
+3647:X 01 Nov 11:49:33.168 # Sentinel ID is 38ef9adbadfd552cded0dbb1c25e2e990ef4d539
+3647:X 01 Nov 11:49:33.168 # +monitor master redis51 192.168.4.51 6351 quorum 1
+3647:X 01 Nov 11:49:33.170 * +slave slave 192.168.4.52:6352 192.168.4.52 6352 @ redis51 192.168.4.51 6351
+3647:X 01 Nov 11:52:54.175 # +sdown master redis51 192.168.4.51 6351
+3647:X 01 Nov 11:52:54.175 # +odown master redis51 192.168.4.51 6351 #quorum 1/1
+3647:X 01 Nov 11:52:54.175 # +new-epoch 1
+3647:X 01 Nov 11:52:54.175 # +try-failover master redis51 192.168.4.51 6351
+3647:X 01 Nov 11:52:54.270 # +vote-for-leader 38ef9adbadfd552cded0dbb1c25e2e990ef4d539 1
+3647:X 01 Nov 11:52:54.270 # +elected-leader master redis51 192.168.4.51 6351
+3647:X 01 Nov 11:52:54.270 # +failover-state-select-slave master redis51 192.168.4.51 6351
+3647:X 01 Nov 11:52:54.360 # +selected-slave slave 192.168.4.52:6352 192.168.4.52 6352 @ redis51 192.168.4.51 6351
+3647:X 01 Nov 11:52:54.360 * +failover-state-send-slaveof-noone slave 192.168.4.52:6352 192.168.4.52 6352 @ redis51 192.168.4.51 6351
+3647:X 01 Nov 11:52:54.461 * +failover-state-wait-promotion slave 192.168.4.52:6352 192.168.4.52 6352 @ redis51 192.168.4.51 6351
+3647:X 01 Nov 11:52:54.645 # +promoted-slave slave 192.168.4.52:6352 192.168.4.52 6352 @ redis51 192.168.4.51 6351
+3647:X 01 Nov 11:52
+..............................
+^C3647:signal-handler (1541044714) Received SIGINT scheduling shutdown...
+3647:X 01 Nov 11:58:34.932 # User requested shutdown...
+3647:X 01 Nov 11:58:34.932 # Sentinel is now ready to exit, bye bye...
+[root@H52 ~]# 
+[root@H52 ~]# redis-cli -h 192.168.4.52 -p 6352
+192.168.4.52:6352> keys *
+1) "v5"
+2) "v2"
+3) "v1"
+4) "v4"
+5) "v3"
+6) "v8"
+7) "xxxx"
+192.168.4.52:6352> info replication
+# Replication
+role:master
+connected_slaves:1
+slave0:ip=192.168.4.53,port=6353,state=online,offset=26166,lag=0
+master_replid:2cd25fc40212359200a7d1615a2dc16554040f04
+master_replid2:84b53e59f7649ebcc77e26415a6c4138079606b2
+master_repl_offset:26166
+second_repl_offset:17558
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:26166
+192.168.4.52:6352> info replication
+..................................
+192.168.4.52:6352> info replication
+# Replication
+role:master
+connected_slaves:2
+slave0:ip=192.168.4.53,port=6353,state=online,offset=41029,lag=1
+slave1:ip=192.168.4.51,port=6351,state=online,offset=41029,lag=0
+master_replid:2cd25fc40212359200a7d1615a2dc16554040f04
+master_replid2:84b53e59f7649ebcc77e26415a6c4138079606b2
+master_repl_offset:41029
+second_repl_offset:17558
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:41029
+192.168.4.52:6352>  exit
+[root@H52 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H53 ~]#  ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# vim /etc/redis/6379.conf 
+[root@H53 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.53
+    93	port 6353
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6353.conf
+   829	#cluster-node-timeout 5000
+[root@H53 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.53:6353       0.0.0.0:*               LISTEN      1875/redis-server 1 
+[root@H53 ~]# redis-cli -h 192.168.4.53 -p 6353
+192.168.4.53:6353> keys *
+1) "xixi"
+2) "v2"
+192.168.4.53:6353> flushall
+OK
+192.168.4.53:6353> keys *
+(empty list or set)
+192.168.4.53:6353> cluster info
+ERR This instance has cluster support disabled
+192.168.4.53:6353> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.53:6353> exit
+[root@H53 ~]# 
+[root@H53 ~]# /etc/init.d/redis_6379  stop && sleep 3 ; /etc/init.d/redis_6379  start
+/var/run/redis_6379.pid does not exist, process is not running
+Starting Redis server...
+
+[root@H53 ~]# ls /var/lib/redis/6379/nodes-6353.conf 
+/var/lib/redis/6379/nodes-6353.conf
+[root@H53 ~]# rm -f /var/lib/redis/6379/nodes-6353.conf
+[root@H53 ~]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H53 ~]# 
+[root@H53 ~]# /etc/init.d/redis_6379 stop
+Stopping ...
+Redis stopped
+[root@H53 ~]# vim /etc/redis/6379.conf 
+[root@H53 ~]# sed -n '282,283p;289,290p' /etc/redis/6379.conf
+# slaveof <masterip> <masterport>
+slaveof  192.168.4.51  6351
+# masterauth <master-password>
+masterauth  123
+[root@H53 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H53 ~]# redis-cli -h 192.168.4.53  -p 6353
+192.168.4.53:6353> keys *
+1) "v3"
+2) "v1"
+3) "v4"
+4) "v8"
+5) "v2"
+6) "v5"
+192.168.4.53:6353> get v8
+"80"
+192.168.4.53:6353> exit
+[root@H53 ~]# redis-cli -h 192.168.4.53  -p 6353
+192.168.4.53:6353> info replication
+# Replication
+role:slave
+master_host:192.168.4.51
+master_port:6351
+master_link_status:up
+master_last_io_seconds_ago:5
+master_sync_in_progress:0
+slave_repl_offset:1116
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:0e5fac90e30d28f5abb925b27c8dc0344528b6f2
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:1116
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1019
+repl_backlog_histlen:98
+192.168.4.53:6353> shutdown
+not connected> eixt
+Could not connect to Redis at 192.168.4.53:6353: Connection refused
+not connected> exit
+[root@H53 ~]# vim /etc/redis/6379.conf 
+[root@H53 ~]#  sed -n '282,283p;289,290p' /etc/redis/6379.conf
+# slaveof <masterip> <masterport>
+slaveof  192.168.4.52  6352
+# masterauth <master-password>
+# masterauth  123
+[root@H53 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H53 ~]# redis-cli -h 192.168.4.53  -p 6353
+192.168.4.53:6353> keys *
+1) "v2"
+2) "v1"
+3) "v8"
+4) "v5"
+5) "v3"
+6) "v4"
+192.168.4.53:6353> info replication
+# Replication
+role:slave
+master_host:192.168.4.52
+master_port:6352
+master_link_status:down
+master_last_io_seconds_ago:-1
+master_sync_in_progress:0
+slave_repl_offset:98
+master_link_down_since_seconds:1541039410
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:6b4595ae876ac8a162e464c0a791d02526c422df
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:98
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.53:6353> exit
+[root@H53 ~]# vim /etc/redis/6379.conf 
+[root@H53 ~]# redis-cli -h 192.168.4.53  -p 6353
+192.168.4.53:6353> info replication
+# Replication
+role:slave
+master_host:192.168.4.52
+master_port:6352
+master_link_status:down
+master_last_io_seconds_ago:-1
+master_sync_in_progress:0
+slave_repl_offset:98
+master_link_down_since_seconds:1541039888
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:6b4595ae876ac8a162e464c0a791d02526c422df
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:98
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+192.168.4.53:6353> exit
+[root@H53 ~]# vim /etc/redis/6379.conf 
+[root@H53 ~]# 
+[root@H53 ~]# redis-cli -h 192.168.4.53  -p 6353
+192.168.4.53:6353> info replication
+# Replication
+role:slave
+master_host:192.168.4.52
+master_port:6352
+master_link_status:up
+master_last_io_seconds_ago:3
+master_sync_in_progress:0
+slave_repl_offset:406
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:84b53e59f7649ebcc77e26415a6c4138079606b2
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:406
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:406
+192.168.4.53:6353> keys *
+1) "v1"
+2) "v2"
+3) "v8"
+4) "v5"
+5) "v3"
+6) "v4"
+192.168.4.53:6353> keys *
+1) "v1"
+2) "v2"
+3) "v8"
+4) "v5"
+5) "v3"
+6) "xxxx"
+7) "v4"
+192.168.4.53:6353> get xxxx
+"xxx"
+192.168.4.53:6353> exit
+[root@H53 ~]# 
+[root@H53 ~]# redis-cli -h 192.168.4.53  -p 6353
+192.168.4.53:6353> shutdown
+not connected> exit
+[root@H53 ~]# vim  /etc/redis/6379.conf 
+[root@H53 ~]# /etc/init.d/redis_6379 start
+Starting Redis server...
+
+[root@H53 ~]# ls redis-4.0.8/
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+[root@H53 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H54 ~]#  ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.54
+192.168.2.54
+201.1.1.54
+201.1.2.54
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H54 ~]# vim /etc/redis/6379.conf 
+[root@H54 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.54
+    93	port 6354
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6354.conf
+   829	#cluster-node-timeout 5000
+[root@H54 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.54:6354       0.0.0.0:*               LISTEN      1881/redis-server 1 
+[root@H54 ~]# redis-cli -h 192.168.4.54 -p 6354
+192.168.4.54:6354> keys *
+(empty list or set)
+192.168.4.54:6354> cluster info
+ERR This instance has cluster support disabled
+192.168.4.54:6354> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.54:6354> exit
+[root@H54 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+[root@H55 ~]#  ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.55
+192.168.2.55
+201.1.1.55
+201.1.2.55
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H55 ~]# vim /etc/redis/6379.conf 
+[root@H55 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.55
+    93	port 6355
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6355.conf
+   829	#cluster-node-timeout 5000
+[root@H55 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.55:6355       0.0.0.0:*               LISTEN      1861/redis-server 1 
+[root@H55 ~]# redis-cli -h 192.168.4.55 -p 6355
+192.168.4.55:6355> keys *
+1) "v1"
+2) "pay2"
+3) "pay"
+4) "x2"
+5) "sex"
+6) "name"
+7) "age"
+192.168.4.55:6355> flushall
+OK
+192.168.4.55:6355> keys *
+(empty list or set)
+192.168.4.55:6355> cluster info
+ERR This instance has cluster support disabled
+192.168.4.55:6355> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.55:6355> exit
+[root@H55 ~]# 
+
+
+
+
+[root@H56 ~]#  ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.56
+192.168.2.56
+201.1.1.56
+201.1.2.56
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H56 ~]# vim /etc/redis/6379.conf 
+[root@H56 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.56
+    93	port 6356
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6356.conf
+   829	#cluster-node-timeout 5000
+[root@H56 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.56:6356       0.0.0.0:*               LISTEN      1904/redis-server 1 
+[root@H56 ~]# redis-cli -h 192.168.4.56 -p 6356
+192.168.4.56:6356> keys *
+(empty list or set)
+192.168.4.56:6356> cluster info
+ERR This instance has cluster support disabled
+192.168.4.56:6356> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.56:6356> exit
+[root@H56 ~]# 
+
+
+
+
+[root@H57 ~]#  ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.57
+192.168.2.57
+201.1.1.57
+201.1.2.57
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H57 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.57
+    93	port 6357
+   137	daemonize yes
+   501	# requirepass foobared
+   815	cluster-enabled yes
+   823	cluster-config-file nodes-6357.conf
+   829	cluster-node-timeout 5000
+[root@H57 ~]# vim /etc/redis/6379.conf 
+[root@H57 ~]# cat -n /etc/redis/6379.conf  |sed -n '70p;93p;137p;501p;815p;823p;829p'
+    70	bind 192.168.4.57
+    93	port 6357
+   137	daemonize yes
+   501	# requirepass foobared
+   815	#cluster-enabled yes
+   823	#cluster-config-file nodes-6357.conf
+   829	#cluster-node-timeout 5000
+[root@H57 ~]# netstat -anpult |grep redis-server
+tcp        0      0 192.168.4.57:6357       0.0.0.0:*               LISTEN      1882/redis-server 1 
+[root@H57 ~]# redis-cli -h 192.168.4.57 -p 6357
+192.168.4.57:6357> keys *
+(empty list or set)
+192.168.4.57:6357> cluster info
+ERR This instance has cluster support disabled
+192.168.4.57:6357> cluster nodes
+ERR This instance has cluster support disabled
+192.168.4.57:6357> exit
+[root@H57 ~]# 
+
+
+

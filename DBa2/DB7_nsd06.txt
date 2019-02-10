@@ -1,0 +1,524 @@
+
+
+[root@DB1 ~]# mysql -uroot -pHiy53.es
+
+mysql> grant select,insert on dba2.* to admina@'%' 
+    -> identified by 'Hiy53.es';
+
+mysql> create database dba2;use dba2;
+
+mysql> create table dba2.user(id int);
+-----------------------------DB3-----------------------------------
+    /***注意这次连接的是 主库51
+[root@DB3 ~]# mysql -h192.168.4.51 -uadmina -pHiy53.es
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| dba2               |
+mysql> use dba2;show tables;
+mysql> insert into dba2.user(id) values(666),(999);
+------------------------DB2------------------------------
+[root@DB2 ~]# mysql -uroot -pHiy53.es
+mysql> show slave status\G;
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: db51.000004
+          Read_Master_Log_Pos: 154
+               Relay_Log_File: DB2-relay-bin.000010
+                Relay_Log_Pos: 357
+        Relay_Master_Log_File: db51.000004
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+------------------------------------------------------------------------------------
+-----------------------------DB3------------------------------
+  /***注意这次连接的是从库52
+[root@DB3 ~]# mysql -h192.168.4.52 -uadmina -pHiy53.es
+mysql> show databases;
+| Database           |
+| information_schema |
+| dba2               |
+mysql> use dba2;select * from dba2.user;
+mysql> use dba2;select * from dba2.user;
+| id   |
+|  666 |
+|  999 |
+
+-----------------------------DB0------------------------------
+
+[root@DB0 ~]#  rpm -ivh maxscale-2.1.2-1.rhel.7.x86_64.rpm  libev-4.15-1.el6.rf.x86_64.rpm ;
+[root@DB0 ~]# cp /etc/maxscale.cnf /etc/maxscale.cnf.bak
+ 
+[root@DB0 ~]# vim /etc/maxscale.cnf
+
+  9 [maxscale]
+ 10 threads=auto
+
+ 18 [server1]    #编辑5Y  +  P
+ 19 type=server
+ 20 address=192.168.4.51
+ 21 port=3306
+ 22 protocol=MySQLBackend
+
+ 24 [server2]
+ 25 type=server
+ 26 address=192.168.4.52
+ 27 #address=192.168.4.51
+ 28 port=3306
+ 29 protocol=MySQLBackend
+
+ 36 [MySQL Monitor]
+ 37 type=monitor
+ 38 module=mysqlmon
+ 39 servers=server1, server2
+ 40 user=scalemon
+ 41 passwd=Hiy53.es
+ 42 monitor_interval=10000
+
+ 53 #[Read-Only Service]
+ 54 #type=service
+ 55 #router=readconnroute
+ 56 #servers=server1
+ 57 #user=myuser
+ 58 #passwd=mypwd
+ 59 #router_options=slave
+
+ 64 [Read-Write Service]
+ 65 type=service
+ 66 router=readwritesplit
+ 67 servers=server1, server2
+ 68 user=scaleuser
+ 69 passwd=Hiy53.es
+ 70 max_slave_connections=100%
+
+ 86 #[Read-Only Listener]
+ 87 #type=listener
+ 88 #service=Read-Only Service
+ 89 #protocol=MySQLClient
+ 90 #port=4008
+
+ 98 [MaxAdmin Listener]
+ 99 type=listener
+100 service=MaxAdmin Service
+101 protocol=maxscaled
+102 socket=default
+103 port=4016
+
+[root@DB1 ~]# mysql -uroot -pHiy53.es
+mysql> grant replication slave,replication client on *.*
+    -> to scalemon@'%'
+    -> identified by 'Hiy53.es';
+
+mysql> grant select on mysql.* to scaleuser@'%'
+    -> identified by 'Hiy53.es';
+
+mysql> select host,user from mysql.user 
+    -> where user in ("scalemon","scaleuser");
+| host | user      |
+| %    | scalemon  |
+| %    | scaleuser |
+
+
+[root@DB2 ~]# mysql -uroot -pHiy53.es
+
+mysql> select host,user from mysql.user
+    -> where user in ('scalemon','scaleuser');
+| host | user      |
+| %    | scalemon  |
+| %    | scaleuser |
+
+[root@DB0 ~]# maxscale -f /etc/maxscale.cnf
+[root@DB0 ~]# netstat -untpl |grep maxscale |column -t;
+tcp6  0  0  :::4016  :::*  LISTEN  3338/maxscale
+tcp6  0  0  :::4006  :::*  LISTEN  3338/maxscale
+
+[root@DB0 ~]# max
+maxadmin        maxbinlogcheck  maxpasswd       
+maxavrocheck    maxkeys         maxscale        
+[root@DB0 ~]# maxadmin -uadmin -pmariadb -P4016
+MaxScale> list servers
+Servers.
+Server   | Address       | Port  | Connections | Status              
+server1  | 192.168.4.51  |  3306 |           0 | Master, Running
+server2  | 192.168.4.52  |  3306 |           0 | Slave, Running
+
+MaxScale> exit
+[root@DB0 ~]# rpm -qc maxscale
+/etc/maxscale.cnf.template
+[root@DB0 ~]# ls /etc/maxscale.cnf
+maxscale.cnf           maxscale.cnf.bak       maxscale.cnf.template
+
+
+[root@DB3 ~]# mysql -h192.168.4.50 -P4006 -uadmina -pHiy53.es
+mysql> show databases;
+| Database           |
+| information_schema |
+| dba2               |
+mysql> use dba2;show tables;
+| Tables_in_dba2 |
+| user           |
+mysql> insert into dba2.user values(777);
+mysql> select * from dba2.user;
+| id   |
+|  666 |
+|  999 |
+|  777 |
+
+[root@DB2 ~]# mysql -uroot -pHiy53.es
+mysql> use dba2;desc dba2.user;
+| Field | Type    | Null | Key | Default | Extra |
+| id    | int(11) | YES  |     | NULL    |       |
+
+mysql> insert into dba2.user values(5252);
+mysql> select * from dba2.user;
+| id   |
+|  666 |
+|  999 |
+|  777 |
+| 5252 |     /**注意数据库52是否同步
+[root@DB1 ~]# mysql -uroot -pHiy53.es
+mysql> select * from dba2.user;
+| id   |
+|  666 |
+|  999 |
+|  777 |
+[root@DB3 ~]# mysql -h192.168.4.50 -P4006 -uadmina -pHiy53.es
+mysql> select * from dba2.user;
+| id   |
+|  666 |
+|  999 |
+|  777 |
+| 5252 |
+
+-----------------------DB70-----------------
+rpm  -e  --nodeps mariadb-server mariadb
+rpm -qa |grep -i mariadb
+grep -v '^#\|^$' /etc/my.cnf
+rm -rf /var/lib/mysql/
+rm -rf /etc/my.cnf*
+tar -xvf mysql-5.7.17.tar
+ls
+yum -y install perl-JSON
+rpm -q perl-JSON
+rpm -Uvh mysql-community-*.rpm
+rpm -qa |grep -i mariadb
+rpm -qa |grep -i mysql
+ps -C mysqld
+systemctl start mysqld && systemctl enable mysqld
+[root@DB70 ~]# awk '/root@localhost:/{print $NF}' /var/log/mysqld.log
+sDY:L3aW2_a7
+[root@DB70 ~]# mysql -hlocalhost -uroot -p'sDY:L3aW2_a7'
+mysql> alter user root@'localhost' identified by 'Hiy53.es';
+mysql> quit;
+Bye
+[root@DB70 ~]# rpm -ivh maxscale-2.1.2-1.rhel.7.x86_64.rpm
+[root@DB70 ~]# systemctl stop mysqld
+
+[root@room11pc06 ~]# ll mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz 
+-rw-r--r-- 1 root root 641127384 9月  18 15:06 mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz
+[root@room11pc06 ~]# scp /root/mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz    root@192.168.4.70:/root/
+
+[root@DB70 ~]# ll mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz 
+-rw-r--r--. 1 root root 641127384 9月  18 15:08 mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz
+
+[root@DB70 ~]# tar -xzf mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz
+
+[root@DB70 ~]# ls mysql-5.7.20-linux-glibc2.12-x86_64
+bin  COPYING  docs  include  lib  man  README  share  support-files
+[root@DB70 ~]# mkdir /data330{7,8}
+[root@DB70 ~]# mkdir /usr/local/mysql/
+
+[root@DB70 ~]# mv mysql-5.7.20-linux-glibc2.12-x86_64/* /usr/local/mysql/
+
+[root@DB70 ~]# ls /usr/local/mysql/
+bin  COPYING  docs  include  lib  man  README  share  support-files
+[root@DB70 ~]# ls /usr/local/mysql/bin/
+innochecksum                mysqldumpslow
+........
+[root@DB70 ~]# ls /usr/local/mysql/bin/ |wc -l
+38
+[root@DB70 ~]# ls /data330*
+/data3307:
+
+/data3308:
+[root@DB70 ~]# vim /etc/profile
+[root@DB70 ~]# tail -1 /etc/profile
+export  PATH=/usr/local/mysql/bin:$PATH
+
+[root@DB70 ~]# source /etc/profile
+[root@DB70 ~]# echo $PATH
+/usr/local/mysql/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@DB70 ~]# ll /etc/my.cnf
+-rw-r--r--. 1 root root 570 6月   8 2017 /etc/my.cnf
+[root@DB70 ~]# mv /etc/my.cnf /root/
+[root@DB70 ~]# vim /etc/my.cnf
+[root@DB70 ~]# cat /etc/my.cnf
+[mysqld_multi]  
+mysqld = /usr/local/mysql/bin/mysqld_safe   
+mysqladmin = /usr/local/mysql/bin/mysqladmin  
+user = root 
+
+[mysqld1] 
+port=3307
+datadir=/data3307
+
+socket=/data3307/mysql3307.sock
+log-error=/data3307/mysqld.err
+pid-file=/data3307/mysqld.pid
+
+[mysqld2] 
+port=3308
+datadir=/data3308
+
+socket=/data3308/mysql3308.sock
+log-error=/data3308/mysqld.err
+pid-file=/data3308/mysqld.pid
+
+[root@DB70 ~]# ll /usr/local/mysql/bin/mysqld_multi  
+-rwxr-xr-x. 1 7161 31415 26738 9月  14 2017 /usr/local/mysql/bin/mysqld_multi
+[root@DB70 ~]# chown mysql:mysql /data330*
+[root@DB70 ~]# ls -ld /data330*
+drwxr-xr-x. 2 mysql mysql 6 9月  18 15:00 /data3307
+drwxr-xr-x. 2 mysql mysql 6 9月  18 15:00 /data3308
+
+[root@DB70 ~]# mysqld  --user=mysql  --basedir=/usr/local/mysql   --datadir=/data3307   --initialize
+
+2018-09-18T08:43:38.024804Z 1 [Note] A temporary password is generated for root@localhost: aF_loBweB4u3
+[root@DB70 ~]# 
+[root@DB70 ~]# mysqld  --user=mysql  --basedir=/usr/local/mysql   --datadir=/data3308   --initialize
+
+2018-09-18T08:50:04.594611Z 1 [Note] A temporary password is generated for root@localhost: Ko+o0_9Vhxj3
+[root@DB70 ~]#
+[root@DB70 ~]# ls /data3307/
+auto.cnf        ibdata1      ib_logfile1  performance_schema
+ib_buffer_pool  ib_logfile0  mysql        sys
+[root@DB70 ~]# ls /data3308/
+auto.cnf        ibdata1      ib_logfile1  performance_schema
+ib_buffer_pool  ib_logfile0  mysql        sys
+
+[root@DB70 ~]# mysqld_multi start 1
+[root@DB70 ~]# mysqld_multi start 2
+
+[root@DB70 ~]# netstat -nputl |egrep  ':330(7|8)' |column -t;
+tcp6  0  0  :::3307  :::*  LISTEN  3900/mysqld
+tcp6  0  0  :::3308  :::*  LISTEN  4058/mysqld
+
+[root@DB70 ~]# ls /data3307/mysql
+mysql/               mysql3307.sock.lock  mysqld.pid
+mysql3307.sock       mysqld.err           
+
+[root@DB70 ~]# mysql -uroot -p'aF_loBweB4u3' -S  /data3307/mysql3307.sock
+mysql> ALTER USER user() identified   by   "123456";
+mysql> quit;
+Bye
+[root@DB70 ~]# ls /data3308/mysql
+mysql/               mysql3308.sock.lock  mysqld.pid
+mysql3308.sock       mysqld.err           
+[root@DB70 ~]# mysql -uroot -p'Ko+o0_9Vhxj3' -S /data3308/mysql3308.sock
+mysql> ALTER USER user() identified   by   "123456";
+mysql> quit;
+Bye
+[root@DB70 ~]# netstat -nputl |egrep  ':330(7|8)' |column -t;
+tcp6  0  0  :::3307  :::*  LISTEN  3900/mysqld
+tcp6  0  0  :::3308  :::*  LISTEN  4058/mysqld
+[root@DB70 ~]# mysqld_multi  --user=root  --password=123456 stop 2
+[root@DB70 ~]# netstat -nputl |egrep  ':330(7|8)' |column -t;
+tcp6  0  0  :::3307  :::*  LISTEN  3900/mysqld
+
+
+
+[root@DB70 ~]# free -m |column -t
+total  used  free  shared  buff/cache  available
+Mem:   992   267   246     7           478        544
+Swap:  2047  0     2047
+[root@DB70 ~]# uptime
+ 17:16:44 up  2:51,  2 users,  load average: 0.00, 0.01, 0.05
+
+
+   0_0 wa 等待处理磁盘的队列大小 ---存储设备 转速必须>=15000转/s
+
+
+
+
+
+
+[root@DB5 ~]# rpm -ivh maxscale-2.1.2-1.rhel.7.x86_64.rpm  libev-4.15-1.el6.rf.x86_64.rpm ;
+
+[root@DB5 ~]# rpm -qa |grep maxscale
+maxscale-2.1.2-1.x86_64
+[root@DB5 ~]# rpm -qc maxscale
+/etc/maxscale.cnf.template
+[root@DB5 ~]# ls /etc/maxscale.cnf
+/etc/maxscale.cnf
+[root@DB5 ~]# cp /etc/maxscale.cnf /etc/maxscale.cnf.bak
+[root@DB5 ~]# vim /etc/maxscale.cnf
+
+[server1]
+type=server
+#address=127.0.0.1
+address=192.168.4.51
+port=3306
+protocol=MySQLBackend
+
+[MySQL Monitor]
+type=monitor
+module=mysqlmon
+servers=server1,server2
+user=scalemon
+passwd=123456
+monitor_interval=10000
+
+[Read-Write Service]
+type=service
+router=readwritesplit
+servers=server1,server2
+#user=myuser
+user=maxscale
+passwd=123456
+max_slave_connections=100%
+
+[Read-Only Listener]
+type=listener
+service=Read-Only Service
+protocol=MySQLClient
+port=4008
+
+[Read-Write Listener]
+type=listener
+service=Read-Write Service
+protocol=MySQLClient
+port=4006
+
+[MaxAdmin Listener]
+type=listener
+service=MaxAdmin Service
+protocol=maxscaled
+socket=default
+port=4018
+
+
+[root@DB5 ~]# ll /etc/maxscale.cnf
+-rw-r--r--. 1 root root 2146 9月  18 09:22 /etc/maxscale.cnf
+
+------------------------------DB1------------------
+
+mysql> show processlist\G;
+*************************** 1. row ***************************
+     Id: 3
+   User: repluser
+   Host: 192.168.4.52:57262
+     db: NULL
+Command: Binlog Dump
+   Time: 32201
+  State: Master has sent all binlog to slave; waiting for more updates
+   Info: NULL
+*************************** 2. row ***************************
+     Id: 4
+   User: root
+   Host: localhost
+     db: dba2
+Command: Query
+   Time: 0
+  State: starting
+   Info: show processlist
+*************************** 3. row ***************************
+     Id: 6
+   User: scalemon
+   Host: 192.168.4.50:55838
+     db: NULL
+Command: Sleep
+   Time: 6
+  State: 
+   Info: NULL
+*************************** 4. row ***************************
+     Id: 9
+   User: admina
+   Host: 192.168.4.50:55850
+     db: dba2
+Command: Sleep
+   Time: 20091
+  State: 
+   Info: NULL
+4 rows in set (0.00 sec)
+
+mysql> show status like '%innodb%';
+| Variable_name    | Value  |
+| Innodb_buffer_pool_dump_status | Dumping of buffer pool not started |
+| Innodb_buffer_pool_load_status | Buffer pool(s) load completed at 180918  8:27:17 |
+| Innodb_buffer_pool_resize_status |    |
+| Innodb_buffer_pool_pages_data  | 266   |
+| Innodb_buffer_pool_bytes_data  | 4358144 |
+
+mysql> show status like '%innodb_row_lock_wai%';
+| Variable_name         | Value |
+| Innodb_row_lock_waits | 0     |
+
+mysql> show variables\G;
+.................
+*************************** 521. row ***************************
+Variable_name: wait_timeout
+        Value: 28800
+*************************** 522. row ***************************
+Variable_name: warning_count
+        Value: 0
+522 rows in set (0.01 sec)
+
+mysql> show variables like '%memory%';
+| Variable_name                         | Value |
+| locked_in_memory                      | OFF   |
+| performance_schema_max_memory_classes | 320   |
+
+mysql> show variables like 'datetime_format';
+| Variable_name   | Value             |
+| datetime_format | %Y-%m-%d %H:%i:%s |
+
+mysql> show variables like 'connect_timeout';
+| Variable_name   | Value |
+| connect_timeout | 10    |
+
+mysql> set connect_timeout = 20;
+ERROR 1229 (HY000): Variable 'connect_timeout' is a GLOBAL variable and should be set with SET GLOBAL
+mysql> set global connect_timeout = 20;
+[root@DB1 ~]# vim /etc/my.cnf
+  4 [mysqld]
+  5 connect_timeout=20
+  6 server_id=51
+  7 log-bin=db51
+  8 binlog_format='mixed'
+  9 #log_slave_updates
+ 10 plugin-load="rpl_semi_sync_master=semisync_slave.so;rpl_semi_sync_slave=semisync_slave.so"
+ 11 rpl_semi_sync_master_enabled=1
+ 12 rpl_semi_sync_slave_enabled=1
+[root@DB1 ~]# systemctl restart mysqld
+[root@DB1 ~]# !mysq
+mysql -uroot -pHiy53.es
+mysql> show variables like 'connect_timeout';
+| Variable_name   | Value |
+| connect_timeout | 20    |
+
+
+
+-----还原mysql---------
+systemctl stop mysqld
+rm -rf /var/lib/mysql/*
+systemctl start mysqld
+-------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+

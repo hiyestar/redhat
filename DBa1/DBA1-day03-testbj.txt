@@ -1,0 +1,563 @@
++++++++++++++++++++++++++++++++++++++++++++++
+把/etc/passwd文件的内容存储到teadb库下的usertab表里，并做如下配置：
+
+mysql> create database teadb;use teadb;select database();
+
+mysql> show variables like '%secure_file_pri%';
+| Variable_name    | Value                 |
+| secure_file_priv | /var/lib/mysql-files/ |
+
+mysql> system cp '/etc/passwd' '/var/lib/mysql-files/';
+
+mysql> system ls /var/lib/mysql-files;
+passwd
+[root@DB3 ~]# tail -1 /var/lib/mysql-files/passwd
+mysql:x:27:27:MySQL Server:/var/lib/mysql:/bin/false
+
+mysql> create table usertab(name char(30),password char(1),
+    -> uid int(2) unsigned,gid int(2),
+    -> comment char(150),homedir char(150),
+    -> shell char(30),index(name));
+mysql> desc  teadb.usertab;
+
+               /** 一定要有引号 '/var/lib/mysql-files/passwd'
+mysql> load data infile '/var/lib/mysql-files/passwd'
+    -> into table teadb.usertab
+    -> fields terminated by':' lines terminated by'\n';
+
+mysql> select name,password,uid,gid from usertab where
+    -> uid between 50 and 70;
+| name  | password | uid  | gid  |
+| tss   | x        |   59 |   59 |
+| avahi | x        |   70 |   70 |
+
+6 在name字段下方添加s_year字段 存放出生年份 默认值是1990
+mysql> alter table teadb.usertab add s_year year default '1990'
+    -> after  name;
+/**mysql> alter table teadb.usertab 
+    -> add s_year year default 1990 after name;
+**/
+mysql> desc teadb.usertab;
+
+mysql> select name,s_year,uid,gid,shell from  teadb.usertab 
+    -> where  uid between 1000 and 2000;
+| name | s_year | uid  | gid  | shell     |
+| lisi |   1990 | 1000 | 1000 | /bin/bash |
+
+7 在name字段下方添加字段名sex 字段值只能是girl 或boy 默认值是 boy
+mysql> alter table teadb.usertab add 
+    -> sex enum('girl','boy') default 'boy' after name;
+mysql> desc teadb.usertab;
+
+mysql> alter table teadb.usertab drop sex;desc usertab;
+
+mysql> alter table teadb.usertab add 
+    -> sex enum('girl','boy')not null default 'boy'
+    -> after name;
+
+mysql> desc teadb.usertab;
+
+8 在sex字段下方添加 age字段  存放年龄 不允许输入负数。默认值 是 21
+mysql> alter table teadb.usertab add
+    -> age int(2) unsigned not null default 21;
+mysql> alter table usertab drop age;
+
+mysql> alter table teadb.usertab add age int(2)
+    -> unsigned not null default 21 after sex;
+
+9 把id字段值是10到50之间的用户的性别修改为 girl
+mysql> select name,sex,uid,gid from teadb.usertab
+    -> where uid between 10 and 50 and uid=gid;
+
+mysql> update teadb.usertab set usertab.sex='girl' where
+    -> uid between 10 and 50 or gid between 10 and 50;
+
+mysql> select name,sex,uid,gid from teadb.usertab
+    -> where uid between 10 and 50 or gid between 10 and 50;
+
+10 统计性别是girl的用户有多少个。
+mysql> select count(*) from teadb.usertab where sex='girl';
+| count(*) |
+|        9     |
+mysql> select name,sex,uid,gid from teadb.usertab
+    -> where sex='girl' and uid<=10 or
+    -> sex='girl' and uid>=50 or
+    -> sex='girl' and gid<=10 or
+    -> sex='girl' and gid>=50;
+mysql> select name,sex,uid,gid from teadb.usertab where
+    -> sex='girl' and uid=(select uid where uid<11 or uid>49)
+    -> or sex='girl' and gid=(select gid where gid<11 or gid>49);
+
+| name     | sex  | uid  | gid  |
+| mail     | girl |    8 |   12 |
+| operator | girl |   11 |    0 |
+| games    | girl |   12 |  100 |
+| ftp      | girl |   14 |   50 |
+
+12 查看性别是girl用户里 uid号 最大的用户名 叫什么。
+mysql> select name,sex,uid,gid from teadb.usertab
+    -> where sex='girl';
+mysql> select name,sex,uid,gid from teadb.usertab where 
+    -> sex='girl' and uid>40;
+| name | sex  | uid  | gid  |
+| gdm  | girl |   42 |   42 |
+
+13 添加一条新记录只给name、uid 字段赋值 值为rtestd  1000
+   添加一条新记录只给name、uid 字段赋值 值为rtest2d   2000
+MySQL为数据表的指定字段插入数据
+为数据表的指定字段插入数据，就是在INSERT语句中只向部分字段中插入值，而其它字段的值为数据表定义时的默认值。
+INSERT INTO 表名(字段1,字段2,...,字段m) VALUES(值1,值2,...,值m);
+字段1,字段2,...,字段m：表示数据表中的字段名称，此处指定数据表的部分字段的名称。
+值1,值2,...,值m：表示指定字段的值，每个值与相应的字段对应。
+mysql> insert into teadb.usertab(name,uid) values('rtestd',1000);
+mysql> insert into usertab(name,uid) values('rtest2d',2000),
+    -> ('xxxx',3000);
+Query OK, 2 rows affected (0.03 sec)
+
+14 显示uid 是四位数的用户的用户名和uid值。
+mysql> select name,uid from teadb.usertab where uid>=1000;
+mysql> select count(*) from usertab where uid>999;
+| count(*) |
+|        5     |
+
+15 显示名字是以字母r 开头 且是以字母d结尾的用户名和uid。 
+ 模糊匹配    --------  > 字段名  like   '表达式';
+mysql> select name,uid from teadb.usertab where name like 'r%d';
+
+16  查看是否有 名字以字母a开头 并且是 以字母c结尾的用户。 
+mysql> select name,uid,sex from usertab where name like 'a%c';
+Empty set (0.00 sec)
+8  把gid  在100到500间用户的家目录修改为/root
+#修改与条件匹配的记录指定字段的值
+update   库.表  set  字段名1=值1，字段名2=值2  where    匹配条件 ；
+
+mysql> update teadb.usertab set homedir='/root' where gid between
+    -> 100 and 500;
+mysql> select name,sex,gid,homedir from usertab 
+    -> where gid between 100 and 500;
+
+9  把用户是  root 、 bin 、  sync 用户的shell 修改为  /sbin/nologin
+mysql> select name,shell from usertab where
+    ->  name like 'root' or name like 'bin' or name like 'sync';
+
+mysql> select name,shell from usertab where 
+    -> name regexp 'root|bin|sync';
+| name | shell         |
+| root | /bin/bash     |
+| bin  | /sbin/nologin |
+| sync | /bin/sync     |
+mysql> update teadb.usertab set shell='/sbin/nologin'
+    -> where name regexp 'root|bin|sync';
+Query OK, 2 rows affected 
+mysql> select name,shell,gid from usertab where 
+    -> name regexp 'root|bin|sync';
+| name | shell         | gid  |
+| root | /sbin/nologin |    0 |
+| bin  | /sbin/nologin |    1 |
+| sync | /sbin/nologin |    0 |
+
+10   查看  gid 小于10的用户 都使用那些shell
+mysql> select name,gid,shell from usertab where gid<10;
+
+12   删除  名字以字母d开头的用户。
+mysql> select name,sex,uid from usertab where name regexp '^d';
+mysql> delete from teadb.usertab where 
+    -> name regexp '^d';
+
+13   查询  gid 最大的前5个用户 使用的 shell
+查询排序 (按照数值类型的字段排队)
+sql查询  order  by  字段名  asc|desc;//从小到大asc |从大到小desc
+mysql> select name,sex,gid,shell from usertab  order by gid asc;
+
+mysql> select name,sex,gid,shell from usertab order by gid desc;
+                                                                 //从大到小desc
+| name                | sex  | gid   | shell          |
+| nfsnobody           | boy  | 65534 | /sbin/nologin  |
+| lisi                | boy  |  1000 | /bin/bash      |
+| polkitd             | boy  |   998 | /sbin/nologin  |
+| libstoragemgmt      | boy  |   996 | /sbin/nologin  |
+| colord              | boy  |   995 | /sbin/nologin  |
+
+mysql> select name,sex,gid,shell from teadb.usertab 取出第一大值,
+    -> where gid=(select max(gid) from usertab);
+| name      | sex | gid   | shell         |
+| nfsnobody | boy | 65534 | /sbin/nologin |
+
+mysql> select name,sex,gid,shell from teadb.usertab 取出第二大值,
+    -> where gid=(select max(gid) from usertab 
+    -> where gid not in(select max(gid) from usertab));
+| name | sex | gid  | shell     |
+| lisi | boy | 1000 | /bin/bash |
+                                             ------取出第三大值,
+mysql> select name,sex,gid,shell from teadb.usertab where gid=(
+    -> select max(gid) from usertab where 
+    -> gid not in(select max(gid) from usertab)---取出不包含第一大值,
+    -> and gid not in( ------取出不包含第二大值,
+    -> select max(gid) from usertab where
+    -> gid not in(select max(gid) from usertab)));
+
+| name    | sex | gid  | shell         |
+| polkitd | boy |  998 | /sbin/nologin |
+mysql> select name,sex,gid,shell from teadb.usertab
+    -> where gid=(select min(gid) from usertab);列出最小值gid
+| name     | sex  | gid  | shell          |
+| root     | boy  |    0 | /sbin/nologin  |
+| sync     | boy  |    0 | /sbin/nologin  |
+
+mysql> select name,gid,shell from usertab  取出第一大值(从0开始计算),
+    -> where gid=(select gid from usertab 
+    -> order by gid desc limit 0,1);
+| name      | gid   | shell         |
+| nfsnobody | 65534 | /sbin/nologin |
+                                                   取出第2大值,
+mysql> select name,gid,shell from usertab where gid=(
+    -> select gid from usertab order by gid desc limit 1,1);
+| name | gid  | shell     |
+| lisi | 1000 | /bin/bash |
+                                                              取出第3大值,
+mysql> select name,gid,shell from usertab where gid=(
+    -> select gid from usertab order by gid desc limit 2,1);
+| name    | gid  | shell         |
+| polkitd |  998 | /sbin/nologin |
+
+mysql> select name,gid,shell from usertab where gid=( select gid from usertab order by gid asc limit 0,1);取出gid值最小的第1条记录(从0开始计算),
+
+mysql> select name,gid,shell from usertab where gid=( select gid from usertab order by gid asc limit 8,1);取出gid值最小的第8条记录
+  | name | gid  | shell         |
+  | bin  |    1 | /sbin/nologin |
+/******查询  gid 最大的前5个用户 使用的 shell **********/   
+mysql> select name,gid,uid,shell from usertab
+    -> order by gid desc limit 0,5;
+/*******取出gid值最大的前5条记录(从0开始计算) **********/
+| name           | gid   | uid   | shell         |
+| nfsnobody      | 65534 | 65534 | /sbin/nologin |
+| lisi           |  1000 |  1000 | /bin/bash     |
+| polkitd        |   998 |   999 | /sbin/nologin |
+| libstoragemgmt |   996 |   998 | /sbin/nologin |
+| colord         |   995 |   997 | /sbin/nologin |
+
+14   查看那些用户没有家目录
+mysql> select name,uid,homedir from usertab 
+    -> where homedir is null;
+| name    | uid  | homedir |
+| rtestd  | 1000 | NULL    |
+| rtest2d | 2000 | NULL    |
+| xxxx    | 3000 | NULL    |
+
+15  把gid号最小的前5个用户信息保存到/mybak/min5.txt文件里。
+ mysql> select * from usertab order by gid asc limit 0,5;
+mysql> show variables like 'secure_file_pri%';
+| Variable_name    | Value                 |
+| secure_file_priv | /var/lib/mysql-files/ |
+
+[root@DB2 ~]# mkdir -m 2700 /mybak/ && chown -R mysql /mybak/;
+[root@DB2 ~]# ls -ld /mybak/
+drwx--S---. 2 mysql root 22 9月  11 15:45 /mybak/
+[root@DB2 ~]# vim /etc/my.cnf
+  4 [mysqld]
+  5 default-storage-engine=innodb
+  6 secure_file_priv="/mybak/"
+[root@DB2 ~]# systemctl restart mysqld
+mysql> show variables like '%secure%priv%';
+| Variable_name    | Value   |
+| secure_file_priv | /mybak/ |
+
+mysql> select * from usertab order by gid asc limit 0,5
+    -> into outfile '/mybak/min5.txt';
+mysql> system ls /mybak/;
+min5.txt
+mysql> select * from usertab order by gid asc limit 0,5
+    -> into outfile '/mybak/min.txt'
+    -> fields terminated by';';
+mysql> system ls /mybak/;
+min5.txt  min.txt
+[root@DB2 ~]# head -3 /mybak/min.txt 
+xxxx;boy;21;1990;\N;3000;\N;\N;\N;\N
+rtestd;boy;21;1990;\N;1000;\N;\N;\N;\N
+rtest2d;boy;21;1990;\N;2000;\N;\N;\N;\N
+
+    使用useradd 命令添加登录系统的用户 名为lucy 
+[root@DB2 ~]# useradd lucy && echo 123 |passwd --stdin lucy;
+[root@DB2 ~]# grep lucy /etc/passwd
+lucy:x:1001:1001::/home/lucy:/bin/bash
+
+16  把lucy用户的信息 添加到user1表里
+[root@DB2 ~]# grep lucy /etc/passwd >/mybak/lucy.txt;
+mysql> create table teadb.user1(name char(30),password char(1),
+    -> uid int(2),gid int(2) unsigned,
+    -> comment char(150),homedir char(150),
+    -> shell char(30),index(name));
+mysql> load data infile '/mybak/lucy.txt'
+    -> into table teadb.user1
+    -> fields terminated by':'
+    -> lines terminated by'\n';
+mysql> desc user1;
+mysql> select * from user1;
+| name | password | uid  | gid  | comment | homedir    | shell     |
+| lucy | x        | 1001 | 1001 |         | /home/lucy | /bin/bash |
+
+17  删除表中的 comment 字段 
+mysql> alter table user1 drop comment;desc user1;
+
+18  设置表中所有字段值不允许为空
+mysql> alter table user1 modify column  name char(30) not null,
+    -> modify password char(1) not null,
+    -> modify uid int(2) not null,
+    -> modify gid int(2) unsigned not null,
+    -> modify homedir char(150) not null;
+mysql> desc user1;
+
+19  删除root 用户家目录字段的值
+mysql> update teadb.usertab set homedir=null where name='root';
+
+mysql> select name,gid,homedir from usertab where name='root';
+| name | gid  | homedir |
+| root |    0 | NULL    |
+
+20  显示 gid 大于500的用户的用户名 家目录和使用的shell
+mysql> select name,homedir,shell,gid from usertab 
+    -> where gid>500;
+
+21  删除uid大于100的用户记录
+mysql> delete from usertab where uid>100;
+Query OK, 19 rows affected
+
+22  显示uid号在10到30区间的用户有多少个。
+mysql> select count(*) from usertab where uid between 10 and 30;
+| count(*) |
+|        5 |
+23  显示uid号是100以内的用户使用shell的类型。
+mysql> select name,uid,shell from usertab where uid<=100;
+
+24  显示uid号最小的前10个用户的信息。
+mysql> select * from usertab order by uid asc limit 0,10;
+
+25  显示表中第10条到第15条记录
+mysql>  select name,uid,gid,shell from usertab order by uid asc limit 9,6;
+
+26  显示uid号小于50且名字里有字母a  用户的详细信息
+mysql> select name,uid,gid,shell from usertab 
+    -> where uid<50 and name like '%a%';
+
+27  只显示用户 root   bin   daemon  3个用户的详细信息。
+mysql> select * from usertab where name regexp 'root|bin|sync';
+
+28  显示除root用户之外所有用户的详细信息。
+mysql> select name,uid,gid,shell from usertab where name!='root';
+
+29  统计username 字段有多少条记录
+mysql> select count(*) from usertab where name is not null;
+| count(*) |
+|       23 |
+mysql> select count(*) from usertab where homedir is  null;
+| count(*) |
+|        1 |
+
+30  显示名字里含字母c  用户的详细信息
+mysql> select name,uid,gid from usertab where name like '%c%';
++++++++++++++++++++++++++++++++++
+31  在sex字段下方添加名为pay的字段，用来存储工资，默认值    是5000.00
+mysql> alter table teadb.usertab add pay float(7,2) default 5000.00
+    -> after sex;
+mysql> desc usertab;
+
+32  把所有女孩的工资修改为10000
+mysql> update teadb.usertab set pay=10000 where sex='girl';
+
+mysql> select name,uid,pay,sex from usertab where sex='girl';
+
+33  把root用户的工资修改为30000
+mysql> update teadb.usertab set pay=30000 where name='root';
+    给adm用户涨500元工资
+mysql> select name,sex,uid,pay from usertab where name='adm';
+| name | sex | uid  | pay     |
+| adm  | boy |    3 | 5000.00 |
+
+mysql> update usertab set pay=pay+500 where name='adm';
+
+mysql> select name,sex,uid,pay from usertab where name='adm';
+| name | sex | uid  | pay     |
+| adm  | boy |    3 | 5500.00 |
+
+34  查看所有用户的名字和工资
+mysql> select name,sex,pay from usertab ;
+
+35  查看工资字段的平均值
+mysql> select avg(pay) from usertab;
+| avg(pay)   |
+|  8065.217391   |
+
+36  查看工资字段值小于平均工资的用户 是谁。
+mysql> select name,sex,uid,pay from usertab 
+    -> where pay<(select avg(pay) from usertab);
+
+      查看女生里谁的uid号最大
+mysql> select name,sex,uid from usertab where uid=(
+    -> select  max(uid) from usertab where sex='girl');
+| name | sex  | uid  |
+| gdm  | girl |   42 |
+
+mysql> select min(uid) from usertab where sex='girl';
+| min(uid) |
+|        8 |
+
+38  查看bin用户的uid gid 字段的值 及 这2个字段相加的和  
+mysql> select name,sex,uid,gid from usertab where name='bin';
+| name | sex | uid  | gid  |
+| bin  | boy |    1 |    1 |
+
+mysql> select sum(uid+gid) as total from usertab where name='bin';
+| total |
+|     2    |
+
++++++++++++++++++++++++++++++++++++++++++++++
+mysql> create database db2;use db2;select database();
+
+mysql> create table jfb(name char(10),stu_id int (1),
+    -> pay enum('yes','no'),
+    -> primary key(name,stu_id));
+
+mysql> desc jfb;
+| Field  | Type             | Null | Key | Default | Extra |
+| name   | char(10)         | NO   | PRI | NULL    |       |
+| stu_id | int(1)           | NO   | PRI | NULL    |       |
+| pay    | enum('yes','no') | YES  |     | NULL    |       |
+
+mysql> alter table jfb drop primary key;删除主键约束
+mysql> drop  table jfb;
+
+mysql> create table jfb(name char(10),
+    -> stu_id int(3) unsigned,
+    -> pay enum('yes','no'),
+    -> primary key(name,stu_id));
+/**多个字段都是primary key 称为复合主键，必须一起同时创建
+通常与 auto_increment 连用
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL} **/
+mysql> desc jfb;
+| Field  | Type             | Null | Key | Default | Extra |
+| name   | char(10)         | NO   | PRI | NULL    |       |
+| stu_id | int(3) unsigned  | NO   | PRI | NULL    |       |
+| pay    | enum('yes','no') | YES  |     | NULL    |       |
+
+mysql> insert into jfb values('bob',1,'yes'),
+    -> ('bob',2,'yes'),
+    -> ('lucy',2,'yes');
+
+mysql> select * from db1.jfb;
+| name | stu_id | pay  |
+| bob  |      1 | yes  |
+| bob  |      2 | yes  |
+| lucy |      2 | yes  |
+mysql> alter table jfb drop primary key;
+Query OK,
+mysql> desc jfb;
+mysql> alter table jfb add primary key(name,stu_id);
+
+mysql> desc jfb;
+| Field  | Type             | Null | Key | Default | Extra |
+| name   | char(10)         | NO   | PRI | NULL    |       |
+| stu_id | int(3) unsigned  | NO   | PRI | NULL    |       |
+| pay    | enum('yes','no') | YES  |     | NULL    |       |
+
+mysql> create table t221(
+    -> id int(1) primary key auto_increment,
+    -> age tinyint(1) unsigned, class char(4));
+
+/**多个字段都是primary key 称为复合主键，必须一起同时创建，
+通常与 auto_increment 连用
+primary key 通常与 AUTO_INCREMENT 连用,实现字段值的自动增长 让字段的值自加1 **/
+
+mysql> desc t221;
+| Field | Type    | Null | Key | Default | Extra |
+| id    | int(1)  | NO   | PRI | NULL    | auto_increment |
+| age   | tinyint(1) unsigned  | YES  |  | NULL  |   |
+| class | char(4) | YES  |     | NULL |  |
+
+mysql> insert into t221(age,class) values(12,'1806'),
+    -> (82,'1807'),(12,'1808'),(12,'1806');
+mysql> select * from t221;
+| id | age  | class |
+|  1 |   12 | 1806  |
+|  2 |   82 | 1807  |
+|  3 |   12 | 1808  |
+|  4 |   12 | 1806  |
+mysql> insert into t221 values(6,22,'1806'),
+    -> (null,22,'1806');
+
+mysql> select * from t221;
+| id | age  | class |
+|  1 |   12 | 1806  |
+|  2 |   82 | 1807  |
+|  3 |   12 | 1808  |
+|  4 |   12 | 1806  |
+|  6 |   22 | 1806  |
+|  7 |   22 | 1806  |   ??????????=7
+mysql> delete from t221;select * from t221;
+
+mysql> insert into t221 values(null,72,'1809');
+Query OK, 1 row affected (0.02 sec)
+
+mysql> select * from t221;
+| id | age  | class |
+|  9 |   72 | 1809  |       ????????????=8?=9?
+
+
+mysql> create table xfb(fname char(10),pay float(7,2)default 28000
+    -> )engine=innodb;
+
+mysql> desc xfb;
+| Field | Type       | Null | Key | Default  | Extra |
+| fname | char(10)   | YES  |     | NULL     |       |
+| pay   | float(7,2) | YES  |     | 28000.00 |       |
+
+mysql> alter table xfb add primary key(fname);
+
+mysql> desc xfb;
+| Field | Type       | Null | Key | Default  | Extra |
+| fname | char(10)   | NO   | PRI | NULL     |       |
+| pay   | float(7,2) | YES  |     | 28000.00 |       |
+
+mysql> insert into xfb(fname) values('tom'),
+    -> ('bob'),('lucy');
+
+mysql> select * from xfb; ##必须先有学费表xfb 上的名字fname
+| fname | pay      |
+| tom   | 28000.00 |
+| bob   | 28000.00 |
+| lucy  | 28000.00 |
+
+mysql> create table xsb(
+    -> xname char(10),
+    -> sex enum('b','g')default 'g',
+    -> foreign key(xname) references xfb(fname)
+    -> on update cascade on delete cascade
+    -> )engine=innodb default charset=utf8;
+ERROR 1215 (HY000): Cannot add foreign key constraint
+
+mysql> create table xsb(
+    ->  xname char(10),
+    -> sex enum('b','g')default 'g',
+    -> foreign key(xname) references xfb(fname)
+    -> on update cascade on delete cascade
+    -> )engine=innodb;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

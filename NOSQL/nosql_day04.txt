@@ -1,0 +1,372 @@
+192.168.4.51:6351> LRANGE grpname 0 2
+1) "jim"
+2) "tom"
+3) "lili"
+192.168.4.51:6351> LRANGE grpname -2 -1
+1) "lili"
+2) "lucy"
+192.168.4.51:6351> 
+
+
+192.168.4.51:6351> lpop grpname
+"jim"
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "tom"
+2) "lili"
+3) "lucy"
+192.168.4.51:6351>
+
+192.168.4.51:6351> LLEN grpname
+(integer) 3
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "tom"
+2) "lili"
+3) "lucy"
+192.168.4.51:6351> 
+
+
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "tom"
+2) "lili"
+3) "lucy"
+192.168.4.51:6351> LINDEX grpname 0
+"tom"
+192.168.4.51:6351> LINDEX grpname 2
+"lucy"
+192.168.4.51:6351> LINDEX grpname 1
+"lili"
+192.168.4.51:6351>
+
+192.168.4.51:6351> lset grpname 0  jerry
+OK
+192.168.4.51:6351> LINDEX grpname 0
+"jerry"
+192.168.4.51:6351> lset grpname 3  jack
+(error) ERR index out of range
+192.168.4.51:6351>
+
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "jim"
+2) "tom"
+3) "lili"
+4) "lucy"
+192.168.4.51:6351> RPUSH grpname a b
+(integer) 6
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "jim"
+2) "tom"
+3) "lili"
+4) "lucy"
+5) "a"
+6) "b"
+192.168.4.51:6351> rpop grpname
+"b"
+192.168.4.51:6351> LRANGE grpname 0 -1
+1) "jim"
+2) "tom"
+3) "lili"
+4) "lucy"
+5) "a"
+
+hash表类型的变量：让一个变量可以有多列 每列有对应的值。
+
+
+记录一本书的信息
+
+set worker  xm
+set pay    19
+
+作者
+价格
+版本
+出版商
+销售量
+192.168.4.51:6351> hset book  name seby
+192.168.4.51:6351> hset book  worker gtq
+192.168.4.51:6351> hset book  pay     18
+
+
+192.168.4.51:6351> hkeys book
+1) "name"
+2) "worker"
+3) "pay"
+192.168.4.51:6351> hget book pay
+"18"
+192.168.4.51:6351>
+
+192.168.4.51:6351> hmset book count 10000 ver 2.0
+
+192.168.4.51:6351> hkeys book
+1) "name"
+2) "worker"
+3) "pay"
+4) "count"
+5) "ver"
+192.168.4.51:6351> hmget book ver pay
+1) "2.0"
+2) "18"
+192.168.4.51:6351> 
+
+192.168.4.51:6351> HGETALL book
+
+192.168.4.51:6351> HVALS book
+1) "seby"
+2) "gtq"
+3) "18"
+4) "10000"
+5) "2.0"
+192.168.4.51:6351>
+
+192.168.4.51:6351> HDEL book count worker
+(integer) 2
+192.168.4.51:6351> hkeys book
+
++++++++++++++++++++++++++++
+nosql_day04  
+一、搭建MongoDB服务器
+二、MongoDB服务基本使用
+
+
+在主机192.168.4.51 上部署 MongoDB服务
+1 安装软件包
+  339  mkdir /usr/local/mongodb
+  340  tar -zxvf mongodb-linux-x86_64-rhel70-3.6.3.tgz 
+  345  cd mongodb-linux-x86_64-rhel70-3.6.3/
+  348  cp -r bin /usr/local/mongodb/
+  349  ls /usr/local/mongodb/
+  350  ls /usr/local/mongodb/bin/
+
+2 创建工作目录
+  353  cd /usr/local/mongodb/
+  356  mkdir etc
+  358  mkdir log
+  361  mkdir -p data/db
+
+3 创建服务主配置文件
+[root@mongodb51 mongodb]# cat  etc/mongodb.conf 
+logpath=/usr/local/mongodb/log/mongodb.log
+logappend=true
+dbpath=/usr/local/mongodb/data/db
+fork=true
+[root@mongodb51 mongodb]# 
+
+4 启动 服务
+]#/usr/local/mongodb/bin/mongod -f /usr/local/mongodb/etc/mongodb.conf 
+
+查看服务信息
+]#netstat -utnlp  | grep  :27017
+]#ps -C mongod
+
+连接服务
+]#/usr/local/mongodb/bin/mongo
+》exit
+
+停止服务
+]#/usr/local/mongodb/bin/mongod --shutdown -f /usr/local/mongodb/etc/mongodb.conf 
+
+
+4 设置服务使用的ip地址和端口号
+* 默认只允许本机连接
+
+]# mstop 
+]#vim /usr/local/mongodb/etc/mongodb.conf 
+.....
+port=27051
+bind_ip=192.168.4.51
+:wq
+]# mstart
+
+]# netstat -utnlp  | grep  :27051
+
+]# /usr/local/mongodb/bin/mongo --host 192.168.4.51 --port 27051
+管理mongodb数据库服务器上库集合文档
+show dbs
+db
+use gamedb
+show tables
+db.t1.save({name:"bob",age:19})
+db.t1.save({name:"tom",age:19,mail:"tom@163.com"})
+db.t1.save({name:"tom",class:"1807",addr="bj"})
+db.t1.find()
+db.t1.findOne()
+db.t1.find({name:"bob"})
+db.t1.find({name:"tom"})
+db.t1.insert({name:"bob",like:"a,b,c"})
+db.t1.remove({name:"bob"})
+db.t1.remove({})
+db.t1.find()
+show tables
+db.t1.drop()
+show tables
++++++++++++++++++++++++++++++
+数据类型 ：
+字符 bool  数值  数组 代码 日志 对象 内嵌 正则表达式
+use userdb
+show tables
+> db.t2.save({name:"xiaosix",card:null})
+> db.t2.save({name:"xiao7",gz:3.14})
+> db.t2.save({name:"xiao8",gz:3})
+> db.t2.save({pay:NumberInt(3)})
+> db.t2.save({pay:NumberInt(3.999)})
+> db.t2.save({pay:NumberLong(3.999)})
+> db.t2.save({pay:NumberLong(3888)})
+> db.t2.save({name:"lucy",
+like:["boy","eat","sleep","game"]})
+> db.t2.save({lg:"php",
+code:function(){/* <?php echo "hello boy"; ?> */}  })
+> db.t2.save({ name:"jerry" , day:new Date() })
+> db.t2.find({name:"jerry"})
+> db.t2.save({name:"lucy",stuid:ObjectId()})
+> db.t2.find({name:"lucy"})
+> db.t2.save({tarena:{addre:"bj",tel:"40018888",
+person:"hsy"}  })
+> db.t2.save({comment:"match null  line",bds:/^$/})
+
+
+数据导入与导出
+]# mkdir /mdb
+
+# /usr/local/mongodb/bin/mongoexport  \
+> --host 192.168.4.51 --port 27051 \
+> -d userdb  -c t2  -f _id,name,age --type=csv  \
+   > /mdb/userdb-t2.csv
+
+]# cat /mdb/userdb-t2.csv
+
+
+]#mongoexport --host 192.168.4.51 --port 27051 \
+-d userdb -c t2  --type=json > /mdb/t2.json
+
+]# cat /mdb/t2.json
+
+
+
+]#mongoexport --host 192.168.4.51 --port 27051 \
+-d userdb -c t2 -f name,age,class \
+--type=csv > /mdb/userdb-t2.csv
+ 
+]#mongoimport --host 192.168.4.51 --port 27051  \
+-d db2  -c stutab --type=csv /mdb/userdb-t2.csv
+>use studb
+>db.stutab.find()
+>db.stutab2.count()
+
+]#mongoimport --host 192.168.4.51 --port 27051  \
+-d db2  -c stutab2  --headerline  \
+--type=csv /mdb/userdb-t2.csv 
+>use studb
+>db.stutab2.find()
+>db.stutab2.count()
+
+]#mongoimport --host 192.168.4.51 --port 27051  \
+-d db2  -c stutab2  --headerline  \
+--type=csv /mdb/userdb-t2.csv 
+>use studb
+>db.stutab2.find()
+>db.stutab2.count()
+
+]#mongoimport --host 192.168.4.51 --port 27051  \
+-d db2  -c stutab2  --headerline --drop  \
+--type=csv /mdb/userdb-t2.csv 
+
+>use studb
+>db.stutab2.find()
+>db.stutab2.count()  
+
+
+]#mongoimport --host 192.168.4.51 \
+--port 27051  -d db2  -c stutab3  \
+--headerline  --drop --type=csv /mdb/userdb-t2.csv 
+
+]#mongoimport --host 192.168.4.51 \
+--port 27051  -d db2  -c stutab4  \
+--type=json /mdb/t2.json 
+
+>use studb
+>db.stutab4.find()
+>db.stutab4.count() 
+++++++++++++++++++++++++++++++++++++++
+]#cp /etc/passwd  /mdb/
+]#sed -i 's/:/,/g' /mdb/passwd 
+]#head  /mdb/passwd
+]# sed -i '1iname,password,uid,gid,comment,homedir,shell'  \
+/mdb/passwd 
+
+]# mongoimport --host 192.168.4.51 --port 27051  
+-d db4 -c user --headerline  --type=csv /mdb/passwd
+
+>use  db4
+>show  tables
+>db.user.count()
+>db.user.find()-> it
+>db.user.find({name:"root"})
+
+
+]#mongoexport --host 192.168.4.51 \
+--port 27051 -d db4  -c user  \
+-f name,password,uid,gid,comment,homedir,shell \
+--type=csv  > /mdb/user.csv
+
+
+]#mongoexport --host 192.168.4.51 \
+--port 27051 -d db4  -c user  --type=json  > /mdb/user2.json
+
+休息到17：15
+
+数据备份与恢复
+
+]# cd /mdb
+]# pwd
+]# mongodump  --host  192.168.4.51   --port 27051  
+]# ls
+]# ls dump/
+]# ls dump/db4
+]# bsondump dump/db4/user.bson 
+  
+]# mkdir /mdb2
+]# mongodump  --host  192.168.4.51   --port 27051  \
+-d db4  -c user -o /mdb2
+
+]# ls /mdb2
+]# ls /mdb2/db4/
+
+> use db4 
+> show tables
+> db.user.drop()
+
+]#mongorestore --host 192.168.4.51  --port 27051 
+-d db4  -c user /mdb2/db4/user.bson
+
+]# mongorestore --host 192.168.4.51  --port 27051 \
+-d db5  -c user2  /mdb2/db4/user.bson
+
+> show dbs
+> use db4
+> show tables
+> db.user.find()
+
+练习8 分钟 到  17：40
+               client: http://192.168.4.250
+                 | 
+                 |
+                VIP:192.168.4.250
+
+             主    HA    备    
+          LVS/DR_1    LVS/DR_2
+
+                           
+      
+      web_1             web_2
+         |               |
+         |------交换机----
+                   |
+                   |
+               maxscale(读写分离服务器)
+                  |
+     ----------------------          
+        |                |
+    master写           slave（读）
+    mysqld_1           mysqld_2
+       |                  |
+ /dev/sdb1(10G)      /dev/sdb1(10G)
+ 

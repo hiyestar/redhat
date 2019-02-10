@@ -1,0 +1,175 @@
+
+
+1、sed命令使用双引号的情况下，可以使用$var（变量）直接引用：
+　　echo | sed "s/^/$RANDOM.rmvb_/g"
+　　13562.rmvb_
+
+　　2、sed命令使用单引号的情况下，可以使用'"$var"'引用（单引号，然后双引号，变量）：
+　　echo | sed 's/^/'"$RANDOM"'.rmvb_/g'
+　　2442.rmvb_
+[root@room9pc01 ~]# i=20;sed  -i '/<source file/s/rh7_node'"$i"'/VMa10/' /etc/libvirt/qemu/VMa10.xml
+[root@room9pc01 ~]# sed  -n '/<source file/,+1p' /etc/libvirt/qemu/VMa10.xml
+      <source file='/var/lib/libvirt/images/VMa10.img'/>
+      <target dev='vda' bus='virtio'/>
+[root@room9pc01 ~]# 
+
+　　sed中执行外部命令。
+　　1、sed命令使用单引号的情况下使用'`shell command`'或者'$(shell command)'引用命令执行的结果：
+　　echo | sed 's/^/'`echo $RANDOM`'.rmvb_/g'
+
+　echo | sed 's/^/'`echo $RANDOM`'.rmvb_/g'
+　　7700.rmvb_# 结果
+　　# 上面的命令使用了旧式的命令替换，也可以采用新式的命令替换方法，如下：
+　　echo | sed 's/^/'$(echo $RANDOM)'.rmvb_/g'
+　　13856.rmvb_# 结果
+　　# 下面例子取用当前日期作为结果的一部分，如下：
+　　echo | sed 's/^/'$(date +"%Y%m%d")'.rmvb_/g'
+　　20130401.rmvb_ # 结果
+　　2、sed命令中使用双引号的情况下，直接`shell command`或者$(shell command)引用命令执行。
+　　echo | sed "s/^/$(date +"%Y%m%d").rmvb_/g"
+　　20130401.rmvb_# 结果
+　　# 使用环境变量$RANDOM以及旧式命令替换的例子：
+　　echo | sed "s/^/`echo $RANDOM`.rmvb_/g"
+　　29484.rmvb_# 结果
+　　总结一下
+　　在sed语句里面，变量替换或者执行shell命令，双引号比单引号少绕一些弯子；所以，sed和变量的关键词搜索的结果，众多都写上替换单引号为双引号。
+
+
+
+
+
+[root@room9pc01 ~]# cat VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzipsh.txt 
+rh7_node17:VMa10:VMb10:Host10:4.10:2.10:1.1.10:1.2.10:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh  
+rh7_node18:VMa11:VMb11:Host11:4.11:2.11:1.1.11:1.2.11:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+rh7_node19:VMa12:VMb12:Host12:4.12:2.12:1.1.12:1.2.12:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+
+[root@room9pc01 ~]# cat /etc/libvirt/qemu/VMa10.xml 
+
+  1 <domain type='kvm'>
+  2   <name>rh7_node20</name>
+  3   <uuid>8f4706c6-b2da-4324-a46c-0a011745ce73</uuid>
+
+ 32       <driver name='qemu' type='qcow2'/>
+ 33       <source file='/var/lib/libvirt/images/rh7_node20.img'/>
+ 34       <target dev='vda' bus='virtio'/>
+
+[root@room9pc01 ~]# sed -n '/<name>rh7_node20<\/name>/,+1p' /etc/libvirt/qemu/VMa10.xml
+  <name>rh7_node20</name>
+  <uuid>8f4706c6-b2da-4324-a46c-0a011745ce73</uuid>
+
+[root@room9pc01 ~]# sed  -n '/<source file/,+1p' /etc/libvirt/qemu/VMa10.xml
+      <source file='/var/lib/libvirt/images/rh7_node20.img'/>
+      <target dev='vda' bus='virtio'/>
+[root@room9pc01 ~]# 
+
+[root@room9pc01 ~]# sed -i '/<name>rh7_node20<\/name>/s/rh7_node20/VMa10/' /etc/libvirt/qemu/VMa10.xml
+[root@room9pc01 ~]# sed -n '/<name>/,+1p' /etc/libvirt/qemu/VMa10.xml
+  <name>VMa10</name>
+  <uuid>8f4706c6-b2da-4324-a46c-0a011745ce73</uuid>
+[root@room9pc01 ~]# 
+
+
+
+[root@room9pc01 ~]# ls /var/lib/libvirt/images/VMa*.img
+/var/lib/libvirt/images/VMa20.img  /var/lib/libvirt/images/VMa21.img
+[root@room9pc01 ~]# ls /etc/libvirt/qemu/VMa*.xml
+/etc/libvirt/qemu/VMa20.xml  /etc/libvirt/qemu/VMa21.xml
+[root@room9pc01 ~]# rm -f /etc/libvirt/qemu/VMa*.xml /var/lib/libvirt/images/VMa*.img
+[root@room9pc01 ~]# ls  /etc/libvirt/qemu/VMa*.xml /var/lib/libvirt/images/VMa*.img
+ls: 无法访问/etc/libvirt/qemu/VMa*.xml: 没有那个文件或目录
+ls: 无法访问/var/lib/libvirt/images/VMa*.img: 没有那个文件或目录
+[root@room9pc01 ~]# 
+
+
+
+
+[root@room9pc01 ~]# ls  /etc/libvirt/qemu/*.xml /var/lib/libvirt/images/*.img
+
+[root@room9pc01 ~]# rm -f /etc/libvirt/qemu/VMa*.xml /var/lib/libvirt/images/VMa*.img
+[root@room9pc01 ~]# ls  /etc/libvirt/qemu/VMa*.xml /var/lib/libvirt/images/VMa*.img
+ls: 无法访问/etc/libvirt/qemu/VMa*.xml: 没有那个文件或目录
+ls: 无法访问/var/lib/libvirt/images/VMa*.img: 没有那个文件或目录
+[root@room9pc01 ~]# 
+
+[root@room9pc01 ~]# vim /etc/libvirt/qemu/rh7_node20.xml
+  9   <name>rh7_node20</name>
+ 10   <uuid>d275c9e7-91ab-4244-804b-2fea34bc532e</uuid>
+
+
+[root@room9pc01 ~]# vim /etc/libvirt/qemu/rh7_node21.xml
+  9   <name>rh7_node21</name>
+ 10   <uuid>e865ace4-5ca6-416e-a190-38c129449d47</uuid>
+
+[root@room9pc01 ~]# sed -i '/<uuid>/s/..<\/uuid>/xx<\/uuid>/' /etc/libvirt/qemu/rh7_node21.xml 
+[root@room9pc01 ~]# sed -n '/<uuid>/p' /etc/libvirt/qemu/rh7_node21.xml
+  <uuid>e865ace4-5ca6-416e-a190-38c129449dxx</uuid>
+[root@room9pc01 ~]# 
+
+
+表示一个十进制数，在sed里，必须用[0-9]来表示，
+正则表达式一般用＋(加号)表示一个或多个，
+但写在sed里前面必须加上转义符号反斜杠\，
+sed 's/[0-9]\+$//g' file，表示去掉文件中每行末尾的一个或多个数字。
+[root@room9pc01 ~]# sed -n $= test.txt    //输出文件的行数
+2
+[root@room9pc01 ~]#
+1）删除文件中每行的第二个、最后一个字符
+分两次替换操作，第一次替换掉第2个字符，第二次替换掉最后一个字符：
+[root@svr5 ~]# sed 's/.//2 ; s/.$//' nssw.txt 
+2）将文件中每行的第一个、倒数第1个字符互换
+每行文本拆分为“第1个字符”、“中间的所有字符”、“倒数第1个字符”三个部分，然后通过替换操作重排顺序为“3-2-1”：
+[root@svr5 ~]# sed -r 's/^(.)(.*)(.)$/\3\2\1/' nssw.txt
+删除文件中所有的数字
+因原文件内没有数字，行首也没有空格，这里稍作做一点处理，生成一个新测试文件：
+[root@svr5 ~]# sed 's/[0-9]//' nssw.txt
+以nssw2.txt文件为例，删除所有数字、行首空格的操作如下：
+[root@svr5 ~]# sed -r 's/[0-9]//g;s/^( )+//' nssw2.txt
+4）为文件中每个大写字母添加括号
+使用“（）”可实现保留功能，所以可参考下列操作解决：
+[root@svr5 ~]# sed -r 's/([A-Z])/[\1]/g' nssw.txt
+#sed [选项] '条件指令' 文件
+选项:
+-n 屏蔽默认输出
+-r 支持扩展正则
+-i 修改源文件
+条件：
+行号 4 4,5 4~2 4,+10
+/正则/
+指令：
+p 打印
+d 删除
+s 替换s/旧/新/g
+a 追加
+i 插入
+c 替换行
+[root@room9pc01 ~]# vim VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzipsh.txt 
+[root@room9pc01 ~]# cat VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzipsh.txt
+rh7_node20:VMa20:VMb10:Host10:4.10:2.10:1.1.10:1.2.10:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh  
+rh7_node21:VMa21:VMb11:Host11:4.11:2.11:1.1.11:1.2.11:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+rh7_node19:VMa12:VMb12:Host12:4.12:2.12:1.1.12:1.2.12:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+[root@room9pc01 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

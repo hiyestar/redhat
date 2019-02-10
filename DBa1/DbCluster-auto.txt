@@ -1,0 +1,326 @@
+
+
+
+[root@room9pc01 ~]# vim VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzipsh.txt 
+[root@room9pc01 ~]# cat VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzipsh.txt
+rh7_node17:VMa10:VMb10:Host10:4.10:2.10:1.1.10:1.2.10:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh  
+rh7_node18:VMa11:VMb11:Host11:4.11:2.11:1.1.11:1.2.11:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+rh7_node19:VMa12:VMb12:Host12:4.12:2.12:1.1.12:1.2.12:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+[root@room9pc01 ~]# 
+
+[root@room9pc01 ~]# vim  MySQLsetup.sh
+[root@room9pc01 ~]# cat MySQLsetup.sh
+#!/bin/bash
+rm -rf /etc/yum.repos.d/*.repo
+echo "[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+
+[rhel7-2]
+name=rhel7.4-2
+baseurl=ftp://192.168.2.254/rhel7
+gpgcheck=0
+enabled=1 
+
+[mon]
+name=mon
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+
+[mon-2]
+name=mon-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd-2]
+name=osd-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools-2]
+name=tools-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+" > /etc/yum.repos.d/ceph.repo
+yum clean all && yum repolist
+rpm -qa |grep -i mariadb
+systemctl stop mariadb;systemctl disable mariadb;
+ss -anpult |grep :3306
+rpm  -e  --nodeps  mariadb-server  mariadb
+rm -rf /var/lib/mysql/
+rm -rf /etc/my.cnf*
+yum -y install perl-JSON 
+rpm -q perl-JSON 
+tar -xvf mysql-5.7.17.tar
+rpm -Uvh mysql-community-*.rpm
+sleep 10;
+rpm -qa |grep -i mariadb
+rpm -qa |grep -i mysql
+systemctl start mysqld  && systemctl enable mysqld
+sleep 5;
+ps  -C mysqld
+netstat -anpult |grep mysqld 
+for i in `awk '/root@localhost/{print $NF}' /var/log/mysqld.log`
+do
+ mysql -uroot -p${i}  -e "set global validate_password_policy=0;" -b --connect-expired-password
+ mysql -uroot -p${i}  -e "set global validate_password_length=4;" -b --connect-expired-password
+ mysql -uroot -p${i}  -e "alter user 'root'@'localhost' identified by'1234';" -b --connect-expired-password
+ mysql -uroot -p'1234' -e "flush privileges;"
+ mysql -uroot -p'1234' -e  "show variables like 'validate_password%';"
+ echo "mysql-Password has been set 1234"
+done
+
+sed -n '/\[mysqld\]/,+1p' /etc/my.cnf
+sed -i '/\[mysqld\]/a validate_password_policy=0\nvalidate_password_length=4'  /etc/my.cnf
+sed -n '/\[mysqld\]/,+3p' /etc/my.cnf
+systemctl restart mysqld
+sleep 3
+mysql -uroot -p1234 -e "show databases;"
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# for i in `cat /root/VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzipsh.txt`; do echo $i;done;
+[rh7_node17:VMa10:VMb10:Host10:4.10:2.10:1.1.10:1.2.10:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+rh7_node18:VMa11:VMb11:Host11:4.11:2.11:1.1.11:1.2.11:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+rh7_node19:VMa12:VMb12:Host12:4.12:2.12:1.1.12:1.2.12:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+[root@room9pc01 ~]# echo $i |awk -F: '{print $1}'
+rh7_node19
+[root@room9pc01 ~]# echo $i |awk -F: '{print $2}'
+VMa12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $3}'
+VMb12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $4}'
+Host12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $5}'
+4.12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $6}'
+2.12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $7}'
+1.1.12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $8}'
+1.2.12
+[root@room9pc01 ~]# echo $i |awk -F: '{print $9}'
+/root/lnmp_soft.tar.gz
+[root@room9pc01 ~]# echo $i |awk -F: '{print $10}'
+/root/mysql-5.7.17.tar
+[root@room9pc01 ~]# echo $i |awk -F: '{print $11}'
+/root/s3cmd-2.0.1-1.el7.noarch.rpm
+[root@room9pc01 ~]# echo $i |awk -F: '{print $12}'
+MySQLsetup.sh
+
+[root@room9pc01 ~]# echo $i |awk -F: '{print $NF}'
+MySQLsetup.sh
+
+[root@room9pc01 ~]# echo $i |awk -F: '{print $0}'
+rh7_node19:VMa12:VMb12:Host12:4.12:2.12:1.1.12:1.2.12:/root/lnmp_soft.tar.gz:/root/mysql-5.7.17.tar:/root/s3cmd-2.0.1-1.el7.noarch.rpm:MySQLsetup.sh
+[root@room9pc01 ~]# echo $i |awk -F: '{print $9,"\t",$10,"\t",$11,"\t",$12}'
+/root/lnmp_soft.tar.gz 	 /root/mysql-5.7.17.tar 	 /root/s3cmd-2.0.1-1.el7.noarch.rpm 	 MySQLsetup.sh
+[root@room9pc01 ~]# 
+
+[root@room9pc01 ~]# echo 3 |clone-auto7
+created rh7_node17					[Done]
+created rh7_node18					[Done]
+created rh7_node19					[Done]
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# ls /var/lib/libvirt/images/
+bin          H12-3.qcow2  H16.qcow2       Host16.qcow2    rh7_node2.img
+conf.d       H12-4.qcow2  H17.qcow2       Host17.qcow2    rh7_node3.img
+content      H12-5.qcow2  H51-1.qcow2     iso             rh7_node4.img
+db           H12.qcow2    Host10.qcow2    lost+found      rh7_node5.img
+exam         H13-1.qcow2  Host11-1.qcow2  qemu            rh7_node6.img
+H10-1.qcow2  H13-2.qcow2  Host11-2.qcow2  rh7_node10.img  rh7_node7.img
+H10-2.qcow2  H13-3.qcow2  Host11.qcow2    rh7_node11.img  rh7_node8.img
+H10.qcow2    H13-4.qcow2  Host12-1.qcow2  rh7_node12.img  rh7_node9.img
+H11-1.qcow2  H13-5.qcow2  Host12-2.qcow2  rh7_node13.img  Student.sh
+H11-2.qcow2  H13.qcow2    Host12-3.qcow2  rh7_node14.img  tedu-wallpaper-01.png
+H11-3.qcow2  H14-1.qcow2  Host12.qcow2    rh7_node15.img  tedu-wallpaper-weekend.png
+H11-4.qcow2  H14-2.qcow2  Host13-1.qcow2  rh7_node16.img  vsftpd.conf
+H11-5.qcow2  H14.qcow2    Host13-2.qcow2  rh7_node17.img  Weekend.sh
+H11.qcow2    H15-1.qcow2  Host13.qcow2    rh7_node18.img
+H12-1.qcow2  H15-2.qcow2  Host14.qcow2    rh7_node19.img
+H12-2.qcow2  H15.qcow2    Host15.qcow2    rh7_node1.img
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# ll  /var/lib/libvirt/images/rh7_node{17..19}.img
+-rw-r--r-- 1 root root 197120 10月 16 21:18 /var/lib/libvirt/images/rh7_node17.img
+-rw-r--r-- 1 root root 197120 10月 16 21:18 /var/lib/libvirt/images/rh7_node18.img
+-rw-r--r-- 1 root root 197120 10月 16 21:18 /var/lib/libvirt/images/rh7_node19.img
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# cd /etc/libvirt/qemu/;ls
+H10.xml  H13.xml  H16.xml     Host11.xml  Host14.xml  Host17.xml      rh7_node18.xml
+H11.xml  H14.xml  H17.xml     Host12.xml  Host15.xml  networks        rh7_node19.xml
+H12.xml  H15.xml  Host10.xml  Host13.xml  Host16.xml  rh7_node17.xml
+[root@room9pc01 qemu]#
+[root@room9pc01 ~]# ll /root/桌面/mysql-5.7.17.tar 
+-rw-r--r-- 1 root root 569651200 10月 13 16:36 /root/桌面/mysql-5.7.17.tar
+[root@room9pc01 ~]# 
+
+[root@room9pc01 ~]# vim clusterdb
+[root@room9pc01 ~]# cat clusterdb
+#!/bin/bash
+password=123456;
+for i in `cat /root/VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzipsh.txt`
+do 
+  VMname=$(echo $i |awk -F: '{print $1}');
+  echo $VMname;
+  hostname=$(echo $i |awk -F: '{print $4}');  
+  echo $hostname;
+  eth0=$(echo $i |awk -F: '{print $5}');
+  echo "192.168.$eth0";
+  eth1=$(echo $i |awk -F: '{print $6}');
+  echo "192.168.$eth1";
+  eth2=$(echo $i |awk -F: '{print $7}');
+  echo "201.$eth2";
+  eth3=$(echo $i |awk -F: '{print $8}');
+  echo "201.$eth3";
+  file=$(echo $i |awk -F: '{print $9,"\t",$10,"\t",$11,"\t",$12}');
+  echo $file;
+  function  newVMnameA(){
+   VMnameA=$(echo $i |awk -F: '{print $2}');
+  }
+  function  newVMnameB(){
+   VMnameB=$(echo $i |awk -F: '{print $3}');
+  }
+  
+  case $1 in
+  set)
+    expect /root/ip.sh $VMname  $password  $hostname  $eth0  $eth1  $eth2  $eth3
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      echo "ipyum well done";
+    else
+      echo  "ipyum failed";
+    fi
+/usr/bin/expect  << EOF
+    spawn virsh  console $VMname
+    set timeout  4
+    expect "换码符为 ^]"  {send "\n"};
+    expect "login:"   {send "root\r"};
+    expect "密码："     {send "123456\r"};
+    expect "#"  {send "sleep 1 && date\r"};
+    expect "#"  {send "\r"};
+    send "exit\r"
+    interact
+    expect EOF
+EOF
+  if [ $? -ne 0 ];then
+    echo "faild"
+    exit 100
+  else
+    echo "ip has been set 192.168.4.x"
+  fi;;
+  startA)
+    virsh start  $VMname;
+    if [ $? -ne 0 ];then
+     newVMnameA
+     virsh start $VMnameA;
+    fi;;
+  startB)
+    virsh start  $VMname;
+    if [ $? -ne 0 ];then
+     newVMnameB
+     virsh start $VMnameB;
+    fi;;
+  stopA)
+    virsh shutdown $VMname;
+    if [ $? -ne 0 ];then
+     newVMnameA
+     virsh shutdown $VMnameA;
+    fi;;
+  stopB)
+    virsh shutdown $VMname;
+    if [ $? -ne 0 ];then
+     newVMnameB
+     virsh shutdown $VMnameB;
+    fi;;
+  *)
+    echo "input-Error";;
+  esac
+done
+echo  "Amazing !"
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# vim ip.sh
+[root@room9pc01 ~]# cat ip.sh
+#!/usr/bin/expect  -f
+set   timeout  4
+set VMname    [lindex  $argv  0]
+set password  [lindex  $argv  1]
+set hostname  [lindex  $argv  2]
+set eth0      [lindex  $argv  3]
+set eth1      [lindex  $argv  4]
+set eth2      [lindex  $argv  5]
+set eth3      [lindex  $argv  6]
+spawn  virsh  console  $VMname
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$password\r"}
+expect "#"  {send "echo 123456 |passwd  --stdin root\r"}
+expect "#"  {send "echo $hostname >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+
+expect "#"  {send "nmcli connection add con-name eth2 ifname eth2 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.$eth2/24  ipv4.gateway 201.1.1.254 connection.autoconnect yes \r"}  
+expect "#"  {send "nmcli connection up eth2 \r"}
+
+expect "#"  {send "nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.$eth3/24  ipv4.gateway 201.1.2.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth3 \r"}
+
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 1 && date\r"}
+expect "#"  {send "\r"}
+send "exit\r"
+
+expect eof
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# vim testscp.sh
+[root@room9pc01 ~]# cat testscp.sh
+#!/usr/bin/expect  -f
+set timeout  -1
+set eth0    [lindex $argv 0]
+spawn  scp  -o  StrictHostKeyChecking=no  /root/hello.sh  root@192.168.$eth0:/root/
+expect "password:"  {send  "123\r"}
+expect "#"  {send  "send date\r"}
+expect "#"  {send  "\r"}
+[root@room9pc01 ~]# echo "hello world">/root/hello.sh
+[root@room9pc01 ~]# vim /root/hello.sh
+[root@room9pc01 ~]# cat /root/hello.sh
+#!/bin/bash
+echo "
+hello world"
+[root@room9pc01 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

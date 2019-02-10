@@ -1,0 +1,1253 @@
+
+安装
+
+Mycat官网：http://www.mycat.io/ 
+可以了解下Mycat的背景和应用情况，这样使用起来比较有信心。
+
+Mycat下载地址：http://dl.mycat.io/ 
+官网有个文档，属于详细的介绍，初次入门，看起来比较花时间。
+
+下载： 
+建议大家选择 1.6-RELEASE 版本，毕竟是比较稳定的版本。
+
+目录	说明
+bin	mycat命令，启动、重启、停止等
+catlet	catlet为Mycat的一个扩展功能
+conf	Mycat 配置信息,重点关注
+lib	Mycat引用的jar包，Mycat是java开发的
+logs	日志文件，包括Mycat启动的日志和运行的日志。
+配置
+
+Mycat的配置文件都在conf目录里面，这里介绍几个常用的文件：
+
+文件	说明
+server.xml	Mycat的配置文件，设置账号、参数等
+schema.xml	Mycat对应的物理数据库和数据库表的配置
+rule.xml	Mycat分片（分库分表）规则
+Mycat的架构其实很好理解，Mycat是代理，Mycat后面就是物理数据库。和Web服务器的Nginx类似。对于使用者来说，访问的都是Mycat，不会接触到后端的数据库。
+我们现在做一个主从、读写分离，简单分表的示例。结构如下图：
+
+服务器	IP	说明
+Mycat	192.168.0.2	mycat服务器，连接数据库时，连接此服务器
+database1	192.168.0.3	物理数据库1，真正存储数据的数据库
+database2	192.168.0.4	物理数据库2，真正存储数据的数据库
+Mycat作为主数据库中间件，肯定是与代码弱关联的，所以代码是不用修改的，使用Mycat后，连接数据库是不变的，默认端口是8066。连接方式和普通数据库一样，如：jdbc:mysql://192.168.0.2:8066/
+server.xml
+
+示例
+
+<user name="test">
+        <property name="password">test</property>  
+        <property name="schemas">lunch</property>  
+        <property name="readOnly">false</property>  
+        
+        <!-- 表级 DML 权限设置 -->
+        <!--        
+        <privileges check="false">
+            <schema name="TESTDB" dml="0110" >
+                <table name="tb01" dml="0000"></table>
+                <table name="tb02" dml="1111"></table>
+            </schema>
+        </privileges>       
+         -->
+    </user>
+重点关注下面这段，其他默认即可。
+
+参数	说明
+user	用户配置节点
+--name	登录的用户名，也就是连接Mycat的用户名
+--password	登录的密码，也就是连接Mycat的密码
+--schemas	数据库名，这里会和schema.xml中的配置关联，多个用逗号分开，例如需要这个用户需要管理两个数据库db1,db2，则配置db1,dbs
+--privileges	配置用户针对表的增删改查的权限，具体见文档吧
+我这里配置了一个账号test 密码也是test,针对数据库lunch,读写权限都有，没有针对表做任何特殊的权限。
+
+schema.xml 
+schema.xml是最主要的配置项，首先看我的配置文件。
+
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+<mycat:schema xmlns:mycat="http://io.mycat/">
+
+<!-- 数据库配置，与server.xml中的数据库对应 -->
+    <schema name="lunch" checkSQLschema="false" sqlMaxLimit="100">
+        <table name="lunchmenu" dataNode="dn1"  />
+        <table name="restaurant" dataNode="dn1"  />
+        <table name="userlunch" dataNode="dn1"  />
+        <table name="users" dataNode="dn1"  />
+        <table name="dictionary" primaryKey="id" autoIncrement="true" dataNode="dn1,dn2"  rule="mod-long" />
+
+        
+    </schema>
+
+<!-- 分片配置 -->
+    <dataNode name="dn1" dataHost="test1" database="lunch" />
+    <dataNode name="dn2" dataHost="test2" database="lunch" />
+
+<!-- 物理数据库配置 -->
+    <dataHost name="test1" maxCon="1000" minCon="10" balance="0"  writeType="0" dbType="mysql" dbDriver="native">
+        <heartbeat>select user();</heartbeat>
+        <writeHost host="hostM1" url="192.168.0.2:3306" user="root" password="123456">  
+        </writeHost>
+    </dataHost>
+
+    <dataHost name="test2" maxCon="1000" minCon="10" balance="0" writeType="0" dbType="mysql" dbDriver="native">
+        <heartbeat>select user();</heartbeat>
+        <writeHost host="hostS1" url="192.168.0.3:3306" user="root" password="123456">  
+        </writeHost>
+    </dataHost>
+</mycat:schema>
+参数	说明
+schema	数据库设置，此数据库为逻辑数据库，name与server.xml中schema对应
+dataNode	分片信息，也就是分库相关配置
+dataHost	物理数据库，真正存储数据的数据库
+每个节点的属性逐一说明：
+
+schema:
+
+属性	说明
+name	逻辑数据库名，与server.xml中的schema对应
+checkSQLschema	数据库前缀相关设置，建议看文档，这里暂时设为folse
+sqlMaxLimit	select 时默认的limit，避免查询全表
+table:
+
+属性	说明
+name	表名，物理数据库中表名
+dataNode	表存储到哪些节点，多个节点用逗号分隔。节点为下文dataNode设置的name
+primaryKey	主键字段名，自动生成主键时需要设置
+autoIncrement	是否自增
+rule	分片规则名，具体规则下文rule详细介绍
+
+
+dataNode
+
+属性	说明
+name	节点名，与table中dataNode对应
+datahost	物理数据库名，与datahost中name对应
+database	物理数据库中数据库名
+dataHost
+
+属性	说明
+name	物理数据库名，与dataNode中dataHost对应
+balance	均衡负载的方式
+writeType	写入方式
+dbType	数据库类型
+heartbeat	心跳检测语句，注意语句结尾的分号要加。
+应用场景
+
+数据库分表分库
+
+配置如下：
+
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+<mycat:schema xmlns:mycat="http://io.mycat/">
+
+<!-- 数据库配置，与server.xml中的数据库对应 -->
+    <schema name="lunch" checkSQLschema="false" sqlMaxLimit="100">
+        <table name="lunchmenu" dataNode="dn1"  />
+        <table name="restaurant" dataNode="dn1"  />
+        <table name="userlunch" dataNode="dn1"  />
+        <table name="users" dataNode="dn1"  />
+        <table name="dictionary" primaryKey="id" autoIncrement="true" dataNode="dn1,dn2"  rule="mod-long" />
+
+        
+    </schema>
+
+<!-- 分片配置 -->
+    <dataNode name="dn1" dataHost="test1" database="lunch" />
+    <dataNode name="dn2" dataHost="test2" database="lunch" />
+
+<!-- 物理数据库配置 -->
+    <dataHost name="test1" maxCon="1000" minCon="10" balance="0"  writeType="0" dbType="mysql" dbDriver="native">
+        <heartbeat>select user();</heartbeat>
+        <writeHost host="hostM1" url="192.168.0.2:3306" user="root" password="123456">  
+        </writeHost>
+    </dataHost>
+
+    <dataHost name="test2" maxCon="1000" minCon="10" balance="0" writeType="0" dbType="mysql" dbDriver="native">
+        <heartbeat>select user();</heartbeat>
+        <writeHost host="hostS1" url="192.168.0.3:3306" user="root" password="123456">  
+        </writeHost>
+    </dataHost>
+
+</mycat:schema>
+我在192.168.0.2、192.168.0.3均有数据库lunch。
+lunchmenu、restaurant、userlunch、users这些表都只写入节点dn1，也就是192.168.0.2这个服务，而dictionary写入了dn1、dn2两个节点，也就是192.168.0.2、192.168.0.3这两台服务器。分片的规则为：mod-long。
+主要关注rule属性，rule属性的内容来源于rule.xml这个文件，Mycat支持10种分表分库的规则，基本能满足你所需要的要求，这个必须赞一个，其他数据库中间件好像都没有这么多。
+
+table中的rule属性对应的就是rule.xml文件中tableRule的name,具体有哪些分表和分库的实现，建议还是看下文档。我这里选择的mod-long就是将数据平均拆分。因为我后端是两台物理库，所以rule.xml中mod-long对应的function count为2，见下面部分代码：
+
+<tableRule name="mod-long">
+        <rule>
+            <columns>id</columns>
+            <algorithm>mod-long</algorithm>
+        </rule>
+    </tableRule>
+    
+<function name="mod-long" class="io.mycat.route.function.PartitionByMod">
+        <!-- how many data nodes -->
+        <property name="count">2</property>
+    </function>
+数据库读写分离
+
+配置如下：
+
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+<mycat:schema xmlns:mycat="http://io.mycat/">
+
+<!-- 数据库配置，与server.xml中的数据库对应 -->
+    <schema name="lunch" checkSQLschema="false" sqlMaxLimit="100">
+        <table name="lunchmenu" dataNode="dn1"  />
+        <table name="restaurant" dataNode="dn1"  />
+        <table name="userlunch" dataNode="dn1"  />
+        <table name="users" dataNode="dn1"  />
+        <table name="dictionary" primaryKey="id" autoIncrement="true" dataNode="dn1"  />
+
+        
+    </schema>
+
+<!-- 分片配置 -->
+    <dataNode name="dn1" dataHost="test1" database="lunch" />
+
+
+<!-- 物理数据库配置 -->
+    <dataHost name="test1" maxCon="1000" minCon="10" balance="1"  writeType="0" dbType="mysql" dbDriver="native">
+        <heartbeat>select user();</heartbeat>
+        <writeHost host="hostM1" url="192.168.0.2:3306" user="root" password="123456">  
+        <readHost host="hostM1" url="192.168.0.3:3306" user="root" password="123456">   
+        </readHost>
+        </writeHost>
+    </dataHost>
+
+
+</mycat:schema>
+这样的配置与前一个示例配置改动如下：
+删除了table分配的规则,以及datanode只有一个
+datahost也只有一台，但是writehost总添加了readhost,balance改为1，表示读写分离。
+以上配置达到的效果就是102.168.0.2为主库，192.168.0.3为从库。
+
+注意：Mycat主从分离只是在读的时候做了处理，写入数据的时候，只会写入到writehost，需要通过mycat的主从复制将数据复制到readhost，这个问题当时候我纠结了好久，数据写入writehost后，readhost一直没有数据，以为是自己配置的问题，后面才发现Mycat就没有实现主从复制的功能，毕竟数据库本身自带的这个功能才是最高效稳定的。
+
+至于其他的场景，如同时主从和分表分库也是支持的了，只要了解这个实现以后再去修改配置，都是可以实现的。而热备及故障专业官方推荐使用haproxy配合一起使用，大家可以试试。
+使用
+
+Mycat的启动也很简单，启动命令在Bin目录：
+
+##启动
+mycat start
+
+##停止
+mycat stop
+
+##重启
+mycat restart
+如果在启动时发现异常，在logs目录中查看日志。
+
+wrapper.log 为程序启动的日志，启动时的问题看这个
+mycat.log 为脚本执行时的日志，SQL脚本执行报错后的具体错误内容,查看这个文件。mycat.log是最新的错误日志，历史日志会根据时间生成目录保存。
+mycat启动后，执行命令不成功，可能实际上配置有错误，导致后面的命令没有很好的执行。
+
+Mycat带来的最大好处就是使用是完全不用修改原有代码的，在mycat通过命令启动后，你只需要将数据库连接切换到Mycat的地址就可以了。如下面就可以进行连接了：
+
+ mysql -h192.168.0.1 -P8806 -uroot -p123456
+连接成功后可以执行sql脚本了。
+所以，可以直接通过sql管理工具（如：navicat、datagrip）连接，执行脚本。我一直用datagrip来进行日常简单的管理，这个很方便。
+
+Mycat还有一个管理的连接，端口号是9906.
+
+ mysql -h192.168.0.1 -P9906 -uroot -p123456
+连接后可以根据管理命令查看Mycat的运行情况，当然，喜欢UI管理方式的人，可以安装一个Mycat-Web来进行管理，有兴趣自行搜索。
+
+简而言之，开发中使用Mycat和直接使用Mysql机会没有差别。
+
+常见问题
+
+使用Mycat后总会遇到一些坑，我将自己遇到的一些问题在这里列一下，希望能与大家有共鸣：
+
+Mycat是不是配置以后，就能完全解决分表分库和读写分离问题？
+Mycat配合数据库本身的复制功能，可以解决读写分离的问题，但是针对分表分库的问题，不是完美的解决。或者说，至今为止，业界没有完美的解决方案。
+分表分库写入能完美解决，但是，不能完美解决主要是联表查询的问题，Mycat支持两个表联表的查询，多余两个表的查询不支持。 其实，很多数据库中间件关于分表分库后查询的问题，都是需要自己实现的，而且节本都不支持联表查询，Mycat已经算做地非常先进了。
+分表分库的后联表查询问题，大家通过合理数据库设计来避免。
+
+Mycat支持哪些数据库，其他平台如 .net、PHP能用吗？
+官方说了，支持的数据库包括MySQL、SQL Server、Oracle、DB2、PostgreSQL 等主流数据库，很赞。
+
+
+[root@hiys ~]# for i in 192.168.4.5{0..7};do  scp  Mycat-server-1.4-beta-20150604171601-linux.tar.gz  maxscale-2.1.2-1.rhel.7.x86_64.rpm  root@${i}:/root/;done
+
+[root@hiys ~]# ll Mycat-server-1.*
+-rw-r--r-- 1 root root  7663894 10月 27 08:56 Mycat-server-1.4-beta-20150604171601-linux.tar.gz
+-rw-r--r-- 1 root root 15662280 10月 27 11:14 Mycat-server-1.6-RELEASE-20161028204710-linux.tar.gz
+[root@hiys ~]# for i in 192.168.4.5{0..7}; do scp -o StrictHostKeyChecking=no  Mycat-server-1.*  root@${i}:/root/; done
+root@192.168.4.50's password: 
+Mycat-server-1.4-beta-20150604171601-linux.tar.gz                                                           100% 7484KB 176.1MB/s   00:00    
+Mycat-server-1.6-RELEASE-20161028204710-linux.tar.gz                                                        100%   15MB 170.3MB/s   00:00    
+root@192.168.4.51's password: 
+
+
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.50
+192.168.2.50
+201.1.1.50
+201.1.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H50 ~]# ll Mycat-server-1.*
+-rw-r--r--. 1 root root  7663894 10月 27 11:16 Mycat-server-1.4-beta-20150604171601-linux.tar.gz
+-rw-r--r--. 1 root root 15662280 10月 27 11:16 Mycat-server-1.6-RELEASE-20161028204710-linux.tar.gz
+[root@H50 ~]# ll maxscale-2.1.2-1.rhel.7.x86_64.rpm 
+-rw-r--r--. 1 root root 17333732 10月 27 09:02 maxscale-2.1.2-1.rhel.7.x86_64.rpm
+
+/***************
+[root@H57 mycat]# vim /usr/local/mycat/conf/server.xml
+ 33         </system>
+ 34         <user name="admin">
+ 35                 <property name="password">1234</property>
+ 36                 <property name="schemas">TESTDB</property> #注意名字 <schema name="TESTDB"##
+ 37         </user>
+*******/
+[root@H50 ~]# mysql  -h192.168.4.57 -uadmin -p1234 -P8066
+
+mysql> show databases;
+
+| DATABASE |
+| TESTDB   |
+
+mysql> use TESTDB;
+
+mysql> show tables;
+
+| Tables in TESTDB |
++------------------+
+| company          |
+| customer         |
+| customer_addr    |
+| employee         |
+| goods            |
+| hotnews          |
+| orders           |
+| order_items      |
+| travelrecord     |
++------------------+
+9 rows in set (0.00 sec)
+
+/****************************  sharding_id  和 id 字段的来源*******************
+[root@H57 mycat]# vim  /usr/local/mycat/conf/schema.xml
+  7                 <table name="travelrecord" dataNode="dn1,dn2" rule="auto-sharding-long" />
+
+ 11                 <table name="company" primaryKey="ID" type="global" dataNode="dn1,dn2" />
+ 12                 <table name="goods" primaryKey="ID" type="global" dataNode="dn1,dn2" />
+ 15                 <table name="hotnews" primaryKey="ID" dataNode="dn1,dn2"
+ 16                         rule="mod-long" />
+
+ 20                 <table name="employee" primaryKey="ID" dataNode="dn1,dn2"
+ 21                         rule="sharding-by-intfile" />
+ 22                 <table name="customer" primaryKey="ID" dataNode="dn1,dn2"
+ 23                         rule="sharding-by-intfile">
+[root@H57 mycat]# vim  /usr/local/mycat/conf/rule.xml 
+
+ 12         <tableRule name="rule1">
+ 13                 <rule>
+ 14                         <columns>id</columns>
+ 15                         <algorithm>func1</algorithm>
+ 16                 </rule>
+ 17         </tableRule>
+
+ 26         <tableRule name="sharding-by-intfile">
+ 27                 <rule>
+ 28                         <columns>sharding_id</columns>
+ 29                         <algorithm>hash-int</algorithm>
+ 30                 </rule>
+ 31         </tableRule>
+**************************  sharding_id  和 id 字段的来源****************/
+
+mysql> create table employee(
+    -> id int(2) primary key auto_increment,
+    -> name char(10),
+    -> age tinyint(2) default 18,
+    -> sex enum('boy','girl') default 'boy',
+    -> sharding_id int(2));
+
+mysql> desc employee;
+
+| Field       | Type               | Null | Key | Default | Extra          |
++-------------+--------------------+------+-----+---------+----------------+
+| id          | int(2)             | NO   | PRI | NULL    | auto_increment |
+| name        | char(10)           | YES  |     | NULL    |                |
+| age         | tinyint(2)         | YES  |     | 18      |                |
+| sex         | enum('boy','girl') | YES  |     | boy     |                |
+| sharding_id | int(2)             | YES  |     | NULL    |                |
+
+/****************10000=0    对应字段sharding_id规定值  sharding_id ---10010=1 *****
+ [root@H57 mycat]# cat /usr/local/mycat/conf/partition-hash-int.txt && echo
+10000=0
+10010=1
+[root@H57 mycat]# 
+***********/
+mysql> insert into employee(name,sharding_id) values("bob",10000),("tom",10010),
+    -> ("lucy",10000),("jack",10010);
+Query OK, 2 rows affected (0.10 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> select * from TESTDB.employee;
+ERROR 1146 (42S02): Table 'testdb.employee' doesn't exist
+mysql> select * from  employee;
++----+------+------+------+-------------+
+| id | name | age  | sex  | sharding_id |
++----+------+------+------+-------------+
+|  1 | bob  |   18 | boy  |       10000 |
+|  2 | lucy |   18 | boy  |       10000 |
++----+------+------+------+-------------+
+2 rows in set (0.01 sec)
+
+mysql> select database();
++------------+
+| DATABASE() |
++------------+
+| TESTDB     |
++------------+
+1 row in set (0.00 sec)
+
+mysql> insert into employee(name,sharding_id) values("bob2",10000),("tom2",10010), ("lucy2",10000),("jack2",10010);
+Query OK, 2 rows affected (0.04 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> select * from  employee;
++----+-------+------+------+-------------+
+| id | name  | age  | sex  | sharding_id |
++----+-------+------+------+-------------+
+|  1 | bob   |   18 | boy  |       10000 |
+|  2 | lucy  |   18 | boy  |       10000 |
+|  3 | bob2  |   18 | boy  |       10000 |
+|  4 | lucy2 |   18 | boy  |       10000 |
++----+-------+------+------+-------------+
+4 rows in set (0.01 sec)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H51 ~]# mysql -uroot -p1234
+mysql> use db9;show tables;
+
+| Tables_in_db9 |
++---------------+
+| t1            |
+| t2            |
+| user          |
+| user2         |
+| v3            |
+| v4            |
+| v5            |
+| v6            |
+| v7            |
+| v8            |
+| v9            |
++---------------+
+11 rows in set (0.00 sec)
+
+mysql> 
+
+
+delimiter /
+create procedure p11()
+begin
+  declare x int(2);
+  set x=1;
+  loop
+     select  x;
+  end loop;
+end/
+delimiter ;
+call p11;
+
+drop procedure p10;
+delimiter /
+create procedure p10()
+begin
+   loop
+      select id,name,uid,gid from db9.user limit 0,2;
+  end loop;
+end/
+delimiter ;
+call p10;
+
+drop procedure p12;
+delimiter /
+create procedure p12()
+begin
+  declare i int(2);
+  set i=1;
+  repeat
+     select i;
+     select id,name,uid,gid from db9.user limit 0,2;
+  set i = i + 1 ;
+  until i > 4
+  end repeat;
+end/
+delimiter ;
+call p12;
+
+mysql> drop procedure p10;
+
+mysql> delimiter /
+mysql> create procedure p10()
+    -> begin
+    ->    loop
+    ->       select id,name,uid,gid from db9.user limit 0,2;
+    ->   end loop;
+    -> end/
+
+mysql> delimiter ;
+mysql> call p10;
+
+
+mysql> delimiter /
+mysql> create procedure p11()
+    -> begin
+    ->   declare x int(2);
+    ->   set x=1;
+    ->   loop
+    ->      select  x;
+    ->   end loop;
+    -> end/
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> delimiter ;
+mysql> call p11;
+
+
+
+mysql> drop procedure p12;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> delimiter /
+mysql> create procedure p12()
+    -> begin
+    ->   declare i int(2);
+    ->   set i=1;
+    ->   repeat
+    ->      select i;
+    ->      select id,name,uid,gid from db9.user limit 0,2;
+    ->   set i = i + 1 ;
+    ->   until i > 4
+    ->   end repeat;  #当条件大于4的时候终止循环
+    -> end/
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> delimiter ;
+mysql> call p12;
+
+| i    |
++------+
+|    1 |
+
+| id | name  | uid  | gid  |
++----+-------+------+------+
+|  1 | admin |    0 |    0 |
+|  2 | bin   |    1 |    1 |
+
+| i    |
++------+
+|    2 |
+
+| id | name  | uid  | gid  |
++----+-------+------+------+
+|  1 | admin |    0 |    0 |
+|  2 | bin   |    1 |    1 |
+
+| i    |
++------+
+|    3 |
+
+| id | name  | uid  | gid  |
++----+-------+------+------+
+|  1 | admin |    0 |    0 |
+|  2 | bin   |    1 |    1 |
+
+| i    |
++------+
+|    4 |
+
+| id | name  | uid  | gid  |
++----+-------+------+------+
+|  1 | admin |    0 |    0 |
+|  2 | bin   |    1 |    1 |
+
+mysql> use db9;show tables;
+
+delimiter /
+ create procedure sumnum(in line int(2))
+ begin
+   declare  x int(2);
+   declare  y int(2);
+   declare  z int(2);
+   set  z=0;
+   set  x=1;
+   while x <= line do
+      select uid  into  y from db9.user where id=x;
+      if  y  %  2 = 0 then
+         set  z=z+1;
+           select id,name,uid from db9.user where id=x;
+      end if;
+        set  x=x+1;
+   end while;
+   select  z;
+ end/
+delimiter ;
+set @line=5;
+call  sumnum(@line);
+
+mysql> delimiter /
+mysql>  create procedure sumnum(in line int(2))
+    ->  begin
+    ->    declare  x int(2);
+    ->    declare  y int(2);
+    ->    declare  z int(2);
+    ->    set  z=0;
+    ->    set  x=1;
+    ->    while x <= line do
+    ->       select uid  into  y from db9.user where id=x;
+    ->       if  y  %  2 = 0 then
+    ->          set  z=z+1;
+    ->            select id,name,uid from db9.user where id=x;
+    ->       end if;
+    ->         set  x=x+1;
+    ->    end while;
+    ->    select  z;
+    ->  end/
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> delimiter ;
+mysql> set @line=5;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> call  sumnum(@line);
+
+| id | name  | uid  |
+|  1 | admin |    0 |
+1 row in set (0.00 sec)
+
+| id | name   | uid  |
+|  3 | daemon |    2 |
+1 row in set (0.00 sec)
+
+| id | name | uid  |
+|  5 | lp   |    4 |
+1 row in set (0.00 sec)
+
+| z    |
+|    3 |
+1 row in set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+(
+mysql> show procedure status\G  #查看存储过程(方法一)
+
+mysql>  select db,name,type from  mysql.proc where name like "%sum%";  #查看存储过程(方法二)
++-----+----------------------------------+-----------+
+| db  | name                             | type      |
++-----+----------------------------------+-----------+
+| db9 | sumnum                           | PROCEDURE |
+| sys | ps_is_consumer_enabled           | FUNCTION  |
+| sys | ps_setup_disable_consumer        | PROCEDURE |
+| sys | ps_setup_enable_consumer         | PROCEDURE |
+| sys | ps_setup_show_disabled_consumers | PROCEDURE |
+| sys | ps_setup_show_enabled_consumers  | PROCEDURE |
++-----+----------------------------------+-----------+
+6 rows in set (0.00 sec)
+
+mysql> system ll  Mycat-*
+sh: ll: 未找到命令
+mysql> system ls -l  Mycat-*
+-rw-r--r--. 1 root root 7663894 10月 27 09:02 Mycat-server-1.4-beta-20150604171601-linux.tar.gz
+mysql> system ls -l  maxscale-2.1.2*
+-rw-r--r--. 1 root root 17333732 10月 27 09:02 maxscale-2.1.2-1.rhel.7.x86_64.rpm
+mysql>  
+[root@H51 ~]# uptime
+ 16:34:25 up  8:07,  2 users,  load average: 0.00, 0.01, 0.05
+[root@H51 ~]# ifconfig |grep "TX packets"
+        TX packets 9732  bytes 19815663 (18.8 MiB)
+        TX packets 31  bytes 4009 (3.9 KiB)
+        TX packets 33  bytes 4169 (4.0 KiB)
+        TX packets 30  bytes 3901 (3.8 KiB)
+        TX packets 1232  bytes 97072 (94.7 KiB)
+        TX packets 0  bytes 0 (0.0 B)
+[root@H51 ~]# 
+mysql> show variables like "%connections";
+
+| Variable_name        | Value |
+| max_connections      | 151   |
+| max_user_connections | 0     |
+
+mysql> set global max_connections = 300 ;
+
+mysql> show variables like "%connections";
+
+| Variable_name        | Value |
+| max_connections      | 300   |
+| max_user_connections | 0     |
+
+mysql> show global status like "Max%"; #####  global status ***********
+
+| Variable_name                 | Value               |
+| Max_execution_time_exceeded   | 0                   |
+| Max_execution_time_set        | 0                   |
+| Max_execution_time_set_failed | 0                   |
+| Max_used_connections          | 2                   |
+| Max_used_connections_time     | 2018-10-27 09:12:15 |
+
+mysql> show processlist;
+
+| Id | User | Host      | db   | Command | Time | State    | Info             |
+|  9 | root | localhost | db9  | Query   |    0 | starting | show processlist |
+
+mysql> show variables like  "wait%";
+| Variable_name | Value |
++---------------+-------+
+| wait_timeout  | 28800 |
+
+mysql> show variables like  "%_timeout";
++-----------------------------+----------+
+| Variable_name               | Value    |
++-----------------------------+----------+
+| connect_timeout             | 10       |
+| delayed_insert_timeout      | 300      |
+| have_statement_timeout      | YES      |
+| innodb_flush_log_at_timeout | 1        |
+| innodb_lock_wait_timeout    | 50       |
+| innodb_rollback_on_timeout  | OFF      |
+| interactive_timeout         | 28800    |
+| lock_wait_timeout           | 31536000 |
+| net_read_timeout            | 30       |
+| net_write_timeout           | 60       |
+| rpl_stop_slave_timeout      | 31536000 |
+| slave_net_timeout           | 60       |
+| wait_timeout                | 28800    |
+
+mysql> show variables like "key_buffer%";
++-----------------+---------+
+| Variable_name   | Value   |
++-----------------+---------+
+| key_buffer_size | 8388608 |
+
+mysql> system echo $[8388608/1024]
+8192
+mysql> system echo $[8192/1024]
+8
+ 
+mysql> select name,uid,id,shell from db9.user order by uid desc;
+
+| name                | uid   | id | shell          |
++---------------------+-------+----+----------------+
+| nfsnobody           | 65534 | 30 | /sbin/nologin  |
+
+| daemon              |     2 |  3 | /sbin/nologin  |
+| bin                 |     1 |  2 | /sbin/nologin  |
+| admin               |     0 |  1 | /bin/bash      |
++---------------------+-------+----+----------------+
+42 rows in set (0.00 sec)
+
+ mysql> show variables like "table%cache%";
++----------------------------+-------+
+| Variable_name              | Value |
++----------------------------+-------+
+| table_definition_cache     | 1400  |
+| table_open_cache           | 2000  |
+| table_open_cache_instances | 16    |
+        
+mysql> show variables like "query_cache_%"; 查看查询缓存
+
+| Variable_name                | Value   |
+| query_cache_limit            | 1048576 |
+| query_cache_min_res_unit     | 4096    |查询缓存 最小存储单元4096字节
+| query_cache_size             | 1048576 | 查询缓存 字节大小
+| query_cache_type             | OFF     |
+| query_cache_wlock_invalidate | OFF     |查询缓存 写锁开关
+
+5 rows in set (0.01 sec)
+
+mysql> show variables like "thread_cache_%";
+
+| Variable_name     | Value |
++-------------------+-------+
+| thread_cache_size | 9     |
+
+mysql> show global status like "Qcache_%";
++-------------------------+---------+
+| Variable_name           | Value   |
++-------------------------+---------+
+| Qcache_free_blocks      | 1       |
+| Qcache_free_memory      | 1031832 |
+| Qcache_hits             | 0       |
+| Qcache_inserts          | 0       |
+| Qcache_lowmem_prunes    | 0       |
+| Qcache_not_cached       | 124657  |
+| Qcache_queries_in_cache | 0       |
+| Qcache_total_blocks     | 1       |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H54 ~]# ll Mycat-server-1.4-beta-20150604171601-linux.tar.gz  maxscale-2.1.2-1.rhel.7.x86_64.rpm 
+-rw-r--r--. 1 root root 17333732 10月 27 09:02 maxscale-2.1.2-1.rhel.7.x86_64.rpm
+-rw-r--r--. 1 root root  7663894 10月 27 09:02 Mycat-server-1.4-beta-20150604171601-linux.tar.gz
+[root@H54 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.54
+192.168.2.54
+201.1.1.54
+201.1.2.54
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H54 ~]# ll maxscale-2.1.2-1.rhel.7.x86_64.rpm \
+> ;
+-rw-r--r--. 1 root root 17333732 10月 27 09:02 maxscale-2.1.2-1.rhel.7.x86_64.rpm
+[root@H54 ~]# vim /etc/my.cnf
+[root@H54 ~]# ls /var/lib/mysql/
+auto.cnf    ca.pem           client-key.pem  ibdata1      ib_logfile1  mysql       mysql.sock.lock     private_key.pem  server-cert.pem  sys
+ca-key.pem  client-cert.pem  ib_buffer_pool  ib_logfile0  ibtmp1       mysql.sock  performance_schema  public_key.pem   server-key.pem
+[root@H54 ~]# rm -rf master.info relay-log.info *-relay-bin.*
+[root@H54 ~]# sed -n '/\[mysqld/,+2p' /etc/my.cnf
+[mysqld]
+validate_password_policy=0
+validate_password_length=4
+[root@H54 ~]# mysql -uroot -p1234
+
+mysql> show slave status;
+Empty set (0.00 sec)
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> create database db1;
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| db1                |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> grant all on *.* to root@'%' identified by'1234';
+
+[root@H54 ~]# vim /etc/my.cnf
+
+[root@H54 ~]# sed -n "/\[mysqld/,+3p" /etc/my.cnf
+[mysqld]
+lower_case_table_names=1
+validate_password_policy=0
+validate_password_length=4
+[root@H54 ~]# systemctl restart mysqld
+
+mysql> use db1;show tables;
+
+Empty set (0.00 sec)
+
+mysql> select * from  employee;
++----+-------+------+------+-------------+
+| id | name  | age  | sex  | sharding_id |
++----+-------+------+------+-------------+
+|  1 | bob   |   18 | boy  |       10000 |
+|  2 | lucy  |   18 | boy  |       10000 |
+|  3 | bob2  |   18 | boy  |       10000 |
+|  4 | lucy2 |   18 | boy  |       10000 |
+
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.55
+192.168.2.55
+201.1.1.55
+201.1.2.55
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H55 ~]# ll Mycat-server-1.*
+-rw-r--r--. 1 root root  7663894 10月 27 11:16 Mycat-server-1.4-beta-20150604171601-linux.tar.gz
+-rw-r--r--. 1 root root 15662280 10月 27 11:16 Mycat-server-1.6-RELEASE-20161028204710-linux.tar.gz
+[root@H55 ~]# ll maxscale-2.1.2-1.rhel.7.x86_64.rpm 
+-rw-r--r--. 1 root root 17333732 10月 27 09:02 maxscale-2.1.2-1.rhel.7.x86_64.rpm
+[root@H55 ~]# ll maxscale-2.1.2-1.rhel.7.x86_64.rpm 
+-rw-r--r--. 1 root root 17333732 10月 27 09:02 maxscale-2.1.2-1.rhel.7.x86_64.rpm
+[root@H55 ~]# mysql -uroot -p1234
+mysql> show databases;
+
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> show slave status\G
+Empty set (0.00 sec)
+
+mysql> create database db2;
+Query OK, 1 row affected (0.01 sec)
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| db2                |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+5 rows in set (0.00 sec)
+
+mysql> grant all on *.* to root@'%' identified by'1234';
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> system vim /etc/my.cnf
+
+mysql> system sed -n "/\[mysqld/,+3p" /etc/my.cnf
+[mysqld]
+lower_case_table_names=1
+validate_password_policy=0
+validate_password_length=4
+mysql> 
+
+[root@H55 ~]#  systemctl restart mysqld
+mysql> use db2;show tables;
+
+mysql> select * from  employee;
+ERROR 1146 (42S02): Table 'db2.employee' doesn't exist
+mysql> select database();
++------------+
+| database() |
++------------+
+| db2        |
++------------+
+1 row in set (0.00 sec)
+
+mysql> show tables;
+Empty set (0.00 sec)
+
+
+
+
+
+
+
+[root@H57 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.57
+192.168.2.57
+201.1.1.57
+201.1.2.57
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H57 ~]# ll maxscale-2.1.2-1.rhel.7.x86_64.rpm  Mycat-server-1.*
+-rw-r--r--. 1 root root 17333732 10月 27 09:02 maxscale-2.1.2-1.rhel.7.x86_64.rpm
+-rw-r--r--. 1 root root  7663894 10月 27 11:16 Mycat-server-1.4-beta-20150604171601-linux.tar.gz
+-rw-r--r--. 1 root root 15662280 10月 27 11:16 Mycat-server-1.6-RELEASE-20161028204710-linux.tar.gz
+[root@H57 ~]# mysql -uroot -p1234
+
+mysql> show databases;show slave status;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set (0.00 sec)
+
+Empty set (0.00 sec)
+
+mysql> 
+[root@H57 ~]# rpm  -qa |grep  -i jdk
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64
+copy-jdk-configs-2.2-3.el7.noarch
+[root@H57 ~]# java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+[root@H57 ~]# tar -xzvf Mycat-server-1.4-beta-20150604171601-linux.tar.gz 
+.......................
+mycat/bin/mycat
+.................................
+mycat/catlet/
+[root@H57 ~]# ls mycat/
+bin  catlet  conf  lib  logs  version.txt
+[root@H57 ~]# mv  mycat/ /usr/local/
+[root@H57 ~]# ls /usr/local/mycat/
+bin  catlet  conf  lib  logs  version.txt
+[root@H57 ~]# cd /usr/local/mycat/;ls bin/
+mycat  rehash.sh  startup_nowrap.sh  wrapper-linux-ppc-64  wrapper-linux-x86-32  wrapper-linux-x86-64
+[root@H57 mycat]# ls
+bin  catlet  conf  lib  logs  version.txt
+[root@H57 mycat]# ls conf/
+autopartition-long.txt   log4j.xml                router.xml  sequence_conf.properties       server.xml
+cacheservice.properties  partition-hash-int.txt   rule.xml    sequence_db_conf.properties    wrapper.conf
+ehcache.xml              partition-range-mod.txt  schema.xml  sequence_time_conf.properties
+
+[root@H57 mycat]# head -n 2 conf/server.xml 
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- - - Licensed under the Apache License, Version 2.0 (the "License"); 
+
+[root@H57 mycat]# head -n 2 conf/schema.xml  
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+
+[root@H57 mycat]# head -n 2 conf/rule.xml 
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- - - Licensed under the Apache License, Version 2.0 (the "License"); 
+[root@H57 mycat]# vim conf/rule.xml
+[root@H57 mycat]# vim  conf/schema.xml 
+[root@H57 mycat]# vim  conf/server.xml
+[root@H57 mycat]# ls lib/
+druid-1.0.14.jar         leveldb-api-0.7.jar         log4j-1.2.17.jar              slf4j-api-1.7.12.jar
+ehcache-core-2.6.11.jar  libwrapper-linux-ppc-64.so  mapdb-1.0.7.jar               slf4j-log4j12-1.7.12.jar
+guava-18.0.jar           libwrapper-linux-x86-32.so  mongo-java-driver-2.11.4.jar  univocity-parsers-1.5.4.jar
+leveldb-0.7.jar          libwrapper-linux-x86-64.so  Mycat-server-1.4-beta.jar     wrapper.jar
+[root@H57 mycat]# ls logs/
+[root@H57 mycat]# cat version.txt 
+BuildTime  2015-06-04 09:15:58
+GitVersion   8f196f8ce23843e62330fddbed2c39baea187d1d
+MavenVersion 1.4-beta
+GitUrl https://github.com/MyCATApache/Mycat-Server.git
+MyCatSite http://www.mycat.org.cn
+QQGroup 106088787
+
+[root@H57 mycat]# ls /usr/local/mycat/conf/server.xml 
+/usr/local/mycat/conf/server.xml
+[root@H57 mycat]# vim /usr/local/mycat/conf/server.xml
+ 33         </system>
+ 34         <user name="admin">
+ 35                 <property name="password">1234</property>
+ 36                 <property name="schemas">TESTDB</property> #注意名字 <schema name="TESTDB"##
+ 37         </user>
+ 38 
+ 39         <user name="user">
+ 40                 <property name="password">user</property>
+ 41                 <property name="schemas">TESTDB</property> ##name="schemas">TESTDB##
+ 42                 <property name="readOnly">true</property>
+ 43         </user>
+[root@H57 mycat]# cp  /usr/local/mycat/conf/schema.xml  /root/
+[root@H57 mycat]# ls /root/schema.xml 
+/root/schema.xml
+[root@H57 mycat]# vim  /usr/local/mycat/conf/schema.xml
+
+                   ##name="schemas">TESTDB 注意名字name= ##
+  5         <schema name="TESTDB" checkSQLschema="false" sqlMaxLimit="100">
+  7                 <table name="travelrecord" dataNode="dn1,dn2" rule="auto-sharding-long" />
+
+ 11                 <table name="company" primaryKey="ID" type="global" dataNode="dn1,dn2" />
+ 12                 <table name="goods" primaryKey="ID" type="global" dataNode="dn1,dn2" />
+ 13 
+ 14                 <!-- random sharding using mod sharind rule -->
+ 15                 <table name="hotnews" primaryKey="ID" dataNode="dn1,dn2"
+ 16                         rule="mod-long" />
+ 17                 <!-- <table name="dual" primaryKey="ID" dataNode="dnx,dnoracle2" type="global" 
+ 18                         needAddLimit="false"/> <table name="worker" primaryKey="ID" dataNode="jdbc_dn1,jdbc_dn2,jdbc_dn3" 
+ 19                         rule="mod-long" /> -->
+ 20                 <table name="employee" primaryKey="ID" dataNode="dn1,dn2"
+ 21                         rule="sharding-by-intfile" />
+ 22                 <table name="customer" primaryKey="ID" dataNode="dn1,dn2"
+ 23                         rule="sharding-by-intfile">
+
+ 37         <dataNode name="dn1" dataHost="localhost1" database="db1" />  #对应 192.168.4.54 database  db1
+ 38         <dataNode name="dn2" dataHost="localhost1" database="db2" />  #对应 192.168.4.55 database  db2
+ 39 <!--    <dataNode name="dn3" dataHost="localhost1" database="db3" /> -->
+
+ 43         <dataHost name="localhost1" maxCon="1000" minCon="10" balance="0"
+ 44                 writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThreshold="100">
+ 45                 <heartbeat>select user()</heartbeat>
+ 46                 <!-- can have multi write hosts --> #修改主机ip地址192.168.4.54
+ 47                 <writeHost host="hostM1" url="192.168.4.54:3306" user="root"
+ 48                         password="1234">
+ 49                         <!-- can have multi read hosts -->
+ 50 
+ 51                 </writeHost>
+ 52 <!--            <writeHost host="hostS1" url="localhost:3316" user="root"
+ 53                         password="123456" /> -->
+ 54                 <!-- <writeHost host="hostM2" url="localhost:3316" user="root" password="123456"/> -->
+ 55         </dataHost>
+
+ 56         <dataHost name="localhost2" maxCon="1000" minCon="10" balance="0"
+ 57                 writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThreshold="100">
+ 58                 <heartbeat>select user()</heartbeat>
+ 59                 <!-- can have multi write hosts -->  #修改主机ip地址192.168.4.55
+ 60                 <writeHost host="hostM2" url="192.168.4.55:3306" user="root"
+ 61                         password="1234">
+ 62                         <!-- can have multi read hosts -->
+ 63 
+ 64                 </writeHost>
+ 65        </dataHost>
+
+[root@H57 mycat]# /usr/local/mycat/bin/mycat  start
+Starting Mycat-server...
+[root@H57 mycat]# ls /usr/local/mycat/logs/
+mycat.log  mycat.pid  wrapper.log
+
+[root@H57 mycat]# vim /usr/local/mycat/logs/wrapper.log 
+[root@H57 mycat]# tail -2 /usr/local/mycat/logs/wrapper.log
+INFO   | jvm 1    | 2018/10/27 14:47:07 | 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+INFO   | jvm 1    | 2018/10/27 14:47:07 | 	at java.lang.Thread.run(Thread.java:748)
+
+[root@H57 mycat]# netstat -anpult |grep  8066
+tcp6       0      0 :::8066                 :::*                    LISTEN      5433/java 
+
+[root@H57 mycat]# /usr/local/mycat/bin/mycat  stop
+Stopping Mycat-server...
+Stopped Mycat-server.
+[root@H57 mycat]# netstat -anpult |grep  8066
+
+[root@H57 mycat]# /usr/local/mycat/bin/mycat  start
+Starting Mycat-server...
+[root@H57 mycat]# netstat -anpult |grep  8066
+tcp6       0      0 :::8066                 :::*                    LISTEN      5690/java           
+[root@H57 mycat]# ps -C java
+  PID TTY          TIME CMD
+ 5690 ?        00:00:04 java
+
+[root@H57 mycat]# ls conf/
+autopartition-long.txt   log4j.xml                rule.xml                     sequence_time_conf.properties
+cacheservice.properties  partition-hash-int.txt   schema.xml                   server.xml
+dnindex.properties       partition-range-mod.txt  sequence_conf.properties     wrapper.conf
+ehcache.xml              router.xml               sequence_db_conf.properties
+
+[root@H57 mycat]# vim conf/autopartition-long.txt 
+[root@H57 mycat]# cat conf/autopartition-long.txt
+# range start-end ,data node index
+# K=1000,M=10000.
+0-500M=0
+500M-1000M=1
+1000M-1500M=2[root@H57 mycat]# 
+[root@H57 mycat]# cat conf/partition-hash-int.txt
+10000=0
+10010=1[root@H57 mycat]# 
+[root@H57 mycat]# cat /usr/local/mycat/conf/partition-hash-int.txt && echo
+10000=0
+10010=1
+[root@H57 mycat]#  
+
+
+
+
+
+
+
+
+
+
+
+
+
+ create table employee(
+ id int(2) primary key auto_increment,
+ name char(10),
+ age tinyint(2) default 18,
+ sex enum('boy','girl') default 'boy',
+ sharding_id int(2));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

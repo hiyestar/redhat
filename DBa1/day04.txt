@@ -1,0 +1,277 @@
+一 多表查询
+1.1 复制表（备份表  快速建表）
+create  database db4;
+use db4;
+create table  t1  select  * from db3.user;
+create table  t2  select  * from db3.user where 1=2;
+
+1.2 多表查询
+
+方法1
+
+mysql> create table  db4.t4
+    -> select name,uid,shell from db3.user limit 3;
+
+mysql> create table db4.t5  
+select name,uid,comment,homedir from db3.user 
+limit 5;
+
+select  * from db4.t4;
+select  * from db4.t5;
+
+mysql> select t5.name,t4.name from t5,t4
+    -> where
+    -> t4.name =t5.name and t4.uid=t5.uid;
+
+mysql> select t5.*,t4.shell from t5,t4
+    -> where
+    -> t4.name =t5.name and t4.uid=t5.uid;
+
+方法2
+
+update  db3.user  set age=88 where id<=10;
+
+mysql>  select  name ,age from db3.user
+    -> where age < (select avg(age) from db3.user);
+
+mysql> select  name ,age from db3.user 
+where age > (select avg(age) from db3.user);
+
+mysql> select name from db3.user 
+where name not in (select name from db4.t4);
+
+mysql> select name from db3.user 
+where name  in (select name from db4.t4);
+++++++++++++++++++++++++++++++++++++++++++++
+连接查询
+mysql> create table  t6 
+select name,uid,shell from db3.user limit 4;
+
+mysql> create table  t7 
+select name,uid,shell from db3.user limit 6;
+
+select  * from  t6;
+select  * from  t7;
+
+方法3  左连接 left  join .... on 
+mysql> select  *  from  
+t6 left join t7 
+on 
+t6.uid = t7.uid;
+
+方法4  右连接 right join .... on
+
+mysql>select  t6.name,t6.uid,t7.name,t7.uid 
+from t6 right join  t7  on  t7.uid = t6.uid;
+
+mysql> select  *  from 
+t6 right join  t7  on  t7.uid = t6.uid; 
+
+
+二 MySQL管理工具
+在数据库服务器50主机上安装图形管理工具phpmyadmin。
+管理数据。
+   67  yum -y  install  httpd  php php-mysql
+   68  systemctl  start httpd 
+   69  systemctl  enable httpd 
+   70  tar -zxvf phpMyAdmin-2.11.11-all-languages.tar.gz  
+       -C /var/www/html/
+   71  cd /var/www/html/
+   75  mv phpMyAdmin-2.11.11-all-languages/ phpmydamin
+
+   77  chown  -R apache:apache phpmydamin/
+   78  cd phpmydamin/
+ 
+   80  cp config.sample.inc.php  config.inc.php 
+   81  vim config.inc.php 
+17 $cfg['blowfish_secret'] = 'plj123';
+31 $cfg['Servers'][$i]['host'] = 'localhost';
+:wq
+在真机访问50  http://192.168.4.50/phpmyadmin
+              用户名root
+              密码  123456
+三 用户授权
+3.1 修改数据库管理员本机登录密码为654321  
+~]# mysqladmin  -uroot -p password "654321"
+Enter password: 输入当前登录密码
+
+使用新密码登录
+]# mysql -uroot  -p654321
+mysql>
+
+3.2 恢复数据库管理员本机登录密码
+]#vim /etc/my.cnf
+#validate_password_length=6
+#validate_password_policy=0 
+skip_grant_tables
+:wq
+
+]# systemctl  restart mysqld
+ 
+]# mysql
+mysql>select  host,user,authentication_string from mysql.user;
+
+mysql> update mysql.user
+    -> set
+    -> authentication_string=password("123456")
+    -> where
+    -> host="localhost" and user="root";
+
+mysql> flush  privileges;
+mysql> quit
+
+]#vim /etc/my.cnf
+validate_password_length=6
+validate_password_policy=0 
+#skip_grant_tables
+:wq
+
+]# systemctl  restart mysqld
+]# mysql  -uroot -p123456
+mysql> 
++++++++++++++++++++++++++++++++++++++++++++++++++
+3.2用户权限
+3.2.1 权限存储位置：授权库（存储在mysql库里）
+mysql> desc mysql.user; 用户
+mysql> desc mysql.db;库
+mysql> desc mysql.tables_priv;表
+mysql> desc mysql.clomuns_priv; 字段
+
+3.2.2用户授权
+mysql> grant all  on *.* 
+    -> to
+    -> mydba@"%"
+    -> identified by "123456"
+    -> with grant option;
+
+查看权限（查看表记录方式）
+select  *  from  mysql.user where user="mydba"\G;
+select host,user from  mysql.user;
+
+show  grants for mydba@"%"; （sql命令查看）
+
+在任意客户端使用授权用户连接50主机，并验证授权权限
+]# yum -y  install mariadb
+[root@room9pc17 ~]# which  mysql
+/bin/mysql
+
+]# mysql  -h192.168.4.50 -umydba  -p123456
+MySQL [(none)]> select  user();
+MySQL [(none)]> select @@hostname;
+MySQL [(none)]> show grants;
+
+授权用户连接后修改登录密码，并使用修改的密码登录
+]# mysql  -h192.168.4.50 -umydba  -p123456
+MySQL [(none)]> set password = password("123abc");
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+MySQL [(none)]>quit；
+ 
+[root@room9pc17 ~]# mysql  -h192.168.4.50 -umydba  -p123abc
+MySQL [(none)]>
+
+数据库管理员，修改授权用户的连接密码
+mysql> set password  for  mydba@"%"=password("123456");
+
+在客户端，使用修改后的密码连接50数据库服务器
+[root@room9pc17 ~]# mysql  -h192.168.4.50 -umydba  -p123456
+MySQL [(none)]>
+
+测试mydba用户授权权限：创建新库 新表 对表记录的增删改查权限
+                       及授权权限
+
+MySQL [db4]> grant all on gamedb.* to test1@"localhost"
+    -> identified by "123456";
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+
+验证有授权权限添加的连接用户test1 :在数据库服务器50本机 ，
+是否有test1用户
+]# mysql  -uroot -p123456
+mysql> select host,user from mysql.user;
+mysql> show grants for test1@"localhost";
+mysql> select  * from  mysql.db where db="gamedb"\G;
+mysql> quit;
+
+在数据库服务器50本机使用test1用户登录，测试对gamedb库的权限：
+创建库表 记录增删改查 删除库表 都可以。
+]# mysql  -utest1 -p123456
+mysql> show databases;
+mysql> create database  gamedb;
+++++++++++++++++++++++++++++++++
+revoke 权限撤销
+
+撤销mydba用户的"授权权限"。
+client50 ~]# mysql -uroot -p123456
+mysql> revoke grant option on *.* from  mydba@"%";
+
+撤销mydba用户的对"库和表的删除权限"（delete, drop）。
+mysql> revoke delete,drop on  *.* from mydba@"%";
+
+撤销mydba用户的"所有权限"
+mysql> revoke all on  *.*  from  mydba@"%";
+
+删除授权用户"mydba"
+mysql> drop user  mydba@"%";
+
+
+扩展知识1：
+在50主机添加数据库连接用户 ：要求如下
+用户名 admin
+客户端地址 网络中的所有主机
+权限 只对db3库有完全权限且有授权权限
+登录密码 123456
+
+mysql> grant all on  db3.* to admin@"%" identified by "123456"
+with grant option;
+
+mysql> grant insert on mysql.* to admin@"%";
+
+mysql> show  grants for admin@"%";
+
+测试授权用户admin：
+在客户端使用admin用户连接数据服务器50 对库的访问权限及授权权限。
+
+测试授权权限：添加授权用户admin2  密码123456。
+                             权限和自己的权限一样。
+MySQL [(none)]> grant all on  db3.* to admin2@"%"  
+identified by "123456";
+
+扩展知识2：
+在50主机 授权如下：
+mysql>grant all  on  *.*  to  root@"192.168.4.254" 
+identified by "123456";
+
+
+执行如下撤销权限命令能否成功？
+不能成功：撤销权限时，库名的表示方式要和授权时一样。
+mysql>reovek  delete  on db44.* from  root@"192.168.4.254"；
+
+
+
+权限的关键字：
+SELECT,delete,drop, INSERT, UPDATE, CREATE, 
+RELOAD, SHUTDOWN, PROCESS, FILE, 
+REFERENCES, INDEX, ALTER, SHOW DATABASES, 
+SUPER, CREATE TEMPORARY TABLES, 
+LOCK TABLES, EXECUTE, 
+REPLICATION SLAVE, REPLICATION CLIENT, 
+CREATE VIEW, SHOW VIEW, CREATE ROUTINE, 
+ALTER ROUTINE, CREATE USER, EVENT, 
+TRIGGER, CREATE TABLESPACE 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

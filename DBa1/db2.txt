@@ -1,0 +1,1392 @@
+DB]# touch db{1..4}.txt
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+
+VM1(eth0:192.168.4.7    eth1:192.168.2.7  )
+VM2(eth0:192.168.4.252  eth1:192.168.2.252)
+VM3(eth0:192.168.4.207  eth1:192.168.2.207)
+VM4(eth0:192.168.4.208  eth1:192.168.2.208)
+##~~19700101   year年份处理默认 70~99==1970~1999  01~69==2001~2069
+[root@DB1 ~]# echo '2^3' >x.txt
+[root@DB1 ~]# bc < x.txt
+8
+[root@DB2 ~]# bc
+2^8
+256
+2^16
+6 5536
+2^15
+3 2768
+2^24
+1677 7216
+2^23
+838 8608
+2^31
+21 4748 3648
+2^32
+42 9496 7296
+2^64
+1844 67440737 09551616
+2^63
+922 33720368 54775808
+quit
+[root@DB2 ~]# 
+/**
+mysql> create table game.t1(name char,age tinyint,sex char);
+mysql> insert into game.t1 values('a',-128,"m"),
+    -> ('b',0,"g"),('c',127,'m');
+mysql> desc t1;
+| Field | Type       | Null | Key | Default | Extra |
+| name  | char(1)    | YES  |     | NULL    |       |
+| age   | tinyint(4) | YES  |     | NULL    |       |
+mysql> select * from game.t1;
+| name | age  | sex  |
+| a    | -128 | m    |
+| b    |    0 | g    |
+| c    |  127 | m    |
+mysql> create table tx(name char(255),age tinyint unsigned, sex varchar(6));
+mysql> desc tx;
+| Field | Type                | Null | Key | Default | Extra |
+| name  | char(255)           | YES  |     | NULL    |       |
+| age   | tinyint(3) unsigned | YES  |     | NULL    |       |
+| sex   | varchar(6)          | YES  |     | NULL    |       |
+***mysql这里varchar 和 char 都不支持中文 写入，原因：DEFAULT CHARSET=latin1 
+##> create table 表名(字段名 类型，字段名2 类型2) DEFAULT CHARSET=utf8;
+**这时候可以输入中文。
+mysql> insert into tx values('aaa',0,'A,B,CD'),('ccc',255,'xiha');
+mysql> select * from tx;
+| name | age  | sex    |
+| aaa  |    0 | A,B,CD |
+| ccc  |  255 | xiha   |
+mysql> create table studb.t1(name char,age1 int,sex char,
+    -> level smallint,age2 tinyint);
+mysql> desc t1;
+| Field | Type        | Null | Key | Default | Extra |
+| name  | char(1)     | YES  |     | NULL    |       |
+| age1  | int(11)     | YES  |     | NULL    |       |
+| sex   | char(1)     | YES  |     | NULL    |       |
+| level | smallint(6) | YES  |     | NULL    |       |
+| age2  | tinyint(4)  | YES  |     | NULL    |       |
+
+mysql> insert into t1 values('n',-2147483648,'g',-32768,-128),
+     > ('m',2147483647,'g',32767,127);
+mysql> select * from t1;
+| name | age1        | sex  | level  | age2 |
+| n    | -2147483648 | g    | -32768 | -128 |
+| m    |  2147483647 | g    |  32767 |  127 |
+**/
+tinyint   1Byte=[8bit =2^8 =256] -128 ~0+127 默认 tinyint(4) 
+取消符号tinyint unsigned 0~255 微小整数tinyint(3)
+
+smallint  2Byte=[16b=2^16=65536] -32768~32767  unsigned 0~65535 小整数
+mediumint 3B=[24b=2^24] -8388608~838 8607  unsigned 0~1677 7215 中整数
+
+int  4B=[32b=2^32] -2^31 ~ 2^31-1  默认int(11)
+取消符号 int unsigned  0 ~ 42 9496 7295大整数int(10)
+
+bigint    8B=[64bit=2^64] -2^63 ~ 2^63-1 unsigned 0 ~ 2^64-1 极其大整数
+float     4B=[2^32bit]          单精度浮点数
+double    8B=[2^64bit]          双精度浮点数
+decimal   decimal(m,d) m有效位数，d小数位数，m位数>d位数， 占用M+2字节
+unsigned  使用无符号存储范围
+/**
+datetime  占用8个字节 1000-01-01 00:00:00.000000
+                      ～ 9999-12-31 23:59:59.999999
+mysql> insert into db1.t5 values
+    -> ("peri",20180909,20181012101030,1992,093000);
+
+datetime 20181012101030  2018-10-12 10:10:30 
+date     20180909        2018-09-09 
+time     093000                     09:30:00
+
+timestamp 占用4个字节 1970-01-01 00:00:00.000000
+                      ～  2038-01-19 03:14:07.999999
+date    占用4个字节 1000-01-01  ～ 9999-12-31
+year    占用1个字节  1901~2155
+time    占用3个字节 HH:MM:SS
+*一个汉字占用2或3个字节，一个英文字母占用一个字节
+如果数据表只有一个varchar字段且该字段DEFAULT NULL，
+那么该varchar字段的最大长度为65532个字节，即65535-2-1=65532 byte。
+
+字符类型若为gbk，每个字符最多占2个字节，最大长度不能超过32766;
+字符类型若为utf8，每个字符最多占3个字节，最大长度不能超过21845。
+DEFAULT CHARSET=latin1 //CHARSET=utf8 //CHARSET=gbk
+##> create table 表名(字段名 类型，字段名2 类型2) DEFAULT CHARSET=utf8;
+
+*char(字符数），最大长度255字符（英文字母），127个汉字
+mysql> create table db1.t3(name char(256),homeaddr varchar(65529)); 
+ERROR 1074 (42000): Column length too big for column 'name' (max = 255); 
+use BLOB or TEXT instead
+*变长varchar(字符数)，字符数超出范围不能写入。
+mysql> create table db1.t3(name char(3),homeaddr varchar(65529));
+Query OK, 
+*大文本类型：text/blob
+*字符数大于65535时，使用，影响数据库读写速度
+**/
+
+一、数字类型
+
+类型
+范围
+说明
+ 
+Char(N) [binary]	N=1~255 个字元
+binary ：分辨大小写	固定长度	std_name cahr(32) not null
+VarChar(N) [binary]	N=1~255 个字元
+binary ：分辨大小写	可变长度	std_address varchar(256)
+TinyBlob	最大长度255个字元(2^8-1)	
+Blob (Binary large objects)储存二进位资料，且有分大小写
+
+memo text not null
+TinyText	最大长度255个字元(2^8-1)
+Blob	最大长度65535个字元(2^16-1)
+Text	最大长度65535个字元(2^16-1)
+MediumBlob	最大长度 16777215 个字元(2^24-1)
+MediumText	最大长度 16777215 个字元(2^24-1)
+LongBlob	最大长度4294967295个字元 (2^32-1)
+LongText	最大长度4294967295个字元 (2^32-1)
+Enum	集合最大数目为65535	列举(Enumeration)，Enum单选、Set复选	sex enum(1,0)
+habby set(‘玩电玩’,'睡觉’,'看电影’,'听音乐’)
+Set	集合最大数目为64
+辨別Null与Not Null ：Null为允许储存空值(Null)
+
+二、数值
+类型                   范围     说明     例如
+TinyInt[M]    -128~127
+           UNSIGNED ： 0~255	 num tinyint unsigned
+SmallInt[M]   -32768~32767
+           UNSIGNED ：0~ 65535	 	 
+MediumInt[M]    -8388608~8388607
+           UNSIGNED ：0~16777215	 	 
+Int[M]         -2^31~2^31-1
+           UNSIGNED ： 0~2^32	 	 
+BigInt[M]      -2^63~2^63-1
+           UNSIGNED ： 0~2^64	 	 
+Float [(M,D)]	-3.4E+38~3.4E+38( 约 )
+注： M 为长度， D 为小数,Float 4 bytes,Double 8 bytes	 
+Double [(M,D)]	-1.79E+308~1.79E+308( 约 )
+Decimal [(M,D)]	 
+辨別ZeroFill：当宣告关键字ZeroFill为自动填满0，如 000021
+mysql> create table int_12(id int(12) zerofill);
+mysql> desc int_12;
+| Field | Type                      | Null | Key | Default | Extra |
+| id    | int(12) unsigned zerofill | YES  |     | NULL    |       |
+
+mysql> insert into int_12(id) values(123456);
+mysql> insert into int_12(id) values(4294967296);
+ERROR 1264 (22003): Out of range value for column 'id' at row 1
+mysql> insert into int_12(id) values(4294967295);
+Query OK
+mysql> select * from int_12;
+| id           |
+| 000000123456 |
+| 004294967295 |
+三、日期时间
+类型    范围    说明
+Date	日期   (yyyy-mm-dd)	 
+Time	时间   (hh:mm:ss)	 
+DateTime	日期与时间組合(yyyy-mm-dd hh:mm:ss)	 
+TimeStamp	yyyymmddhhmmss	 
+Year	年份    yyyy
+/**
+mysql> delete from db1.t1 where age=24 or age=99;
+mysql> delete from db1.t1 where age=-1 and pay=33200.88;
+*查看   select   *  from   库名.表名   ; 
+*插入   insert    into   库名.表名  values(字段值列表);
+*删除   delete  from   库名.表名;
+*修改  update  库名.表名  set   字段名=值 where  条件；
+mysql> select * from db1.t1 where age=-1;
+| age  |  pay    |
+|   -1    |  22200.33  |
+mysql> update db1.t1 set pay=-1122.00 where age=127;
+
+*/
+[root@DB1 ~]# nmcli connection show 
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    e66959f2-707d-4f33-8fb4-0a1efff34199  802-3-ethernet  eth1   
+virbr0  fb7f86bd-e427-472a-ac55-0829b0cf5fc9  bridge          virbr0 
+[root@DB1 ~]#  route -n |awk 'NR<6{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+[root@DB1 ~]# ifconfig |grep 'inet ' |head -4
+        inet 192.168.4.51  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.51  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@DB1 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[rhel7-2]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+[root@DB1 ~]# yum clean all >/dev/null;yum repolist |tail -4;
+查看   select   *  from   库名.表名   ; 
+插入   insert    into   库名.表名  values(字段值列表);
+删除   delete  from   库名.表名;
+修改  update  库名.表名  set   字段名=值 where  条件；
+mysql> drop table game.t1;select database();
+mysql> drop database game;show databases;
+mysql> create table perdb.perinfo(name char(8),age tinyint unsigned,
+    -> pay float(8,2),birthday date,meetting datetime,
+    -> start year,listen time,
+    -> sex enum("boy","girl","no"),
+    -> hobby set("eat","sleep","music","peri"));
+Query OK, 0 rows affected (0.31 sec)
+
+mysql> desc perdb.perinfo;
+| Field    | Type                              | Null | Key | Default | Extra |
++----------+-----------------------------------+------+-----+---------+-------+
+| name     | char(8)                           | YES  |     | NULL    |       |
+| age      | tinyint(3) unsigned               | YES  |     | NULL    |       |
+| pay      | float(8,2)                        | YES  |     | NULL    |       |
+| birthday | date                              | YES  |     | NULL    |       |
+| meetting | datetime                          | YES  |     | NULL    |       |
+| start    | year(4)                           | YES  |     | NULL    |       |
+| listen   | time                              | YES  |     | NULL    |       |
+| sex      | enum('boy','girl','no')           | YES  |     | NULL    |       |
+| hobby    | set('eat','sleep','music','peri') | YES  |     | NULL    |       |
+
+ date       2018-09-06
+ datetime   2018-09-06 20:30:10
+ year(4)   1990
+ time      08:30:55
+mysql> insert into perdb.perinfo values("lily",255,108888.66,19900612,20021211083030,2002,092920,"girl","sleep,music,peri");
+Query OK, 1 row affected (0.02 sec)
+
+mysql> select * from perdb.perinfo;
++------+------+-----------+------------+---------------------+-------+----------+------+------------------+
+| name | age  | pay       | birthday   | meetting            | start | listen   | sex  | hobby            |
++------+------+-----------+------------+---------------------+-------+----------+------+------------------+
+| lily |  255 | 108888.66 | 1990-06-12 | 2002-12-11 08:30:30 |  2002 | 09:29:20 | girl | sleep,music,peri |
++------+------+-----------+------------+---------------------+-------+----------+------+------------------+
+mysql> select curtime(); 获取当前系统的时刻时分秒
++-----------+
+| curtime() |
++-----------+
+| 09:49:10  |
+
+mysql> select curdate();获取当前系统的日期年月日
++------------+
+| curdate()  |
++------------+
+| 2018-09-07 |
+
+mysql> select now();获取当前系统的日期年月日时刻时分秒
++---------------------+
+| now()               |
++---------------------+
+| 2018-09-07 09:34:54 |
+
+mysql> select sleep(3); 休眠3秒
++----------+
+| sleep(3) |
++----------+
+|        0 |
++----------+
+1 row in set (3.00 sec)
+1、sleep的精度是秒
+2、usleep的精度是微秒，不精确
+3、select的精度是微秒，精确
+select(0, NULL,NULL, NULL, &delay);
+
+mysql> select day(now());
+| day(now()) |
++------------+
+|          7 |
+mysql> select month(now());
+| month(now()) |
++--------------+
+|            9 |
+
+mysql> show tables;
+| Tables_in_db1 |
++---------------+
+| t1            |
+| t2            |
+| t3            |
+| t4            |
+| t5            |
+| t6            |
+mysql> desc t5;
+| name     | char(10) | YES  |     | NULL    |       |
+| birthday | date     | YES  |     | NULL    |       |
+| meetting | datetime | YES  |     | NULL    |       |
+| start    | year(4)  | YES  |     | NULL    |       |
+| sktime   | time     | YES  |     | NULL    |       |
+
+mysql> insert into db1.t5 values("lucy",curdate(),now(),1990,curtime());
+mysql> insert into db1.t5 values("ab",curdate(),now(),year(20191120),curtime());
+
+mysql> insert into db1.t5 values('lucy',curdate(),now(),1990,curtime()),
+    ->  ('ab',curdate(),now(),year(20191120),curtime());
+
+mysql> select * from db1.t5;
++--------+------------+---------------------+-------+----------+
+| name   | birthday   | meetting            | start | sktime   |
++--------+------------+---------------------+-------+----------+
+| joehan | 2018-09-06 | 2018-09-06 20:30:10 |  1990 | 08:30:55 |
+| lucy   | 2018-09-07 | 2018-09-07 09:42:08 |  1990 | 09:42:08 |
+| ab     | 2018-09-07 | 2018-09-07 09:43:22 |  2019 | 09:43:22 |
+
+mysql> desc t24;
+| Field    | Type      | Null | Key | Default           | Extra                       |
+| party    | datetime  | YES  |     | NULL              |                             |
+| meetting | timestamp | NO   |     | CURRENT_TIMESTAMP | on update CURRENT_TIMESTAMP |
+
+/***timestamp有时间范围的限制，目前1970年之前月2037年之后的时间都不能使用timestamp.
+而dateTime 支持的范围是'1000-01-01 00:00:00'到'9999-12-31 23:59:59' **/
+
+TIMESTAMP列用于INSERT或UPDATE操作时记录日期和时间。
+如果你不分配一个值，
+表中的第一个TIMESTAMP列自动设置为最近操作的日期和时间。
+也可以通过分配一个NULL值，将TIMESTAMP列设置为当前的日期和时间。
+TIMESTAMP值返回后显示为'YYYY-MM-DD HH:MM:SS'格式的字符串，
+显示宽度固定为19个字符。空格也是一个字符。
+如果想要获得数字值，应在TIMESTAMP 列添加+0
+/**insert into 表名(字段列名)  values(now());
+             字段类型 datetime  默认赋值 NULL 
+             字段类型 timestamp 默认赋值当前时间   **/
+mysql> create table t24(party datetime, meetting timestamp);
+
+mysql> insert into t24(party)    values(20191120083000); 
+     > insert into t24(meetting) values(20151120083000);
+
+mysql> insert into db1.t24 values(now(),now());
+mysql> select * from t24;
+| party         |     meetting        |
++--------------------------+-------------------------------------+
+| 2019-11-20 08:30:00 |  2018-09-07 10:08:56      |
+| NULL          | 2015-11-20 08:30:00 |
+| 2018-09-07 10:11:35 |  2018-09-07 10:11:35       |
+/**insert into 表名(字段列名)  values(now());
+              字段类型 datetime  默认赋值 NULL 
+             字段类型 timestamp 默认赋值当前时间   **/
+ ///Extra 额外设置
+mysql> use mysql;
+mysql> desc mysql.user;
+| Field                  | Type                              | Null | Key | Default  | Extra |
++------------------------------------------+---------------------------------------------------------------+----------+---------+-----------------+------+
+| Host                   | char(60)                          | NO   | PRI |          |    |
+| User                   | char(32)                          | NO   | PRI |          |    |
+| Create_tablespace_priv | enum('N','Y')                     | NO   |     | N        |    |
+| ssl_type               | enum('','ANY','X509','SPECIFIED') | NO   |     |          |    |
+| ssl_cipher             | blob                              | NO   |     | NULL     |    |
+| max_user_connections   | int(11) unsigned                  | NO   |     | 0                     |  |
+| plugin                 | char(64)                          | NO   |     | mysql_native_password |  |
+| authentication_string  | text                              | YES  |     | NULL                  |  |
+| password_expired       | enum('N','Y')                     | NO   |     | N                     |  |
+| password_last_changed  | timestamp                         | YES  |     | NULL                  |  |
+| password_lifetime      | smallint(5) unsigned              | YES  |     | NULL                  |  |
+| account_locked         | enum('N','Y')                     | NO   |     | N                     |  |
+45 rows in set (0.01 sec)
+mysql> use db1;
+mysql> select database();show tables;
+
+mysql> create table t25(name char(3) not null,age  tinyint(2) default 21,
+    -> sex enum("m","w") not null default "m");
+Query OK, 0 rows affected (0.15 sec)
+
+mysql> desc t25;
++-------+---------------+------+-----+---------+-------+
+| Field | Type          | Null | Key | Default | Extra |
++-------+---------------+------+-----+---------+-------+
+| name  | char(3)       | NO   |     | NULL    |       |
+| age   | tinyint(2)    | YES  |     | 21      |       |
+| sex   | enum('m','w') | NO   |     | m       |       |
+
+mysql> insert into t25(name) values('bob');
+Query OK, 
+mysql> insert into t25 values('tom',18,'w');
+
+mysql> insert into t25 values(null,null,null);
+ERROR 1048 (23000): Column 'name' cannot be null
+mysql> insert into t25 values('per',null,'w');
+Query OK, 
+mysql> create table t26(name char(4) not null,
+    -> age tinyint(2)  default 21,sex enum("m","w") not null default "m");
+
+mysql> insert into t26 values("null",null,"m");
+mysql> insert into t26 values("",null,"m");
+
+mysql> insert into t26 values("null",null,"m"),
+    -> ("",null,'m');
+Query OK,
+
+mysql> insert into t26 values(null,null,"m");
+ERROR 1048 (23000): Column 'name' cannot be null
+mysql> desc t26;
+| Field | Type          | Null | Key | Default | Extra |
++-------+---------------+------+-----+---------+-------+
+| name  | char(4)       | NO   |     | NULL    |       |
+| age   | tinyint(2)    | YES  |     | 21      |       |
+| sex   | enum('m','w') | NO   |     | m       |       |
+
+mysql> select * from t26;
+
+| name | age  | sex |
++------+------+-----+
+| null | NULL | m   |
+|      | NULL | m   |
+     /**修表结构命令的格式?
+/* alter table 表名  执行动作
+  增加add 列名email 字段类型varchar(50) dafault '默认值' ，
+  增加add 列名tel 字段类型 char(11) ; **/
+mysql> alter table db1.t6 add email varchar(50) default "stu@tedu.cn",
+    -> add tel char(11);
+mysql> desc db1.t6;
+| Field | Type                           | Null | Key | Default     | Extra |
++-------+--------------------------------+------+-----+-------------+-------+
+| name  | char(5)                        | YES  |     | NULL        |       |
+| sex   | enum('boy','girl','no')        | YES  |     | NULL        |       |
+| likes | set('eat','sleep','game','it') | YES  |     | NULL        |       |
+| email | varchar(50)                    | YES  |     | stu@tedu.cn |       |
+| tel   | char(11)                       | YES  |     | NULL        |       |
+
+mysql> select * from db1.t6;
++------+------+--------------+-------------+------+
+| name | sex  | likes        | email       | tel  |
++------+------+--------------+-------------+------+
+| bob  | boy  | eat,sleep,it | stu@tedu.cn | NULL |
+          /**修表结构命令的格式?
+        /* alter table 表名  执行动作
+                 增加add  列名  字段类型   dafault '默认值'  插入位置first 字段列名; **/
+mysql> alter table db1.t6  add class char(7) default "nsd1806" first,
+    -> add qq varchar(11) after name;
+mysql> desc db1.t6;
+| Field | Type                           | Null | Key | Default     | Extra |
++-------+--------------------------------+------+-----+-------------+-------+
+| class | char(7)                        | YES  |     | nsd1806     |       |
+| name  | char(5)                        | YES  |     | NULL        |       |
+| qq    | varchar(11)                    | YES  |     | NULL        |       |
+| sex   | enum('boy','girl','no')        | YES  |     | NULL        |       |
+| likes | set('eat','sleep','game','it') | YES  |     | NULL        |       |
+| email | varchar(50)                    | YES  |     | stu@tedu.cn |       |
+| tel   | char(11)                       | YES  |     | NULL        |       |
+
+mysql> alter table t6 modify name varchar(10); 修改列属性(字段类型)
+          /**修表结构命令的格式?
+/* alter table 表名  执行动作
+ 修改modify  列名  字段类型  是否允许空值not null
+ dafault '默认值'  插入位置after 字段列名 ; **/
+
+mysql> alter table t6 modify sex enum('boy','girl','no') not null
+    -> default "no" after name;desc db1.t6;
+
+| Field | Type                           | Null | Key | Default     | Extra |
++-------+--------------------------------+------+-----+-------------+-------+
+| class | char(7)                        | YES  |     | nsd1806     |       |
+| name  | varchar(10)                    | YES  |     | NULL        |       |
+| sex   | enum('boy','girl','no')        | NO   |     | no          |       |
+| qq    | varchar(11)                    | YES  |     | NULL        |       |
+| likes | set('eat','sleep','game','it') | YES  |     | NULL        |       |
+| email | varchar(50)                    | YES  |     | stu@tedu.cn |       |
+| tel   | char(11)                       | YES  |     | NULL        |       |
+mysql> select * from db1.t6;
+| class   | name | sex | qq   | likes        | email       | tel  |
++---------+------+-----+------+--------------+-------------+------+
+| nsd1806 | bob  | boy | NULL | eat,sleep,it | stu@tedu.cn | NULL |
+
+          /**修表结构命令的格式?
+ /*  alter table 表名  执行动作
+    改变change  旧列名  换成新列名 字段类型  【是否允许空值not null】
+   dafault '默认值'  【插入位置after 字段列名 】; **/
+mysql> alter table t6
+    -> change email mail varchar(50) default 'stu@tedu.cn';
+
+mysql> desc db1.t6;
+| Field | Type                           | Null | Key | Default     | Extra |
++-------+--------------------------------+------+-----+-------------+-------+
+| class | char(7)                        | YES  |     | nsd1806     |       |
+| name  | varchar(10)                    | YES  |     | NULL        |       |
+| sex   | enum('boy','girl','no')        | NO   |     | no          |       |
+| qq    | varchar(11)                    | YES  |     | NULL        |       |
+| likes | set('eat','sleep','game','it') | YES  |     | NULL        |       |
+| mail  | varchar(50)                    | YES  |     | stu@tedu.cn |       |
+| tel   | char(11)                       | YES  |     | NULL        |       |
+
+[root@DB1 ~]# !mysql
+mysql -uroot -pHiy53.es
+mysql> use db1;select database();show tables;
+
+          /**修表结构命令的格式?
+ /*  alter table 表名  执行动作
+        删除drop  旧列名 ; **/
+mysql> alter table db1.t6 drop mail;desc db1.t6;
+
+     /**修改表名
+ /*  alter  table  旧表名  rename 新表名； **/
+mysql> alter table  t6  rename  stuinfo; 
+
+mysql> show tables;select * from stuinfo;
+| Tables_in_db1 |
++---------------+
+| stuinfo       |
+| t1            |
+| t2            |
+| t24           |
+| t25           |
+| t26           |
+| t3            |
+| t4            |
+| t5            |
+| class   | name | sex | qq   | likes        | tel  |
++---------+------+-----+------+--------------+------+
+| nsd1806 | bob  | boy | NULL | eat,sleep,it | NULL |
+
+
+[root@DB1 ~]# mysql -hlocalhost -uroot  -pHiy53.es
+
+mysql> set global validate_password_policy=0; 只检查密码的长度
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> set global validate_password_length=3;
+Query OK, 0 rows affected (0.02 sec)
+                                                  /**密码长度不能小于3个字符*/
+mysql> alter user root@'localhost' identified by"1234";
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> quit;
+Bye                          /**  让密码策略永久生效*/
+          /** mysql -h服务器名     -u用户名  -p密码   数据库名*/
+[root@DB1 ~]# mysql -h127.0.0.1 -uroot  -p1234  db1
+
+mysql> select database();
+| database() |
++------------+
+| db1        |
++------------+
+1 row in set (0.00 sec)
+mysql> desc db1.t26;
+mysql> show index from t26;
+Empty set (0.01 sec)
+mysql> desc db1.t5;
+
+MySQL中explain执行计划中额外信息字段(Extra)详解
+
+SQL执行计划是经过优化器决策，产生的SQL在数据库内部执行的访问路径计划； 
+由如下语法得到：
+
+explain select col1,col2 from t1..;
+desc select col1,col2 from t1..;
+
+id:每个select子句的标识id
+select_type:select语句的类型
+table:当前表名
+显示查询将访问的分区，如果你的查询是基于分区表
+type：当前表内访问方式
+possible_keys:可能使用到的索引
+key:经过优化器评估最终使用的索引
+key_length:使用到的索引长度
+ref:引用到的上一个表的列
+rows:rows_examined，要得到最终记录索要扫描经过的记录数
+filtered:表示存储引擎返回的数据在server层过滤后，剩下多少满足查询的记录数量的比例，注意是百分比，不是具体记录数。
+Extra:额外的信息说明
+         id: 1
+  select_type: SIMPLE
+        table: baba
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 2
+        Extra: Using where
+
+1 row in set (0.00 sec)  //该条sql语句没有走索引
+
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+
+  // 给已有表创建index字段
+/** create index 索引名自定义 on  库名.表名（用于索引的字段列名）**/
+mysql> create index suoyin on db1.t5(name);
+
+mysql> select * from db1.t5 where name="ab";
+| name | birthday   | meetting            | start | sktime   |
++------+------------+---------------------+-------+----------+
+| ab   | 2018-09-07 | 2018-09-07 09:43:22 |  2019 | 09:43:22 |
+
+mysql> desc t5;
++----------+----------+------+-----+---------+-------+
+| Field    | Type     | Null | Key | Default | Extra |
++----------+----------+------+-----+---------+-------+
+| name     | char(10) | YES  | MUL | NULL    |       |
+| birthday | date     | YES  |     | NULL    |       |
+| meetting | datetime | YES  |     | NULL    |       |
+| start    | year(4)  | YES  |     | NULL    |       |
+| sktime   | time     | YES  |     | NULL    |       |
+
+mysql> create index abc on t5(meetting);
+mysql> show index from t5\G;
+*************************** 1. row ***************************
+        Table: t5
+   Non_unique: 1
+     Key_name: suoyin  ##索引名
+ Seq_in_index: 1
+  Column_name: name
+    Collation: A
+  Cardinality: 3
+     Sub_part: NULL
+       Packed: NULL
+         Null: YES
+   Index_type: BTREE   ##索引类型
+      Comment: 
+Index_comment: 
+*************************** 2. row ***************************
+        Table: t5
+   Non_unique: 1
+     Key_name: abc
+ Seq_in_index: 1
+  Column_name: meetting
+....................................
+mysql> desc t5;
+       /**建表时创建索引  
+/**  create table 表名（index（用于索引的字段名）,index（用于索引的字段名 ）)； */
+mysql> create table t27(name char(10),age int(2),
+    -> class char(7),index(name),index(age));
+
+mysql> desc t27;
+| Field | Type     | Null | Key | Default | Extra |
++-------+----------+------+-----+---------+-------+
+| name  | char(10) | YES  | MUL | NULL    |       |
+| age   | int(2)   | YES  | MUL | NULL    |       |
+| class | char(7)  | YES  |     | NULL    |       |
+
+mysql> drop index name on t27;desc t27;
+| Field | Type     | Null | Key | Default | Extra |
++-------+----------+------+-----+---------+-------+
+| name  | char(10) | YES  |     | NULL    |       |
+| age   | int(2)   | YES  | MUL | NULL    |       |
+| class | char(7)  | YES  |     | NULL    |       |
+
+mysql> select * from t5 ;
+| name   | birthday   | meetting            | start | sktime   |
++--------+------------+---------------------+-------+----------+
+| joehan | 2018-09-06 | 2018-09-06 20:30:10 |  1990 | 08:30:55 |
+| lucy   | 2018-09-07 | 2018-09-07 09:42:08 |  1990 | 09:42:08 |
+| ab     | 2018-09-07 | 2018-09-07 09:43:22 |  2019 | 09:43:22 |
+
+mysql> explain select * from t5 where name="lucy"\G;
+*************************** 1. row *******************
+           id: 1           #id:每个select子句的标识id
+  select_type: SIMPLE      #select_type:select语句的类型
+        table: t5        #table:当前表名
+   partitions: NULL 
+         type: ref       #type：当前表内访问方式
+possible_keys: suoyin    #possible_keys:可能使用到的索引
+          key: suoyin    #key:经过优化器评估最终使用的索引
+      key_len: 11        #key_length:使用到的索引长度
+          ref: const     #ref:引用到的上一个表的列
+         rows: 1        #rows:rows_examined，要得到最终记录索要扫描经过的记录数
+     filtered: 100.00
+        Extra: NULL    #Extra:额外的信息说明
+filtered:表示存储引擎返回的数据在server层过滤后，剩下多少满足查询的记录数量的比例，注意是百分比，不是具体记录数。
+
+/**[root@DB1 mysql]# ls /var/lib/mysql/db1/
+db.opt       t1.frm   t24.ibd  t26.frm  t27.ibd  t3.frm  t4.ibd
+stuinfo.frm  t1.ibd   t25.frm  t26.ibd  t2.frm   t3.ibd  t5.frm
+stuinfo.ibd  t24.frm  t25.ibd  t27.frm  t2.ibd   t4.frm  t5.ibd **/
+/**服务名  mysqld
+服务的主配置文件  /etc/my.cnf
+数据目录  /var/lib/mysql
+日志文件   /var/log/mysqld.log **/
+/** sql命令分类? DDL   DML    DTL    DCL **/
+    /**添加主键方式一 create table 表名（字段名  字段类型 primary key,列名  属性类型,...);     
+mysql> create table t28(name char(10) primary key, age int(2));
+
+mysql> desc db1.t28;
+| Field | Type     | Null | Key | Default | Extra |
++-------+----------+------+-----+---------+-------+
+| name  | char(10) | NO   | PRI | NULL    |       |
+| age   | int(2)   | YES  |     | NULL    |       |
+ /**添加主键方式二 create table 表名(字段名  字段类型,列名 属性类型,..,primary key(要添加主键的字段名));
+mysql> create table t29(name char(10),age int(2),primary key(name));
+
+mysql> desc db1.t29;
+| Field | Type     | Null | Key | Default | Extra |
++-------+----------+------+-----+---------+-------+
+| name  | char(10) | NO   | PRI | NULL    |       |
+| age   | int(2)   | YES  |     | NULL    |       |
+
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+
+mysql> insert into db1.t29 values("tom",29);
+Query OK, 
+mysql> insert into t29 values(null,12);
+ERROR 1048 (23000): Column 'name' cannot be null
+
+mysql> insert into t29 values("tom",22);
+ERROR 1062 (23000): Duplicate entry 'tom' for key 'PRIMARY'
+
+mysql> insert into t29 values("bob",29);
+Query OK, 
+
+mysql> select * from db1.t29;
+
+mysql> delete from t5;select * from db1.t5;desc db1.t5;
+| Field    | Type     | Null | Key | Default | Extra |
++----------+----------+------+-----+---------+-------+
+| name     | char(10) | YES  | MUL | NULL    |       |
+| birthday | date     | YES  |     | NULL    |       |
+| meetting | datetime | YES  | MUL | NULL    |       |
+| start    | year(4)  | YES  |     | NULL    |       |
+| sktime   | time     | YES  |     | NULL    |       |
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+
+mysql> alter table db1.t5 add primary key(name);desc t5;
+
+| Field    | Type     | Null | Key | Default | Extra |
++----------+----------+------+-----+---------+-------+
+| name     | char(10) | NO   | PRI | NULL    |       |
+| birthday | date     | YES  |     | NULL    |       |
+| meetting | datetime | YES  | MUL | NULL    |       |
+| start    | year(4)  | YES  |     | NULL    |       |
+| sktime   | time     | YES  |     | NULL    |       |
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+
+mysql> show index from t5\G;
+*************************** 1. row ***
+     Key_name: PRIMARY
+ Seq_in_index: 1
+  Column_name: name
+    Collation: A
+*************************** 2. row ***************************
+        Table: t5
+   Non_unique: 1
+     Key_name: suoyin
+ Seq_in_index: 1
+  Column_name: name
+    Collation: A
+*************************** 3. row ***************************
+        Table: t5
+   Non_unique: 1
+     Key_name: abc
+ Seq_in_index: 1
+  Column_name: meetting
+    Collation: A
+
+mysql> create table jfb(name char(10),stu_id int (1),
+     > pay enum("yes","no"),primary key(name,stu_id));
+
+mysql> alter table jfb drop primary key;删除主键约束
+
+mysql> create table jfb(name char(10),stu_id int(3) unsigned,
+    -> pay enum('yes','no'),primary key(name,stu_id));
+
+/**多个字段都是primary key 称为复合主键，必须一起同时创建
+通常与 auto_increment 连用
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL} **/
+mysql> desc jfb;
+
+| Field  | Type             | Null | Key | Default | Extra |
++--------+------------------+------+-----+---------+-------+
+| name   | char(10)         | NO   | PRI | NULL    |       |
+| stu_id | int(1)           | NO   | PRI | NULL    |       |
+| pay    | enum('yes','no') | YES  |     | NULL    |       |
+
+
+mysql> insert into db1.jfb values("bob",1,"yes");
+
+mysql> insert into db1.jfb values("bob",2,"yes");
+
+mysql> insert into db1.jfb values("lucy",2,"yes");
+
+mysql> insert into db1.jfb values(null,null,"no");
+ERROR 1048 (23000): Column 'name' cannot be null
+
+mysql> select * from db1.jfb;
+| name | stu_id | pay  |
+| bob  |      1 | yes  |
+| bob  |      2 | yes  |
+| lucy |      2 | yes  |
+
+mysql> alter table jfb drop primary key(name);
+ERROR 1064 (42000):
+mysql> alter table jfb drop primary key;
+Query OK,
+mysql> desc jfb;
++--------+------------------+------+-----+---------+-------+
+| Field  | Type             | Null | Key | Default | Extra |
++--------+------------------+------+-----+---------+-------+
+| name   | char(10)         | NO   |     | NULL    |       |
+| stu_id | int(1)           | NO   |     | NULL    |       |
+| pay    | enum('yes','no') | YES  |     | NULL    |       |
+
+mysql> insert into db1.jfb values("bob",1,"yes");
+
+mysql> insert into db1.jfb values("bob",1,"yes");
+
+mysql> insert into db1.jfb values("bob",1,"yes");
+mysql> select * from jfb;
++------+--------+------+
+| name | stu_id | pay  |
++------+--------+------+
+| bob  |      1 | yes  |
+| bob  |      2 | yes  |
+| lucy |      2 | yes  |
+| bob  |      1 | yes  |
+| bob  |      1 | yes  |
+| bob  |      1 | yes  |
+
+mysql> alter table jfb add primary key(name,stu_id);
+ERROR 1062 (23000): Duplicate entry 'bob-1' for key 'PRIMARY'
+mysql> delete from jfb;
+mysql> alter table db1.jfb add primary key(name,stu_id);
+
+mysql> desc db1.jfb;
+| Field  | Type             | Null | Key | Default | Extra |
++--------+------------------+------+-----+---------+-------+
+| name   | char(10)         | NO   | PRI | NULL    |       |
+| stu_id | int(1)           | NO   | PRI | NULL    |       |
+| pay    | enum('yes','no') | YES  |     | NULL    |       |
+
+/**多个字段都是primary key 称为复合主键，必须一起同时创建，
+通常与 auto_increment 连用
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL} **/
+
+mysql> create table t221(
+    -> id int(1) primary key auto_increment,
+    -> age tinyint(1) unsigned, class char(4));
+
+/**多个字段都是primary key 称为复合主键，必须一起同时创建，
+通常与 auto_increment 连用
+primary key 通常与 AUTO_INCREMENT 连用,实现字段值的自动增长 让字段的值自加1 **/
+
+mysql> desc t221;
+| Field | Type                | Null | Key | Default | Extra          |
++-------+---------------------+------+-----+---------+----------------+
+| id    | int(1)              | NO   | PRI | NULL    | auto_increment |
+| age   | tinyint(1) unsigned | YES  |     | NULL    |                |
+| class | char(4)             | YES  |     | NULL    |                |
+
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+
+mysql> insert into t221(age,class) values(12,"1806");
+Query OK, 1 row affected (0.05 sec)
+
+mysql> insert into t221(age,class) values(82,"1807");
+Query OK, 1 row affected (0.04 sec)
+
+mysql> insert into t221(age,class) values(12,"1806");
+Query OK, 1 row affected (0.02 sec)
+
+mysql> insert into t221(age,class) values(12,"1806");
+
+mysql> select * from t221;
+| id | age  | class |
+|  1 |   12 | 1806  |
+|  2 |   82 | 1807  |
+|  3 |   12 | 1806  |
+|  4 |   12 | 1806  |
+
+mysql> select * from t221 where id=3;
+| id | age  | class |
++----+------+-------+
+|  3 |   12 | 1806  |
++----+------+-------+
+mysql> insert into t221  values(6,22,"1806");
+
+mysql> insert into t221  values(null,22,"1806");
+
+mysql> select * from t221;
++----+------+-------+
+| id | age  | class |
++----+------+-------+
+|  1 |   12 | 1806  |
+|  2 |   82 | 1807  |
+|  3 |   12 | 1806  |
+|  4 |   12 | 1806  |
+|  6 |   22 | 1806  |
+|  7 |   22 | 1806  |
++----+------+-------+
+mysql> delete from t221;select * from t221;
+
+mysql> insert into t221  values(null,72,"1809");
+
+mysql> select * from t221;
++----+------+-------+
+| id | age  | class |
++----+------+-------+
+|  8 |   72 | 1809  |
+
+
+mysql> create table xfb(fname char(10), pay float(7,2)default 28000 )engine=innodb;           #学费表xfb 上的名字fname
+mysql> desc db1.xfb;
+| Field | Type       | Null | Key | Default  | Extra |
+| fname | char(10)   | YES  |     | NULL     |       |
+| pay   | float(7,2) | YES  |     | 28000.00 |       |
+
+mysql> alter table xfb add primary key(fname); #学费表xfb 上的名字fname
+
+mysql> desc xfb;
+| Field | Type       | Null | Key | Default  | Extra |
++-------+------------+------+-----+----------+-------+
+| fname | char(10)   | NO   | PRI | NULL     |       |
+| pay   | float(7,2) | YES  |     | 28000.00 |       |
+
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+
+mysql> insert into xfb(fname) values("tom"); #学费表xfb 上的名字fname
+
+mysql> insert into xfb(fname) values("bob"); #学费表xfb 上的名字fname
+mysql> insert into xfb(fname) values("lucy"); #学费表xfb 上的名字fname
+
+mysql> select * from xfb; ##必须先有学费表xfb 上的名字fname
+| fname | pay      |
+| tom   | 28000.00 |
+| bob   | 28000.00 |
+| lucy  | 28000.00 |
+
+mysql> create table xsb(  #学生表xsb 上的名字xname
+    -> xname char(10),
+    -> sex enum("b","g") default "g",
+    -> foreign key(xname) references xfb(fname) on update cascade
+    -> on delete cascade)engine=innodb;
+/************
+mysql> create table bbs.学生表(姓名 char(12),班级 char(7),
+    -> 家庭地址 char(50)) DEFAULT CHARSET=utf8;
+mysql> create table bbs.message(
+    -> id tinyint(3) not null auto_increment,
+    -> user varchar(25) not null,
+    -> content tinytext not null,
+    -> primary key(id))engine=innodb
+    -> default charset=utf8 auto_increment=1;
+Query OK, 
+mysql> desc bbs.message;
+| Field   | Type        | Null | Key | Default | Extra          |
+| id      | tinyint(3)  | NO   | PRI | NULL    | auto_increment |
+| user    | varchar(25) | NO   |     | NULL    |                |
+| content | tinytext    | NO   |     | NULL    |                |
+1.InnoDB，是MySQL的数据库引擎之一，为MySQL AB发布binary的标准之一。
+2.AUTO_INCREMENT会在新记录插入表中时生成一个唯一的数字。
+希望在每次插入新记录时，自动地创建主键字段的值，
+可以在表中创建一个 auto_increment 字段。
+ENGINE=InnoDB 表示将数据库的引擎设置为InnoDB,
+从MySQL 5.6开始默认使用该引擎。
+DEFAULT CHARSET=utf8 表示设置数据库的默认字符集为utf8
+AUTO_INCREMENT=1 表示自动增长的起始值为1
+*****************8/
+mysql> desc xsb;
+| Field | Type          | Null | Key | Default | Extra |
++-------+---------------+------+-----+---------+-------+
+| xname | char(10)      | YES  | MUL | NULL    |       |
+| sex   | enum('b','g') | YES  |     | g       |       |
+
+普通索引 index 对应值{key MUL}Index_type: BTREE   ##索引类型
+主键     primary key  对应值{key  PRI}
+外键     foreign key  对应值{key  MUL}
+
+mysql> show create table xsb\G;
+*************************** 1. row ***************************constraint
+       Table: xsb
+Create Table: CREATE TABLE `xsb` (
+  `xname` char(10) DEFAULT NULL,
+  `sex` enum('b','g') DEFAULT 'g',
+  KEY `xname` (`xname`),
+  CONSTRAINT `xsb_ibfk_1` FOREIGN KEY (`xname`) REFERENCES
+ `xfb` (`fname`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
+
+     #必须先有学费表xfb 上的名字fname jack，才能插入学生表xsb名字xname jack
+mysql> insert into xsb(xname) values("jack");  #学生表xsb 上的名字xname
+ERROR 1452 (23000): Cannot add or update a child row: 
+a foreign key constraint fails 
+(`db1`.`xsb`, CONSTRAINT `xsb_ibfk_1` FOREIGN KEY (`xname`)
+ REFERENCES `xfb` (`fname`) ON DELETE CASCADE ON UPDATE CASCADE) 
+#必须先有学费表xfb 上的名字fname
+mysql> insert into xsb(xname) values("bob"); #学生表xsb 上的名字xname
+
+mysql> insert into xsb(xname) values("tom");  #学生表xsb 上的名字xname
+
+mysql> insert into xsb(xname) values("lucy"); #学生表xsb 上的名字xname
+
+mysql> insert into xfb(fname) values("jack"); #必须先有学费表xfb 上的名字fname
+
+mysql> insert into xsb(xname) values("jack"); #后有学生表xsb 上的名字xname
+
+mysql> select * from xsb; #后有学生表xsb 上的名字xname
++-------+------+
+| xname | sex  |
++-------+------+
+| bob   | g    |
+| tom   | g    |
+| lucy  | g    |
+| jack  | g    |
+
+mysql> select * from xfb; #必须先有学费表xfb 上的名字fname
+| fname | pay      |
++-------+----------+
+| bob   | 28000.00 |
+| jack  | 28000.00 |
+| lucy  | 28000.00 |
+| tom   | 28000.00 |
+
+
+mysql> select * from db1.xsb where xname="tom";
++-------+------+
+| xname | sex  |
++-------+------+
+| tom   | g    |
++-------+------+
+1 row in set (0.00 sec)
+       /**  查询该sql语句的执行计划 */
+mysql> explain select * from db1.xsb where xname="tom"\G;
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: xsb
+   partitions: NULL
+         type: ref
+possible_keys: xname
+          key: xname
+      key_len: 11
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+1 row in set, 1 warning (0.00 sec)
+
+ERROR: 
+No query specified
+
+mysql> show index from db1.xsb\G;
+*************************** 1. row ***************************
+        Table: xsb
+   Non_unique: 1
+     Key_name: xname
+ Seq_in_index: 1
+  Column_name: xname
+    Collation: A
+  Cardinality: 4
+     Sub_part: NULL
+       Packed: NULL
+         Null: YES
+   Index_type: BTREE
+      Comment: 
+Index_comment: 
+1 row in set (0.00 sec)
+
+ERROR: 
+No query specified
+
+mysql> desc db1.xsb;
++-------+---------------+------+-----+---------+-------+
+| Field | Type          | Null | Key | Default | Extra |
++-------+---------------+------+-----+---------+-------+
+| xname | char(10)      | YES  | MUL | NULL    |       |
+| sex   | enum('b','g') | YES  |     | g       |       |
++-------+---------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+  /** 使用explain查询select查询语句执行计划*/
+mysql> explain select * from db1.xsb where xname="tom"\G;
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: xsb
+   partitions: NULL
+         type: ref
+possible_keys: xname
+          key: xname
+      key_len: 11
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: NULL
+1 row in set, 1 warning (0.00 sec)
+
+ERROR: 
+No query specified
+
+
+
+
+
+[root@DB2 ~]# ifconfig |grep 'inet '
+        inet 192.168.4.52  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.52  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@DB2 ~]# systemctl start mysqld && systemctl enable mysqld
+[root@DB2 ~]# ps -C mysqld
+
+[root@DB2 ~]# awk '/root@localhost/{print $NF}' /var/log/mysqld.log
+pghQP1fSd>Wp
+[root@DB2 ~]# mysql -hlocalhost -uroot -p'pghQP1fSd>Wp'
+
+mysql> alter user root@'localhost' identified by 'Hiy53.es';quit;
+Query OK, 0 rows affected (0.00 sec)
+
+Bye
+[root@DB2 ~]# mysql -hlocalhost -uroot -pHiy53.es
+
+/**# mysqladmin -uroot password 'mima' 回车（第一次设置秘码）
+
+** [root@proxy ~]# mysqladmin -uroot -predhat password 'mysql'
+***修改密码，旧密码为redhat，新密码为mysql
+
+** [root@proxy ~]# mysql -uroot -pmysql
+
+** MariaDB [(none)]>set password for root@'localhost'=password('redhat');
+*  //使用账户登录数据库，修改密码
+* MariaDB [(none)]> select user,host,password from mysql.user;
+
+* [root@proxy ~]# cat .bash_history
+* mysqladmin -uroot -pxxx password 'redhat'
+* //通过命令行修改的密码，bash会自动记录历史，历史记录中记录了明文密码
+* [root@proxy ~]# cat .mysql_history 
+* set password for root@'localhost'=password('redhat');
+* select user,host,password from mysql.user;
+**/
+/**
+[root@DB1 mysql]# ll /root/.mysql_history
+-rw-------. 1 root root 16996 9月   7 21:27 /root/.mysql_history
+[root@DB1 mysql]# > /root/.mysql_history
+[root@DB1 mysql]# ll /root/.mysql_history
+[root@DB1 mysql]# grep 'Hiy53.es' /root/.bash_history
+mysql -uroot -pHiy53.es
+mysql -hlocalhost -uroot -pHiy53.es
+mysql -uroot -pHiy53.es
+[root@DB1 mysql]# grep '1234' /root/.bash_history
+mysql -h127.0.0.1 -uroot -p1234 db1
+**/
+mysql> set password for root@'localhost'=password('redhat');
+ERROR 1819 (HY000): Your password does not satisfy the current policy requirements
+mysql> select user,host,password from mysql.user;
+ERROR 1054 (42S22): Unknown column 'password' in 'field list'
+
+mysql> set global validate_password_policy=0; 只检查密码的长度
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> set global validate_password_length=3; 密码长度不能小于3个字符
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> alter user root@localhost identified by'1234';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select user,host from mysql.user;
++-----------+-----------+
+| user      | host      |
++-----------+-----------+
+| mysql.sys | localhost |
+| root      | localhost |
++-----------+-----------+
+2 rows in set (0.00 sec)
+
+mysql> flush privileges; ##刷新特权
+Query OK, 0 rows affected (0.01 sec)
+/**
+flush privileges 命令本质上的作用是
+将当前user和privilige表中的用户信息/权限设置
+从mysql库(MySQL数据库的内置库)中提取到内存里。
+MySQL用户数据和权限有修改后，希望在”不重启MySQL服务”的情况下直接生效，
+那么就需要执行这个命令。通常是在修改ROOT帐号的设置后，
+怕重启后无法再登录进来，那么直接flush之后就可以看权限设置是否生效
+**/
+mysql> quit;
+Bye
+[root@DB2 ~]# mysql -uroot -p1234
+
+mysql> quit;
+Bye                     /**  让密码策略永久生效*/
+[root@DB2 ~]# vim /etc/my.cnf
+[root@DB2 ~]# tail -3 /etc/my.cnf
+pid-file=/var/run/mysqld/mysqld.pid
+validate_password_policy=0
+validate_password_length=3 /*密码长度不能小于3个字符*/
+[root@DB2 ~]# systemctl restart mysqld
+[root@DB2 ~]# ls /etc/my.cnf.d/
+[root@DB2 ~]# mysql -hlocalhost -uroot -p1234
+
+mysql> alter user root@localhost identified by'123';
+ERROR 1819 (HY000): Your password does not satisfy the current policy requirements
+mysql> alter user root@localhost identified by'1234';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> quit;
+Bye
+[root@DB2 ~]# reboot;
+[root@room11pc06 ~]# ssh -X 192.168.4.52
+[root@DB2 ~]# mysql -uroot -p1234 
+mysql> quit
+Bye
+[root@DB2 ~]#mysql -h127.0.0.1   -uroot  -p1234  mysql
+          /** mysql -h服务器名     -u用户名  -p密码   数据库名*/
+mysql> select database();
+| database() |
++------------+
+| mysql      |
++------------+
+1 row in set (0.00 sec)
+
+mysql>
+
+
+
+
+
+
+
+
+
+
+
+[root@DB3 ~]# ifconfig |grep 'inet '
+        inet 192.168.4.53  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.53  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@DB3 ~]# systemctl start mysqld && systemctl enable mysqld
+[root@DB3 ~]# ps -C mysqld
+
+[root@DB3 ~]# awk '/root@localhost/{print $NF}' /var/log/mysqld.log 
+Fi?=aRYj6-)M
+
+[root@DB3 ~]# mysql -hlocalhost -uroot -p'Fi?=aRYj6-)M'
+mysql> alter user root@'localhost' identified by 'Hiy53.es';quit;
+Query OK, 0 rows affected (0.00 sec)
+
+Bye
+[root@DB3 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@DB4 ~]# ifconfig |grep 'inet '
+        inet 192.168.4.54  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.54  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@DB4 ~]# systemctl start mysqld && systemctl enable mysqld
+[root@DB4 ~]# ps -C mysqld
+[root@DB4 ~]# awk '/root@localhost/{print $NF}' /var/log/mysqld.log 
+o-:Hoh0%yl_/
+[root@DB4 ~]# mysql -hlocalhost -uroot -p'o-:Hoh0%yl_/'
+
+mysql> alter user  root@'localhost' identified by'Hiy53.es';quit;
+Query OK, 0 rows affected (0.01 sec)
+
+Bye
+[root@DB4 ~]# 
+
+
+
+
+
+
+
+
+linux下忘记mysql密码的几种找回方法
+
+今天我们主要是讲一下关于linux忘记mysql密码处理方法，下面提供了5种linux忘记mysql密码找回方法哦。
+方法一(先进入root权限)：
+# /etc/init.d/mysql stop
+# mysqld_safe --user=mysql --skip-grant-tables --skip-networking &
+# mysql -u root
+mysql> update user set password=password("newpassword") where user='root';
+mysql> flush privileges;
+mysql> quit
+# /etc/init.d/mysql restart
+# mysql -uroot -p
+enter password: <输入新设的密码newpassword>
+mysql>
+
+方法二：
+直接使用/etc/mysql/debian.cnf文件中[client]节提供的用户名和密码:
+# mysql -udebian-sys-maint -p
+enter password: <输入[client]节的密码>
+mysql> update user set password=password("newpassword")  where user=root;
+mysql> flush privileges;
+mysql> quit
+# mysql -uroot -p
+enter password: <输入新设的密码newpassword>
+mysql>
+
+方法三：
+这种方法我没有进行过测试，因为我的root用户默认密码已经被我修改过了，那位有空测试一下，把结果告诉我，谢谢！！
+# mysql -uroot -p
+enter password: <输入/etc/mysql/debian.cnf文件中[client]节提供的密码>
+
+方法四：
+方法如下： 1， 关闭mysql服务 /etc/init.d/mysqld stop 2，使用 –skip-grant-tables选项启动mysql服务,可以修 改/etc/inin.d/mysqld脚本启动位置增加此选项， vi /etc/init.d/mysqld
+方法如下：
+1， 关闭mysql服务
+/etc/init.d/mysqld stop
+2，使用 –skip-grant-tables选项启动mysql服务,可以修 改/etc/inin.d/mysqld脚本启动位置增加此选项，
+vi /etc/init.d/mysqld  ||vim /etc/my.cnf
+在下面运行启动的语句里增加--skip-grant-tables
+/usr/bin/mysqld_safe --skip-grant-tables --datadir="datadir"−−socket="datadir"−−socket="socketfile"
+--log-error="errlogfile"−−pid−file="errlogfile"−−pid−file="mypidfile"
+加入--skip-grant-tables的意思是启动mysql服务的时候跳 过权限表认证。启动后，连接到mysql的root不需要口令
+3,重新启动mysql服务
+/etc/init.d/mysqld start
+4. 修改root用户的密码；
+mysql> update mysql.user set authentication_string=password("Hiy53.es")
+    -> where user="root" and host="localhost";
+mysql> flush privileges；
+mysql> quit
+5. 重新启动mysql，就可以使用 新密码登录了。
+mysql
+mysql -u root –p
+输入密码：123456
+6，关闭mysql服务
+/etc/init.d/mysqld stop
+7， 重新修改第2步修改的/etc/init.d/mysqld，使其保持原来不变，也就是取消--skip-grant-tables语句
+8,重新 启动mysql服务
+/etc/init.d/mysqld start
+
+后记:
+
+新安装的MySQL是有密码的,但是其实自动存储在了/var/log/mysqld.log 文件夹中
+
+
+

@@ -1,0 +1,83 @@
+字段约束条件：控制给字段赋值
+mysql> create table  t9(
+    -> name char(10)not  null,
+    -> age  tinyint(2) default 19,
+    -> likes set("eat","sleep","game","flim") 
+       not null default "eat,sleep"
+    -> );
+
+mysql> insert into  t9(name)values("bob");
+
+mysql> insert into  t9 values("tom",21,"game,flim");
+
+name 字段不允许赋null值
+mysql> insert into  t9 values(NULL,21,"game,flim");
+ERROR 1048 (23000): Column 'name' cannot be null
+ 
+加“”表示为普通字符 
+mysql> insert into  t9 values("NULL",21,"game,flim");
+Query OK, 1 row affected (0.03 sec)
++++++++++++++++++++++++++++++++
+添加新字段
+mysql> alter table  t4 add age int(2) default 19;
+mysql> alter table  t4 add mail char(50) after name;
+mysql> alter table  t4 add stu_num char(10) first;
+
+修改字段类型 ，类型要与字段存储的数据匹配
+mysql> alter table  t4 modify name varchar(3);
+ERROR 1406 (22001): Data too long for column 'name' at row 1
+
+mysql> alter table  t4 modify name varchar(15);
+Query OK, 1 row affected (0.44 sec)
+
+修改字段位置
+mysql> alter table  t4  modify age int(2) default  19 
+after name;
+
+删除字段
+mysql> alter table  t5 drop start;
+mysql> select  * from t5;
+mysql> desc  t5;
+
+修改字段名alter table  t4 change stu_num stu_id char(10);
+
+修改表名 alter table   t9 rename stuinfo;
+++++++++++++++++++++++++++++++++
+5000+
+
+select 
+
+insert update delete
+
+索引  算法 Btree （二叉树）
+stuinfo-----> /var/lib/mysql/数据库名/stuinfo.frm stuinfo.ibd
+index
+name
+
+
+           1 - 10
+
+      1-5          6-10
+ 1-2.5   2.6-5
+
+
+mysql> show  index from t4;
+
+建表是创建索引
+create  table  t21(
+name  char(10),
+sex  enum("boy","girl"),
+class char(7),
+age  int(2),
+index(name),
+index(sex)
+);
+desc t21; 查看索引
+show index  from  t21\G; 查看详细信息
+drop  index  name  on  t21; 删除索引
+desc  t21;
+show index  from  t21\G;
+
+create  index  name  on  t21(name); 在已有表里设置索引字段
+desc  t21;
+select  * from t21 where name="bob";

@@ -1,0 +1,30 @@
+命令        权限
+usage      无权限
+SELECT     查询表记录
+INSERT     插入表记录
+UPDATE     更新表记录
+DELETE     删除表记录
+CREATE     创建库、表
+DROP       删除库、表
+RELOAD     有重新载入授权 必须拥有reload权限，才可以执行flush [tables | logs | privileges] 
+SHUTDOWN   允许关闭mysql服务 使用mysqladmin shutdown 来关闭mysql
+PROCESS    允许查看用户登录数据库服务器的进程 （  show  processlist;  ）
+FILE       导入、导出数据
+REFERENCES 创建外键
+INDEX      创建索引 
+ALTER      修改表结构
+SHOW DATABASES     查看库
+SUPER     关闭属于任何用户的线程
+CREATE TEMPORARY TABLES       允许在create  table 语句中使用  TEMPORARY关键字
+LOCK   TABLES                 允许使用  LOCK   TABLES  语句
+EXECUTE  执行存在的Functions,Procedures 
+REPLICATION SLAVE    从主服务器读取二进制日志
+REPLICATION CLIENT   允许在主/从数据库服务器上使用 show  status命令
+CREATE VIEW  创建视图
+SHOW VIEW    查看视图
+CREATE ROUTINE 创建存储过程
+ALTER ROUTINE  修改存储过程
+CREATE USER    创建用户
+EVENT          有操作事件的权限
+TRIGGER,  有操作触发器的权限
+CREATE TABLESPACE  有创建表空间的权限

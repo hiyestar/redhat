@@ -1,0 +1,1011 @@
+
+[root@H50 ~]# ss -anpult |egrep ":11211|:9000|:3306" |column -t
+udp  UNCONN  0  0    *:11211         *:*   users:(("memcached",pid=1022,fd=28))
+udp  UNCONN  0  0    :::11211        :::*  users:(("memcached",pid=1022,fd=29))
+tcp  LISTEN  0  128  *:11211         *:*   users:(("memcached",pid=1022,fd=26))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*   users:(("php-fpm",pid=1167,fd=0),("php-fpm",pid=1166,fd=0),...
+tcp  LISTEN  0  128  :::11211        :::*  users:(("memcached",pid=1022,fd=27))
+tcp  LISTEN  0  80   :::3306         :::*  users:(("mysqld",pid=1342,fd=26))
+[root@H50 ~]# clear
+
+[root@H50 ~]# mysql -uroot -p1234
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> create database db4;use db4;
+
+mysql> create table db4.t1 select * from db3.user;
+Query OK, 57 rows affected (0.04 sec)
+Records: 57  Duplicates: 0  Warnings: 0
+
+mysql> show tables;
+
+mysql> desc db4.t1;
+| Field    | Type                | Null | Key | Default | Extra |
+| id       | int(2)              | NO   |     | 0       |       |
+| name     | char(50)            | YES  |     | NULL    |       |
+| age      | tinyint(2) unsigned | YES  |     | 19      |       |
+| password | char(1)             | YES  |     | NULL    |       |
+| uid      | int(1)              | YES  |     | NULL    |       |
+| gid      | int(1)              | YES  |     | NULL    |       |
+| comment  | varchar(150)        | YES  |     | NULL    |       |
+| homedir  | varchar(100)        | YES  |     | NULL    |       |
+| shell    | char(30)            | YES  |     | NULL    |       |
+
+9 rows in set (0.01 sec)
+
+mysql> select * from db4.t1 limit 0,5;
+
+| id | name   | age  | password | uid  | gid  | comment | homedir        | shell         |
+|  1 | root   |   19 | x        |   10 |    0 | student | /root          | /bin/bash     |
+|  2 | bin    |   19 | a        |   11 |    1 | student | /bin           | /sbin/nologin |
+|  3 | daemon |   19 | a        |   12 |    2 | student | /sbin          | /sbin/nologin |
+|  4 | adm    |   19 | a        |   14 |    4 | student | /var/adm       | /sbin/nologin |
+|  5 | lp     |   19 | a        |   17 |    7 | student | /var/spool/lpd | /sbin/nologin |
+
+5 rows in set (0.00 sec)
+
+mysql> select count(*) from db4.t1;
+
+| count(*) |
+|       57 |
+
+mysql> select * from db4.t1 limit 50,7;
+
+| id | name  | age  | password | uid  | gid  | comment | homedir | shell |
+| 53 |       |   19 | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 54 | null  |   19 | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 55 | NULL  |   19 | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 56 | yaya1 |   19 | NULL     | NULL |  100 | NULL    | NULL    | NULL  |
+| 57 | yaya2 |   19 | NULL     | NULL |  200 | NULL    | NULL    | NULL  |
+| 58 | yaaa3 |   19 | NULL     | NULL |  300 | NULL    | NULL    | NULL  |
+| 59 | yaxa9 |   19 | NULL     | NULL |  900 | NULL    | NULL    | NULL  |
+
+7 rows in set (0.00 sec)
+
+mysql> select * from db4.t1 limit 50,6;
+
+| id | name  | age  | password | uid  | gid  | comment | homedir | shell |
+| 53 |       |   19 | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 54 | null  |   19 | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 55 | NULL  |   19 | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 56 | yaya1 |   19 | NULL     | NULL |  100 | NULL    | NULL    | NULL  |
+| 57 | yaya2 |   19 | NULL     | NULL |  200 | NULL    | NULL    | NULL  |
+| 58 | yaaa3 |   19 | NULL     | NULL |  300 | NULL    | NULL    | NULL  |
+
+6 rows in set (0.01 sec)
+
+mysql> select name,shell from db4.t1 where shell!="/bin/bash";
+
+| name                | shell          |
+| bin                 | /sbin/nologin  |
+........................
+| nginx               | /sbin/nologin  |
+| ceph                | /sbin/nologin  |
+| jack                | /sbin/nologin  |
+
+44 rows in set (0.00 sec)
+
+mysql> select name,shell from db4.t1 where shell!="/bin/bash" limit 40,4;
+
+| name      | shell         |
+| memcached | /sbin/nologin |
+| nginx     | /sbin/nologin |
+| ceph      | /sbin/nologin |
+| jack      | /sbin/nologin |
+
+4 rows in set (0.00 sec)
+
+mysql> create table t2 select * from db3.user where 1=2;
+
+mysql> desc db4.t2;
+
+| Field    | Type                | Null | Key | Default | Extra |
+| id       | int(2)              | NO   |     | 0       |       |
+| name     | char(50)            | YES  |     | NULL    |       |
+| age      | tinyint(2) unsigned | YES  |     | 19      |       |
+| password | char(1)             | YES  |     | NULL    |       |
+| uid      | int(1)              | YES  |     | NULL    |       |
+| gid      | int(1)              | YES  |     | NULL    |       |
+| comment  | varchar(150)        | YES  |     | NULL    |       |
+| homedir  | varchar(100)        | YES  |     | NULL    |       |
+| shell    | char(30)            | YES  |     | NULL    |       |
+
+9 rows in set (0.00 sec)
+
+mysql> select * from db4.t2;
+Empty set (0.00 sec)
+
+mysql> create table db4.t3 select * from db3.user limit 3;
+Query OK, 3 rows affected (0.03 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+
+mysql> select * from db4.t3 limit 0,5;
+
+| id | name   | age  | password | uid  | gid  | comment | homedir | shell         |
+|  1 | root   |   19 | x        |   10 |    0 | student | /root   | /bin/bash     |
+|  2 | bin    |   19 | a        |   11 |    1 | student | /bin    | /sbin/nologin |
+|  3 | daemon |   19 | a        |   12 |    2 | student | /sbin   | /sbin/nologin |
+
+3 rows in set (0.00 sec)
+
+mysql> select * from db4.t3 limit 0,2;
+
+| id | name | age  | password | uid  | gid  | comment | homedir | shell         |
+|  1 | root |   19 | x        |   10 |    0 | student | /root   | /bin/bash     |
+|  2 | bin  |   19 | a        |   11 |    1 | student | /bin    | /sbin/nologin |
+
+2 rows in set (0.00 sec)
+
+mysql> create table db4.t5 select name,uid,comment,homedir from db3.user limit 5;
+
+mysql> desc db4.t5;
+
+| Field   | Type         | Null | Key | Default | Extra |
+| name    | char(50)     | YES  |     | NULL    |       |
+| uid     | int(1)       | YES  |     | NULL    |       |
+| comment | varchar(150) | YES  |     | NULL    |       |
+| homedir | varchar(100) | YES  |     | NULL    |       |
+
+mysql> drop table db4.t4;
+
+mysql> create table db4.t4 select name,uid,shell from db3.user limit 3;
+
+mysql> select * from db4.t4;
+| name   | uid  | shell         |
+| root   |   10 | /bin/bash     |
+| bin    |   11 | /sbin/nologin |
+| daemon |   12 | /sbin/nologin |
+
+
+mysql> select * from db4.t5;
+| name   | uid  | comment | homedir        |
+| root   |   10 | student | /root          |
+| bin    |   11 | student | /bin           |
+| daemon |   12 | student | /sbin          |
+| adm    |   14 | student | /var/adm       |
+| lp     |   17 | student | /var/spool/lpd |
+
+mysql> select * from db4.t4,db4.t5; #注意有左右顺序的区别 : 左3列是 t4 表 右4列是 t5表
+
+| name   | uid  | shell         | name   | uid  | comment | homedir        |
+
+| root   |   10 | /bin/bash     | root   |   10 | student | /root          |
+| bin    |   11 | /sbin/nologin | root   |   10 | student | /root          |
+| daemon |   12 | /sbin/nologin | root   |   10 | student | /root          |
+| root   |   10 | /bin/bash     | bin    |   11 | student | /bin           |
+| bin    |   11 | /sbin/nologin | bin    |   11 | student | /bin           |
+| daemon |   12 | /sbin/nologin | bin    |   11 | student | /bin           |
+| root   |   10 | /bin/bash     | daemon |   12 | student | /sbin          |
+| bin    |   11 | /sbin/nologin | daemon |   12 | student | /sbin          |
+| daemon |   12 | /sbin/nologin | daemon |   12 | student | /sbin          |
+| root   |   10 | /bin/bash     | adm    |   14 | student | /var/adm       |
+| bin    |   11 | /sbin/nologin | adm    |   14 | student | /var/adm       |
+| daemon |   12 | /sbin/nologin | adm    |   14 | student | /var/adm       |
+| root   |   10 | /bin/bash     | lp     |   17 | student | /var/spool/lpd |
+| bin    |   11 | /sbin/nologin | lp     |   17 | student | /var/spool/lpd |
+| daemon |   12 | /sbin/nologin | lp     |   17 | student | /var/spool/lpd |
+
+15 rows in set (0.00 sec)
+
+mysql> select db4.t5.name,db4.t4.name from db4.t5,db4.t4 where
+    -> t4.name=t5.name and t4.uid=t5.uid;
+
+| name   | name   |
+| root   | root   |
+| bin    | bin    |
+| daemon | daemon |
+3 rows in set (0.00 sec)
+
+mysql> select t5.*,t4.shell from t5,t4 where
+    -> t4.name=t5.name and t4.uid=t5.uid;
+
+| name   | uid  | comment | homedir | shell         |
+| root   |   10 | student | /root   | /bin/bash     |
+| bin    |   11 | student | /bin    | /sbin/nologin |
+| daemon |   12 | student | /sbin   | /sbin/nologin |
+
+3 rows in set (0.00 sec)
+
+mysql> update db3.user set age=88 where id<=20;
+
+mysql> select avg(age) from db3.user;
+
+| avg(age) |
+|  43.2105 |
+
+mysql> select name from db3.user where
+    -> name in (select name from db4.t4);
+
+mysql> select name from db3.user where name not in
+    -> (select name from db4.t4);
+
+mysql> select name,age from db3.user where
+    -> age < (select avg(age) from db3.user);
+
+mysql> select name,age from db3.user where age >= (select avg(age) from db3.user);
+
+mysql> select database();
+
+| database() |
+| db4        |
+
+mysql> create table db4.t6 select name,uid,shell
+    -> from db3.user limit 4;
+
+mysql> create table db4.t7 select name,uid,shell from db3.user limit 6;
+
+mysql> desc db4.t6;desc db4.t7;
+
+| Field | Type     | Null | Key | Default | Extra |
+| name  | char(50) | YES  |     | NULL    |       |
+| uid   | int(1)   | YES  |     | NULL    |       |
+| shell | char(30) | YES  |     | NULL    |       |
+
+| Field | Type     | Null | Key | Default | Extra |
+| name  | char(50) | YES  |     | NULL    |       |
+| uid   | int(1)   | YES  |     | NULL    |       |
+| shell | char(30) | YES  |     | NULL    |       |
+
+mysql> select * from db4.t6;select * from db4.t7;
+
+| name   | uid  | shell         |
+| root   |   10 | /bin/bash     |
+| bin    |   11 | /sbin/nologin |
+| daemon |   12 | /sbin/nologin |
+| adm    |   14 | /sbin/nologin |
+
+| name   | uid  | shell         |
+| root   |   10 | /bin/bash     |
+| bin    |   11 | /sbin/nologin |
+| daemon |   12 | /sbin/nologin |
+| adm    |   14 | /sbin/nologin |
+| lp     |   17 | /sbin/nologin |
+| sync   |   10 | /bin/sync     |
+6 rows in set (0.00 sec)
+
+/***left join 条件成立时，以左边的表为主 显示查询结果  -----左连接查询 **/
+****适用于表结构相同时，比较数据的差异
+/***right join 条件成立时，以右边的表为主 显示查询结果  -----右连接查询 **/
+
+mysql> select * from t6 left join db4.t7 on db4.t6.uid=db4.t7.uid;
+
+| name   | uid  | shell         | name   | uid  | shell         |
+| root   |   10 | /bin/bash     | root   |   10 | /bin/bash     |
+| bin    |   11 | /sbin/nologin | bin    |   11 | /sbin/nologin |
+| daemon |   12 | /sbin/nologin | daemon |   12 | /sbin/nologin |
+| adm    |   14 | /sbin/nologin | adm    |   14 | /sbin/nologin |
+| root   |   10 | /bin/bash     | sync   |   10 | /bin/sync     |
+
+5 rows in set (0.00 sec)
+
+mysql> select t6.name,t6.uid,t7.name,t7.uid from t6
+    -> right join t7 on t7.uid=t6.uid;
+
+6 rows in set (0.00 sec)
+
+mysql> select * from t6
+    -> right join t7  on t7.uid=t6.uid;
+
+6 rows in set (0.00 sec)
+
+mysql> select * from t6 left join t7  on t7.uid=t6.uid;
+
+| name   | uid  | shell         | name   | uid  | shell         |
+
+5 rows in set (0.00 sec)
+
+[root@H50 ~]# ls phpMyAdmin-2.11.11-all-languages.tar.gz -l
+-rw-r--r--. 1 root root 4318827 10月 15 09:04 phpMyAdmin-2.11.11-all-languages.tar.gz
+[root@H50 ~]# ss -anpult |grep :80
+
+[root@H50 ~]# rpm -q httpd php-mysql php
+httpd-2.4.6-67.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-5.4.16-42.el7.x86_64
+[root@H50 ~]# systemctl start httpd && systemctl enable httpd
+
+[root@H50 ~]# ss -anpult |grep :80
+tcp    LISTEN     0      128      :::80      :::*    users:(("httpd",pid=2862,fd=4),("httpd",pid=2861,fd=4)
+[root@H50 ~]# ss -anpult |grep php
+tcp    LISTEN     0      128    127.0.0.1:9000     *:*       users:(("php-fpm",pid=1167,fd=0),("php-fpm",pid=1166,fd=0),
+
+[root@H50 ~]# tar -zxvf phpMyAdmin-2.11.11-all-languages.tar.gz  -C /var/www/html/
+
+[root@H50 ~]# cd /var/www/html/;ls
+phpMyAdmin-2.11.11-all-languages
+[root@H50 html]# mv phpMyAdmin-2.11.11-all-languages/  phpmyadmin
+[root@H50 html]# ls
+phpmyadmin
+[root@H50 html]# id apache
+uid=48(apache) gid=48(apache) 组=48(apache)
+[root@H50 html]# chown -R apache:apache  phpmyadmin/
+[root@H50 html]# cd phpmyadmin/;ls
+chk_rel.php            js                     readme.php              tbl_move_copy.php
+config.sample.inc.php  lang                   RELEASE-DATE-2.11.11    tbl_operations.php
+contrib                libraries              scripts                 tbl_printview.php
+...............................
+[root@H50 phpmyadmin]# cp config.sample.inc.php  config.inc.php
+[root@H50 phpmyadmin]# vim config.inc.php
+
+ 17 $cfg['blowfish_secret'] = 'plj123'; /* YOU MUST FILL IN THIS FOR COOKIE AUTH! */
+ 31 $cfg['Servers'][$i]['host'] = 'localhost';
+
+[root@H50 phpmyadmin]# pwd
+/var/www/html/phpmyadmin
+[root@H51 ~]# which firefox
+/usr/bin/firefox
+[root@H51 ~]# firefox http://192.168.4.50/phpmyadmin
+root  数据库用户输入
+1234  数据库密码输入
+
+[root@H50 phpmyadmin]# pwd
+/var/www/html/phpmyadmin
+[root@H50 phpmyadmin]# cd
+[root@H50 ~]# mysqladmin  -uroot  -p password "1122"
+Enter password: 1234 旧密码
+
+[root@H50 ~]# mysql -uroot -p1122 -e  "show variables like 'autoco%';"
+mysql: [Warning] Using a password on the command line interface can be insecure.
+
+| Variable_name | Value |
+| autocommit    | ON    |
+
+[root@H50 ~]# mysqladmin -uroot -p password "1234"
+Enter password: 1122 旧密码
+
+[root@H50 ~]# mysql -uroot -p1234 -e "show variables like 'autoco%';"
+mysql: [Warning] Using a password on the command line interface can be insecure.
+
+| Variable_name | Value |
+| autocommit    | ON    |
+
+[root@H50 ~]# mysql -uroot -p1234
+ 
+mysql> select host,user authentication_strintg from mysql.user;
+
+| host      | authentication_strintg |
+| localhost | mysql.sys              |
+| localhost | root                   |
+
+mysql> update mysql.user       #管理员自己重新改写密码
+    -> set authentication_string=password('123456')
+    -> where user='root' and host='localhost';
+
+mysql> flush privileges;
+
+mysql> select password('123456');查看加密后的密码
+
+| password('123456')                        |
+| *6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9 |
+
+mysql> select password(123456); 查看加密后的密码
+
+| password(123456)                          |
+| *6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9 |
+
+mysql> exit;
+Bye
+[root@H50 ~]# vim /etc/my.cnf
+[mysqld]
+skip_grant_tables  #添加此行skip
+secure_file_priv=/mydir/
+default-storage-engine=myisam
+#validate_password_policy=0  #注释这2行
+#validate_password_length=4
+[root@H50 ~]# systemctl restart mysqld
+
+[root@H50 ~]# mysql
+
+mysql> select host,user,authentication_string from mysql.user;
+
+| host      | user      | authentication_string                     |
+| localhost | root      | *6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9 |
+| localhost | mysql.sys | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+
+mysql> update mysql.user   #管理员自己重新改写密码
+    -> set authentication_string=password("1234")
+    -> where user="root" and host="localhost";
+
+mysql> flush privileges;
+mysql> quit;
+Bye
+[root@H50 ~]# vim /etc/my.cnf
+[mysqld]
+#skip_grant_tables   #注释这skip_grant_tables 行
+secure_file_priv=/mydir/
+default-storage-engine=myisam
+validate_password_policy=0  #取消注释这2行
+validate_password_length=4
+[root@H50 ~]# systemctl restart mysqld
+[root@H50 ~]# which mysql
+/usr/bin/mysql
+[root@H50 ~]# mysql -uroot -p1234
+mysql> use db4;show tables;
+| Tables_in_db4 |
+| t1            |
+| t2            |
+| t3            |
+| t4            |
+| t5            |
+| t6            |
+| t7            |
+
+mysql> use mysql;show tables;
+| Tables_in_mysql           |
+| columns_priv   | 存储授权用户对【 字段 】的访问权限
+| db         |存储授权用户对【 数据库 】的访问权限
+| engine_cost               |
+
+| proc                      |
+| procs_priv                |
+| proxies_priv              |
+
+| servers                   |
+| slave_master_info         |
+| slave_relay_log_info      |
+| slave_worker_info         |
+| tables_priv   | 存储授权用户对【 表 】的访问权限
+| time_zone                 |
+| user    | 存储授权用户 的【访问权限】
+
+mysql> desc mysql.user;
+| Field     | Type   | Null | Key | Default | Extra |
+| Host      | char(60)    | NO   | PRI |    |       |
+| User       | char(32)   | NO   | PRI |    |       |
+| Select_priv  | enum('N','Y') | NO   |     | N  |       |
+| Insert_priv  | enum('N','Y') | NO   |     | N  |       |
+| Update_priv  | enum('N','Y') | NO   |     | N  |       |
+| Delete_priv  | enum('N','Y') | NO   |     | N  |       |
+| Create_priv  | enum('N','Y') | NO   |     | N  |       |
+| Drop_priv    | enum('N','Y') | NO   |     | N  |       |
+| Reload_priv  | enum('N','Y') | NO   |     | N  |       |
+| Shutdown_priv| enum('N','Y') | NO   |     | N  |       |
+| Process_priv | enum('N','Y') | NO   |     | N  |       |
+
+mysql> select * from mysql.user where Host="localhost" and User="root"\G
+*************************** 1. row ***************************
+                  Host: localhost
+                  User: root
+           Select_priv: Y
+           Insert_priv: Y
+           Update_priv: Y
+           Delete_priv: Y
+           Create_priv: Y
+             Drop_priv: Y
+           Reload_priv: Y
+         Shutdown_priv: Y
+          Process_priv: Y
+             File_priv: Y
+            Grant_priv: Y
+       References_priv: Y
+            Index_priv: Y
+            Alter_priv: Y
+          Show_db_priv: Y
+            Super_priv: Y
+ Create_tmp_table_priv: Y
+      Lock_tables_priv: Y
+          Execute_priv: Y
+       Repl_slave_priv: Y
+      Repl_client_priv: Y
+      Create_view_priv: Y
+        Show_view_priv: Y
+   Create_routine_priv: Y
+    Alter_routine_priv: Y
+      Create_user_priv: Y
+            Event_priv: Y
+          Trigger_priv: Y
+Create_tablespace_priv: Y
+              ssl_type: 
+            ssl_cipher: 
+           x509_issuer: 
+          x509_subject: 
+         max_questions: 0
+           max_updates: 0
+       max_connections: 0
+  max_user_connections: 0
+                plugin: mysql_native_password
+ authentication_string: *A4B6157319038724E3560894F7F932C8886EBFCF
+      password_expired: N
+ password_last_changed: 2018-10-19 11:28:31
+     password_lifetime: NULL
+        account_locked: N
+
+mysql> desc mysql.db;
+| Field                 | Type          | Null | Key | Default | Extra |
+| Host                  | char(60)      | NO   | PRI |         |       |
+| Db                    | char(64)      | NO   | PRI |         |       |
+| User                  | char(32)      | NO   | PRI |         |       |
+| Select_priv           | enum('N','Y') | NO   |     | N       |       |
+
+mysql> desc mysql.tables_priv\G
+mysql>  desc mysql.tables_priv;
+| Field   | Type  | Null | Key | Default  | Extra |
+| Host    | char(60)    | NO   | PRI |    |       |
+| Db      | char(64)    | NO   | PRI |    |       |
+| User        | char(32) | NO   | PRI |   |       |
+| Table_name  | char(64) | NO   | PRI |   |       |
+| Grantor     | char(93) | NO   | MUL |   |       |
+| Timestamp   | timestamp | NO   |    | CURRENT_TIMESTAMP | on update CURRENT_TIMESTAMP |
+| Table_priv  | set('Select','Insert','Update','Delete','Create','Drop','Grant','References','Index','Alter','Create View','Show view','Trigger') | NO || |  |
+| Column_priv | set('Select','Insert','Update','References') | NO | | |  |
+
+mysql> select host,user,db,table_name from mysql.tables_priv;
+| host      | user      | db  | table_name |
+| localhost | mysql.sys | sys | sys_config |
+
+mysql> desc mysql.columns_priv;
+| Field       | Type    | Null | Key | Default | Extra |
+| Host        | char(60)| NO   | PRI |    |    |
+| Db          | char(64)| NO   | PRI |    |    |
+| User        | char(32)| NO   | PRI |    |    |
+| Table_name  | char(64)| NO   | PRI |    |    |
+| Column_name | char(64) | NO  | PRI |   |    |
+| Timestamp   | timestamp | NO | | CURRENT_TIMESTAMP | on update CURRENT_TIMESTAMP |
+| Column_priv | set('Select','Insert','Update','References') | NO | |  |  |
+
+mysql> select * from mysql.columns_priv;
+Empty set (0.00 sec)
+
+mysql> select * from mysql.user where user="mydba";
+------------------------------------------------------------------------------------------------------------------------------
+| Host   | User  | Select_priv | Insert_priv | Update_priv   | Delete_priv 
+| Create_priv | Drop_priv      | Reload_priv | Shutdown_priv | Process_priv 
+| File_priv   | Grant_priv     | References_priv   | Index_priv | Alter_priv 
+| Show_db_priv | Super_priv    | Create_tmp_table_priv | Lock_tables_priv 
+| Execute_priv | Repl_slave_priv | Repl_client_priv | Create_view_priv 
+| Show_view_priv | Create_routine_priv | Alter_routine_priv   | Create_user_priv 
+| Event_priv   | Trigger_priv | Create_tablespace_priv | ssl_type | ssl_cipher 
+| x509_issuer  | x509_subject | max_questions | max_updates  | max_connections 
+| max_user_connections | plugin | authentication_string  | password_expired 
+| password_last_changed | password_lifetime | account_locked |
+----------------------------------------------------------------------------------------------------------------------
+| %  | mydba | Y  | Y | Y | Y | Y  | Y  | Y | Y | Y  | Y  | Y | Y | Y 
+| Y | Y  | Y | Y  | Y  | Y | Y  | Y  | Y | Y | Y  | Y | Y | Y | Y  | Y 
+ | |  | |  |  0 |  0 |  0 |  0 | mysql_native_password 
+| *A4B6157319038724E3560894F7F932C8886EBFCF | N | 2018-10-19 14:38:14 |  NULL | N  |
+
+/****grant授权列表
+命令        权限
+usage      无权限
+SELECT     查询表记录
+INSERT     插入表记录
+UPDATE     更新表记录
+DELETE     删除表记录
+CREATE     创建库、表
+DROP       删除库、表
+RELOAD     有重新载入授权 必须拥有reload权限，才可以执行flush [tables | logs | privileges] 
+SHUTDOWN   允许关闭mysql服务 使用mysqladmin shutdown 来关闭mysql
+PROCESS    允许查看用户登录数据库服务器的进程 （  show  processlist;  ）
+FILE       导入、导出数据
+
+
+mysql> grant all on *.* to mydba@'%' identified by '1234'
+    -> with grant option;
+
+mysql> select host,user from mysql.user;
+| host      | user      |
+| %         | mydba     |
+| localhost | mysql.sys |
+| localhost | root      |
+
+mysql> show grants for mydba@'%';
+| Grants for mydba@% |
+| GRANT ALL PRIVILEGES ON *.* TO 'mydba'@'%' WITH GRANT OPTION |
+
+mysql> set password for mydba@"%" =password("1234"); #管理员给授权用户改密码("用户如果忘了密码的话")
+
+mysql> show grants for test1@"localhost";
+| Grants for test1@localhost                                |
+| GRANT USAGE ON *.* TO 'test1'@'localhost'                 |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'test1'@'localhost' |
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db3                |
+| db4                |
+| db44               |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb              |
+| teadb2             |
+mysql> select host,user from mysql.user;
+| host      | user      |
+| %         | mydba     |
+| localhost | mysql.sys |
+| localhost | root      |
+| localhost | test1     |
+
+mysql> select Host,Db,User,Select_priv  from mysql.db where db="gamedb";
+| Host      | Db     | User  | Select_priv |
+| localhost | gamedb | test1 | Y           |
+
+mysql> select *  from mysql.db where db="gamedb";
+
+mysql> exit;
+Bye
+[root@H50 ~]# mysql -uroot -p1234
+
+mysql> show grants for mydba@"%";
+| Grants for mydba@%     |
+| GRANT ALL PRIVILEGES ON *.* TO 'mydba'@'%' WITH GRANT OPTION |
+
+   /撤销用户权限 revoke 权限列表 on 数据库名.表名
+               from 用户名@‘客户端地址';
+ #撤销权限时,库名的表示方式 必须和 授权时定义的库名表示方式 一致
+
+mysql> revoke grant option on *.* from mydba@"%";
+
+mysql> show grants for mydba@"%"; #取消mydba的  WITH GRANT OPTION 权限
+| Grants for mydba@%       |
+| GRANT ALL PRIVILEGES ON *.* TO 'mydba'@'%' |
+
+
+mysql> revoke delete,drop on *.* from mydba@'%'; #取消mydba的 delete,drop 权限
+
+mysql> show grants for mydba@'%';
+-----------------------------------------------------------------
+| Grants for mydba@%   |
+----------------------------------------------------------------------------------------------------------------------------
+| GRANT SELECT, INSERT, UPDATE, CREATE, RELOAD, SHUTDOWN, PROCESS, FILE, 
+REFERENCES, INDEX, ALTER, SHOW DATABASES, SUPER, CREATE TEMPORARY TABLES, 
+LOCK TABLES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, CREATE VIEW, 
+SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, CREATE USER, EVENT, TRIGGER, 
+CREATE TABLESPACE ON *.* TO 'mydba'@'%' |
+---------------------------------------------------------------------------------------------------------------------
+   /撤销用户权限 revoke 权限列表 on 数据库名.表名
+               from 用户名@‘客户端地址';
+ #撤销权限时,库名的表示方式 必须和 授权时定义的库名表示方式 一致
+
+mysql> revoke all on *.* from mydba@'%';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> show grants for mydba@'%';
+| Grants for mydba@%                |
+| GRANT USAGE ON *.* TO 'mydba'@'%' |
+
+
+mysql> drop user mydba@'%';
+
+mysql> select host,user  from mysql.user;
+| host      | user      |
+| localhost | mysql.sys |
+| localhost | root      |
+| localhost | test1     |
+
+mysql> show grants for test1@'localhost';
+
+| Grants for test1@localhost                                |
+| GRANT USAGE ON *.* TO 'test1'@'localhost'                 |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'test1'@'localhost' |
+
+mysql> drop user test1@'localhost';
+
+mysql> select host,user from mysql.user;
+| host      | user      |
+| localhost | mysql.sys |
+| localhost | root      |
+
+mysql> select * from mysql.db where db="gamedb"\G 
+#用户删除后,其创建的数据库gamedb也同时消失
+Empty set (0.00 sec)
+
+mysql>  show grants;
+
+| Grants for root@localhost   |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION        |
+
+2 rows in set (0.00 sec)
+                      #撤销权限时,库名的表示方式 必须和 授权时定义的库名表示方式 一致
+/撤销用户权限 revoke 权限列表 on 数据库名.表名
+               from 用户名@‘客户端地址';
+
+mysql> grant all on db3.* to admin@'%' identified by'123456' 
+    -> with grant option;
+
+/*** > grant 权限列表 on 库名.表名 to  用户名@‘匹配的客户端主机地址’
+     > identified by '给于客户的用户密码'
+     > with grant option ------是否有授权权限
+     【@‘%.baidu.com’匹配指定的域名】 【@'192.168.1.%'匹配指定的网段】
+
+mysql> select host,user from mysql.user 
+    -> where user="admin";
+
+| host | user  |
+| %    | admin |
+
+mysql> grant insert on mysql.* to admin@'%'; 
+  #撤销权限时,库名的表示方式 必须和 授权时定义的库名表示方式 一致
+
+mysql> show grants for admin@'%';
+
+| Grants for admin@%   |
+| GRANT USAGE ON *.* TO 'admin'@'%'  |
+| GRANT ALL PRIVILEGES ON `db3`.* TO 'admin'@'%' WITH GRANT OPTION |
+| GRANT INSERT ON `mysql`.* TO 'admin'@'%'                         |
+
+mysql> show grants for admin2@'%';
+| Grants for admin2@% |
+| GRANT USAGE ON *.* TO 'admin2'@'%'              |
+| GRANT ALL PRIVILEGES ON `db3`.* TO 'admin2'@'%' |
+
+mysql> select user,host from mysql.user;
+
+| user      | host      |
+| admin     | %         |
+| admin2    | %         |
+| mysql.sys | localhost |
+| root      | localhost |
+
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H51 ~]# ss -anpult |egrep ":11211|:9000|:3306" |column -t
+udp  UNCONN  0  0    *:11211         *:*   users:(("memcached",pid=1085,fd=28))
+udp  UNCONN  0  0    :::11211        :::*  users:(("memcached",pid=1085,fd=29))
+tcp  LISTEN  0  128  *:11211         *:*   users:(("memcached",pid=1085,fd=26))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*   users:(("php-fpm",pid=1316,fd=0),
+tcp  LISTEN  0  128  :::11211        :::*  users:(("memcached",pid=1085,fd=27))
+tcp  LISTEN  0  80   :::3306         :::*  users:(("mysqld",pid=1604,fd=27))
+[root@H51 ~]#
+[root@H51 ~]# ls phpMyAdmin-2.11.11-all-languages.tar.gz -l
+-rw-r--r--. 1 root root 4318827 10月 15 09:04 phpMyAdmin-2.11.11-all-languages.tar.gz
+
+[root@H51 ~]# mysql -h192.168.4.50 -uroot -p1234
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1130 (HY000): Host '192.168.4.51' is not allowed to connect to this MySQL server
+[root@H51 ~]# mysql -h 192.168.4.50 -umydba -p1234
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db3                |
+| db4                |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb              |
+| teadb2             |
+
+mysql> select user();
+| user()             |
+| mydba@192.168.4.51 |
+
+mysql> select @@hostname;
+| @@hostname |
+| H50        |
+
+mysql> show grants;
+| Grants for mydba@%     |
+| GRANT ALL PRIVILEGES ON *.* TO 'mydba'@'%' WITH GRANT OPTION |
+
+mysql> set password=password("1234abc"); #授权用户 mydba自己 重新改写密码
+mysql> quit;
+Bye
+[root@H51 ~]# mysql -h 192.168.4.50 -umydba -p1234abc
+
+mysql> set password=password("1234");
+mysql> exit;
+Bye
+[root@H51 ~]# mysql -h192.168.4.50 -umydba -p1234 -e "show grants;";
+
+| Grants for mydba@%                                           |
+| GRANT ALL PRIVILEGES ON *.* TO 'mydba'@'%' WITH GRANT OPTION |
+
+[root@H51 ~]# mysql -h192.168.4.50 -umydba -p1234 -e "create database db44;";
+
+[root@H51 ~]# mysql -h192.168.4.50 -umydba -p1234 -e "create table db44.t1(id int);";
+
+[root@H51 ~]# mysql -h192.168.4.50 -umydba -p1234 -e "desc  db44.t1;";
+
+| Field | Type    | Null | Key | Default | Extra |
+| id    | int(11) | YES  |     | NULL    |       |
+
+[root@H51 ~]# mysql -h192.168.4.50 -umydba -p1234 -e "show databases;";
+
+| Database           |
+| information_schema |
+| db3                |
+| db4                |
+| db44               |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb              |
+| teadb2             |
+
+[root@H51 ~]# mysql -h192.168.4.50 -umydba -p1234  
+
+mysql> grant all on gamedb.* to test1@"localhost"
+    -> identified by "123456";
+
+mysql> show grants;
+| Grants for mydba@%     |
+| GRANT ALL PRIVILEGES ON *.* TO 'mydba'@'%' WITH GRANT OPTION |
+
+mysql> show grants for test1@"localhost";
+| Grants for test1@localhost                                |
+| GRANT USAGE ON *.* TO 'test1'@'localhost'                 |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'test1'@'localhost' |
+
+mysql> show grants;  # mydba 用户 权限消失
+
+| Grants for mydba@%   |
+-----------------------------------------------------------------------------------------------------------------------------------------
+| GRANT SELECT, INSERT, UPDATE, CREATE, RELOAD, SHUTDOWN, PROCESS, 
+FILE, REFERENCES, INDEX, ALTER, SHOW DATABASES, SUPER, CREATE TEMPORARY TABLES, 
+LOCK TABLES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, CREATE VIEW, 
+SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, CREATE USER, EVENT, TRIGGER,
+ CREATE TABLESPACE ON *.* TO 'mydba'@'%' |
+------------------------------------------------------------------------------------------------------------------------------
+
+mysql> use db44;show tables;
+
+| Tables_in_db44 |
+| t1             |
+
+mysql> drop table db44.t1;
+
+mysql> exit;
+Bye
+[root@H51 ~]# mysql -h192.168.4.50 -umydba -p1234 # mydba 用户 权限消失 
+
+mysql> show grants;
+| Grants for mydba@%    |
+| GRANT USAGE ON *.* TO 'mydba'@'%' |
+
+mysql> show databases;
+| Database           |
+| information_schema |
+
+mysql> exit;
+Bye
+[root@H51 ~]# mysql -h192.168.4.50 -umydba -p1234  # mydba 用户 权限消失
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1045 (28000): Access denied for user 'mydba'@'192.168.4.51' (using password: YES)
+[root@H51 ~]# 
+ 
+[root@H50 ~]# mysql -hlocalhost -utest1 -p123456 #test1 权限消失的过程
+
+mysql> show databases;
+| Database           |
+| information_schema |
+
+mysql> create database  gamedb;
+
+mysql> use gamedb;create table gamedb.t1(id int(3) unsigned not null default 119);
+
+mysql> desc gamedb.t1;
+| Field | Type            | Null | Key | Default | Extra |
+| id    | int(3) unsigned | NO   |     | 119     |       |
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| gamedb             |
+
+ mysql> show databases;
+| Database           |
+| information_schema |
+
+mysql> show grants;
+ERROR 1141 (42000): There is no such grant defined for user 'test1' on host 'localhost'
+mysql> exit;
+Bye
+[root@H50 ~]# mysql -hlocalhost -utest1 -p123456  #test1 权限消失
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1045 (28000): Access denied for user 'test1'@'localhost' (using password: YES)
+[root@H50 ~]#
+------------------------@H51 ~-----------------
+[root@H51 ~]# mysql -h192.168.4.50 -uadmin  -p123456
+
+mysql> show grants;
+| Grants for admin@%       |
+| GRANT USAGE ON *.* TO 'admin'@'%'      |
+| GRANT ALL PRIVILEGES ON `db3`.* TO 'admin'@'%' WITH GRANT OPTION |
+
+mysql> select  user();
+| user()             |
+| admin@192.168.4.51 |
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db3                |
+
+mysql> use db3;show tables;
+
+| Tables_in_db3 |
+| t4            |
+| user          |
+
+mysql> create table db3.admin( xxlie tinyint(3) unsigned not null default 33, name char(20));
+
+mysql> show tables;
+| Tables_in_db3 |
+| admin         |
+| t4            |
+| user          |
+
+mysql> grant all on db3.* to admin2@'%' identified by'123456'; 
+                                               #这时还没有 grant insert on mysql.*权限
+ERROR 1410 (42000): You are not allowed to create a user with GRANT
+mysql> show grants;
+| Grants for admin@%                                               |
+| GRANT USAGE ON *.* TO 'admin'@'%'                                |
+| GRANT ALL PRIVILEGES ON `db3`.* TO 'admin'@'%' WITH GRANT OPTION |
+
+mysql> exit;
+Bye
+[root@H51 ~]# mysql -h192.168.4.50 -uadmin  -p123456
+                 #这时已经 拥 有 grant insert on mysql.*权限
+mysql> grant all on db3.* to admin2@'%' identified by'123456';
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> show grants;      #撤销权限时,库名的表示方式 必须和 授权时定义的库名表示方式 一致
+| Grants for admin@% |
+| GRANT USAGE ON *.* TO 'admin'@'%' |
+| GRANT ALL PRIVILEGES ON `db3`.* TO 'admin'@'%' WITH GRANT OPTION |
+| GRANT INSERT ON `mysql`.* TO 'admin'@'%'                         |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H52 ~]# ss -anpult |egrep ":11211|:9000|:3306" |column -t
+udp  UNCONN  0  0    *:11211         *:*   users:(("memcached",pid=1055,fd=28))
+udp  UNCONN  0  0    :::11211        :::*  users:(("memcached",pid=1055,fd=29))
+tcp  LISTEN  0  128  *:11211         *:*   users:(("memcached",pid=1055,fd=26))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*   users:(("php-fpm",pid=1462,fd=0),("php-fpm",pid=1461,fd=0),("php-fpm",pid=1460,fd=0),("php-fpm",pid=1459,fd=0),("php-fpm",pid=1458,fd=0),("php-fpm",pid=1063,fd=6))
+tcp  LISTEN  0  128  :::11211        :::*  users:(("memcached",pid=1055,fd=27))
+tcp  LISTEN  0  80   :::3306         :::*  users:(("mysqld",pid=1776,fd=22))
+[root@H52 ~]#
+[root@H52 ~]# ls phpMyAdmin-2.11.11-all-languages.tar.gz -l
+-rw-r--r--. 1 root root 4318827 10月 15 09:04 phpMyAdmin-2.11.11-all-languages.tar.gz
+
+
+
+
+
+
+

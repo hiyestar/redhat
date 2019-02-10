@@ -1,0 +1,224 @@
+DBA 数据库管理员 岗位
+
+DB1基础  5天 （背命令和操作步骤）
+
+db2进阶  5天 （背操作步骤和命令 理解服务的工作原理）
+
+DB_NoSQL 5天 （背命令 服务的工作原理）
+++++++++++++++++++++++++++++++++++++++++
+DB1基础  5天
+
+day01
+搭建数据库服务器
+在主机50上部署mysql数据库服务器 MYSQL ORACLE  DB2  SQL SERVER
+
+装包  mysql-5.7.17.tar
+tar -xvf mysql-5.7.17.tar
+ls  *.rpm
+yum -y  install  perl-JSON
+rpm -Uvh mysql-community-*.rpm
+
+修改配置文件(无需修改 按默认配置运行即可)
+vim /etc/my.cnf
+
+启动
+systemctl  start mysqld
+systemctl  enable mysqld
+systemctl  status mysqld
+ls  /var/lib/mysql/  查看初始化数据
+
+查看服务运行状态
+]# netstat -utnlp  | grep :3306 查看端口
+]# ps -C mysqld                 查看进程
+
+
+与数据库服务相关的信息？
+主配置文件  日志文件  socket文件 PID号文件 
+数据目录的位置  进程所有者和组   数据目录所有者和组
+
+
+客户端连接数据库服务存储数据
+*默认只允许数据服务器自己访问自己。
+]# grep password /var/log/mysqld.log
+]# mysql -hlocalhost -uroot -p'sttLT6(4hk=#'
+
+mysql> alter user root@"localhost" identified  by "123qqq...A";
+
+mysql> show databases;
+mysql>  quit或exit
+
+]# mysql -hlocalhost -uroot -p123qqq...A
+mysql> show databases;
+
+SQL命令 的使用规则（结构化查询语言）
+
+
+修改数据库服务密码策略?
+命令行
+mysql> show variables like "%password%";
+mysql> set global validate_password_policy=0;
+mysql> set global validate_password_length=6;
+mysql> alter user root@"localhost" identified by "123456";
+mysql> quit
+]# mysql -hlocalhost -uroot -p123456
+mysql> show databases;
+
+永久设置
+vim /etc/my.cnf
+[mysqld]
+validate_password_policy=0
+validate_password_length=6
+:wq
+systemctl  restart  mysqld
+]# mysql -hlocalhost -uroot -p123456
+mysql> show variables like "%password%";
+
+
+数据库服务的基本使用：
+客户端把数据存储到数据库服务器上的步骤：
+1 客户端连接数据库服务器
+2 创建数据库（文件夹）
+3 创建表（文件） 创建 查看 删除
+4 存储数据 （select insert  update delete）
+5 断开连接
+
+连接数据库命令
+mysql  -hlocalhost -uroot  -p123456
+
+数据库管理命令
+创建 查看当前所在的库 查看  切换库 删除  
+
+
+表管理命令
+mysql> create database teadb;
+mysql> create table teadb.stuinfo(
+    -> name char(20),
+    -> age int,
+    -> homeaddr  char(50)
+    -> );
+mysql> show  tables;
+
+
+mysql> insert  into  teadb.stuinfo 
+values
+("bob",19,"shenzhen"),
+("tom",21,"guangzhou");
+
+mysql> select  *  from teadb.stuinfo;
+
+修改所有表记录
+mysql> update teadb.stuinfo set age=35;
+
+修改符合条件的表记录
+update teadb.stuinfo set age=18 where name="bob";
+
+删除符合条件的表记录
+mysql> delete from  teadb.stuinfo where name="bob";
+mysql> delete from  teadb.stuinfo; 删除所有表记录
+
+mysql> desc teadb.stuinfo; 查看表结构
+mysql> select  *  from  stuinfo; 查看表记录
+mysql> drop tables teadb.stuinfo; 删除表
+mysql> show tables; 查看已有的表
+
+use teadb;
+mysql> create  table 
+学生表(
+姓名 char(20),性别 char(6)
+)
+DEFAULT CHARSET=utf8;
+
++++++++++++++++++++++++++++
+MySQL数据类型
+
+mysql> create table  t3(
+    -> age tinyint  unsigned ,
+    -> pay float(7,2)
+    -> );
+Query OK, 0 rows affected (0.15 sec)
+
+mysql> insert into  t3 values(318,38000.88);
+ERROR 1264 (22003): Out of range value for column 'age' at row 1
+mysql> 
+mysql> insert into  t3 values(18,38000.88);
+Query OK, 1 row affected (0.03 sec)
+
+mysql> select  * from t3;
++------+----------+
+| age  | pay      |
++------+----------+
+|   18 | 38000.88 |
++------+----------+
+1 row in set (0.00 sec)
+
+mysql> 
+
+
+mysql> create table  t4( name char(4), homedir  varchar(6) );
+mysql> desc  t4;
+insert into  t4 values("jack","usa");
+
+mysql> insert into  t4 values("jack2","usaB");
+ERROR 1406 (22001): Data too long for column 'name' at row 1
+mysql> 
+
++++++++++++++++++++++++++++++++++
+日期时间类型
+mysql> create table  t5(
+    -> name char(10),
+    -> birthday  date,
+    -> start  year,
+    -> uptime time,
+    -> party  datetime
+    -> );
+Query OK, 0 rows affected (0.19 sec)
+
+赋值
+mysql> insert into t5 
+values("bob",20181120,1990,083000,20181224203018);
+
+
+查看记录
+mysql> select  * from  t5;
++------+------------+-------+----------+---------------------+
+| name | birthday   | start | uptime   | party               |
++------+------------+-------+----------+---------------------+
+| bob  | 2018-11-20 |  1990 | 08:30:00 | 2018-12-24 20:30:18 |
++------+------------+-------+----------+---------------------+
+1 row in set (0.00 sec)
+
+mysql> 
+
+枚举类型
+mysql> create table t6( 
+name char(10), 
+likes set("eat","sleep","game","film"), 多选
+sex enum("boy","girl","no")  单选
+);
+
+赋值
+mysql> insert into  t6 values("bob","eat,sleep","boy");
+Query OK, 1 row affected (0.05 sec)
+
+mysql> select  * from  t6;
++------+-----------+------+
+| name | likes     | sex  |
++------+-----------+------+
+| bob  | eat,sleep | boy  |
++------+-----------+------+
+1 row in set (0.00 sec)
+赋没有的值 报错
+mysql> insert into  t6 values("tom","woman","man");
+ERROR 1265 (01000): Data truncated for column 'likes' at row 1
+mysql> 
+
+
+desc  mysql.user;
+
+在persondb数据里创建dogperson表存储前任信息
+
+
+休息到10：10
+休息到11：15
+休息到15：15
+休息到16：10

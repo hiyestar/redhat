@@ -1,0 +1,101 @@
+启用binlog日志
+
+]# vim /etc/my.cnf
+[mysqld]
+server_id=50
+log-bin=db50
+binlog_format="mixed"
+:wq
+
+]# systemctl  restart  mysqld
+]# ls /var/lib/mysql/db50.*
+]# cd /var/lib/mysql/
+]# mysqlbinlog  db50.000001
+
+++++++++++++++++++++++++++++++++
+]#mysqldump  -uroot -p123456  db3 user > /root/user.sql
+
+>insert  into db3.user(name)values("bob");
+>insert  into db3.user(name)values("bob2");
+>insert  into db3.user(name)values("bob3");
+>insert  into db3.user(name)values("bob4");
+>delete from db3.user;
+>quit
+
+]#mysqlbinlog  db50.000001 查看不包含删除数据命令偏移量的位置
+]#mysql  -uroot -p123456 db3  < /root/user.sql
+]#mysqlbinlog --stop-position=偏移量值 db50.000001 | mysql  -uroot -p123456
+
+> select  * from db3.user;
+
+++++++++++++++++++++++++++++++
+mysql> flush logs;
+mysql> show master status;
+>
+create database  db1;
+create table db1.a(id int);
+insert into  db1.a values(100);
+insert into  db1.a values(200);
+insert into  db1.a values(300);
+insert into  db1.a values(400);
+
+> mysql> flush logs;
+mysql> show master status;
+
+insert into  db5.user values(10101);
+insert into  db5.user values(10101);
+insert into  db5.user values(10101);
+insert into  db5.user values(10101);
+insert into  db1.a values(7101);
+insert into  db1.a values(7101);
+insert into  db1.a values(7101);
+insert into  db1.a values(7101);
+insert into  db1.a values(7101);
+> drop database  db1;
+
+]# mysqlbinlog db50.XXXX  | mysql -uroot -p123456
+>select  * from db1.a;
+
+]# mysqlbinlog --start-position=xx  --stop-position=xxx  db50.XXXX  | mysql -uroot -p123456
+
+>select  * from  db1.a;
+
++++++++++++++++++++++++++++++++++++++++++
+  226  mkdir /logdir
+  227  chown  mysql /logdir/
+  228  vim /etc/my.cnf
+       [mysqld]
+       server_id=50
+       #log-bin=db50
+       log-bin=/logdir/plj
+       binlog_format="mixed"
+       :wq
+  229  systemctl  restart mysqld
+  230  ls /logdir/plj.*
+++++++++++++++++++++++++++++++++++++++++++++++++
+]# yum -y  install  perl-DBD-mysql perl-Digest-MD5
+]# rpm -ivh libev-4.15-1.el6.rf.x86_64.rpm
+]# rpm -ivh percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+
+]# rpm -ql percona-xtrabackup-24
+]# man innobackupex
+]# man xtrabackup
+
+
+
+]# innobackupex  <选项>
+
+]# innobackupex --user root --password 123456 /allbak  --no-timestamp
+]# ls /allbak/
+
+]#innobackupex --user root --password 123456  --apply-log /allbak/
+]#  systemctl  stop  mysqld
+]#  rm -rf /var/lib/mysql/*
+]#innobackupex --user root --password 123qqq...A  --copy-back /allbak/
+  
+]# chown  -R mysql:mysql /var/lib/mysql
+]# ls /var/lib/mysql/ -l
+]# systemctl  start  mysqld
+]# systemctl  status  mysqld
+]# mysql -uroot -p123456
+> show  databases;

@@ -1,0 +1,209 @@
+DBA2_DAY03 配置MySQL高可用集群+++++++++++++++++++
+
+主机角色 ：
+客户端       client50
+数据库服务器 mysql51 到 mysql55
+管理主机     mgm56
+VIP地址      192.168.4.100
+
+拓扑结构：
+
+      client50  ]#mysql  -hvip  -utestusr  -p123qqq...A
+
+         | 
+      mysql51主  
+         |  
+---------------------------------------------
+   |        |        |        |         |
+mysql52  mysql53  mysql54  mysql55    mgm56
+ 从        从        从      从       管理集群
+备用主   备用主
+
+
+
+配置MySQL主从同步结构：一主多从
+配置主库51
+配置备用从库52
+配置备用从库53
+配置纯从库54
+配置纯从库55
+++++++++++++++++++++++++++++++++++
+准备集群环境：
+1 在所有主机上安装共享目录里的perl软件包 （51-56）
+2 在所有数据库服务器51-55上授权监控用户
+mysql>
+grant all  on *.* to   root@'%'  identified  by  '123qqq...A'; 
+3 在所有服务器51-56上安装mha_node软件包
+]#cd mha-soft-student/
+]#yum -y  install perl-DBD-mysql
+]#rpm -ivh  mha4mysql-node-0.56-0.el6.noarch.rpm
+4 在管理主机56上安装mha_manager软件包
+# yum -y  install perl-ExtUtils-*   perl-CPAN-*
+
+# tar -zxf  mha4mysql-manager-0.56.tar.gz 
+
+# cd  mha4mysql-manager-0.56
+
+# perl  Makefile.pl
+
+# make
+
+# make  install
+
+5 配置ssh密钥认证登录
+5.1 管理主机56 可以无密码ssh 所有数据库服务器51-55
+5.2 数据库服务器主机之间可以互相无密码ssh连接
+++++++++++++++++++++++++++++++++++++++++
+三、配置MHA:
+3.1 在管理主机56上创建管理命令
+]# mkdir /root/bin
+]#cd mha4mysql-manager-0.56/bin  
+]#cp   *  /root/bin/
+
+3.2 创建主配置 并编辑
+]# mkdir /etc/mha
+]#cp  mha4mysql-manager-0.56/samples/conf/app1.cnf  /etc/mha/
+
+]#vim /etc/mha/app1.cnf
+[server default]  #服务默认配置
+manager_workdir=/etc/mha   #工作目录
+manager_log=/etc/mha/manager.log #日志文件
+#故障切换脚本
+master_ip_failover_script=/etc/mha/master_ip_failover
+
+#ssh服务用户名及端口
+ssh_user=root
+ssh_port=22
+
+#主从复制时，从库连接主库的用户名及密码
+repl_user=repluser
+repl_password=123qqq...A
+
+#监控数据库时，连接服务器的用户及密码
+user=root
+password=123qqq...A
+
+指定数据库服务器ip及角色
+[server1]
+hostname=192.168.4.61
+candidate_master=1
+[server2]
+hostname=192.168.4.62
+candidate_master=1
+[server3]
+hostname=192.168.4.63
+candidate_master=1
+[server4]
+hostname=192.168.4.64
+no_master=1
+[server5]
+hostname=192.168.4.65
+no_master=1
+:wq
+
+创建故障切换脚本并编辑
+]# cd mha-soft-student
+]# cp master_ip_failover /etc/mha/
+]# chmod  +x /etc/mha/master_ip_failover
+
+]# vim /etc/mha/master_ip_failover
+ 35 my $vip = '192.168.4.100/24';  # Virtual IP 
+ 36 my $key = "1";
+ 37 my $ssh_start_vip = "/sbin/ifconfig eth0:$key $vip";
+ 38 my $ssh_stop_vip = "/sbin/ifconfig eth0:$key down";
+:wq
+
+把脚本中指定的ip地址手动部署在当前主库51 上。
+
+mysql51]#  ifconfig  eth0:1  192.168.4.100/24
+mysql51]#  ifconfig  eth0:1
+
+
+3.3 启动服务
+3.3.1  检查ssh连接
+mgm56]# masterha_check_ssh --conf=/etc/mha/app1.cnf
+
+Wed Oct 24 14:32:35 2018 - 
+[info] All SSH connection tests passed successfully.
+
+3.3.2  检查主从同步配置
+mgm56]# masterha_check_repl --conf=/etc/mha/app1.cnf
+
+MySQL Replication Health is OK.
+
+3.3.3  启动管理服务
+mgm56]#
+masterha_manager --conf=/etc/mha/app1.cnf  \
+--remove_dead_master_conf --ignore_last_failover
+
+
+3.4 查看状态
+]# masterha_check_status --conf=/etc/mha/app1.cnf
+app1 (pid:9541) is running(0:PING_OK), master:192.168.4.61
+
+
+3.5 测试配置
+
+3.5.1 在客户端50主机上连接vip 192.168.4.100 访问数据库服务
+
+主库做用户授权
+mysql51>create database db3;create table db3.a(id int);
+mysql51>grant select,insert  on  db3.* to plj@"%" identified
+by  "123qqq...A";
+
+客户端使用授权用户连接
+client50]# mysql -h192.168.4.100  -uplj -p123qqq...A  db3
+mysql> 
+mysql> insert  into db3.a values(100);
+Query OK, 1 row affected (0.07 sec)
+mysql> select  * from db3.a;
+
+3.5.1 测试高可用配置
+把主库51的数据库服务停止 
+客户端仍然可以连接VIP地址192.168.4.100 访问数据库服务
+
+mysql51]# systemctl stop mysqld
+
+client50]# ping  -c 2  192.168.4.100
+
+client50]# mysql -h192.168.4.100  -uplj  -p123qqq...A  db3
+mysql> select  @@hostname;
+mysql> select * from  db3.a;
+mysql> insert into db3.a values(101);
+
+在/etc/mha/app1.cnf文件没有了主库51的配置
+数据库53 - 55  把 主库地址指向 新选举出的主库ip地址
+
+
+3.5.2  把坏掉的数据库服务器51 再添加到集群里。
+MySQL51]# systemctl  start mysqld
+MySQL51]# mysql -uroot  -p123qqq...A
+
+mysql> change master to  master_host="192.168.4.52",
+    -> master_user="repluser",
+    -> master_password="123qqq...A",
+    -> master_log_file="master52.000002", 当前主库日志
+    -> master_log_pos=1237; 对应的pos点
+mysql> start slave;
+mysql> show  slave status\G;  IO 和SQL 进程都是Yes 主机ip 52
+
+
+mgm56]# vim /etc/mha/app1.cnf
+[server1]
+candidate_master=1
+hostname=192.168.4.51
+:wq
+
+mgm56]# 
+masterha_manager --conf=/etc/mha/app1.cnf  \
+--remove_dead_master_conf --ignore_last_failover
+
+
+3.4 查看状态
+mgm56]# masterha_check_status --conf=/etc/mha/app1.cnf
+app1 (pid:9541) is running(0:PING_OK), master:192.168.4.52
+
+
+把主库52的数据库服务停止后，客户端仍然可以连接
+vip地址192.168.4.100 访问MySQL数据库服务.
+

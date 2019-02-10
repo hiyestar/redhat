@@ -1,0 +1,358 @@
+
+[root@test ~]# ifdown eth0
+成功断开设备 'eth0'。
+[root@test ~]# ifup eth0
+连接已成功激活（D-Bus 活动路径：/org/freedesktop/NetworkManager/ActiveConnection/3）
+
+[root@test ~]# systemctl restart NetworkManager
+
+[root@test ~]# ctrl + ] 退出虚拟机
+
+[root@hiys images]# for i in  rh7_node{9..12};do virsh shutdown ${i};done
+...................
+
+[root@hiys images]# virt-manager  # # 弹出虚拟机系统管理器
+
+[root@hiys ~]# rm -f /var/lib/libvirt/images/rh7_node*
+
+[root@hiys ~]# ls /var/lib/libvirt/images/
+bin      db    lost+found  tedu-wallpaper-01.png       Weekend.sh
+conf.d   exam  qemu        tedu-wallpaper-weekend.png
+content  iso   Student.sh  vsftpd.conf
+
+[root@hiys ~]# ls /etc/libvirt/qemu/
+networks
+[root@hiys ~]# ls /etc/libvirt/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@hiys networks]# ls -a /etc/libvirt/qemu/networks/autostart/
+.   default.xml   private2.xml  public2.xml
+..  private1.xml  public1.xml   rhce.xml
+[root@hiys networks]# 
+
+[root@hiys ~]# ll -a  /var/lib/libvirt/images/.rhel7.xml 
+-rw------- 1 root root 4291 1月  10 2018 /var/lib/libvirt/images/.rhel7.xml
+[root@hiys networks]# ll -a /var/lib/libvirt/images/.rh7_template.img
+-rw------- 1 qemu qemu 3904503808 3月  10 2018 /var/lib/libvirt/images/.rh7_template.img
+[root@hiys networks]# pwd
+/etc/libvirt/qemu/networks
+[root@hiys networks]#
+
+[root@hiys ~]# cat /var/lib/libvirt/images/.rhel7.xml
+...................................................
+<domain type='kvm'>
+  <name>rh7_template</name>
+  <memory unit='KiB'>1048576</memory>
+  <currentMemory unit='KiB'>1048576</currentMemory>
+  <vcpu placement='static'>1</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-i440fx-rhel7.0.0'>hvm</type>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+    <cpu mode='host-model'>
+      <model fallback='allow'/>
+  </cpu>
+  <clock offset='utc'>
+    <timer name='rtc' tickpolicy='catchup'/>
+    <timer name='pit' tickpolicy='delay'/>
+    <timer name='hpet' present='no'/>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <pm>
+    <suspend-to-mem enabled='no'/>
+    <suspend-to-disk enabled='no'/>
+  </pm>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/rh7_template.img'/>
+      <target dev='vda' bus='virtio'/>
+      <boot order='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <target dev='hda' bus='ide'/>
+      <readonly/>
+      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+    </disk>
+    <controller type='usb' index='0' model='ich9-ehci1'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x7'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci1'>
+      <master startport='0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0' multifunction='on'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci2'>
+      <master startport='2'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x1'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci3'>
+      <master startport='4'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x2'/>
+    </controller>
+    <controller type='pci' index='0' model='pci-root'/>
+    <controller type='ide' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+    </controller>
+    <controller type='virtio-serial' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+    </controller>
+    <interface type='network'>
+      <source network='private1'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='private2'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='public1'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='public2'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x0b' function='0x0'/>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='tablet' bus='usb'/>
+    <input type='mouse' bus='ps2'/>
+    <input type='keyboard' bus='ps2'/>
+    <graphics type='spice' autoport='yes'>
+      <image compression='off'/>
+    </graphics>
+    <sound model='ich6'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </sound>
+    <video>
+      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <redirdev bus='usb' type='spicevmc'>
+    </redirdev>
+    <redirdev bus='usb' type='spicevmc'>
+    </redirdev>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+[root@hiys ~]# 
+[root@hiys ~]# ls /etc/libvirt/qemu/
+networks
+[root@hiys ~]# ls /var/lib/libvirt/images/
+bin      db    lost+found  tedu-wallpaper-01.png       Weekend.sh
+conf.d   exam  qemu        tedu-wallpaper-weekend.png
+content  iso   Student.sh  vsftpd.conf
+
+[root@hiys ~]# echo 9 |clone-auto7
+
+[root@hiys ~]# ls /etc/libvirt/qemu/
+networks       rh7_node2.xml  rh7_node4.xml  rh7_node6.xml  rh7_node8.xml
+rh7_node1.xml  rh7_node3.xml  rh7_node5.xml  rh7_node7.xml  rh7_node9.xml
+[root@hiys ~]# ls /var/lib/libvirt/images/
+bin      iso            rh7_node3.img  rh7_node8.img               vsftpd.conf
+conf.d   lost+found     rh7_node4.img  rh7_node9.img               Weekend.sh
+content  qemu           rh7_node5.img  Student.sh
+db       rh7_node1.img  rh7_node6.img  tedu-wallpaper-01.png
+exam     rh7_node2.img  rh7_node7.img  tedu-wallpaper-weekend.png
+[root@hiys ~]# 
+
+
+[root@hiys ~]# virsh list |awk '/V/||/rh7/{print $0}'
+ 1     Va51                           running
+ 2     Va54                           running
+ 3     rh7_node17                     running
+ 4     rh7_node18                     running
+ 5     Vb57                           running
+ 6     Vb50                           running
+
+[root@hiys ~]# virsh list |awk '/V/||/rh7/{print $2}'
+Va51
+Va54
+rh7_node17
+rh7_node18
+Vb57
+Vb50
+[root@hiys ~]# echo $?
+0
+[root@hiys ~]# virsh list |awk '/Vx/||/rh7x/{print $2}'
+[root@hiys ~]# echo $?
+0
+[root@hiys ~]# x=`virsh list |awk '/Vx/||/rh7x/{print $2}'`;echo "$x";
+
+[root@hiys ~]# if [ "$x" = "" ];then echo "$x is null";
+> fi;
+ is null
+[root@hiys ~]# 
+
+[root@hiys ~]# if [ -n "$x" ];then echo nullll;fi;
+[root@hiys ~]# if [ -z "$x" ];then echo nullll;fi;
+nullll
+
+[root@hiys ~]# if [ -f "$x" ];then echo nullll;fi;
+[root@hiys ~]# if [ -n "$x" ];then echo nullll;fi;
+
+[root@hiys ~]# if [ -n "$x" ];then echo nullll;fi;
+[root@hiys ~]# if [[ -n $x  ]];then echo nullll;fi;
+[root@hiys ~]# if [[ -z $x  ]];then echo nullll;fi;
+nullll
+[root@hiys ~]# 
+
+
+
+[root@hiys ~]# j=$(virsh list |awk '/Vx/||/rh7x/{print $2}');echo $j;
+
+[root@hiys ~]# echo $?
+0
+[root@hiys ~]# if [ -n "$j" ];then echo "haha";fi;
+[root@hiys ~]# if [ -z "$j" ];then echo "haha";fi;
+haha
+[root@hiys ~]# if [[ -z $j ]];then echo "haha";fi;
+haha
+[root@hiys ~]# if [[ -n $j ]];then echo "haha";fi;
+[root@hiys ~]# if [ -n $j ];then echo "haha";fi;
+haha
+[root@hiys ~]# 
+
+
+
+[root@hiys ~]# x=$(virsh list |awk '/V/||/rh7/{print $2}');echo $x
+Va51 Va54 rh7_node17 rh7_node18 Vb57 Vb50
+[root@hiys ~]# for x in $(virsh list |awk '/V/||/rh7/{print $2}')
+> do
+> echo $x
+> done
+Va51
+Va54
+rh7_node17
+rh7_node18
+Vb57
+Vb50
+[root@hiys ~]#
+[root@hiys ~]# list=$(virsh list |awk '/V/||/rh7/{print $2}');echo $list
+Va51 Va54 rh7_node17 rh7_node18 Vb57 Vb50
+
+[root@hiys ~]# x=6;virsh list |awk '/V/||/rh7/{print $2}' |sed -n ${x}p
+Vb50
+[root@hiys ~]# 
+
+x="";
+for i in `cat /root/VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzipsh.txt`
+do
+  VMname=$(echo $i |awk -F: '{print $1}');
+  VMnameA=$(echo $i |awk -F: '{print $2}');
+  VMnameB=$(echo $i |awk -F: '{print $3}');
+
+  list=$(virsh list |awk '/V/||/rh7/{print $2}');
+  let x++;
+ 
+  if [ -z  "$list" ];then
+    echo $list;
+    echo "virtual machine is not running";
+  elif [[ -n $list ]];then
+
+    j=$(virsh list |awk '/V/||/rh7/{print $2}' |sed -n ${x}p)
+    nr=$(virsh list |awk '/V/||/rh7/{print $2}' |sed -n $=)
+
+    if [ "$x" -le "$nr" ];then
+      if [[ "$j" = Va* ]];then
+        Vname=$VMnameA
+        echo $Vname
+      elif [[ "$j" = Vb* ]];then
+        Vname=$VMnameB
+        echo $Vname
+      elif [[ "$j" != V* ]];then
+        Vname=$VMname
+        echo $Vname
+      fi
+    elif [ "$x" -gt "$nr" ];then
+      echo "${x} is  dayu ${nr}"
+    fi
+  fi
+done
+
+list=$(virsh list |awk '/V/||/rh7/{print $2}');echo $list
+
+Va51 Va54 rh7_node17 rh7_node18 Vb57 Vb50
+
+ x="";
+ for i in `cat /root/VMname-hostname-eth0-eth1-eth2-eth3-rpmtarzipsh.txt`
+ do
+   VMname=$(echo $i |awk -F: '{print $1}');
+   VMnameA=$(echo $i |awk -F: '{print $2}');
+   VMnameB=$(echo $i |awk -F: '{print $3}');
+ 
+   list=$(virsh list |awk '/V/||/rh7/{print $2}');
+   let x++;
+  
+   if [ -z  "$list" ];then
+     echo $list;
+     echo "virtual machine is not running";
+   elif [[ -n $list ]];then
+ 
+     j=$(virsh list |awk '/V/||/rh7/{print $2}' |sed -n ${x}p)
+     nr=$(virsh list |awk '/V/||/rh7/{print $2}' |sed -n $=)
+ 
+     if [ "$x" -le "$nr" ];then
+       if [[ "$j" = Va* ]];then
+         Vname=$VMnameA
+         echo $Vname
+       elif [[ "$j" = Vb* ]];then
+         Vname=$VMnameB
+         echo $Vname
+       elif [[ "$j" != V* ]];then
+         Vname=$VMname
+         echo $Vname
+       fi
+     elif [ "$x" -gt "$nr" ];then
+       echo "${x} is  dayu ${nr}"
+     fi
+   fi
+ done
+
+Va50
+Va51
+rh7_node
+rh7_node
+Vb54
+Vb55
+7 is  dayu 6
+8 is  dayu 6
+[root@hiys ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

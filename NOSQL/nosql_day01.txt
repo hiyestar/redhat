@@ -1,0 +1,408 @@
+优化MySQL数据库服务的方法：
+数据库服务运行时，查看硬件使用情况（cpu  内存  磁盘）
+网络接口流量 
+数据库服务运行时,参数配置：
+show variables ;
+show global  status;
+
+并发连接数量  超时时间  重复使用的线程数量
+多个线程同时打开表的数量  
+ 索引缓存  
+处理不查询方式MySQL线程使用缓存设置
+select  * from a;
+select  name,age from a order by  age  desc;
+
+查询缓存配置
+select variables like "query_cache_%";
+
+查看查询缓存统计信息
+select variables like  "qcache_%";
+
+
+优化程序员编写的sql命令
+
+]#vim /etc/my.cnf
+general-log 启用查询日志
+
+slow-query-log 启用慢查询日志
+log-queries-not-using-indexes 没有使用索引的
+                              查询也记录到日志文件里
+:wq
+
+统计慢查询日志记录的sql命令保存到文本文件
+]# mysqldumpslow /var/lib/mysql/mysql51-slow.log  > /tmp/sql.txt
+
+优化网络架构：结构中不要有数据传输瓶颈
+             不要有单点故障
+
+MHA集群
+
+RDBMS  mysql  oracle   sql server
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+NoSQL 5天 数据服务：Redis  和 MongoDB
+
+
+NoSQL_day01  
+搭建Redis数据库服务器192.168.4.50
+1 安装redis软件包
+# rpm -q gcc 
+]# yum -y install gcc 
+]#tar -zxvf redis-4.0.8.tar.gz 
+]#cd redis-4.0.8/
+]#make
+]#make install
+
+2 初始化配置
+[root@client50 redis-4.0.8]# ./utils/install_server.sh 
+Welcome to the redis service installer
+This script will help you easily set up a running redis server
+
+Please select the redis port for this instance: [6379]  端口号
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf]  主配置文件
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log]  日志文件
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli  命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. 回车
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server... 启动服务
+Installation successful!
+[root@client50 redis-4.0.8]# netstat -utnlp  | grep :6379 
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*               
+LISTEN      1957/redis-server 1 
+
+服务管理
+[root@client50 redis-4.0.8]# /etc/init.d/redis_6379 status 查看状态
+Redis is running (1957)
+[root@client50 redis-4.0.8]# 
+[root@client50 redis-4.0.8]# /etc/init.d/redis_6379 stop 停止
+Stopping ...
+Redis stopped
+[root@client50 redis-4.0.8]# 
+[root@client50 redis-4.0.8]# /etc/init.d/redis_6379 status
+cat: /var/run/redis_6379.pid: ....
+Redis is running ()
+[root@client50 redis-4.0.8]# 
+[root@client50 redis-4.0.8]# /etc/init.d/redis_6379 start  启动
+Starting Redis server... 
+[root@client50 redis-4.0.8]# 
+[root@client50 redis-4.0.8]# /etc/init.d/redis_6379 status
+Redis is running (2052)
+[root@client50 redis-4.0.8]# 
+
+本机连接redis服务
+[root@client50 redis-4.0.8]# redis-cli 
+127.0.0.1:6379> 
+127.0.0.1:6379> keys *
+(empty list or set)
+127.0.0.1:6379> exit
+[root@client50 redis-4.0.8]#
+
+
+
+常用操作指令（管理数据的命令）
+
+
+
+配置文件解析 --- 修改服务使用的ip地址和端口号
+
+]# /etc/init.d/redis_6379 stop
+]# vim /etc/redis/6379.conf
+port 6350
+bind 192.168.4.50
+:wq
+]# /etc/init.d/redis_6379 start
+]# netstat -utnlp  | grep  :6350
+]# redis-cli  -h 192.168.4.50  -p 6350
+> keys *
+> quit
+]# vim /etc/init.d/redis_6379
+43  $CLIEXEC -h 192.168.4.50  -p 6350 shutdown
+:wq
+]# /etc/init.d/redis_6379 stop
+]# /etc/init.d/redis_6379 start
+]# redis-cli  -h 192.168.4.50  -p 6350
+> keys *
+> quit
+
+
+设置服务连接密码
+
+vim  /etc/redis/6379.conf
+501 requirepass 123456
+:wq
+]# /etc/init.d/redis_6379 restart
+[root@client50 ~]# redis-cli  -h 192.168.4.50 -p 6350
+192.168.4.50:6350> keys *
+(error) NOAUTH Authentication required.
+
+192.168.4.50:6350> auth 123456
+OK
+192.168.4.50:6350> keys *
+(empty list or set)
+192.168.4.50:6350> ping
+PONG
+192.168.4.50:6350>exit
+
+]# redis-cli  -h 192.168.4.50 -p 6350 -a 123456
+192.168.4.50:6350> ping
+PONG
+192.168.4.50:6350> keys *
+(empty list or set)
+192.168.4.50:6350> exit
+
+
+]# redis-cli  -h 192.168.4.50 -p 6350 -a 123456 shutdown
+
+
+]# vim /etc/init.d/redis_6379
+43 $CLIEXEC  -h 192.168.4.50 -p 6350 -a 123456 shutdown
+:wq
+
+
+[root@client50 ~]# /etc/init.d/redis_6379  start
+Starting Redis server...
+[root@client50 ~]# 
+[root@client50 ~]# /etc/init.d/redis_6379  stop
+Stopping ...
+Redis stopped
+[root@client50 ~]#
+
+  161  netstat -utnlp  | grep :80
+  162  systemctl  stop httpd
+  163  systemctl  disable httpd
+  164  rpm -q gcc
+  165  useradd nginx
+  166  tar -zxvf nginx-1.12.2.tar.gz 
+  167  cd nginx-1.12.2/
+  168  ls
+  169  ./configure --prefix=/usr/local/nginx
+  170  make 
+  171  make install
+
+[root@web57 nginx-1.12.2]# ls /usr/local/nginx/
+conf  html  logs  sbin
+[root@web57 nginx-1.12.2]# 
+[root@web57 nginx-1.12.2]# 
+[root@web57 nginx-1.12.2]# echo  123 > /usr/local/nginx/html/test.html
+[root@web57 nginx-1.12.2]# 
+[root@web57 nginx-1.12.2]# 
+[root@web57 nginx-1.12.2]# ls /usr/local/nginx/html/
+50x.html  index.html  test.html
+[root@web57 nginx-1.12.2]# 
+[root@web57 nginx-1.12.2]# /usr/local/nginx/sbin/nginx 
+[root@web57 nginx-1.12.2]# 
+[root@web57 nginx-1.12.2]# netstat -utnlp  | grep  :80
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      8073/nginx: master  
+[root@web57 nginx-1.12.2]# curl  http://localhost/test.html
+123
+[root@web57 nginx-1.12.2]#
+
+
+]# rpm -ivh php-fpm-5.4.16-42.el7.x86_64.rpm
+
+]# systemctl start php-fpm
+]# systemctl enable php-fpm
+
+[root@web57 lnmp]# netstat -utnlp  | grep :9000
+tcp        0      0 127.0.0.1:9000          0.0.0.0:*               LISTEN      8426/php-fpm: maste 
+
+[root@web57 lnmp]# 
+]# /usr/local/nginx/sbin/nginx  -s stop
+
+]# vim /usr/local/nginx/conf/nginx.conf
+ 65         location ~ \.php$ {
+ 66             root           html;
+ 67             fastcgi_pass   127.0.0.1:9000;
+ 68             fastcgi_index  index.php;
+ 69         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 70             include        fastcgi.conf;
+ 71         }
+:wq
+
+[root@web57 lnmp]# /usr/local/nginx/sbin/nginx  -t
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+ 
+[root@web57 lnmp]# /usr/local/nginx/sbin/nginx
+
+[root@web57 lnmp]# netstat -utnlp  | grep :80
+tcp        0      0 0.0.0.0:80      0.0.0.0:*  LISTEN      8799/nginx: master  
+[root@web57 lnmp]# 
+
+]# vim /usr/local/nginx/html/test.php
+<?php
+echo "hello boy!!!";
+?>
+:wq
+
+[root@web57 lnmp]# curl  http://localhost/test.php
+hello boy!!!
+
+
+  199  yum -y  install mariadb-server  mariadb
+  200  rpm q  mariadb-server  mariadb
+  201  rpm q  mariadb-server  
+   203  rpm -q  mariadb
++++++++++++++++++++++++++++++++++++++++++
+  209  tar -zxvf redis-4.0.8.tar.gz 
+  210  cd redis-4.0.8/
+  211  ls
+  212  make
+  213  make install
+  214  ./utils/install_server.sh 
+
+]# netstat -utnlp  | grep  :6379
+
+[root@web57 redis-4.0.8]# redis-cli 
+127.0.0.1:6379> ping
+PONG
+127.0.0.1:6379> set name bob
+OK
+127.0.0.1:6379> get name
+"bob"
+127.0.0.1:6379> exit
+[root@web57 redis-4.0.8]#
+
+++++++++++++++++++++++++++++++++
+配置php支持redis
+
+]# yum -y  install automake   autoconf
+]# rpm -ivh php-devel-5.4.16-42.el7.x86_64.rpm
+
+    2  tar -zxvf php-redis-2.2.4.tar.gz 
+ 
+    4  cd phpredis-2.2.4/
+ 
+    6  phpize 
+   10  ./configure --with-php-config=/usr/bin/php-config
+   11  make
+
+]# make install
+Installing shared extensions:     /usr/lib64/php/modules/
+
+]# ls /usr/lib64/php/modules/redis.so
+
+++++++++配置php支持redis++++++++++++++++++++++++++
+]# vim /etc/php.ini
+ 728 extension_dir = "/usr/lib64/php/modules/"
+ 729 ; On windows:
+ 730 extension = "redis.so"
+:wq
+
+]# systemctl restart php-fpm
+
+]# php -m  | grep  -i redis
+redis
+
+[root@web57 ~]# vim /usr/local/nginx/html/test2.php
+[root@web57 ~]# cat /usr/local/nginx/html/test2.php
+<?php
+phpinfo();
+?>
+[root@web57 ~]# php -m | grep -i redis
+
+浏览器访问 http://192.168.4.57/test2.php
+
++++++++++++++++++++++++++++++++++++++++++++++++++
+[root@web57 ~]# vim  /usr/local/nginx/html/test3.php
+<?php
+$redis = new redis();
+$redis->connect('127.0.0.1',6379);
+$redis->set('x','666');
+echo $redis->get('x');
+?>
+:wq
+[root@web57 ~]# redis-cli 
+127.0.0.1:6379> keys *
+1) "name"
+127.0.0.1:6379> exit
+
+]# curl  http://localhost/test3.php
+]#redis-cli 
+127.0.0.1:6379> keys *
+1) "x"
+2) "name"
+127.0.0.1:6379> get x
+"666"
+127.0.0.1:6379> quit
+
+
+
+192.168.4.55
+mysql> create database gamedb;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> create table gamedb.user(
+    -> name char(15),
+    -> password char(6)
+    -> );
+Query OK, 0 rows affected (0.36 sec)
+
+mysql> grant select,insert on gamedb.* to admin@"192.168.4.57"
+    -> identified by "123qqq...A";
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> 
+
+192.168.4.57
+~]# mysql -h192.168.4.55 -uadmin -p123qqq...A gamedb
+mysql> insert into user(name,password)values
+("bob","123456");
+mysql> select  * from user;
+mysql> quit;
+
+]# vim /usr/local/nginx/html/index.html 
+<html>
+<form action="reg.php" method="post">
+<h1> reg login user info :</h1> 
+<h3>LoginName: </h3><input type="text" name="name" size="20" maxlength="255"/>
+<br />
+<br />
+<h3>LoginPass: </h3><input type="text" name="password" size="20" maxlength="255"/>
+<br />
+<br />
+<h3><input type="submit" name="submit" value="SUBMIT" /></h3></p>
+</form>
+</html>
+[root@room9pc17 LAMP]# 
+
+
+
+]# vim /usr/local/nginx/html/reg.php 
+<?php
+$servername = "192.168.4.55";
+$username = "admin";
+$password = "123qqq...A";
+$dbname = "gamedb";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+if ($conn->connect_error) {
+    die("link fail: " . $conn->connect_error);
+}else{echo "link mysql Ok"; echo "       ";} 
+
+$username=$_POST['name'];
+$userpassword=$_POST['password'];
+
+$sql="insert into user (name,password) values ('$username','$userpassword')";
+if($conn->query($sql)){echo "insert data ok"; }
+$conn->close();
+
+?>
+:wq
+
+http://192.168.4.57/index.html

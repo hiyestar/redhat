@@ -1,0 +1,264 @@
+
+
+[root@H55 ~]# ss -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+udp  UNCONN  0  0    *:11211         *:*   users:(("memcached",pid=1003,fd=28))
+udp  UNCONN  0  0    :::11211        :::*  users:(("memcached",pid=1003,fd=29))
+tcp  LISTEN  0  128  *:11211         *:*   users:(("memcached",pid=1003,fd=26))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*   users:(("php-fpm",pid=1065,fd=0),
+tcp  LISTEN  0  128  :::11211        :::*  users:(("memcached",pid=1003,fd=27))
+tcp  LISTEN  0  128  :::80           :::*  users:(("httpd",pid=1113,fd=4),
+tcp  LISTEN  0  80   :::3306         :::*  users:(("mysqld",pid=1308,fd=29))
+[root@H55 ~]# 
+[root@H55 ~]# mysql -hlocalhost -uroot -p1234
+
+mysql> show variables like '%secure_file_pri%';
+
+| Variable_name    | Value                 |
+| secure_file_priv | /var/lib/mysql-files/ |
+
+mysql> create database teadb;use teadb;
+
+mysql> system head -n 2 '/etc/passwd';
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+mysql> system cat  -A  /etc/passwd |head -2
+root:x:0:0:root:/root:/bin/bash$
+bin:x:1:1:bin:/bin:/sbin/nologin$
+
+mysql> system cp '/etc/passwd'  '/var/lib/mysql-files/';
+mysql> system ls /var/lib/mysql-files/
+passwd
+mysql> create table teadb.usertab(
+    -> name char(30),
+    -> password  char(1),
+    -> uid  int(2) unsigned,
+    -> gid  int(2) unsigned,
+    -> comment char(150),
+    -> homedir  char(150),
+    -> shell char(30),
+    -> index(name))engine=Innodb default charset=utf8; 
+
+mysql> desc teadb.usertab;
+| Field    | Type            | Null | Key | Default | Extra |
+| name     | char(30)        | YES  | MUL | NULL    |       |
+| password | char(1)         | YES  |     | NULL    |       |
+| uid      | int(2) unsigned | YES  |     | NULL    |       |
+| gid      | int(2) unsigned | YES  |     | NULL    |       |
+| comment  | char(150)       | YES  |     | NULL    |       |
+| homedir  | char(150)       | YES  |     | NULL    |       |
+| shell    | char(30)        | YES  |     | NULL    |       |
+
+mysql> load data infile '/var/lib/mysql-files/passwd'
+    -> into table teadb.usertab
+    -> fields terminated by':'
+    -> lines terminated by'\n';
+
+mysql> select * from teadb.usertab limit 0,2;
+| name | password | uid  | gid  | comment | homedir | shell         |
+| root | x        |    0 |    0 | root    | /root   | /bin/bash     |
+| bin  | x        |    1 |    1 | bin     | /bin    | /sbin/nologin |
+
+mysql> alter table teadb.usertab  add  s_year  year default 1990 after name;
+
+mysql> desc teadb.usertab;
+| Field    | Type            | Null | Key | Default | Extra |
+| name     | char(30)        | YES  | MUL | NULL    |       |
+| s_year   | year(4)         | YES  |     | 1990    |       |
+| password | char(1)         | YES  |     | NULL    |       |
+| uid      | int(2) unsigned | YES  |     | NULL    |       |
+| gid      | int(2) unsigned | YES  |     | NULL    |       |
+| comment  | char(150)       | YES  |     | NULL    |       |
+| homedir  | char(150)       | YES  |     | NULL    |       |
+| shell    | char(30)        | YES  |     | NULL    |       |
+
+mysql> alter table teadb.usertab drop sex;desc teadb.usertab;
+
+mysql> alter table teadb.usertab  add  sex  enum('girl',
+    -> 'boy')not null default 'boy' after name;
+
+mysql> desc usertab;
+| Field    | Type               | Null | Key | Default | Extra |
+| name     | char(30)           | YES  | MUL | NULL    |       |
+| sex      | enum('girl','boy') | NO   |     | boy     |       |
+| s_year   | year(4)            | YES  |     | 1990    |       |
+| password | char(1)            | YES  |     | NULL    |       |
+| uid      | int(2) unsigned    | YES  |     | NULL    |       |
+| gid      | int(2) unsigned    | YES  |     | NULL    |       |
+| comment  | char(150)          | YES  |     | NULL    |       |
+| homedir  | char(150)          | YES  |     | NULL    |       |
+| shell    | char(30)           | YES  |     | NULL    |       |
+
+mysql> alter table teadb.usertab add age 
+    -> int(2) unsigned  not null default 21 after sex;
+
+mysql> desc  teadb.usertab;
+| Field    | Type               | Null | Key | Default | Extra |
+| name     | char(30)           | YES  | MUL | NULL    |       |
+| sex      | enum('girl','boy') | NO   |     | boy     |       |
+| age      | int(2) unsigned    | NO   |     | 21      |       |
+| s_year   | year(4)            | YES  |     | 1990    |       |
+| password | char(1)            | YES  |     | NULL    |       |
+| uid      | int(2) unsigned    | YES  |     | NULL    |       |
+| gid      | int(2) unsigned    | YES  |     | NULL    |       |
+| comment  | char(150)          | YES  |     | NULL    |       |
+| homedir  | char(150)          | YES  |     | NULL    |       |
+| shell    | char(30)           | YES  |     | NULL    |       |
+
+mysql> select name,sex,uid,gid from  teadb.usertab
+    -> where uid between 10  and 50 or gid between 10 and 50;
+
+mysql> update teadb.usertab set usertab.sex='girl'
+    -> where uid between 10 and 50 or gid between 10 and 50;
+
+mysql> select name,sex,uid,gid from teadb.usertab where
+    -> uid between 10 and 50 or gid between 10 and 50;
+| name     | sex  | uid  | gid  |
+| mail     | girl |    8 |   12 |
+| operator | girl |   11 |    0 |
+| games    | girl |   12 |  100 |
+| ftp      | girl |   14 |   50 |
+| rpc      | girl |   32 |   32 |
+| rpcuser  | girl |   29 |   29 |
+| gdm      | girl |   42 |   42 |
+| ntp      | girl |   38 |   38 |
+| apache   | girl |   48 |   48 |
+| mysql    | girl |   27 |   27 |
+10 rows in set (0.00 sec)
+mysql> select count(*) from teadb.usertab where sex='girl';
+| count(*) |
+|       10 |
+
+mysql> select name,sex,uid,gid from teadb.usertab
+    -> having uid=(
+    ->  select max(uid) from teadb.usertab where sex='girl');
+| name   | sex  | uid  | gid  |
+| apache | girl |   48 |   48 |
+
+mysql> insert into teadb.usertab(name,uid) values("rtestd",1000),
+    -> ("rtest2d",2000);
+
+mysql> select count(*)  from teadb.usertab;
+| count(*) |
+|       47 |
+
+mysql> select * from teadb.usertab limit 45,2;
+| name    | sex | age | s_year | password | uid  | gid  | comment | homedir | shell |
+| rtestd  | boy |  21 |   1990 | NULL     | 1000 | NULL | NULL    | NULL    | NULL  |
+| rtest2d | boy |  21 |   1990 | NULL     | 2000 | NULL | NULL    | NULL    | NULL  |
+
+mysql> select name,uid from teadb.usertab having uid between 1000 and 9999;
+| name    | uid  |
+| lisi    | 1000 |
+| nginx   | 1001 |
+| rtestd  | 1000 |
+| rtest2d | 2000 |
+
+mysql> select name,uid  from usertab where name like 'r%d';
+| name    | uid  |
+| radvd   |   75 |
+| rtest2d | 2000 |
+| rtestd  | 1000 |
+
+mysql> select name,uid from usertab where name like 'a%c';
+Empty set (0.00 sec)
+
+mysql> select name,gid,uid,shell  from  usertab where gid 
+    -> between 100 and 500;
+
+mysql> update teadb.usertab set homedir='/root'
+    -> where gid between 100 and 500;
+
+Query OK, 8 rows affected (0.03 sec)
+
+mysql> select name,gid,uid,sex,homedir from usertab
+    -> where homedir='/root';
+
+10 rows in set (0.00 sec)
+
+mysql> select name,shell,sex,uid from usertab
+    -> where name in("root","bin","sync");
+| name | shell         | sex | uid  |
+| bin  | /sbin/nologin | boy |    1 |
+| root | /bin/bash     | boy |    0 |
+| sync | /bin/sync     | boy |    5 |
+3 rows in set (0.00 sec)
+
+mysql> select name,shell,sex,uid from usertab
+    -> where name regexp 'root|bin|sync';
+
+| name | shell         | sex | uid  |
+| root | /bin/bash     | boy |    0 |
+| bin  | /sbin/nologin | boy |    1 |
+| sync | /bin/sync     | boy |    5 |
+
+mysql> update teadb.usertab set shell='/sbin/nologin'
+    -> where name regexp 'root|bin|sync';
+Query OK, 2 rows affected (0.03 sec)
+
+mysql> select shell,name,uid,sex from teadb.usertab
+    -> where name in('root','bin','sync');
+
+| shell         | name | uid  | sex |
+| /sbin/nologin | bin  |    1 | boy |
+| /sbin/nologin | root |    0 | boy |
+| /sbin/nologin | sync |    5 | boy |
+
+mysql> select name,gid,shell from teadb.usertab
+    -> having gid<10;
+
+| name     | gid  | shell          |
+| root     |    0 | /sbin/nologin  |
+| bin      |    1 | /sbin/nologin  |
+| operator |    0 | /sbin/nologin  |
+9 rows in set (0.00 sec)
+
+mysql> select name,sex,gid from teadb.usertab where name regexp '^d';
+
+| name   | sex | gid  |
+| daemon | boy |    2 |
+| dbus   | boy |   81 |
+2 rows in set (0.00 sec)
+
+mysql> select name,sex,gid from teadb.usertab where name like 'd%';
+
+mysql> delete from teadb.usertab where name regexp '^d';
+Query OK, 2 rows affected (0.03 sec)
+
+mysql> select name,sex,gid,shell from teadb.usertab 
+    -> order by gid desc limit 0,5;
+
+| name           | sex | gid   | shell         |
+| nfsnobody      | boy | 65534 | /sbin/nologin |
+| nginx          | boy |  1001 | /sbin/nologin |
+| lisi           | boy |  1000 | /bin/bash     |
+| polkitd        | boy |   998 | /sbin/nologin |
+| libstoragemgmt | boy |   996 | /sbin/nologin |
+
+mysql> select name,uid,homedir from usertab
+    -> having homedir is null;
+
+| name    | uid  | homedir |
+| rtestd  | 1000 | NULL    |
+| rtest2d | 2000 | NULL    |
+
+mysql> select * from usertab order by gid asc limit 0,5;
+
+mysql> select * from usertab order by gid asc,uid asc limit 0,5;
+
+| name     | sex | age | s_year | password | uid  | gid  | comment  | homedir | shell |
+| rtestd   | boy |  21 |   1990 | NULL     | 1000 | NULL | NULL     | NULL    | NULL   |
+| rtest2d  | boy |  21 |   1990 | NULL     | 2000 | NULL | NULL     | NULL    | NULL   |
+| root     | boy |  21 |   1990 | x        |    0 |    0 | root     | /root   | /sbin/nologin  |
+| sync     | boy |  21 |   1990 | x        |    5 |    0 | sync     | /sbin   | /sbin/nologin  |
+| shutdown | boy |  21 |   1990 | x        |    6 |    0 | shutdown | /sbin   | /sbin/shutdown |
++
+
+mysql> system mkdir  -m 2700 /mybak/
+mysql> system chown -R mysql /mybak/;
+mysql> system ls -ld /mybak/;
+drwx--S---. 2 mysql root 6 10月 19 21:29 /mybak/
+
+
+
+

@@ -1,0 +1,398 @@
+字段约束条件：控制给字段赋值
+mysql> create table  t9(
+    -> name char(10)not  null,
+    -> age  tinyint(2) default 19,
+    -> likes set("eat","sleep","game","flim") 
+       not null default "eat,sleep"
+    -> );
+
+mysql> insert into  t9(name)values("bob");
+
+mysql> insert into  t9 values("tom",21,"game,flim");
+
+name 字段不允许赋null值
+mysql> insert into  t9 values(NULL,21,"game,flim");
+ERROR 1048 (23000): Column 'name' cannot be null
+ 
+加“”表示为普通字符 
+mysql> insert into  t9 values("NULL",21,"game,flim");
+Query OK, 1 row affected (0.03 sec)
++++++++++++++++++++++++++++++++
+添加新字段
+mysql> alter table  t4 add age int(2) default 19;
+mysql> alter table  t4 add mail char(50) after name;
+mysql> alter table  t4 add stu_num char(10) first;
+
+修改字段类型 ，类型要与字段存储的数据匹配
+mysql> alter table  t4 modify name varchar(3);
+ERROR 1406 (22001): Data too long for column 'name' at row 1
+
+mysql> alter table  t4 modify name varchar(15);
+Query OK, 1 row affected (0.44 sec)
+
+修改字段位置
+mysql> alter table  t4  modify age int(2) default  19 
+after name;
+
+删除字段
+mysql> alter table  t5 drop start;
+mysql> select  * from t5;
+mysql> desc  t5;
+
+修改字段名alter table  t4 change stu_num stu_id char(10);
+
+修改表名 alter table   t9 rename stuinfo;
+++++++++++++++++++++++++++++++++
+5000+
+
+select 
+
+insert update delete
+
+索引  算法 Btree （二叉树）
+stuinfo-----> /var/lib/mysql/数据库名/stuinfo.frm stuinfo.ibd
+index
+name
+
+
+           1 - 10
+
+      1-5          6-10
+ 1-2.5   2.6-5
+
+
+mysql> show  index from t4;
+
+建表是创建索引
+create  table  t21(
+name  char(10),
+sex  enum("boy","girl"),
+class char(7),
+age  int(2),
+index(name),
+index(sex)
+);
+desc t21; 查看索引
+show index  from  t21\G; 查看详细信息
+drop  index  name  on  t21; 删除索引
+desc  t21;
+show index  from  t21\G;
+
+create  index  name  on  t21(name); 在已有表里设置索引字段
+desc  t21;
+select  * from t21 where name="bob";
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+mysql> show  index from t4;
+
+建表是创建索引
+create  table  t21(
+name  char(10),
+sex  enum("boy","girl"),
+class char(7),
+age  int(2),
+index(name),
+index(sex)
+);
+desc t21; 查看索引
+show index  from  t21\G; 查看详细信息
+drop  index  name  on  t21; 删除索引
+desc  t21;
+show index  from  t21\G;
+
+create  index  name  on  t21(name); 在已有表里设置索引字段
+desc  t21;
+select  * from t21 where name="bob";
+
+创建主键 格式1
+mysql> create table t22(
+    -> name char(10),
+    -> stu_num char(9),
+    -> primary key(stu_num)
+    -> );
+Query OK, 0 rows affected (0.43 sec)
+
+
+创建主键 格式2
+mysql> create table t23( 
+name char(10) primary key, 
+stu_num char(9) 
+);
+mysql> desc t22;
++---------+----------+------+-----+---------+-------+
+| Field   | Type     | Null | Key | Default | Extra |
++---------+----------+------+-----+---------+-------+
+| name    | char(10) | YES  |     | NULL    |       |
+| stu_num | char(9)  | NO   | PRI | NULL    |       |
++---------+----------+------+-----+---------+-------+
+
+mysql> insert into t22 values("bob","nsd180709");
+mysql> insert into t22 values("bob","nsd180708");
+mysql> select  * from  t22;
+
+字段值不允许重复或赋null值
+mysql> insert into t22 values("lucy","nsd180708");
+ERROR 1062 (23000): Duplicate entry 'nsd180708' for key 'PRIMARY'
+
+mysql> insert into t22 values("lucy",null);
+ERROR 1048 (23000): Column 'stu_num' cannot be null
+
+
+复合主键（表中多个字段一起做主键）
+mysql> create table  t24(
+    -> cip  char(15),
+    -> sport smallint(2),
+    -> status  enum("deny","allow"),
+    -> primary key(cip,sport)
+    -> );
+Query OK, 0 rows affected (0.29 sec)
+
+mysql> desc  t24;
++--------+----------------------+------+-----+---------+-------+
+| Field  | Type                 | Null | Key | Default | Extra |
++--------+----------------------+------+-----+---------+-------+
+| cip    | char(15)             | NO   | PRI | NULL    |       |
+| sport  | smallint(2)          | NO   | PRI | NULL    |       |
+| status | enum('deny','allow') | YES  |     | NULL    |       |
++--------+----------------------+------+-----+---------+-------+
+3 rows in set (0.00 sec)
+mysql> insert into t24 values("192.168.4.1",21,"deny");
+Query OK, 1 row affected (0.04 sec)
+mysql> insert into t24 values("192.168.4.1",21,"allow");
+ERROR 1062 (23000): Duplicate entry '192.168.4.1-21' for key 'PRIMARY'
+mysql> 
+mysql> insert into t24 values("192.168.4.2",21,"allow");
+Query OK, 1 row affected (0.10 sec)
+mysql> insert into t24 values("192.168.4.2",23,"deny");
+Query OK, 1 row affected (0.04 sec)
+
+mysql> select  * from t24;
++-------------+-------+--------+
+| cip         | sport | status |
++-------------+-------+--------+
+| 192.168.4.1 |    21 | deny   |
+| 192.168.4.2 |    21 | allow  |
+| 192.168.4.2 |    23 | deny   |
++-------------+-------+--------+
+
+删除主键
+mysql> alter table t24 drop  primary key;
+mysql> insert into t24 values("192.168.4.2",21,"deny");
+mysql> insert into t24 values("192.168.4.2",21,"deny");
+
+在已有表里创建复合主键
+mysql> select  * from t24;
++-------------+-------+--------+
+| cip         | sport | status |
++-------------+-------+--------+
+| 192.168.4.1 |    21 | deny   |
+| 192.168.4.2 |    21 | allow  |
+| 192.168.4.2 |    23 | deny   |
+| 192.168.4.2 |    21 | deny   |
+| 192.168.4.2 |    21 | deny   |
++-------------+-------+--------+
+5 rows in set (0.00 sec)
+
+mysql> alter table  t24 add  primary key(cip,sport);
+ERROR 1062 (23000): Duplicate entry '192.168.4.2-21' for key 'PRIMARY'
+
+mysql> delete from  t24;
+
+mysql> alter table  t24 add  primary key(cip,sport);
+
+primary key 与 AUTO_INCREMENT 连用
+
+
+mysql> create table t25(
+    -> stu_id  int(2) primary key auto_increment,
+    -> name char(5),
+    -> age  tinyint(2) unsigned
+    -> );
+
+mysql> insert into t25(name,age)values("bob",19);
+
+mysql> insert into t25(name,age)values("tom",29);
+
+mysql> select  * from  t25;
++--------+------+------+
+| stu_id | name | age  |
++--------+------+------+
+|      1 | bob  |   19 |
+|      2 | tom  |   29 |
++--------+------+------+
+
+mysql> alter table stuinfo add  id int(2) zerofill primary key
+    -> auto_increment first;
+
+select   *  from   stuinfo;
+
+
+有自增长设置时 删除主键的步骤
+mysql> alter table  t25 modify stu_id int(2) not null ; 先删除自增长
+mysql> alter table  t25 drop primary key; 再删除主键
+++++++++++++++++++++++++++++++++++++++++++++++++++
+外键
+                员工信息表
+		ygtab  user 姓名  yg_id
+                      lucy         1
+		      jack	   8	
+	              tom          3
+                 
+工资表
+gztab    gz_id 员工号外键   pay 工资
+         1		       20000
+         8                     26000
+         3                     36000
+      
+
+mysql> create table ygtab(
+    -> yg_id  int(2) primary key auto_increment,
+    -> name char(10)
+    -> )engine=innodb;
+Query OK, 0 rows affected (0.36 sec)
+
+mysql> insert into ygtab(name)values("bob");
+Query OK, 1 row affected (0.04 sec)
+
+mysql> insert into ygtab(name)values("tom");
+Query OK, 1 row affected (0.04 sec)
+
+mysql> select  * from ygtab;
++-------+------+
+| yg_id | name |
++-------+------+
+|     1 | bob  |
+|     2 | tom  |
++-------+------+
+2 rows in set (0.00 sec)
+
+mysql> 
+      
+mysql> create  table gztab(
+    -> gz_id  int(2),
+    -> pay float(7,2),
+    -> foreign key(gz_id) references ygtab(yg_id)
+    -> on update cascade on delete cascade
+    -> )engine=innodb;
+Query OK, 0 rows affected (0.35 sec)
+
+查看表是否有外键
+mysql> show  create  table gztab;
+
+ 
+mysql> insert into gztab values(1,28000);
+Query OK, 1 row affected (0.04 sec)
+
+mysql> insert into gztab values(2,38000);
+Query OK, 1 row affected (0.11 sec)
+  
+
+mysql> insert into gztab values(3,30000);
+ERROR 1452 (23000): Cannot add or update a 
+child row: a foreign key constraint
+ fails (`teadb`.`gztab`, CONSTRAINT `gztab_ibfk_1` 
+FOREIGN KEY (`gz_id`) REFERENCES `ygtab` (`yg_id`) 
+ON DELETE CASCADE ON UPDATE CASCADE)
+mysql> 
+
+
+mysql> update ygtab set yg_id=8 where yg_id=2;
+Query OK, 1 row affected (0.03 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select  * from ygtab;
++-------+------+
+| yg_id | name |
++-------+------+
+|     1 | bob  |
+|     8 | tom  |
++-------+------+
+2 rows in set (0.00 sec)
+
+mysql> select  * from gztab;
++-------+----------+
+| gz_id | pay      |
++-------+----------+
+|     1 | 28000.00 |
+|     8 | 38000.00 |
++-------+----------+
+2 rows in set (0.00 sec)
+
+mysql> delete from  ygtab where yg_id=8;
+mysql> select  * from ygtab;
++-------+------+
+| yg_id | name |
++-------+------+
+|     1 | bob  |
++-------+------+
+1 row in set (0.01 sec)
+
+mysql> 
+mysql> 
+mysql> 
+mysql> 
+mysql> 
+mysql> select  * from gztab;
++-------+----------+
+| gz_id | pay      |
++-------+----------+
+|     1 | 28000.00 |
++-------+----------+
+1 row in set (0.00 sec)
+
+mysql> delete  from  gztab;
+mysql> alter table gztab add primary key (gz_id);
+
+
+mysql> insert into gztab values(1,28000);
+Query OK, 1 row affected (0.06 sec)
+
+mysql> insert into gztab values(1,28000);
+ERROR 1062 (23000): Duplicate entry '1' for key 'PRIMARY'
+
+mysql> insert into gztab values(null,28000);
+ERROR 1048 (23000): Column 'gz_id' cannot be null
+
+mysql> select  * from gztab;
+
+
+mysql> delete from ygtab;
+Query OK, 1 row affected (0.04 sec)
+
+mysql> select  * from ygtab;
+Empty set (0.00 sec)
+
+mysql> delete from gztab;
+Query OK, 0 rows affected (0.00 sec)
+
+
+mysql> drop table ygtab;
+ERROR 1217 (23000): Cannot delete or update a parent row: a foreign key constraint fails
+mysql>
+
+mysql> alter table  gztab drop  
+foreign key gztab_ibfk_1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

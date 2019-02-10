@@ -1,0 +1,131 @@
+MySQL 主从同步  
+从数据库服务器自动同步主库上的数据到本机。
+实现数据的自动备份
+
+主数据库服务器： 接收客户端访问的数据库服务器。
+从数据库服务器： 自动同步主数据库服务器上的数据到本机。
+休闲到 15:15
+部署mysql主从同步：
+
+主数据库的配置步骤：
+1启用binlog日志
+]# vim /etc/my.cnf
+[mysqld]
+server_id=51
+log-bin=db51
+binlog_format="mixed"
+:wq
+[root@node1 ~]# systemctl  restart mysqld
+[root@node1 ~]# ls /var/lib/mysql/db51*
+/var/lib/mysql/db51.000001
+/var/lib/mysql/db51.index
+
+2用户授权
+mysql> grant  replication  slave on  *.* to
+    -> repluser@"%"
+    -> identified by "123qqq...A";
+Query OK, 0 rows affected, 1 warning (0.06 sec)
+
+mysql> select user,host from mysql.user where user="repluser";
++----------+------+
+| user     | host |
++----------+------+
+| repluser | %    |
++----------+------+
+1 row in set (0.00 sec)
+
+mysql> 
+
+
+3查看日志信息 
+mysql> show master status;
+
+
+从数据库的配置步骤：
+1 指定server_id
+[root@node2 ~]# vim /etc/my.cnf
+[mysqld]
+server_id=52
+:wq
+[root@node2 ~]# systemctl  restart mysqld
+
+2 指定主库信息
+[root@node2 ~]# mysql -uroot -p123qqq...A
+mysql> change master to master_host="192.168.4.51",
+    -> master_user="repluser",
+    -> master_password="123qqq...A",
+    -> master_log_file="db51.000001",
+    -> master_log_pos=441;
+Query OK, 0 rows affected, 2 warnings (0.49 sec)
+
+3 启动slave程序
+mysql> start slave;
+Query OK, 0 rows affected (0.03 sec)
+
+4 查看slave程序运行状态
+mysql> show  slave status\G;
+Slave_IO_Running: Yes
+Slave_SQL_Running: Yes
+
+Last_IO_Error:记录IO报错信息
+Last_SQL_Error:记录SQL保存信息
+
+
+从库数据库目录下的相关配在文件：
+master.info
+node2-relay-bin.000001
+node2-relay-bin.index
+relay-log.info
+
+
+
+5客户测试 192.168.4.50
+5.1 在主库服务器51 添加客户端访问数据连接用户并设置权限。
+mysql> mysql> grant select,insert on db5.* to yaya@"%"
+    -> identified  by "123qqq...A";
+
+5.2 在主机50上连接数据库服务器51 查询或存储数据
+]#mysql -h192.168.4.51 -uyaya  -p123qqq...A
+mysql> show grants;
+mysql> 访问主库插入数据 ，在从库本机也能够查看到
+
+++++++++++++++++++++++++
+让从数据库服务器52 暂时不同步主库数据
+52
+mysql> stop slave;
+
+把从数据库服务器52 恢复为独立数据库服务器
+52:
+]# cd /var/lib/mysql
+[root@node2 mysql]# rm -rf master.info  relay-log.info 
+[root@node2 mysql]# rm -rf node2-relay-bin.*
+[root@node2 mysql]# systemctl  restart mysqld
+ 
+++++++++++++++++++++++++++++
+mysql主从同步结构模式？
+一主一从
+一主多从
+
+主从从 ***
+
+主主结构（ 54   55） 
+
+mysql主从同步配置参数。
+
+MySQL 主从同步复制模式：
+全同步模式
+异步模式
+半同步模式 **
+
+
+
+
+
+
+
+
+
+
+
+
+

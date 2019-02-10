@@ -1,0 +1,862 @@
+
+
+
+
+
+
+
+
+
+
+
+个人分类： 面试
+一、选择题
+1. Linux系统中DNS服务进程名为（A）
+A．named  B.httpd  C.ftpd  D.SysLog
+
+2.在UINX/Linux中，系统Root用户口令信息一半保存的文件夹是（D）
+A．autobat  B.service.conf  C.inetd.conf  D.shadow
+
+3. 在下列选项中，属于Linux系统日志服务的是（D）
+A．named  B.httpd  C.ftpd  D.SysLog
+
+4.Linux操作系统支持的文件系统类型是（A）
+A、EX3  B.NFT  C.TXT  D.FAT
+
+5.在UINX系统中输入命令“ls –al test”显示如下”-rwx--xr-x 1 root root 100 2013-12-20 23:51 test”对它的含义解释错误的是（D）
+A．这是一个文件，而不是目录
+B．文件的拥有者可以对这个文件进行读、写和执行的操作
+C．文件所有者可以读它，也可以执行它
+D、其他所有用户只可以执行它
+
+6.在大多数Linux发行版本中，以下哪个属于块设备（B）
+A、串行口 B、硬盘 C、虚拟终端 D、打印机
+
+7.怎样了解您在当前目录下还有多大空间（D）
+A．use df B. use du / C. use du .  D. use df .
+
+8.以下关于Linux超级权限的说明，不正确的是（C）
+A.一般情况下，为了系统的安全，对于一般常规级别的应用，不需要root用户来操作完成
+B.普通用户可以通过su和sudo来获得系统的超级权限
+C.对于系统日志的管理，添加和删除用户等管理工作，必须以root用户登录才能进行
+D．root是系统的超级用户，无论是否为文件和程序的所有者都具有访问权限
+
+9.REDHAT9.0的防火墙软件是哪个（B）
+A．ipchains  B.iptables  C.ISA  D.checkpoint
+
+10．显示文件头部的命令是（C）
+A．fidsk  B.mount  C.head  D.man
+
+11.删除文件的命令是（B）
+A．mkdir  B.rm  C. mv  D. remove
+
+12.显示用户的ID，以及所属组的ID，要使用命令是（C）
+A．su  B.who  C.id  D. man
+
+13.Linux根分区的文件系统是（C）
+A．FAT16  B.FAT32  C.EXT3  D.NTFS
+
+14．Linux的DNS服务是下列哪个（C）
+A．host  B.hosts  C. bind  D.vsftp
+
+15.不能用来关机的命令是（D）
+A.shutdown  B.halt  C.init  D.logout
+
+16.以下那个命令修改SAMBA口令（A）
+A．smbpasswd  B.passwd  C.smbpassword  D.password
+
+17./dev/ethX表示（B）
+A．系统回送接口 B.以太网接口设备 C.令牌环网设备 D.PPP设备
+
+18.GRUB的配置文件是（C）
+A./etc/grub  B./boot.ini  C./etc/grub.conf  D./etc/inittab
+
+19.我们将逻辑分区建立在（B）上
+A．从分区 B.扩展分区 C.主分区 D.第二分区
+
+20.使用iptables拒绝来自10.10.10.1.访问的正确写法是（C）
+A.iptables –I INPUT –s 10.10.10.1 –j ACCEPT
+B. iptables –A INPUT –D 10.10.10.1 –j DROP
+C. iptables –I INPUT –s 10.10.10.1 –j DROP
+D. iptables –A INPUT –s 10.10.10.1 –j ACCEP
+
+21.init是Linux的第一个程序，该程序是根据文件(B)来建立子进程的
+A./etc  B./etc/inittab  C./etc/modules.conf  D./etc/lilo.conf
+
+22.不是shell具有的功能特点是（C）
+A.管道 B.输入输出重定向 C.监视系统 D.解释程序命令
+
+23.如果你的umask设为022，则你创建文件的缺省权限是（D）
+A.----w--w- B. -w--w---- C.r-xr-x--- D.rw-r--r--
+
+24．为了修改文件test的许可模式，使其文件属性具有读、写和运行的权限，组和其他用户可以读和运行，可以采用（A）方法
+A．chmod 755 test  B. chmod 700 test  C. chmod +rwx test  D.chmod g-w test
+
+25.统计文件占用磁盘空间，我们可以使用命令（B）
+A．df  B.du  C.mount  D. in
+
+26在SHELL程序里，判断文件不存在的写法是（A）
+A．if [ ! –f “$myfile”];then
+B. if [-d “$myfile”];then
+C. if [-f“$myfile”];then
+D. if [! –d “$myfile”];then
+
+27.使用tcpdump监听eth0的80端口网络数据的正确命令是（D）
+A．tcpdump –n eth0 port! 80  B. tcpdump –ni eth0 port=80
+C. tcpdump –i eth0 port ! 80  D. tcpdump–ni eth0 port 80
+
+28.SQL中，下列操作有语法错误的是（D）
+A． AGE IS NOTNULL  B. NOT (AGE IS NULL)  C.SNAME=’王五’  D.SNAME=’王%’
+
+29.在Mysql中，下列关于创建数据库表的描述正确的是（C）
+A．在创建表时必须设定列的约束
+B．在删除表的时候通过列键的约束连接在一起的表会被一同删除
+C．在创建表时必须设置列类型
+D．通过CREATE TABLE new_t SELECT * FROM old_t复制表的同时，表的约束能够一起被复制到新表中
+
+30.SQL中，”AGE IN (20，22)”的语义是（A）
+A.AGE<=22 AND AGE>=20  B. AGE<22 AND AGE>20
+C.AGE=20 AND AGE=22  D.AGE=20 OR AGE=22
+
+31.下列对跨站脚本攻击（XSS）的解释最准确的一项是：（D）
+A.引诱用户点击虚假网络连接的一种攻击方法
+B．构造精妙的关系数据库的结构化查询语言对数据库进行非法的访问
+C．一种很强大的木马工具手段
+D．将恶意代码嵌入到用户WEB网页中，从而达到恶意的目的
+
+32.允许防火墙和某些路由器通过将地址引向不可信网络的方法来隐藏网络地址被称为 (B)
+A．地址过滤      B.NAT      C.反转        D.IP欺骗
+
+33.局域网的网络地址192.168.1.0/24，局域网络连接其他网络的网关地址是192.168.1.1。主机192.168.1.20访问172.16.1.0/24网络时，其路由设置正确的是（A）
+A．route add –net 192.168.1.0 gw 192.168.1.1 netmask255.255.255.0 metric 1
+B．route add –net 172.16.1.0 gw 192.168.1.1 netmask255.255.255.255 metric 1
+C．route add –net 172.16.1.0 gw 172.16.1.1 netmask255.255.255.0 metric 1
+D．route add default 192.168.1.0 gw 192.168.1.0 netmask172.168.1.1 metric 1
+
+34.取ls –l输出结果的第5列的值的正确写法是（B）
+A．ls –l |awk “{print$5}”  B.  ls –l |awk‘{print$5}’
+C. ls –l |awk {print$5}   D. ls–l |awk ‘print$5’
+
+35.在vi编辑器的命令模式中，删除一行的命令是（B）
+A.yy  B.dd  C.pp  D.xx
+
+36.有一个中学获得了C类网段的一组IP192.168.1.0/24.要求你划分7个以上的子网，每个子网主机数不得少于25台，请问子网掩码该怎么写?（B）
+A．255.255.255.128 B.255.255.255.224 C.255.255.255.240 D.255.255.240.0
+
+37.在三层交换机和路由器上，启用路由功能的命令是:（D）
+A．ip router  B.enable route  C.start ip route  D.ip routing
+
+38.什么命令解压缩tar.gz文件（B）
+A. tar –czcffilename.tar.gz  B. tar –xzvf  filename.tar.gz 
+C. tar –tzvf  filename.tar.gz  D. tar –dzvf filename.tar.gz
+
+39.显示LINUX内核版本号的命令是(B)
+A. mkdir  B.uname –a  C.uname –e  D.linuxis
+ 
+二．简答题
+1.请分别详细写出如何在命令行下运行PHP、C、java程序的命令，程序名可用test代替？
+答案：
+PHP: php  test.php
+C: gcc  –o  test  test.c
+Java: java  test
+
+2. ftp有几种模式，几种连接类型，有什么区别？
+答案：
+分为主动模式与被动模式。主动为服务器发起21端口去访问客户端的随机端口，并通过服务器的20端口来传数据。被动模式正好相反，由客户端发起连接服务器的21端口，然后服务器随机开启一个数据连接端口来传数据。
+
+3. 两台Linux服务器都只开放了SSH服务，端口号均为999，你已使用user1登陆服务器1.1.1.1，需要将/home/user1/data.tar.gz文件传送至服务器2.2.2.2用户名为:userB 目的目录为/home/userB，并将文件更名为：dataB.tar.gz 请用一条命令完成上述任务（密码不考虑）
+答案：
+rsync -av -e “ssh -p999”  /home/user1/data.tar.gz  userB@2.2.2.2:/home/userB/dataB.tar.gz //这是一行命令
+
+4. 日志切分在运维中扮演着重要角色，现有1个500G的日志文件A，时间跨度为2013年1月25日到4月28日。怎么获取其中2月某天时段的记录生成文件B，注：操作服务器系统资源有限，请使用一条命令实现。
+答案：
+假如日志每行都有时间标记，比如我们要获取的日期为2013年2月10日，日志中的日期表示是这样的“10/feb/2013:00:00:01”。那么答案为sed -rn‘/10\/feb\/2013:/’p A > B
+
+5. 现有5000行文本数据，用vi编辑器操作，需将文本中全部的192.168.0.111更改为192.168.0.112，需将1000行至1120行的文本数据中的aaa更改为bbb。请用两条命令实现。
+答案
+:1，$s/192.168.0.111/192.168.0.112/g
+:1000，1120s/aaa/bbb/g
+
+6. 一台Linux服务器IP为：192.168.0.8只希望开放TCP 80端口，请写出iptables的设置命令
+答案：
+iptables -A INPUT –p tcp –dport 80 –d 192.168.0.8 –j ACCEPT
+iptables -A INPUT –p tcp –d 192.168.0.8 –j DROP
+
+一、选择题
+1、用哪一个命令可以关机，而不重启 （C）
+A、reboot  B、shutdown -r  C、halt  D、init 1
+
+2、与磁盘无关的命令是？ （A）
+A、free  B、du  C、df  D、mkfs
+
+3、/etc/shadow 文件中存放？ （B）
+A、用户账号基本信息 B、用户口令的加密信息
+C、用户组信息 D、文件系统信息
+
+4、配置Apache服务器需要修改的配置文件为？ （A）
+A、httpd.conf  B、access.conf  C、srm.conf  D、named.conf
+
+5、在TCP/IP模型中，应用层包含了所有的高层协议，在下列的一些应用协议中，     是能够实现本地与远程主机之间的文件传输工作。 （B）
+A、telent  B、FTP  C、SNMP  D、NFS
+
+6、DNS 域名系统主要负责主机名和    之间的解析。 （A）
+A、IP地址 B、MAC地址 C、网络地址 D、主机别名
+
+7、建立一个新文件可以使用的命令为？ （D）
+A、chmod  B、more  C、cp  D、touch
+
+8、Apache服务器默认的接听连接端口号是？ （C）
+A、1024  B、800  C、80  D、8
+
+9、假设root当前所在目录为：/usr/local， 键入cd命令后，用户当前所在目录为？ （B）
+A、/home  B、 /root  C、/home/root   D、/usr/local
+
+10、将光盘CD-ROM（hdc）安装到文件系统的/mnt/cdrom 目录下的命令是？ （C）
+A、mount /mnt/cdrom  B、mount /mnt/cdrom /dev/hdc
+C、mount /dev/hdc /mnt/cdrom   D、mount /dev/hdc
+
+11、以下哪个命令是 vi编辑器中执行存盘退出的？ （D）
+A、q  B、zz  C、:q!  D、:wq
+
+12、下面选项中不属于Linux下常用的文件系统格式是哪个？ （C）
+A、ext2  B、ext3  C、NTFS  D、xfs
+
+13、mysql的主从复制是通过什么方式完成数据同步的？ （B）
+A、通过同步数据库表进行数据同步
+B、通过同步日志文件回滚表数据
+C、通过底层数据块同步进行同步
+D、基于内存同步技术定时刷新数据到磁盘
+
+14、在ps命令中什么参数使用来显示所有用户的进程的？ （C）
+A、a  B、b  C、u  D、x
+
+15、keepalived是什么类型的集群软件？ （B）
+A、负载均衡群集软件  B、高可用群集软件
+C、高性能计算群集软件  D、存储群集软件
+
+16、若一台服务器的内存为16GB，则交换分区的大小通常是：（A）
+A、32G  B、16G  C、0GB  D、4GB
+解析：有很多同学对此题有疑问，按我教给大家的答案是16G，这是因为据我的经验，内存分大了并没有什么大用，浪费了空间。但是作为该题的出题者他想要的答案是内存的2倍，所以以后大家做笔试题的时候，出现类似的题，就选内存2倍，但是实际工作中，按我说的做。
+
+17、Linux操作系统中，cd ../..命令的作用是？ （D）
+A、转到当前目录的上级 B、转到根目录
+C、转到/root目录 D、转到当前目录的上两级目录
+
+18、按____键能终止当前运行的命令 （B）
+A、Ctrl-D  B、Ctrl-C  C、Ctrl-B  D、Ctrl-F
+
+19、crontab文件由6个域组成，每个域之间用空格分割，其排列如下： （B）
+A、MIN HOUR DAY MONTH YEAR COMMAND
+B、MIN HOUR DAY MONTH DAOFWEEK COMMAND
+C、COMMAND HOUR DAY MONTH DAYOFWEEK
+D、COMMAND YEAR MONTH DAY HOUR MIN
+
+20、在给定文件中查找与设定条件相符字符串的命令为？ （A）
+A、grep  B、gzip  C、find  D、sort
+
+
+二、简单题
+1、当一个一般文件权限为-rwxrwxrwx 则表示这个档案的意义为？我需要将一个文件的权限改为-rwxr-xr--请问该如何编写命令
+答案：
+1）文件的权限为777，所有用户拥有读写执行所有权限
+2）chmod 754 file
+
+2、如何用mysql 命令进行备份和恢复？ 以test 库为例，创建一个备份，并再用此备份进行恢复。
+答案：
+mysqldump -u root -p test > test.bak
+mysql -u root -p < test.bak
+
+3、写一个脚本查找最后创建时间是3天前，后缀是*.log的文件
+答案：
+#!/bin/bash
+find  /var/log  -name  “*.log”  -mtime  +3
+
+4、试简要的分析如下指令的区别cat，tac、more、less、head、tail
+答案：
+cat 正常显示文件
+tac 按列逆向显示文件
+more 分屏显示
+less 分屏显示。支持查找，比more功能稍多
+head 显示文件头，默认显示前10行
+tail 显示文件尾，默认显示尾10行
+
+5、有用户manager、renshi、xingzheng，文件夹renshi，xingzheng，要求manager用户可以查看并更改renshi，xingzheng文件夹下的文件，renshi用户只能查看修改renshi文件夹，xingzheng用户只能查看修改xingzheng文件夹。其他人不能访问该两个文件夹，问通过权限该如何实现？
+答案：
+usermod -G renshi，xingzheng manager
+chown renshi.renshi renshi ; chmod 770 renshi
+chown xingzheng.xingzheng xingzheng ; chmod 770 xingzheng
+
+6、什么是绝对路径和相对路径
+答案：
+绝对路径：它从 / 根目录开始到目标文件和目录，比如/tmp/log/1.txt
+相对路径：它以当前所在目录为参照物，到目标目录和文件，比如当前目录是/tmp/， 则log/1.txt为相对路径
+
+7、简要叙述下列端口所运行的服务。
+答案：
+21：ftp
+22：ssh
+23：telnet
+25：smtp
+110：pop3
+3306：mysql
+
+8、用tar命令归档并gzip压缩整个/test目录，请写出完整压缩命令和解压命令
+答案：
+tar -zcvf test.tar.gz /test
+tar -zxvf test.tar.gz -C ./
+
+9、有/mydata/scriptweb.sh 脚本文件，需要在每天3:30 执行，请写出crontab参数
+答案：
+30 3 * * * /bin/bash /mydata/scriptweb.sh
+
+10、描述下列指令的含义
+答案：
+cd 切换目录
+mkdir 创建目录
+rm 删除目录或文件
+chmod 更改目录和文件权限
+chown 更改目录和文件所属主和组
+mv 移动或重命名
+ls 列出文件或目录
+chgrp 更改目录所属组
+free 查看内存
+
+一、填空题
+
+1.linux 查看从本地到218.56.57.58的路由链路情况的命令是：route -eeFCn|grep 218.56.57.58
+
+2.检查硬盘sda读写速度的命令是：dd if=/dev/zero bs=1024 count=1000000 of=/1Gb.file
+检查系统IO使用状态的命令是：iostat -d /dev/sda -k 1
+
+3.红帽操作系统版本号及内核版本的命令是：cat /etc/redhat-release; uname -a
+
+4.CentOS6.3操作系统日志是由rsyslog服务负责记录的，对应的配置文件为：cat /etc/rsyslog.conf
+
+5.常见的MTA有那些：sendmail、postfix
+
+6.查看当前数据库的进程命令是：show  full  processlist;
+
+7.Centos5.9系统安装anysetup-sec的rpm包，如何查看该包包含那些文件：rpm -ql anysetup-sec
+
+8.查看当前系统加载的模块情况的命令是：lsmod ;查看服务器各接口卡情况的命令是：lspci
+
+9.假设/a目录不存在，建立如下目录结构的文件夹（/a/b/c/d）使用的命令是：mkdir -p /a/b/c/d
+
+10.假设文件b.txt含一些文件路径，使用的tar将b.txt文件中内容打包为test.tar的命令是：tar -cvf  test.tar  $(cat b.txt|tr '\n' ' ')
+说明：$() 小括号里面是一条命令，这里就表示直接引用这条命令的结果，实际上就是咱们讲的反引号，一个意思。tr ‘\n’ ‘ ‘ 这条命令意思是，把换行符替换成空格，其实可以用|xargs实现。所以还有一个答案： tar -cvf test.tar `cat b.txt|xargs`
+
+11.假设存在压缩包any.tgz，查看此包的tar命令是：tar -tf  /home目录下解压，所使用的tar命令是：tar -zxf any.tgz -C /home
+
+12.修改eth0网卡为百兆全双工命令是：ethtool -s eth0 speed 100 duplex full autoneg on
+
+13.查看服务器内存容量的命令是：free 服务器cpu型号的命令是：awk -F: '/model name/{print $2}' /proc/cpuinfo
+
+14.vi编辑器中，向上翻页的组合键为ctrl+f要将5-15行间所有hello替换成HELLO，vi的命令为：:5,15s/hello/HELLO/g
+
+15.Centos6.0查看mysql是否开机启动，执行那个命令：chkconfig --list|grep mysql
+
+16.用find 命令清理系统/mail分区下所有后缀为 “.lock”文件，命令为：find /mail -type f -name “*.lock”-exec rm -rf {} \;
+
+17.Mysql的配置文件路径是：/etc/my.cnf httpd的配置文件路径是/etc/httpd/conf/httpd.conf(假如是编译安装的，路径在/usr/local/apache2，那配置文件在/usr/local/apache2/conf/httpd.conf
+
+18.查看一个文件类型使用那个命令ls -l ,换为DOS格式，命令是：unix2dos
+
+
+二、简单题
+1. linux系统如果要对一个5T的存储阵列sda进行分区，应该使用什么命令分区，使用什么分区表？需要分配两个100G空间的，剩余空间给第三个分区，请提供命令：
+答案：
+用parted 来分区，yum install -y parted安装。使用gpt分区表来分区。
+分区步骤：
+parted /dev/sda   指定要分区的磁盘，进入后再继续执行下面的命令
+mklabel gpt     指定分区表格式
+mkpart primary 0 100G   第一个100G分区
+mkpart primary 100G 200G   第二个100G分区
+mkpart primary 200G -1     最后一个分区
+exit 退出并保存
+
+2. 若要使我的程序/root/testsoft.sh每年1月1日，5月1日，10月1日0点执行一次，请给出用法
+答案：
+0 0 1 1,5,10 * /bin/bash /root/testsoft.sh
+
+3. vi编辑器中，如何使其显示各行行号？若要将文档中所有的zhangsan，替换成lisi，命令为？
+答案：
+显示行号为: set nu  
+替换命令: %s/zhangsan/lisi/g
+
+4. 将文件test的权限赋为743，语句为？改权限的中文描述是？
+答案：
+chmod 743 test  
+把test文件的
+所有者权限设置为读写执行。
+所属组内成员权限设置为只读。
+其他用户的权限设置为写与执行。
+
+5. 一个分区的标签为XXX 以标签形式挂在/tmp/mnt下，命令格式为？单机需要挂载IP-SAN设备时，需要在/etc/fstab文件设置挂载点时需要注意什么参数？
+答案：
+mount LABEL="XXX" /tmp/mnt
+要增加_netdev参数，这意思是挂载这个设置之前，先要开启网络服务，因为它依赖网络。
+
+6. Linux下将211.154.203.84的8080端口映射到内部192.168.2.200的80上，实现对内网机器的访问，请给出NAT转换命令行？
+答案：
+iptables -t nat -A PREROUTING -d 211.154.203.84 -p tcp --dport 8080 -j DNAT --to 192.168.2.200:80  
+
+7. 假设存在anymacro-4.8-txt-5.iso 已知/usr/bin/anysetup是该iso的一个rpm包，请给找出到该文件所属rpm的方法，如何挂载ISO镜像并取出此rpm包放到/tmp目录下？
+答案：
+mount -t iso9660 -o loop anymacro-4.8-txt-5.iso /mnt/
+find  /mnt -type f -name “$(rpm -qf /usr/bin/anysetup)”-exec cp -rf {} /tmp/ \;
+
+8. Cetnos6.0系统默认语言是英文，我如何将操作系统的默认语言修改为简体中文（utf-8格式）？
+答案：
+LANG=zh_CN.UTF-8
+
+9. txt为utf8编码的文件，如何操作能够终端使用vi工具正常显示文件内容
+答案：
+set encoding=utf-8
+
+10. 查看aminglinux.com的域名的mx，ns，txt记录的方法？说明这些记录的差别？如何确认某个ip地址是否已经做反向解析。
+答案：
+nslookup -qt=mx aminglinux.com
+nslookup -qt=ns aminglinux.com
+nslookup -qt=txt aminglinux.com
+MX记录主要用来做邮件服务器的域名记录，标明这是一台邮件服务器
+NS记录主要是用来做DNS服务器的记录，标明这是一台DNS服务器
+TXT 记录主要用来做域名的说明。比如：域名所有者的信息。
+nslookup -qa=ptr ip地址，如果有返回正确的域名，就表示反解析正常。
+
+11. 现需要将邮件系统A的/mail分区拷贝到邮件系统B的/mail 分区下，且必须保留A服务器/mail分区的文件权限及属组，已知邮件服务器A的ssh端口为31421，IP地址为192.168.1.1，邮件服务器B的ssh端口为31422，IP地址为192.168.1.2，请提供远程拷贝命令
+答案：
+A服务器命令：rsync -avz  -e “ssh -p 31422” /mail root@192.168.1.2:/mail
+B服务器命令：rsync -avz  -e “ssh -p 31421” root@192.168.1.1:/mail /mail
+
+12. CentOS6.0安装系统时主机名和DNS服务器设置设错了，请给出具体要修改的文件：
+答案：
+/etc/sysconfig/network 设置主机名
+/etc/sysconfig/network-scripts/ifcfg-eth0 设置DNS
+
+13. 系统MBR引导丢失，我们如何利用系统光盘修复引导
+答案：
+设置bios，光驱启动，启动光盘进入rescue mode，尝试重新安装grub，命令：gurb-install /dev/sda，之后尝试重启
+
+14. 要以user:zhangsan，password:6687 访问test数据库，语句为？
+答案：
+mysql -u
+面试的时候，面试官有可能会问你，你之前运维都做哪些工作。通过你的回答，他可以判定你到底有没有做过运维。下面我给出一些答案，希望能帮到你。
+ 
+1.看监控中心，处理警告问题，注意，这里的警告问题并不是那种故障问题，故障问题平时一旦接到告警短信我们第一时间就已经处理了。这里的问题可以不用马上解决，但也有潜在风险的问题。举例，比如磁盘分区超过80%、某台机器负载长时间偏高（超过20）、某台mysql的慢查询日志数量比较多、某台nginx服务器偶尔出现502状态码等等
+ 
+2.编写或者优化运维脚本。 啥脚本呢？比如备份mysql的脚本、监控某个服务的脚本、自动化发布的脚本反正只要是方便我们运维工作的脚本都写。
+ 
+3.根据开发或者运营同事的需求，部署或者配置环境，当然也会写一些脚本。 比如，今天开发同事上线了一个新的业务，那么就意味着要新增一个虚拟主机，nginx和php-fpm都要配置，还有要修改dns解析等等。又比如，开发同事说最近某个业务访问比较慢，那么我们就需要配合开发同事去查找该业务慢的原因，可以去查看mysql慢查询日志也可以查看php-fpm的慢执行日志等。又比如，运营同事说，最近的访问量有点多，看看是正常访问还是异常访问，我们则需要去分析访问日志。等等
+ 
+4.安全和优化。 有一天，php官方说某某版本有漏洞了，影响很大，我们则需要根据官方提供的补丁去处理漏洞。这就需要我们平时多关注it领域的一些咨询信息，关注一些大牛或者组织的公众号，要第一时间知道漏洞。优化的话，是需要开发同事配合一起来做的。我们之前讲过的apache相关的配置，很多都算是优化，比如日志切割、静态文件缓存时间、访问控制等等。
+ 
+5.规划和部署公司业务，决定什么时候扩容或缩容。 业务访问量越来越大，那服务器负载就越来越高，一旦支撑不了的时候，就需要扩容。一般企业的架构都是支持横向扩容的（lvs、nginx负载均衡），增加多少机器，也是需要我们衡量的，机器的购买、上架、部署工作也是我们来做的。现在越来越多的企业使用云主机，在机器购买、上架、部署上就相当简单了。环境部署好，还得需要我们测试，测试没有问题才能真正上线。
+ 
+6.关注一线资讯，学习新技能。 如果不忙的时候，我们是需要严格管理好自己的，学习新技能是必须的，不学习就会被淘汰。 开源中国、51cto、infoQ、techtarget等都可以关注，我们可以了解到一线运维的趋势和新技术。
+ 
+7.有些大企业是有资产管理平台的(cmdb)，这个也需要我们运维人员来管理各种服务器资源的记录、变更。
+ 
+8.有些企业可能会牵扯到员工账号、权限的管理（git/svn），也可能需要我们来分配。
+ 
+9.故障处理。这个不用多说，遇到问题，就得处理。还是列一下常见的故障：网站访问慢或访问不了、服务器宕机、某个服务宕掉、ddos攻击、cc攻击、磁盘损坏、存储损坏、磁盘空间撑满、网站被黑、mysql主从不同步、mysql查询慢等。
+ 
+10.分析pv uv等数据 结合业务和产品线 出统计图以及报表（web化）
+ 
+11.上线发布情况统计 以及问题录入
+ 
+12.基础apm分析 请求问题排查 趋势分析以及响应情况
+ 
+13.自动化运维平台开发、去中控、认证集中化、工单一体化
+ 
+14.故障问题排查脚本化，问题解决方法脚本化，至少实现半自动化；
+ 
+15.负责的系统信息批量扫描，批量化工具开发与维护；
+ 
+16.不断完善与优化监控，包括监控项目，监控脚本，必要的情况下对监控做二次开发；
+ 
+17.对脚本进行持续优化，目标是用尽量少的代码实现最大的效果，合并与摒弃不必要的判断与循环；
+zhangsan -p6687  test
+
+
+1.计划每天凌晨1点对Mysql数据库letang备份一次，备份后的文件要带有当天的日期。请编写shell脚本并设定crontab
+答案：
+vim /usr/local/sbin/backup.sh
+#!/bin/bash
+bakdir=/root/mysql_bak
+d=`date +%F`
+[ -d $bakdir ] || mkdir $bakdir
+mysqldump -uroot --default-character-set=utf8 -p'****' letang >$bakdir/$d-letang.sql
+crontab:
+0  1  *  *  *  /bin/bash /usr/local/sbin/backup.sh
+
+2.查询文件/logs/foo.log以”abc”结尾的行。
+答案：
+grep  “abc$” /logs/foo.log
+
+3.如何将/usr/local/mysql/bin添加到环境变量中
+答案：
+vim /etc/profile.d/path.sh
+写入 export PATH=$PATH:/usr/local/mysql/bin
+保存后执行: source /etc/profile
+
+4.请描述一下如何查找并杀掉letang.sh进程
+答案：
+ps aux|grep letang.sh 找出进程ID,然后 kill 进程ID
+
+5.查找/logs目录下前缀为access的文件并删除
+答案：
+find  /logs  -type f  -name “access*” -exec rm -rf {} \;
+
+6.通过nginx访问日志access.log统计ip和每个地址的访问次数，并列出前10 名
+日志格式如下：
+123.232.208.98 - [10/Sep/2016:16:33:13 +0800] "/thread-14858-1-1.html" 200 "http://www.lishiming.net/forum.php?mod=guide&view=my" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML， like Gecko) Chrome/31.0.1650.63 Safari/537.36 TheWorld 6"
+答案：
+IP前10名： awk '{print $1}' access.log |sort|uniq -c|sort -rn|head
+网址前10名：awk -F '"' '{print $2}’ access.log|sort|uniq -c|head
+
+7.谈谈你对运维工程师的理解以及对工作的认识。
+答案：
+运维工程师属于一个公司被人看不到，却很重要的职位，领导总是把运维排在最后面，和研发、产品、测试比起来，运维是默默服务在后面的。运维掌握着线上业务的命脉，一旦出现问题，所有技术人员都来找运维处理。所以，运维在日常工作中，需要做好监控和事故预案，当问题出现时，运维需要以最快的速度处理好问题。在平时，运维不仅仅要给研发、测试提供协助，还要自发性地去研究和分析服务器上的一些性能指标和日志，从而给研发同事提供一些数据和线索来优化业务。
+
+一、SHELL脚本部分：
+1.完成如下操作
+1) 查询file.txt文件里第一列数据数值之和（字段以&符号分隔）
+2) 查询file.txt在第7行之前添加一行，内容为“#注释”。
+3) 打印出file.txt 文件第6到第10行。
+答案：
+1) awk -F ’&’ ‘BEGIN{sum=0}{sum +=$1}END{print sum}’ file.txt
+2) sed -i ‘ 7 i\ “#注释” ’ file.txt
+3) sed -n ‘6,10’p file.txt
+
+2.编写个shell脚本将/usr/local/test 目录下大于100k的文件转移到 /tmp目录下。
+答案：
+find /usr/local/test  -type f  -size +100k -exec mv {} /tmp \;
+
+3.设计一个shell程序，添加一个新组为class1，然后添加属于这个组的30个用户，用户名的形式为stdxx，其中xx从01到30
+答案：
+#!/bin/bash
+for i in $(seq -w 01 30)
+do
+   useradd -g class1 std$i
+done
+说明： seq -w 可以让序列的数字都是两位数
+
+4.通过apache 访问 日志access.log统计IP和每个地址访问的次数，按访问 量列出前10名。
+日志格式样例如下：
+192.168.1.247  -  -  [02/[ul/2015:23:44:59  [0800]  “GET  /[HTTP/1.1  200  19”
+答案：
+awk ‘{print $1}’ access.log|sort|uniq -c|sort -rn|head
+
+二、系统维护部分
+1、Linux系统怎么查找以普通用户Galo运行的所有进程？
+答案：
+ps aux|grep “^Galo”
+
+2、现用vi编辑了一个脚本test.sh，在linux下执行时报错时，怎么进行调试脚本？
+答案：
+用sh -x 来查看脚本执行的过程，如果太多可以用&>定向执行过程到相应的日志里，再排查错误。
+
+3、在/m_data/backup/scrip/目录下有一个数据库备份脚本mysql_bak.sh，需要每周三凌晨2:30自动执行，使用crontab来完成此操作，请写下命令及crontab的内容？
+答案：
+30 2 * * 3 /bin/bash /m_data/backup/scrip/mysql_bak.sh
+
+4、Linux服务器上的tomcat进程经常出现假死的情况，当你遇到这种问题时怎么处理该问题及采取怎样的预防措施？
+答案：
+先排查假死时机器的负载，是否因为内存不足，cpu使用过高，或者磁盘问题等导致。临时解决办法是写个脚本监控tomcat进程状况和模拟用户访问web站点，当出现不正常时，重启tomcat。另外还需要写一个监控系统各个硬件状态的脚本，比如cpu、内存、磁盘、交换分区等，综合分析tomcat假死的原因，找问题是一个漫长和痛苦的事情，需要多一些耐心，还需要我们敢去猜测，当然根据tomcat、系统相关的日志来获取一些信息也是非常有必要的。
+
+5、如何使用命令查出linux系统下某占用某个端口（如8088）具体是那个进程？
+答案：
+netstat -lnp|awk -F'[ :/]+' '$5~/8088/{print $10}'
+
+6、使用网络方式kickstart安装linux操作系统时，通常要在安装源服务器上配置并启动哪些服务。
+答案：
+dhcp  ftp/http  tftp
+
+7、Apache 服务器的配置文件httpd.conf中有很多内容，请解释如下配置项：
+答案：
+1) MaxKeepAliveRequests    最大长连接请求数。
+2) UserDir public_html    用户的公用目录路径
+3) DefaultType text/plain     默认网页格式为文本模式
+4) AddLanguage en .en  加入英文字体
+5) DocumentRoot "/var/www/html"  网站根目录
+6) AddType application/x-httpd-php.php .php  增加对.php文件的支持
+
+8、Linux现连接一个新的存储（如/dev/sdf，容量2T）一个应用程序需要在/data目录使用此存储的500G的存储空间（做成LVM），需要哪些步骤，请描述。
+答案：
+fdisk /dev/sdf 分区
+n，p，1，1 +500G w 分区步骤
+pvcreate /dev/sdf1 创建物理卷
+vgcreate vg01 /dev/sdf1 创建卷组
+lvcreate -n lv01 -l 1000%free vg01 创建逻辑卷
+mkfs.ext4 /dev/vg01/lv01 格式化这个卷
+mount /dev/mapper/vg01-lv01 /data   挂载这个卷
+
+9、目前有一套2台Linux组成的MySql双机热备系统 ，使用heartbeat或者你所熟悉的HA软件，进行双机切换测试，数据库版本为MySql5.5，写下双机切换的测试验证过程。
+说明：这个题目考察的是大家对HA架构的熟练程度，遇上这样的题目多半是需要你上机操作的，如果是虚拟机实验，大家安装步骤是：1. 两台机器分别安装mysql  2.第一台部署NFS，第二台挂载NFS  3. 两台安装heartbeat。 当然，线上环境不建议做NFS，因为mysql对磁盘IO有很高的要求，生产环境可以考虑drbd，参考链接http://hypocritical.blog.51cto.com/3388028/1350251/
+
+10、基于Linux的系统监控或性能监控，写下你熟悉的一种监控软件（Nagios，Cacti，Nmon或者其他工具或命令）能控制哪些性能指标，报警有哪些级别，有哪些报警方式。
+答案：
+Zabbix可以监控cpu、内存、磁盘、进程、用户、文件、服务等基础项目，也可以自定义监控项目，通过shell、python等脚本实现。报警级别有Information，Warning，Average，High，Disaster，可以通过邮件、短信、微信等方式告警
+
+11、简述raid0、raid1、raid5三种工作模式的工作原理及特点。
+答案：
+Raid0 最简单的模式，就是把N个物理磁盘合成一个总的虚拟磁盘。优点是：能够增加磁盘的IO性能。缺点是：只要有一个磁盘数据不正确，整个虚拟磁盘都会有影响。安全性最差。
+Raid1 最安全的模式，raid1也叫做镜像盘，都是以偶数形式出现。每个物理盘都有一块与它数据完全一致的磁盘搭配，优点是：在坏掉某一块磁盘时都不会造成数据的损坏。缺点是：磁盘的空间利用率只能达到50%。
+Raid5 最性价比的模式。raid5是拿一块磁盘的空间来进行奇偶校验，容错能力平均分布所有硬盘上，当其中一块硬盘失效时，可以保证其它成员的硬盘数据正常，所以RAID5的总容量为“(N-1)*最低容量硬盘容量”，对整体而言，raid5容量效率比较高。优点是：在保证了安全性的前提下最大化使用容量。缺点是：会影响整机的性能。
+
+12、简述Apache2.x版本的两种工作模式，以及各自工作原理
+答案：
+prefork模式使用多个子进程，每个子进程只有一个线程。每个进程在某个确定的时间只能维持一个连接。在大多数平台上，Prefork MPM在效率上要比Worker MPM要高，但是内存使用大得多。prefork的无线程设计在某些情况下将比worker更有优势：它可以使用那些没有处理好线程安全的第三方模块，并且对于那些线程调试困难的平台而言，它也更容易调试一些。
+worker模式使用多个子进程，每个子进程有多个线程。每个线程在某个确定的时间只能维持一个连接。通常来说，在一个高流量的HTTP服务器上，Worker MPM是个比较好的选择，因为Worker MPM的内存使用比Prefork MPM要低得多。但worker MPM也有不完善的地方，如果一个线程崩溃，整个进程就会连同其所有线程一起“死掉”。由于线程共享内存空间，所以一个程序在运行时必须被系统识别为每个线程都是安全的。
+
+13、现有一套Mysql数据库，数据量40G，应该如何对Mysql数据库进行备份和恢复？请写出三种备份方案，并标注你的最优方案。
+答案：
+1）mysqldump最常用的mysql备份工具，支持myisam或innodb引擎，备份出来的数据是一个sql文件，它不仅要含有创建表的sql语句，还要包含表中每一条数据的插入sql语句。不管是备份还是恢复，效率都比较低，会锁表，如果数据量不大，使用mysqldump是很方便的。
+2）xtrabackup 默认只支持innodb引擎的数据，备份的时候相当于直接把mysql datadir里面的所有文件拷贝一份，恢复也是直接把拷贝的文件放回去。所以，使用xtrabackup备份或者恢复速度都很快。它的变种工具innobackupex是对xtrabackup封装的perl脚本，提供了myisam表备份的能力。（能进行整库和数据表备份）。当数据量较大时，适合使用innobackupex来备份，效率很快。所以，本题中40G数据，适合使用这个工具。
+3）binlog 就是大家熟知的主从了，它相当于是实时备份，在高可用架构中，通常使用主从或者主主，当一台宕机，另外一台可以马上替上去，数据可能会有少量丢失，但问题不大，我们可以通过查看binlog日志完全恢复。另外，做增量备份时，也可以只备份binlog文件，恢复时通过binlog文件可以恢复到指定某一时刻的数据状态。打开binlog意味着需要消耗额外的磁盘I/O资源。
+
+14、在开启iptables 防火墙的情况下，防火墙规则配置默认拒绝所有，请将192.168.0.150的3306端口映射到公网58.206.99.105的1056端口，能够正常访问数据库，写下详细的规则。
+答案：
+iptables -t nat -I PREROUTING -d 58.206.99.105 -p tcp --dport 1056 -j DNAT --to 192.168.0.150:3306
+iptables  -t filter  -I FORWARD -d 58.206.99.105  -j ACCEPT
+iptables  -t filter  -I FORWARD -s 192.168.0.150  -j ACCEPT
+
+
+
+1. 请用shell查询file1里面空行所在的行号
+答案：
+grep -n "^$" file1
+
+2. 编写ShellScript 查询file1以abc结尾的行
+答案：
+grep “.*abc$” file1
+
+3. 打印出file1文件第1到第3行
+答案：
+sed  -n  ‘1，3’p  file1
+
+4. 如何将本地80端口的请求转发到8080端口，当前主机ip为192.168.2.18
+答案：
+iptables -t nat -I PREROUTING -d 192.168.2.18 -p tcp --dport 80 -j DNAT --to 127.0.0.1:8080
+
+5. 分别写出每天的早上3 点执行一次/usr/bin/waks.day.sh，每周日早上4点执行一次/usr/bin/baks_week.sh
+答案：
+0 3 * * *  /bin/bash /usr/bin/waks.day.sh
+0 4 * * 7  /bin/bash /usr/bin/baks_week.sh
+
+6. 如何查看Java占用线程及线程所在目录
+答案：
+ps  -eLf |grep Java  查看所有线程，记住第二列的数字即pid
+ls -l /proc/pid 查看cwd那行即为目录
+
+7. 通过apache访问日志access.log统计IP和每个地址访问的次数，按访问量列出前10名。日志格式样例如下
+192.168.1.247 - - [02/Jul/2010:23:44:59 +0800] “GET / HTTP/1.1” 200 19
+答案：
+awk ‘{print $1}’ access.log|sort -n|uniq -c|sort -rn|head
+
+8.如何用mysql命令进行备份和恢复？以test库为例，创建一个备份，并再用此备份进行恢复。
+答案：
+备份 mysqldump -uroot -p’***’ test > /tmp/test.sql
+恢复mysql -uroot -p’***’ < /tmp/test.sql
+
+9.你认为在系统调优方面都包括那些工作，以Linux为例，请简明阐述，并举一些参数为例。
+答案：
+Linux系统调优可以通过这几个方面来做，比如文件系统优化（分区调优，格式化时根据存储文件特性，指定合适的块大小，noatime，日志隔离，软raid，有效使用/dev/shm，关闭不必要的服务）、内核参数优化（net.ipv4.tcp_syncookies = 1， net.ipv4.tcp_max_tw_buckets = 65535， net.ipv4.tcp_tw_recycle = 1， net.ipv4.tcp_tw_reuse = 1）
+
+10.请用iptables 写出只允许10.1.8.179访问本服务器的22端口
+答案：
+iptables -I INPUT -s 10.1.8.179 -p tcp --dport 22 -j ACCEPT
+
+11.Nginx启动，重启，关闭命令：以及升级nginx切换命令
+答案：
+启动：/usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf
+重启： /usr/local/nginx/sbin/nginx -s stop 掉再启动
+关闭：/usr/local/nginx/sbin/nginx -s stop
+升级：/usr/local/nginx/sbin/nginx -s reload
+
+12.现在因为访问人数太多，网站时常出现too many connection的错误，请给出解决的方案。
+答案：
+Too many connections是因为连接mysql的客户端数量超过了它的最大限定值。mysql默认最大连接数为100个，而程序在打开连接后，并未能及时的关闭mysql的连接，造成连接数超出默认值。临时解决方案：在my.cnf里配置max_connections=1024 （这个数值根据业务访问量多少来决定，通常1024是足够的），更改后需要重启mysqld服务，若不能重启服务，也可以进入mysql中，执行set global max_connections = 1024;。当然，最好的解决方案就是和开发人员一起找出不能正常关闭连接的问题，比如要通过查看慢查询日志分析执行慢的sql。
+1.如何将本地80端口的请求转发到8080端口，当前主机IP为192.168.16.1，其中本地网卡eth0
+答案：
+iptables -t nat -A PREROUTING  -d 192.168.16.1 -p tcp --dport 80 -j DNAT  --to 192.168.16.1:8080
+
+2.什么是NAT，常见分为哪几种，DNAT与SNAT有什么不同，应用实例有哪些?
+答案：
+NAT也叫做网络地址转换，起初是用来解决ipv4地址资源的日益衰竭。NAT分为源地址转换SNAT，目标地址转换DNAT，与网络地址伪装MASQUERADE。SNAT是指在数据包从网卡发送出去的时候，把数据包中的源地址部分替换为指定的IP，这样，接收方就认为数据包的来源是被替换的那个IP的主机。
+MASQUERADE是用发送数据的网卡上的IP来替换源IP，因此，对于那些IP不固定的场合，比如拨号网络或者通过dhcp分配IP的情况下，就得用MASQUERADE。
+DNAT，就是指数据包从网卡发送出去的时候，修改数据包中的目的IP，表现为如果你想访问A，可是因为网关做了DNAT，把所有访问A的数据包的目的IP全部修改为B，那么，你实际上访问的是B。因为，路由是按照目的地址来选择的，因此，DNAT是在PREROUTING链上来进行的，而SNAT是在数据包发送出去的时候才进行，因此是在POSTROUTING链上进行的。
+下面我给出两个应用实例：
+1） 内网机器访问外网 http://ask.apelearn.com/question/3624
+2） 外网访问内网的ftp http://ask.apelearn.com/question/1003
+
+3.包过滤防火墙与代理应用防火墙有什么区别，能列举几种相应的产品吗？
+答案：
+包过滤防火墙工作在网络协议ip层，它只对ip包的源地址、目标地址及相应端口进行处理，因此速度比较快，能够处理的并发连接比较多，缺点是对应用层的攻击无能为力。如：iptables，windows等软件类防火墙。代理服务器防火墙将收到的IP包还原成高层协议的通讯数据，比如http连接信息，因此能够对基于高层协议的攻击进行拦截。缺点是处理速度比较慢，能够处理的并发数比较少。如：一些审计类的防火墙，用户行为控制系统等。
+
+4.Iptables是否支持time时间控制用户行为，如有请写出具体操作步骤。
+答案：
+支持，规则为
+iptables -A INPUT -p tcp —dport 445 -m time --weekdays Mon，Tus，Wed，Thu，Fri --timestart 08:00:00 —timestop 18:00:00 -j ACCEPT  指定工作日的8点到18点期间，才能访问445端口。
+
+5.说出你知道的几种linux/unix发行版本
+答案：
+Redhat、CentOS、Fedora、SuSE、Slackware、Gentoo、Debian、Ubuntu、FreeBSD、Solaris、HPUX、AIX
+
+6.列出linux常见打包工具并写相应解压缩参数（至少三种）
+答案：
+tar -zcvf test.tar.gz test  解压：tar -zxvf test.tar.gz
+zip -r test.zip test    解压：unzip test.zip
+gzip test  解压: gzip -d test.gz
+
+7.计划每星期天早8点服务器定时重启，如何实现？
+答案：
+写入crontab  
+0 8 * * 7  init 6
+
+8.列出作为完整邮件系统的软件，至少二类。
+答案：
+iredmail    Postfix+Cyrus-SASL+dovecot
+
+9.当用户在浏览器当中输入一个网站，说说计算机对dns解析经过那些流程？注：本机跟本地dns还没有缓存。
+答案：
+a.用户输入网址到浏览器；
+b.浏览器发出DNS请求信息；
+c.计算机首先查询本机HOST文件，看是否存在，存在直接返回结果，不存在，继续下一步；
+d.计算机按照本地DNS的顺序，向合法dns服务器查询IP结果；
+e.合法dns返回dns结果给本地dns，本地dns并缓存本结果，直到TTL过期，才再次查询此结果；
+f.返回IP结果给浏览器；
+g.浏览器根据IP信息，获取页面；
+
+10.我们都知道，dns即采用了tcp协议，又采用了udp协议，什么时候采用tcp协议？什么时候采用udp协议？为什么要这么设计？
+答案：
+DNS主备服务器之间传输数据时使用tcp，而客户端与DNS服务器之间数据传输时用的是udp。tcp和udp最大的区别在于tcp需要三次握手来验证数据包的完整性和准确性，udp不需要验证，速度比tcp要快。DNS主备数据传输需要保证数据准确性，有必要使用tcp通信，而客户端请求服务端，更需要快，所以用udp。
+
+
+1. 写一个脚本查找最后创建时间是三天前，后缀是*.log的文件并删除。
+答案：
+find dir/ -mtime +3 -type f -name “.*.log” -exec rm -rf {} \;
+
+2. 写一个脚本将某目录下大于100k的文件移动至/tmp下。
+答案：
+find dir/ -type f -size +100k -exec mv {} /tmp \;
+
+3. 写一个脚本将数据库备份并打包至远程服务器192.168.1.1 /backup目录下
+答案：
+#!/bin/bash
+/usr/local/mysql/bin/mysqldump -uroot --default-character-set=utf8 -p'****' database > /tmp/data_$(date +%F).sql
+[ $? -eq 0 ] && gzip /tmp/data_$(date +%F).sql
+[ -f /tmp/data_$(date +%F).gz ] && rsync -av -e “ssh -p 22” /tmp/data_$(date +%F).gz root@192.168.1.1:/backup/
+
+4. 写一个防火墙配置脚本，只允许远程主机访问本机的80端口。
+答案：
+#!/bin/bash
+iptables -F
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -P INPUT DROP
+iptables -P OUTPUT ACCEPT
+
+5. 写一个脚本执行nginx日志统计，得到访问ip最多的前10个。（nginx日志路
+径：/home/logs/nginx/default/access.log)
+答案:
+awk '{print $1}' /home/logs/nginx/default/access.log |sort -n|uniq -c|sort -rn|head
+
+6. 写出下列命令的含义 
+MaxKeepAlivRequest 100   #最大允许多少个持久链接
+Options FollowSymLinks   #跟随符号链接，允许访问符号链接所指向的原文件。 为了安全，不应开启
+Order Deny Allow #先deny后allow
+Deny from all #拒绝所有访问
+Allow from 192.168.1.1 #只允许192.168.1.1访问
+
+7. 写一个脚本把指定文件里的/usr/local替换为别的目录
+答案：
+sed -i ‘s#/usr/local#/usr/src#g’ file
+
+
+一、选择题（24分，每小题3分）
+1. 操作系统是一组什么（ C ）
+A.文件管理程序 
+B.中断处理程序
+C.资源管理程序 
+D.设备管理程序
+
+解释：在一个计算机操作系统中，通常含有多种硬件和软件资源。归纳起来可将这些资源分为四类：处理机、存储器、I/O设备以及文件(数据和程序)。相应的，OS的主要功能也正是对这四类资源进行有效的管理。处理机管理是用于分配和控制处理机；存储器管理主要负责内存的分配与回收；I/O设备管理是负责I/O设备的分配(回收)与操纵；文件管理是用于实现对文件的存取、共享和保护。可见，OS的确是计算机系统资源的管理者。(计算机操作系统 第四版 西电出版社)   
+
+2. 现代操作系统的基本的特征是（ C ）资源共享和操作的异步性
+A.多道程序设计	B.中断处理
+C.程序的并发执行	D.实现分时与实时处理
+
+解释：批处理系统有着高的资源利用率和系统吞吐量；分时系统能获得及时响应；实时系统具有实时特征。除此之外，它们还共同具有并发、共享、虚拟和异步四个基本特征。
+
+3. 引入多道程序的目的在于（ A ）
+A.充分利用CPU，减少CPU等待时间
+B.提高实时响应速度
+C.有利于代码共享，减少主、辅存信息交换量
+D.充分利用存储器
+
+4. 实时操作系统追求的目标是（ C ）
+A.高吞吐率	B.充分利用内存
+C.快速响应	D.减少系统开销
+
+5. CPU状态分为系统态和用户态，从用户态转换到系统态唯一途径是（ C ）
+A.运行进程修改程序状态字	B.中断屏蔽
+C.系统调用	D.进程调度程序
+
+6. UNIX命令一般格式为（ A ）
+A.命令名	  [选项]  [参数]	B.[选项]  [参数]  命令名
+C.[参数]   [选项]  命令名	D.[命令名]  [选项]  [参数]
+
+7. 进程和程序的本质区别是（ D ）
+A.存储在内存和外存	B.顺序和非顺序执行机器指令
+C.分别使用和独占计算机资源	D.动态和静态特征
+
+8. 一个进程被唤醒意味着（ B ）
+A.该进程重新占有了CPU	B.进程状态变为就绪
+C.它的优先权变为最大	D.其PCB移至就绪队列的队首
+
+二、简答题。
+1. 解释以下术语：硬件、软件、多道程序设计、并发、吞吐量
+答案：
+硬件：硬件（英文名Hardware）是计算机硬件的简称，是指计算机系统中由电子，机械和光电元件等组成的各种物理装置的总称。这些物理装置按系统结构的要求构成一个有机整体为计算机软件运行提供物质基础，由运算器、控制器、存储器、输入设备和输出设备等五个逻辑部件组成。
+软件：软件（英文：Software）是一系列按照特定顺序组织的计算机数据和指令的集合。一般来讲软件被划分为系统软件、应用软件和介于这两者之间的中间件。软件并不只是包括可以在计算机上运行的电脑程序，与这些电脑程序相关的文档一般也被认为是软件的一部分。简单的说软件就是程序加文档的集合体。
+多道程序设计：是在计算机内存中同时存放几道相互独立的程序，使它们在管理程序控制之下，相互穿插的运行。 两个或两个以上程序在计算机系统中同处于开始到结束之间的状态。这就称为多道程序设计。多道程序技术运行的特征：多道、宏观上并行、微观上串行。
+并发：在操作系统中，是指一个时间段中有几个程序都处于已启动运行到运行完毕之间，且这几个程序都是在同一个处理机上运行，但任一个时刻点上只有一个程序在处理机上运行。
+吞吐量：吞吐量是指对网络、设备、端口、虚电路或其他设施，单位时间内成功地传送数据的数量（以比特、字节、分组等测量）。
+
+面试的时候，面试官有可能会问你，你之前运维都做哪些工作。通过你的回答，他可以判定你到底有没有做过运维。下面我给出一些答案，希望能帮到你。
+ 
+1.看监控中心，处理警告问题，注意，这里的警告问题并不是那种故障问题，故障问题平时一旦接到告警短信我们第一时间就已经处理了。这里的问题可以不用马上解决，但也有潜在风险的问题。举例，比如磁盘分区超过80%、某台机器负载长时间偏高（超过20）、某台mysql的慢查询日志数量比较多、某台nginx服务器偶尔出现502状态码等等
+ 
+2.编写或者优化运维脚本。 啥脚本呢？比如备份mysql的脚本、监控某个服务的脚本、自动化发布的脚本反正只要是方便我们运维工作的脚本都写。
+ 
+3.根据开发或者运营同事的需求，部署或者配置环境，当然也会写一些脚本。 比如，今天开发同事上线了一个新的业务，那么就意味着要新增一个虚拟主机，nginx和php-fpm都要配置，还有要修改dns解析等等。又比如，开发同事说最近某个业务访问比较慢，那么我们就需要配合开发同事去查找该业务慢的原因，可以去查看mysql慢查询日志也可以查看php-fpm的慢执行日志等。又比如，运营同事说，最近的访问量有点多，看看是正常访问还是异常访问，我们则需要去分析访问日志。等等
+ 
+4.安全和优化。 有一天，php官方说某某版本有漏洞了，影响很大，我们则需要根据官方提供的补丁去处理漏洞。这就需要我们平时多关注it领域的一些咨询信息，关注一些大牛或者组织的公众号，要第一时间知道漏洞。优化的话，是需要开发同事配合一起来做的。我们之前讲过的apache相关的配置，很多都算是优化，比如日志切割、静态文件缓存时间、访问控制等等。
+ 
+5.规划和部署公司业务，决定什么时候扩容或缩容。 业务访问量越来越大，那服务器负载就越来越高，一旦支撑不了的时候，就需要扩容。一般企业的架构都是支持横向扩容的（lvs、nginx负载均衡），增加多少机器，也是需要我们衡量的，机器的购买、上架、部署工作也是我们来做的。现在越来越多的企业使用云主机，在机器购买、上架、部署上就相当简单了。环境部署好，还得需要我们测试，测试没有问题才能真正上线。
+ 
+6.关注一线资讯，学习新技能。 如果不忙的时候，我们是需要严格管理好自己的，学习新技能是必须的，不学习就会被淘汰。 开源中国、51cto、infoQ、techtarget等都可以关注，我们可以了解到一线运维的趋势和新技术。
+ 
+7.有些大企业是有资产管理平台的(cmdb)，这个也需要我们运维人员来管理各种服务器资源的记录、变更。
+ 
+8.有些企业可能会牵扯到员工账号、权限的管理（git/svn），也可能需要我们来分配。
+ 
+9.故障处理。这个不用多说，遇到问题，就得处理。还是列一下常见的故障：网站访问慢或访问不了、服务器宕机、某个服务宕掉、ddos攻击、cc攻击、磁盘损坏、存储损坏、磁盘空间撑满、网站被黑、mysql主从不同步、mysql查询慢等。
+ 
+10.分析pv uv等数据 结合业务和产品线 出统计图以及报表（web化）
+ 
+11.上线发布情况统计 以及问题录入
+ 
+12.基础apm分析 请求问题排查 趋势分析以及响应情况
+ 
+13.自动化运维平台开发、去中控、认证集中化、工单一体化
+ 
+14.故障问题排查脚本化，问题解决方法脚本化，至少实现半自动化；
+ 
+15.负责的系统信息批量扫描，批量化工具开发与维护；
+ 
+16.不断完善与优化监控，包括监控项目，监控脚本，必要的情况下对监控做二次开发；
+ 
+17.对脚本进行持续优化，目标是用尽量少的代码实现最大的效果，合并与摒弃不必要的判断与循环；
+
+

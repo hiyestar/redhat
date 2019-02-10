@@ -1,0 +1,1419 @@
+
+
+[root@hiys ~]# for i in 192.168.4.5{0..7};do  scp -r  '/root/桌面/redis' root@${i}:/root/ ; done
+
+   
+[root@hiys ~]# cat lnmp.sh 
+#!/bin/bash
+ss -anputl |grep nginx 
+if [ $? -ne 0 ];then
+ nginx
+ if [ $? -eq 0 ];then
+  echo "nginx has already been installed";
+ else
+  echo "nginx will be installed";
+  tar -xzf /root/lnmp_soft.tar.gz;
+  if [ $? -eq 0 ];then
+    echo "tar lnmp_soft.tar.gz  has completed";
+  else
+    echo "tar lnmp_soft.tar.gz  Error!";
+    exit;
+  fi
+  yum -y install  httpd elinks telnet httpd-tools  gcc pcre-devel openssl-devel mariadb-devel mariadb-server  mariadb memcached php-pecl-memcache php php-mysql zlib-devel /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm ;
+  if [ $? -eq 0 ];then
+    echo "yum install has completed";
+  else
+    echo "yum install Error!";
+    exit; 
+  fi
+  sleep 5 && date;
+  rpm -q  elinks telnet httpd-tools gcc  pcre-devel openssl-devel mariadb-devel mariadb mariadb-server memcached php-pecl-memcache  php php-mysql php-fpm zlib-devel ;
+  nginx -s stop;
+  rm  -rf /usr/local/nginx;
+  useradd -s /sbin/nologin nginx;
+  if [ $? -eq 0 ];then
+    echo "user nginx is added";
+  else
+    echo "user nginx  already exist !";
+  fi
+  tar -xzf /root/lnmp_soft/nginx-1.12.2.tar.gz;
+  if [ $? -eq 0 ];then
+    echo "tar nginx-1.12.2.tar.gz  has completed";
+  else
+    echo "tar nginx-1.12.2.tar.gz Error!";
+    exit;
+  fi
+  cd nginx-1.12.2/;ls
+  ./configure  --prefix=/usr/local/nginx  --user=nginx  --group=nginx --with-http_ssl_module  --with-stream  --with-http_stub_status_module  --without-http_autoindex_module  --without-http_ssi_module ;
+  sleep 5 && date
+  make && make install
+#  echo 'export PATH=/usr/local/nginx/sbin/:$PATH' >>/etc/profile;
+#  source /etc/profile;
+#  which nginx;
+  ln -s /usr/local/nginx/sbin/nginx /sbin/
+  ls -l  /sbin/nginx
+  nginx
+  if [ $? -eq 0 ];then
+    echo "nginx startup successfully!";
+  else
+    echo "nginx startup failed !";
+    exit;
+  fi
+  systemctl start mariadb && systemctl enable mariadb
+  systemctl start php-fpm && systemctl enable php-fpm
+  systemctl start memcached && systemctl enable memcached
+  if [ $? -eq 0 ];then
+    echo "memcached is active and enabled ";
+  else
+    echo "Service memcached startup failed!";
+    exit;
+  fi
+  nginx -V
+  ss -anptul |egrep ':80|3306|:9000|:11211'
+  echo "nginx is setting up";
+ fi
+else
+  echo "`ifconfig |awk '/inet /{print $2}' |sed -n 1p` nginx is active"
+fi
+echo "[mon]
+name=mon
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[mon-2]
+name=mon-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd-2]
+name=osd-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools-2]
+name=tools-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1 " > /etc/yum.repos.d/ceph.repo
+yum clean all
+yum repolist
+[root@hiys ~]# 
+
+
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.50
+192.168.2.50
+201.1.1.50
+201.1.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H50 ~]# systemctl stop mysqld.service && systemctl disable mysqld.service 
+
+[root@H50 ~]# cd redis/;ls
+redis-3.2.1.gem  redis.zip  ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H50 redis]# rpm -q gcc 
+未安装软件包 gcc 
+[root@H50 redis]# yum -y install  gcc |tail -4  # [ 1 ] 安装redis软件包
+
+[root@H50 redis]# rpm -q gcc 
+gcc-4.8.5-16.el7.x86_64
+/*********************************暂时不需要以下操作
+[root@H50 redis]# unzip  redis.zip
+[root@H50 redis]# ls
+redis  redis-3.2.1.gem  redis.zip  ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H50 redis]# cd redis/;ls
+192.168.4.51  lnmp  redis-4.0.8.tar.gz
+[root@H50 redis]# cd  *********************/
+
+[root@H50 ~]# tar -zxvf redis-4.0.8.tar.gz   # [ 2 ] 安装redis软件包
+......................
+redis-4.0.8/utils/install_server.sh
+.........................
+
+[root@H50 ~]# cd redis-4.0.8/;ls       # [ 3 ] 初始化配置
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+
+[root@H50 redis-4.0.8]# make >/dev/null  && make install |tail -4   ## [ 4 ] 初始化配置
+..............................
+make[1]: 离开目录“/root/redis-4.0.8/src”
+
+[root@H50 redis-4.0.8]# ls     ## [ 5 ] 初始化配置
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+
+[root@H50 redis-4.0.8]# ./utils/install_server.sh    ## [ 6 ]初始化  初始化配置
+.....................................
+
+Please select the redis port for this instance: [6379] 端口号[默认值 直接回车确认]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] 主配置文件 [默认值 直接回车确认]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] 日志文件 [默认值 直接回车确认]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379]  数据库目录 [默认值 直接回车确认]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server] 服务器程序文件[默认值 直接回车确认]
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli    命令行连接命令
+Is this ok? Then press ENTER to go on or Ctrl-C to abort. [默认值 直接回车确认]
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...  
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...  启动服务
+Installation successful!
+[root@H50 redis-4.0.8]# netstat  -anputl |grep :6379   ## [ 7 ]
+
+tcp  0   0 127.0.0.1:6379   0.0.0.0:*     LISTEN      6413/redis-server 1 
+
+[root@H50 redis-4.0.8]# ls /etc/init.d/redis_6379 
+/etc/init.d/redis_6379
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 status
+Redis is running (6413)
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 stop  #停止服务//停止已经开启的redis服务
+Stopping ...
+Redis stopped
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 status  查看状态
+cat: /var/run/redis_6379.pid: 没有那个文件或目录
+Redis is running ()
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 start  #启动服务
+Starting Redis server...
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 status
+Redis is running (6470)
+
+[root@H50 redis-4.0.8]# tail -4 /etc/init.d/redis_6379
+    *)
+        echo "Please use start, stop, restart or status as first argument"
+        ;;
+esac
+
+[root@H50 redis-4.0.8]# ps -C redis-server  #查看redis服务
+  PID TTY          TIME CMD
+ 6470 ?        00:00:00 redis-server
+
+[root@H50 redis-4.0.8]# netstat -anputl |grep redis
+tcp        0      0 127.0.0.1:6379    0.0.0.0:*       LISTEN      6470/redis-server 1 
+
+[root@H50 redis-4.0.8]# redis-cli  #连接本机的redis 数据库服务
+
+127.0.0.1:6379> exit;
+(error) ERR unknown command 'exit;'
+127.0.0.1:6379> exit
+[root@H50 redis-4.0.8]# ls /var/lib/redis/
+6379
+[root@H50 redis-4.0.8]# ls /var/lib/redis/6379/
+dump.rdb
+[root@H50 redis-4.0.8]# redis-cli 
+127.0.0.1:6379> select
+(error) ERR wrong number of arguments for 'select' command
+127.0.0.1:6379> select 0
+OK
+127.0.0.1:6379> select 15
+OK
+127.0.0.1:6379[15]> select 0
+OK
+127.0.0.1:6379> select 0
+OK
+127.0.0.1:6379> keys *
+(empty list or set)
+127.0.0.1:6379> set name bob
+OK
+127.0.0.1:6379> keys *
+1) "name"
+127.0.0.1:6379> get name
+"bob"
+127.0.0.1:6379> set name lucy
+OK
+127.0.0.1:6379> get name
+"lucy"
+127.0.0.1:6379> keys *
+1) "name"
+127.0.0.1:6379> exists name
+(integer) 1
+127.0.0.1:6379> exists age
+(integer) 0
+127.0.0.1:6379> set a1 0
+OK
+127.0.0.1:6379> set aa1 9
+OK
+127.0.0.1:6379> keys a?
+1) "a1"
+127.0.0.1:6379> keys a??
+1) "aa1"
+127.0.0.1:6379> keys a*
+1) "aa1"
+2) "a1"
+127.0.0.1:6379> get a*
+(nil)
+127.0.0.1:6379> get a1
+"0"
+127.0.0.1:6379> get aa1
+"9"
+127.0.0.1:6379> ttl name
+(integer) -1
+127.0.0.1:6379> set age  7  
+OK
+127.0.0.1:6379> expire age  10
+(integer) 1
+127.0.0.1:6379> ttl age
+(integer) 2
+127.0.0.1:6379> ttl age
+(integer) -2
+127.0.0.1:6379> exists age
+(integer) 0
+127.0.0.1:6379> exists name
+(integer) 1
+127.0.0.1:6379> keys a*
+1) "aa1"
+2) "a1"
+127.0.0.1:6379> del a1
+(integer) 1
+127.0.0.1:6379> keys a*
+1) "aa1"
+127.0.0.1:6379> select 1
+OK
+127.0.0.1:6379[1]> keys *
+(empty list or set)
+127.0.0.1:6379[1]> set x 1
+OK
+127.0.0.1:6379[1]> set y  2
+OK
+127.0.0.1:6379[1]> keys *
+1) "x"
+2) "y"
+127.0.0.1:6379[1]> flushall
+OK
+127.0.0.1:6379[1]> keys *
+(empty list or set)
+127.0.0.1:6379[1]> select 0
+OK
+127.0.0.1:6379> keys *
+(empty list or set)
+127.0.0.1:6379> set x 1
+OK
+127.0.0.1:6379> set y 2
+OK
+127.0.0.1:6379> set z 3
+OK
+
+127.0.0.1:6379> select 1
+OK
+127.0.0.1:6379[1]> set name bob
+OK
+127.0.0.1:6379[1]> flushdb
+OK
+127.0.0.1:6379[1]> keys *
+(empty list or set)
+127.0.0.1:6379[1]> select 0
+OK
+127.0.0.1:6379> keys *
+1) "z"
+2) "x"
+3) "y"
+127.0.0.1:6379> move y 1
+(integer) 1
+127.0.0.1:6379> keys *
+1) "z"
+2) "x"
+127.0.0.1:6379> select 1
+OK
+127.0.0.1:6379[1]> keys *
+1) "y"
+127.0.0.1:6379[1]> set z 99
+OK
+127.0.0.1:6379[1]> set name lucy
+OK
+127.0.0.1:6379[1]> keys *
+1) "name"
+2) "z"
+3) "y"
+127.0.0.1:6379[1]> type z
+string
+127.0.0.1:6379[1]> type name
+string
+127.0.0.1:6379[1]> save
+OK
+127.0.0.1:6379[1]> shutdown
+not connected> exit
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H50 redis-4.0.8]# redis-cli 
+127.0.0.1:6379> exit
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H50 redis-4.0.8]#  
+
+[root@H50 ~]# vim /etc/redis/6379.conf  #配置文件解析 --- 修改服务使用的ip地址和端口号
+
+  70 bind 192.168.4.50
+
+  93 port 6350
+
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H50 redis-4.0.8]# netstat  -anputl |grep redis
+tcp    0    0 192.168.4.50:6350       0.0.0.0:*      LISTEN      7127/redis-server 1 
+
+[root@H50 redis-4.0.8]# redis-cli -h 192.168.4.50 -p 6350
+192.168.4.50:6350> keys *
+1) "z"
+2) "x"
+192.168.4.50:6350> exit
+
+[root@H50 redis-4.0.8]# redis-cli -h 192.168.4.50 -p 6350 shutdown
+
+[root@H50 redis-4.0.8]# netstat  -anputl |grep redis
+
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 status
+cat: /var/run/redis_6379.pid: 没有那个文件或目录
+Redis is running ()
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H50 redis-4.0.8]# netstat  -anputl |grep redis
+tcp    0   0 192.168.4.50:6350    0.0.0.0:*    LISTEN      7177/redis-server 1 
+[root@H50 redis-4.0.8]# pwd
+/root/redis-4.0.8
+[root@H50 redis-4.0.8]# vim /etc/init.d/redis_6379  
+
+  4 EXEC=/usr/local/bin/redis-server
+  5 CLIEXEC=/usr/local/bin/redis-cli
+  6 PIDFILE=/var/run/redis_6379.pid
+  7 CONF="/etc/redis/6379.conf"
+  8 REDISPORT="6379"
+
+ 36     stop)
+ 37         if [ ! -f $PIDFILE ]
+ 38         then
+ 39             echo "$PIDFILE does not exist, process is not running"
+ 40         else
+ 41             PID=$(cat $PIDFILE)
+ 42             echo "Stopping ..."
+ 43         #    $CLIEXEC -p $REDISPORT shutdown
+ 44              $CLIEXEC -h 192.168.4.50 -p 6350 shutdown
+ 45             while [ -x /proc/${PID} ]
+ 46             do
+ 47                 echo "Waiting for Redis to shutdown ..."
+ 48                 sleep 1
+ 49             done
+ 50             echo "Redis stopped"
+ 51         fi
+ 52         ;;
+ 53     status)
+ 54         PID=$(cat $PIDFILE)
+ 55         if [ ! -x /proc/${PID} ]
+ 56         then
+ 57             echo 'Redis is not running'
+ 58         else
+ 59             echo "Redis is running ($PID)"
+ 60         fi
+ 61         ;;
+ 62     restart)
+ 63         $0 stop
+ 64         $0 start
+ 65         ;;
+ 66     *)
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 status
+Redis is running (7177)
+[root@H50 redis-4.0.8]# sed -n '/stop)/,+9p' /etc/init.d/redis_6379 
+    stop)
+        if [ ! -f $PIDFILE ]
+        then
+            echo "$PIDFILE does not exist, process is not running"
+        else
+            PID=$(cat $PIDFILE)
+            echo "Stopping ..."
+        #    $CLIEXEC -p $REDISPORT shutdown
+             $CLIEXEC -h 192.168.4.50 -p 6350 shutdown
+            while [ -x /proc/${PID} ]
+[root@H50 redis-4.0.8]# 
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 status
+cat: /var/run/redis_6379.pid: 没有那个文件或目录
+Redis is running ()
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 start
+Starting Redis server...
+
+[root@H50 redis-4.0.8]# cat /var/run/redis_6379.pid 
+7340
+[root@H50 redis-4.0.8]# ss -anpult |grep redis
+tcp    LISTEN     0      128    192.168.4.50:6350     *:*     users:(("redis-server",pid=7340,fd=6))
+
+[root@H50 redis-4.0.8]# ps -C redis-server
+  PID TTY          TIME CMD
+ 7340 ?        00:00:09 redis-server
+
+[root@H50 ~]# vim /etc/redis/6379.conf   #####设置服务连接密码
+
+102 tcp-backlog 511  #tcp链接总数
+
+114 timeout 0   #链接超时时间
+
+ 131 tcp-keepalive 300  #长连接 300秒(空闲链接)
+
+ 187 databases 16
+
+ 264 dir /var/lib/redis/6379
+
+501 # requirepass foobared  #设置服务的链接密码foobared
+ 501  requirepass 1234    #设置服务的链接密码 1234
+
+ 533 # maxclients 10000
+
+ 560 # maxmemory <bytes>
+
+ 565 # volatile-lru -> Evict using approximated LRU among the keys with an expire set.
+ 566 # allkeys-lru -> Evict any key using approximated LRU.
+ 567 # volatile-lfu -> Evict using approximated LFU among the keys with an expire set.
+ 568 # allkeys-lfu -> Evict any key using approximated LFU.
+ 569 # volatile-random -> Remove a random key among the ones with an expire set.
+ 570 # allkeys-random -> Remove a random key, any key.
+ 571 # volatile-ttl -> Remove the key with the nearest expire time (minor TTL)
+ 572 # noeviction -> Don't evict anything, just return an error on write operations.
+
+ 591 # maxmemory-policy noeviction  #默认不删除内存 定义使用策略
+
+ 602 # maxmemory-samples 5  #选取模版数据的个数(针对lru 和ttl策略)
+
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 restart
+
+[root@H50 redis-4.0.8]# redis-cli -h 192.168.4.50 -p 6350  #验证 服务连接密码
+192.168.4.50:6350> keys *
+(error) NOAUTH Authentication required.
+192.168.4.50:6350> auth  1234  # 验证 服务 连接密码
+OK
+192.168.4.50:6350> keys *
+1) "i"
+2) "x"
+3) "z"
+192.168.4.50:6350> get i
+"99"
+192.168.4.50:6350> exit
+[root@H50 redis-4.0.8]# redis-cli -h 192.168.4.50 -p 6350 -a 1234 shutdown #验证 服务连接密码
+[root@H50 redis-4.0.8]# ss -anpult |grep redis
+
+[root@H50 redis-4.0.8]# which redis-cli
+/usr/local/bin/redis-cli
+[root@H50 redis-4.0.8]# redis-cli -h 192.168.4.50 -p 6350 -a 1234 shutdown
+[root@H50 redis-4.0.8]# ss -anpult |grep redis
+[root@H50 redis-4.0.8]# vim /etc/init.d/redis_6379 
+
+ 36     stop)
+ 37         if [ ! -f $PIDFILE ]
+ 38         then
+ 39             echo "$PIDFILE does not exist, process is not running"
+ 40         else
+ 41             PID=$(cat $PIDFILE)
+ 42             echo "Stopping ..."
+ 43         #    $CLIEXEC -p $REDISPORT shutdown    #设置服务的链接密码 1234
+ 44              $CLIEXEC -h 192.168.4.50 -p 6350 -a 1234 shutdown
+ 45             while [ -x /proc/${PID} ]
+
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H50 redis-4.0.8]# ss -anpult |grep redis
+tcp    LISTEN     0      128    192.168.4.50:6350                  *:*                   users:(("redis-server",pid=8947,fd=6))
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 stop
+Stopping ...
+Waiting for Redis to shutdown ...
+Redis stopped
+[root@H50 redis-4.0.8]# ss -anpult |grep redis
+[root@H50 redis-4.0.8]# /etc/init.d/redis_6379 start
+Starting Redis server...
+[root@H50 redis-4.0.8]# ss -anpult |grep redis
+tcp    LISTEN     0      128    192.168.4.50:6350                  *:*                   users:(("redis-server",pid=8969,fd=6))
+[root@H50 redis-4.0.8]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.51
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H51 ~]# vim /etc/my.cnf
+
+[root@H51 ~]# sed -n '/\[mysqld/,+3p' /etc/my.cnf
+[mysqld]
+general-log   ##查询位置默认文件位置 /var/lib/mysql/H51.log 记录所有增删查改select 日志
+server_id=51
+validate_password_policy=0
+
+[root@H51 ~]# systemctl restart mysqld
+
+[root@H51 ~]# ls /var/lib/mysql/
+auto.cnf         client-key.pem  ibdata1      mysql               private_key.pem  sys
+ca-key.pem       db9             ib_logfile0  mysql.sock          public_key.pem
+ca.pem           H51.log         ib_logfile1  mysql.sock.lock     server-cert.pem
+client-cert.pem  ib_buffer_pool  ibtmp1       performance_schema  server-key.pem
+
+[root@H51 ~]# head -3 /var/lib/mysql/H51.log 
+
+/usr/sbin/mysqld, Version: 5.7.17-log (MySQL Community Server (GPL)). started with:
+Tcp port: 0  Unix socket: /var/lib/mysql/mysql.sock
+Time                 Id Command    Argument
+
+[root@H51 ~]# mysql -uroot -p1234
+
+mysql> show databases;
+mysql> use db9;
+mysql> show tables;
+
+[root@H51 ~]# tail -f /var/lib/mysql/H51.log
+
+/usr/sbin/mysqld, Version: 5.7.17-log (MySQL Community Server (GPL)). started with:
+Tcp port: 0  Unix socket: /var/lib/mysql/mysql.sock
+ Time                 Id Command    Argument
+2018-10-29T01:19:10.165943Z	    1 Query	SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE CREATE_OPTIONS LIKE '%partitioned%';
+2018-10-29T01:20:45.382960Z	    3 Connect	root@localhost on  using Socket
+2018-10-29T01:20:45.383329Z	    3 Query	show databases
+2018-10-29T01:20:54.242542Z	    3 Query	SELECT DATABASE()
+2018-10-29T01:20:54.242962Z	    3 Init DB	db9
+2018-10-29T01:20:54.246277Z	    3 Query	show databases
+2018-10-29T01:20:54.247056Z	    3 Query	show tables
+
+[root@H51 ~]# vim /etc/my.cnf
+[root@H51 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+general-log   启用查询日志
+server_id=51
+slow-query-log    #启用慢查询日志
+log-queries-not-using-indexes  #没有使用索引的查询也记录到日志文件里
+validate_password_policy=0
+
+[root@H51 ~]# systemctl restart mysqld
+
+[root@H51 ~]# ls /var/lib/mysql/
+auto.cnf         db9             ib_logfile0  mysql.sock.lock     server-key.pem
+ca-key.pem       H51.log         ib_logfile1  performance_schema  sys
+ca.pem           H51-slow.log    ibtmp1       private_key.pem
+client-cert.pem  ib_buffer_pool  mysql        public_key.pem
+client-key.pem   ibdata1         mysql.sock   server-cert.pem
+
+[root@H51 ~]# ll /var/lib/mysql/H51-slow.log 
+-rw-r-----. 1 mysql mysql 180 10月 29 09:37 /var/lib/mysql/H51-slow.log
+
+[root@H51 ~]# cat /var/lib/mysql/H51-slow.log
+/usr/sbin/mysqld, Version: 5.7.17-log (MySQL Community Server (GPL)). started with:
+Tcp port: 0  Unix socket: /var/lib/mysql/mysql.sock
+Time                 Id Command    Argument
+[root@H51 ~]# 
+[root@H51 ~]# mysqldumpslow  /var/lib/mysql/H51-slow.log
+
+Reading mysql slow query log from /var/lib/mysql/H51-slow.log
+Count: 1  Time=0.00s (0s)  Lock=0.00s (0s)  Rows=0.0 (0), 0users@0hosts
+  
+                            #统计慢查询日志记录的sql日志保存到文本文件
+[root@H51 ~]# mysqldumpslow  /var/lib/mysql/H51-slow.log > /tmp/sql.txt
+
+Reading mysql slow query log from /var/lib/mysql/H51-slow.log
+[root@H51 ~]# cat /tmp/sql.txt
+Count: 1  Time=0.00s (0s)  Lock=0.00s (0s)  Rows=0.0 (0), 0users@0hosts
+  
+
+[root@H51 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.52
+192.168.2.52
+201.1.1.52
+201.1.2.52
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H52 ~]# ls lnmp_soft.tar.gz redis/
+lnmp_soft.tar.gz
+
+redis/:
+redis-3.2.1.gem  redis.zip  ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H52 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# ls lnmp_soft.tar.gz redis/
+lnmp_soft.tar.gz
+
+redis/:
+redis-3.2.1.gem  redis.zip  ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H53 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H54 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.54
+192.168.2.54
+201.1.1.54
+201.1.2.54
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H54 ~]# ls lnmp_soft.tar.gz redis/
+lnmp_soft.tar.gz
+
+redis/:
+redis-3.2.1.gem  redis.zip  ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H54 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.55
+192.168.2.55
+201.1.1.55
+201.1.2.55
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H55 ~]# ls lnmp_soft.tar.gz redis/
+lnmp_soft.tar.gz
+
+redis/:
+redis-3.2.1.gem  redis.zip  ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H55 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 1415 ?        00:00:15 mysqld
+[root@H55 ~]# mysql -uroot -p1234
+
+mysql> create database gamedb;
+
+mysql> use gamedb;
+Database changed
+mysql> create table gamedb.user(
+    -> name char(15),password char(6));
+
+mysql> desc gamedb.user;
+| Field    | Type     | Null | Key | Default | Extra |
+| name     | char(15) | YES  |     | NULL    |       |
+| password | char(6)  | YES  |     | NULL    |       |
+
+mysql> grant select,insert on gamedb.* to admin@"192.168.4.57"
+    -> identified by'1234';
+
+mysql> show grants for admin@"192.168.4.57";
+
+| Grants for admin@192.168.4.57                                |
+| GRANT USAGE ON *.* TO 'admin'@'192.168.4.57'                 |
+| GRANT SELECT, INSERT ON `gamedb`.* TO 'admin'@'192.168.4.57' |
+
+mysql> select host,user from mysql.user;
+
+| host         | user      |
+| %            | root      |
+| 192.168.4.57 | admin     |
+| localhost    | mysql.sys |
+| localhost    | root      |
+
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H56 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.56
+192.168.2.56
+201.1.1.56
+201.1.2.56
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H56 ~]# ls lnmp_soft.tar.gz redis/
+lnmp_soft.tar.gz
+
+redis/:
+redis-3.2.1.gem  redis.zip  ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H56 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H57 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<8{print $2}'
+192.168.4.57
+192.168.2.57
+201.1.1.57
+201.1.2.57
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H57 ~]# ls lnmp_soft.tar.gz redis/
+lnmp_soft.tar.gz
+
+redis/:
+redis-3.2.1.gem  redis.zip  ruby-devel-2.0.0.648-30.el7.x86_64.rpm
+[root@H57 ~]# ls /usr/local/mycat/bin/mycat 
+/usr/local/mycat/bin/mycat
+
+[root@H57 ~]# ss -anputl |grep java
+
+[root@H57 ~]# /usr/local/mycat/bin/mycat  stop  ## [ 1 ]
+Stopping Mycat-server...
+Mycat-server was not running.
+
+[root@H57 ~]# netstat -anputl |grep :80    ## [ 1 ]
+/************************非必须操作***********
+[root@H57 ~]# tar -xzf lnmp_soft.tar.gz
+
+[root@H57 ~]# ls lnmp_soft/
+.............................**********/
+[root@H57 ~]# ls lnmp/
+nginx-1.12.2.tar.gz  php-fpm-5.4.16-42.el7.x86_64.rpm
+[root@H57 ~]# cd lnmp/
+
+[root@H57 lnmp]# tar -xzf nginx-1.12.2.tar.gz   ## [ 2 ]
+
+[root@H57 lnmp]# cd nginx-1.12.2/  ## [ 2 ]
+
+[root@H57 nginx-1.12.2]# ls
+auto  CHANGES  CHANGES.ru  conf  configure  contrib  html  LICENSE  man  README  src
+
+[root@H57 nginx-1.12.2]# yum list |grep  gcc   ## [ 2 ]
+
+libgcc.x86_64                           4.8.5-16.el7               @anaconda/7.4
+compat-gcc-44.x86_64                    4.4.7-8.el7                rhel7        
+compat-gcc-44-c++.x86_64                4.4.7-8.el7                rhel7        
+gcc.x86_64                              4.8.5-16.el7               rhel7        
+gcc-c++.x86_64                          4.8.5-16.el7               rhel7        
+gcc-gfortran.x86_64                     4.8.5-16.el7               rhel7        
+gcc-gnat.x86_64                         4.8.5-16.el7               rhel7        
+gcc-objc.x86_64                         4.8.5-16.el7               rhel7        
+gcc-objc++.x86_64                       4.8.5-16.el7               rhel7        
+libgcc.i686                             4.8.5-16.el7               rhel7    
+    
+[root@H57 nginx-1.12.2]# yum -y install gcc-c++  gcc  pcre-devel zlib-devel |tail -5  ## [ 2 ]
+警告：RPM 数据库已被非 yum 程序修改。
+  cpp.x86_64 0:4.8.5-16.el7             glibc-devel.x86_64 0:2.17-196.el7       
+  glibc-headers.x86_64 0:2.17-196.el7   kernel-headers.x86_64 0:3.10.0-693.el7  
+  libmpc.x86_64 0:1.0.1-3.el7           libstdc++-devel.x86_64 0:4.8.5-16.el7   
+
+完毕！
+[root@H57 nginx-1.12.2]# rpm -q  gcc-c++  gcc  pcre-devel zlib-devel php-mysql  ## [ 2 ]
+gcc-c++-4.8.5-16.el7.x86_64
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+zlib-devel-1.2.7-17.el7.x86_64
+[root@H57 nginx-1.12.2]# pwd
+/root/lnmp/nginx-1.12.2
+
+[root@H57 nginx-1.12.2]# ls   ## [ 2 ]
+auto  CHANGES  CHANGES.ru  conf  configure  contrib  html  LICENSE  man  README  src
+
+[root@H57 nginx-1.12.2]# useradd -s /sbin/nologin nginx  ## [ 2 ]
+
+[root@H57 nginx-1.12.2]# ./configure  --prefix=/usr/local/nginx  |tail -9  # 注意忘了加属主用户nginx## [ 3 ]
+
+  nginx pid file: "/usr/local/nginx/logs/nginx.pid"
+  nginx error log file: "/usr/local/nginx/logs/error.log"
+  nginx http access log file: "/usr/local/nginx/logs/access.log"
+  nginx http client request body temporary files: "client_body_temp"
+  nginx http proxy temporary files: "proxy_temp"
+  nginx http fastcgi temporary files: "fastcgi_temp"
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+
+[root@H57 nginx-1.12.2]# echo $?
+0
+[root@H57 nginx-1.12.2]# make >/dev/null && make install >/dev/null  ## [ 3 ]
+
+[root@H57 nginx-1.12.2]# ls /usr/local/nginx/
+conf  html  logs  sbin
+[root@H57 nginx-1.12.2]# echo H57 >/usr/local/nginx/html/test.html  ## [ 4 ]
+
+[root@H57 nginx-1.12.2]# /usr/local/nginx/sbin/nginx   ## [ 4 ]
+
+[root@H57 nginx-1.12.2]# netstat -anpult |grep nginx   ## [ 4 ]
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      8159/nginx: master  
+[root@H57 nginx-1.12.2]# curl http://localhost/test.html
+H57
+[root@H57 nginx-1.12.2]# id nginx
+id: nginx: no such user
+[root@H57 nginx-1.12.2]# useradd -s /sbin/nologin nginx  ## [ 2 ]
+
+[root@H57 nginx-1.12.2]# id nginx
+uid=1001(nginx) gid=1001(nginx) 组=1001(nginx)
+
+[root@H57 nginx-1.12.2]# id nobody
+uid=99(nobody) gid=99(nobody) 组=99(nobody)
+
+[root@H57 nginx-1.12.2]# ls -ld  /usr/local/nginx/
+drwxr-xr-x. 11 root root 151 10月 29 15:26 /usr/local/nginx/
+
+[root@H57 nginx-1.12.2]# chown -R nginx:nginx /usr/local/nginx/  ## [ 4 ]
+
+[root@H57 nginx-1.12.2]# cd
+[root@H57 ~]# ls  lnmp/
+nginx-1.12.2  nginx-1.12.2.tar.gz  php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@H57 phpredis-2.2.4]# yum -y install php-mysql   
+已安装:
+  php-mysql.x86_64 0:5.4.16-42.el7                                                              
+
+作为依赖被安装:
+  php-pdo.x86_64 0:5.4.16-42.el7                                                                
+
+完毕！
+[root@H57 ~]# yum -y install lnmp/php-fpm-5.4.16-42.el7.x86_64.rpm  ## [ 5 ]
+
+  正在安装    : libzip-0.10.1-8.el7.x86_64                                                1/3 
+  正在安装    : php-common-5.4.16-42.el7.x86_64                                           2/3 
+  正在安装    : php-fpm-5.4.16-42.el7.x86_64                                              3/3 
+  验证中      : php-fpm-5.4.16-42.el7.x86_64                                              1/3 
+  验证中      : libzip-0.10.1-8.el7.x86_64                                                2/3 
+  验证中      : php-common-5.4.16-42.el7.x86_64                                           3/3 
+
+已安装:
+  php-fpm.x86_64 0:5.4.16-42.el7                                                              
+
+作为依赖被安装:
+  libzip.x86_64 0:0.10.1-8.el7                php-common.x86_64 0:5.4.16-42.el7               
+
+完毕！
+[root@H57 ~]# systemctl start php-fpm.service    ## [ 5 ]
+[root@H57 ~]# systemctl enable php-fpm.service
+Created symlink from /etc/systemd/system/multi-user.target.wants/php-fpm.service to /usr/lib/systemd/system/php-fpm.service.
+[root@H57 ~]# netstat -anpult  |grep php    ## [ 5 ]
+tcp        0      0 127.0.0.1:9000          0.0.0.0:*               LISTEN      8371/php-fpm: maste 
+
+[root@H57 ~]#  /usr/local/nginx/sbin/nginx -s stop   ## [ 6 ]
+
+[root@H57 ~]# vim /usr/local/nginx/conf/nginx.conf   ## [ 6 ]
+
+ 65         location ~ \.php$ {
+ 66             root           html;
+ 67             fastcgi_pass   127.0.0.1:9000;
+ 68             fastcgi_index  index.php;
+ 69         #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+ 70             include        fastcgi.conf;
+ 71         }
+
+[root@H57 ~]# ls /usr/local/nginx/conf/fastcgi.conf
+/usr/local/nginx/conf/fastcgi.conf
+
+[root@H57 ~]# head -3 /usr/local/nginx/conf/fastcgi.conf
+
+fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;
+fastcgi_param  QUERY_STRING       $query_string;
+
+[root@H57 ~]#  /usr/local/nginx/sbin/nginx  -t    ## [ 6 ]
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+
+[root@H57 ~]#  /usr/local/nginx/sbin/nginx   ## [ 7 ]
+
+[root@H57 ~]# netstat -anpult |grep :80    ## [ 7 ]
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      8551/nginx: master  
+
+[root@H57 ~]# ls /usr/local/nginx/
+client_body_temp  conf  fastcgi_temp  html  logs  proxy_temp  sbin  scgi_temp  uwsgi_temp
+[root@H57 ~]# ls /usr/local/nginx/html/
+50x.html  index.html  test.html  test.php
+
+[root@H57 ~]# vim  /usr/local/nginx/html/test.php   ## [ 8 ]
+[root@H57 ~]# cat /usr/local/nginx/html/test.php 
+<?php
+echo "hello H57\n";
+?>
+[root@H57 ~]# curl http://localhost/test.php   ## [ 9 ]
+hello H57
+
+[root@H57 ~]# ss -anpult |grep -E ":3306|:9000|:80"
+tcp    LISTEN     0      128       *:80       *:*      users:(("nginx",pid=8552,fd=6),("nginx",pid=8551,fd=6))
+tcp    LISTEN     0      128    127.0.0.1:9000     *:*      users:(("php-fpm",pid=8376,fd=0),....
+tcp    LISTEN     0      80       :::3306       :::*       users:(("mysqld",pid=1415,fd=25))
+
+[root@H57 ~]# ls redis-4.0.8.tar.gz   ## [ 10 ]
+redis-4.0.8.tar.gz
+[root@H57 ~]# tar -xzf redis-4.0.8.tar.gz    ## [ 10 ]
+
+[root@H57 ~]# ls redis-4.0.8/  ## [ 10 ]
+00-RELEASENOTES  COPYING  Makefile   redis.conf       runtest-sentinel  tests
+BUGS             deps     MANIFESTO  runtest          sentinel.conf     utils
+CONTRIBUTING     INSTALL  README.md  runtest-cluster  src
+
+[root@H57 ~]# cd redis-4.0.8/  ## [ 10 ]
+
+[root@H57 redis-4.0.8]# make  ## [ 11 ]
+
+[root@H57 redis-4.0.8]# make install  ## [ 12 ]
+
+[root@H57 redis-4.0.8]# ls  utils/  ## [ 13 ]
+build-static-symbols.tcl  graphs             redis-copy.rb          speed-regression.tcl
+cluster_fail_time.tcl     hashtable          redis_init_script      whatisdoing.sh
+corrupt_rdb.c             hyperloglog        redis_init_script.tpl
+create-cluster            install_server.sh  redis-sha1.rb
+generate-command-help.rb  lru                releasetools
+
+[root@H57 redis-4.0.8]# ./utils/install_server.sh  ## [ 13 ]
+Welcome to the redis service installer
+This script will help you easily set up a running redis server
+
+Please select the redis port for this instance: [6379] [取默认值回车]
+Selecting default: 6379
+Please select the redis config file name [/etc/redis/6379.conf] [取默认值回车]
+Selected default - /etc/redis/6379.conf
+Please select the redis log file name [/var/log/redis_6379.log] [取默认值回车]
+Selected default - /var/log/redis_6379.log
+Please select the data directory for this instance [/var/lib/redis/6379] [取默认值回车]
+Selected default - /var/lib/redis/6379
+Please select the redis executable path [/usr/local/bin/redis-server]  [取默认值回车]
+Selected config:
+Port           : 6379
+Config file    : /etc/redis/6379.conf
+Log file       : /var/log/redis_6379.log
+Data dir       : /var/lib/redis/6379
+Executable     : /usr/local/bin/redis-server
+Cli Executable : /usr/local/bin/redis-cli
+Is this ok? Then press ENTER to go on or Ctrl-C to abort.
+Copied /tmp/6379.conf => /etc/init.d/redis_6379
+Installing service...
+Successfully added to chkconfig!
+Successfully added to runlevels 345!
+Starting Redis server...
+Installation successful!
+[root@H57 redis-4.0.8]# netstat -anputl |grep :6379   ## [ 13 ]
+tcp        0      0 127.0.0.1:6379          0.0.0.0:*               LISTEN      12277/redis-server  
+
+[root@H57 redis-4.0.8]# redis-cli   ## [ 13 ]
+127.0.0.1:6379> ping
+PONG
+127.0.0.1:6379> set name bob
+OK
+127.0.0.1:6379> get name
+"bob"
+127.0.0.1:6379> exit
+[root@H57 redis-4.0.8]# 
+[root@H57 redis-4.0.8]# vim  /usr/local/nginx/html/test2.php   ## [ 13 ]
+[root@H57 redis-4.0.8]# cat /usr/local/nginx/html/test2.php   ## [ 13 ]
+<?php
+phpinfo();
+?>
+[root@H57 ~]# firefox http://192.168.4.57/test2.php  #此时配置未完.实验失败
+..........................................ok..................
+
+
+[root@H57 redis-4.0.8]# cd
+
+[root@H57 ~]# ls php-redis-2.2.4.tar.gz 
+php-redis-2.2.4.tar.gz
+
+[root@H57 ~]# ls php*
+php-devel-5.4.16-42.el7.x86_64.rpm  php-redis-2.2.4.tar.gz
+
+                                     ### [ 14 ] 配置php支持redis
+[root@H57 ~]# yum -y install autoconf automake php-devel-5.4.16-42.el7.x86_64.rpm 
+
+已安装:
+  autoconf.noarch 0:2.69-11.el7 automake.noarch 0:1.13.4-3.el7 php-devel.x86_64 0:5.4.16-42.el7
+
+作为依赖被安装:
+  m4.x86_64 0:1.4.16-10.el7                      perl-Test-Harness.noarch 0:3.28-3.el7         
+  perl-Thread-Queue.noarch 0:3.02-2.el7          php-cli.x86_64 0:5.4.16-42.el7                
+
+完毕！
+[root@H57 ~]# rpm -q  autoconf automake php-devel    ### [ 14 ] 配置php支持redis
+autoconf-2.69-11.el7.noarch
+automake-1.13.4-3.el7.noarch
+php-devel-5.4.16-42.el7.x86_64
+[root@H57 ~]# php -m |grep -i redis
+[root@H57 ~]# php -m |grep -i mysql
+[root@H57 ~]# echo $?
+1
+[root@H57 ~]# ls php*
+php-devel-5.4.16-42.el7.x86_64.rpm  php-redis-2.2.4.tar.gz
+
+[root@H57 ~]# tar -xzf php-redis-2.2.4.tar.gz     ### [ 14 ] 配置php支持redis
+
+[root@H57 ~]# ls php*
+php-devel-5.4.16-42.el7.x86_64.rpm  php-redis-2.2.4.tar.gz
+
+phpredis-2.2.4:
+.............................
+[root@H57 ~]# cd phpredis-2.2.4/;ls     ### [ 14 ] 配置php支持redis
+arrays.markdown  COPYING         library.h         README.markdown     redis.c          tests
+common.h         CREDITS         mkdeb-apache2.sh  redis_array.c       redis_session.c
+config.h         debian          mkdeb.sh          redis_array.h       redis_session.h
+config.m4        debian.control  package.xml       redis_array_impl.c  rpm
+config.w32       library.c       php_redis.h       redis_array_impl.h  serialize.list
+
+[root@H57 phpredis-2.2.4]# phpize     ### [ 14 ] 配置php支持redis
+Configuring for:
+PHP Api Version:         20100412
+Zend Module Api No:      20100525
+Zend Extension Api No:   220100525
+[root@H57 phpredis-2.2.4]# ls confi*
+config.guess  config.h  config.h.in  config.m4  config.sub  configure  configure.in  config.w32
+[root@H57 phpredis-2.2.4]# ls
+................................................
+                               ### [ 14 ] 配置php支持redis
+[root@H57 phpredis-2.2.4]# ./configure  --with-php-config=/usr/bin/php-config 
+
+config.status: config.h is unchanged
+config.status: executing libtool commands
+
+[root@H57 phpredis-2.2.4]# make     ### [ 14 ] 配置php支持redis
+
+more information, such as the ld(1) and ld.so(8) manual pages.
+----------------------------------------------------------------------
+
+Build complete.
+Don't forget to run 'make test'.
+
+[root@H57 phpredis-2.2.4]# make install     ### [ 14 ] 配置php支持redis
+
+Installing shared extensions:     /usr/lib64/php/modules/
+
+[root@H57 phpredis-2.2.4]# ls /usr/lib64/php/modules/    ### [ 14 ] 配置php支持redis
+curl.so  fileinfo.so  json.so  phar.so  redis.so  zip.so
+
+[root@H57 phpredis-2.2.4]# vim /etc/php.ini     ### [ 14 ] 配置php支持redis
+
+ 727 ; http://php.net/extension-dir
+ 728 ; extension_dir = "./"
+ 729 ; On windows:
+ 730 ; extension_dir = "ext"
+
+ 728 extension_dir = "/usr/lib64/php/modules/"
+ 729 ; On windows:
+ 730 extension = "redis.so"
+
+[root@H57 phpredis-2.2.4]# sed -n '/extension_dir = "\/usr/,+2p' /etc/php.ini 
+extension_dir = "/usr/lib64/php/modules/"
+; On windows:
+extension = "redis.so"
+
+[root@H57 phpredis-2.2.4]# systemctl restart php-fpm.service    ### [ 14 ] 配置php支持redis
+[root@H57 phpredis-2.2.4]# systemctl is-enabled php-fpm.service
+enabled
+[root@H57 phpredis-2.2.4]# php -m |grep mysql
+[root@H57 phpredis-2.2.4]# echo $?
+1
+[root@H57 phpredis-2.2.4]# php -m |grep redis
+redis
+[root@H57 phpredis-2.2.4]# echo $?
+0
+[root@H57 phpredis-2.2.4]# ps -C mysqld
+  PID TTY          TIME CMD
+ 1415 ?        00:00:14 mysqld
+[root@H57 phpredis-2.2.4]# rpm -q php-mysql
+未安装软件包 php-mysql 
+[root@H57 phpredis-2.2.4]# yum -y install php-mysql   
+已安装:
+  php-mysql.x86_64 0:5.4.16-42.el7                                                              
+
+作为依赖被安装:
+  php-pdo.x86_64 0:5.4.16-42.el7                                                                
+
+完毕！
+[root@H57 phpredis-2.2.4]# php -m |grep mysql
+mysql
+mysqli
+pdo_mysql
+[root@H57 phpredis-2.2.4]# sed -n '/extension_dir = "\/usr/,+2p' /etc/php.ini 
+extension_dir = "/usr/lib64/php/modules/"
+; On windows:
+extension = "redis.so"
+
+[root@H57 redis-4.0.8]# cat /usr/local/nginx/html/test2.php   ## [ 13 ]
+<?php
+phpinfo();
+?>
+[root@H57 ~]# firefox http://192.168.4.57/test2.php 
+.......................ok ....................
+[root@H57 ~]# vim /usr/local/nginx/html/testredis.php
+[root@H57 ~]# cat /usr/local/nginx/html/testredis.php
+<?php
+$redis = new redis();
+$redis->connect('127.0.0.1',6379);
+$redis->set('xx','666');
+echo $redis->get('xx');
+echo "\n";
+?>
+[root@H57 ~]# curl http://localhost/testredis.php
+666
+[root@H57 ~]# redis-cli 
+127.0.0.1:6379> keys *
+1) "xx"
+2) "name"
+127.0.0.1:6379> get xx
+"666"
+127.0.0.1:6379> quit
+[root@H57 ~]# php -m |grep mysql
+mysql
+mysqli
+pdo_mysql
+[root@H57 ~]# mysql -uadmin -h192.168.4.55 -p1234 gamedb
+
+mysql> show grants;
+
+| Grants for admin@192.168.4.57                                |
+| GRANT USAGE ON *.* TO 'admin'@'192.168.4.57'                 |
+| GRANT SELECT, INSERT ON `gamedb`.* TO 'admin'@'192.168.4.57' |
+
+
+mysql> select user();
+
+| user()             |
+| admin@192.168.4.57 |
+
+mysql> show tables;
+| Tables_in_gamedb |
++------------------+
+| user             |
+
+mysql> select * from user;
+Empty set (0.00 sec)
+
+mysql> insert into user(name,password) values("bob","123456");
+
+mysql> select * from user;
+| name | password |
+| bob  | 123456   |
+
+mysql> select @@hostname;
++------------+
+| @@hostname |
+| H55        |
+[root@H57 ~]# firefox http://192.168.4.57/test2.php
+
+[root@H57 ~]# mv /usr/local/nginx/html/index.html  /usr/local/nginx/html/index.html.bak
+
+[root@H57 ~]# vim /usr/local/nginx/html/index.html
+
+[root@H57 ~]# cat /usr/local/nginx/html/index.html
+<html>
+<form action="reg.php" method="post">
+<h1> reg login user info :</h1> 
+<h3>LoginName: </h3><input type="text" name="name" size="20" maxlength="255"/>
+<br />
+<br />
+<h3>LoginPass: </h3><input type="text" name="password" size="20" maxlength="255"/>
+<br />
+<br />
+<h3><input type="submit" name="submit" value="SUBMIT" /></h3></p>
+</form>
+</html>
+[root@H57 ~]# vim  /usr/local/nginx/html/reg.php
+
+[root@H57 ~]# cat /usr/local/nginx/html/reg.php
+<?php
+$servername = "192.168.4.55";
+$username = "admin";
+$password = "1234";
+$dbname = "gamedb";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+if ($conn->connect_error) {
+    die("link fail: " . $conn->connect_error);
+}else{echo "link mysql Ok"; echo "       ";} 
+
+$username=$_POST['name'];
+$userpassword=$_POST['password'];
+
+$sql="insert into user (name,password) values ('$username','$userpassword')";
+if($conn->query($sql)){echo "insert data ok"; }
+$conn->close();
+?>
+[root@H57 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

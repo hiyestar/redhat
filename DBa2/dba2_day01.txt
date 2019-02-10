@@ -1,0 +1,204 @@
+dba2_day01
+MySQL主从同步介绍：
+
+主库服务器：客户端存取数据时访问的数据库服务器
+从库服务器 :  自动从主库上同步数据
+
+配置MySQL主从同步:
+主库的配置步骤？ 
+启用binlog日志  用户授权  查看binlog日志信息
+
+从库的配置步骤？
+验证授权用户  指定主库信息   查看状态信息  
+
+
+MySQL主从同步工作过程？
+从库 运行
+IO线程： 
+同步主库binlog日志里的sql命令到本机的中继日志文件里
+
+SQL线程 ： 
+执行本机中继日志文件里的sql命令把数据写进本机的库里
+
+
+部署MySQL主从同步常用配置参数？
+
+MySQL主从同步结构模式？
+一主 一 从
+一主 多从
+主从从
+互为主从
+
+MySQL主从同步复制模式
+全同步模式
+异步模式 （默认）
+半同步模式
+
++++++++++++++++++++++++++++++++++++
+配置一主一从 主从同步结构
+          50   51
+环境准备： 
+ping通   
+在没有配置为主从之前要保证从库上有主库上的数据。
+
+配置主库50
+]#vim  /etc/my.cnf
+server_id=50
+log-bin=master50
+binlog_format="mixed"
+:wq
+]#systemctl  restart  mysqld
+]#ls  /var/lib/mysql/master50.*
+
+> grant    replication  slave  on  *.*   to   
+
+repluser@"192.168.4.51"  identified by "123456";
+
+> show  master  status;
+
+配置从库51
+]# mysql  -h192.168.4.50   -urepluser  -p123456
+> quit;
+]#vim /etc/my.cnf
+[mysqld]
+server_id=51
+:wq
+]#systemctl  restart  mysqld
+]# mysql  -uroot  -p123456
+> change  master  to   
+master_host="192.168.4.50",
+master_user="repluser",
+master_password="123456",
+master_log_file="master50.000001",
+master_log_pos=452;
+>start  slave;
+> show  slave status\G;
+
+>stop  slave;
+>change master  to   选项="值";
+>start slave;
+
+
+在客户端测试主从同步配置：
+1 在主库服务器上添加连接用户
+                 
+> grant  select ,insert,update  on  *.*  to yaya@"%"
+identified by "123456";
+2 客户端使用授权的用户连接主库：执行存取数据的操作
+]# mysql  -h192.168.4.50  -uyaya  -p123456
+> select @@hostname;
+>select  user();
+> show grants;
+> insert into db5.user values(898989);
+> update  db5.user set  id=666  where id=777;
+> select  * from db5.user;
+
+3 在从库本机查看是否和主库的数据一样。
+> select  * from db5.user;
+
+++++++++++++++++++++++++
+让从库暂时不同步主库上的数据。
+>  stop  slave;
+>  show slave status\G;
++++++++++++++++++++++++++
+把从库恢复为独立数据库服务器
+]# cd /var/lib/mysql/
+]# rm  -rf  master.info  rely-log.info
+]# rm -rf  中继日志文件   索引文件
+]#  systemctl  restart  mysqld
+> show  slave status\G;
+++++++++++++++++++++++++++
+配置一主多从  主从同步结构
+主54
+]#vim  /etc/my.cnf
+[mysqld]
+server_id=54
+log-bin=master54
+binlog_format="mixed"
+:wq
+]# systemctl  restart  mysqld
+]# ls /var/lib/mysql/master54.*
+]# mysql  -ruoot  -p123456
+>grant   replication   slave  on *.*   to   yaya8@"%"  
+
+identified by "123456";
+> show master  status;
+
+从55
+]# mysql  -h192.168.4.54 -uyaya8  -p123456
+> quit;
+]# vim /etc/my.cnf
+[mysqld]
+server_id=55
+:wq
+]# systemctl  restart  mysqld
+]# mysql  -uroot  -p123456
+> change master to  master_host="192.168.4.54",
+master_user="yaya8",
+master_password="123456",
+master_log_file="master54.000001",
+master_log_pos=429；
+> start  slave;
+> show slave status\G;
+
+从56
+]# mysql  -h192.168.4.54 -uyaya8  -p123456
+> quit;
+]# vim /etc/my.cnf
+[mysqld]
+server_id=56
+:wq
+]# systemctl  restart  mysqld
+]# mysql  -uroot  -p123456
+> change master to  master_host="192.168.4.54",
+master_user="yaya8",
+master_password="123456",
+master_log_file="master54.000001",
+master_log_pos=429；
+> start  slave;
+> show slave status\G;
+
+在客户端50 测试主从同步配置:
+在主库上添加访问数据的连接用户：
+> grant all  on  bbsdb.*  to  admin@"%" identified by 
+
+"123456";
+在客户端50连接主库，执行sql命令
+]# mysql  -h192.168.4.54  -uadmin  -p123456
+> show  databases;
+> create  database bbsdb;
+> create table  bbsdb.a(id int);
+>insert into  bbsdb.a values(123);
+>insert into  bbsdb.a values(123);
+>insert into  bbsdb.a values(123);
+>insert into  bbsdb.a values(123);
+> select  * from bbsdb.a;
+分别在2台从库上能查看相同的数据
+]#mysql  -uroot -p123456
+> select  * from bbsdb.a;
++++++++++++++++++++++++++++++
+配置 主从从  主从同步结构
+51  52  53
+主   从   从
+
+主51： 启用binlog    用户授权  查看日志信息
+
+从52  （做 51 的从库 ）：
+测试授权  
+指定server_id   启用binlog    用户授权   
+指定主库信息  查看状态 
+
+从53 （做 52 的从库 ）：
+测试授权    指定server_id     指定主库信息  查看状态
++++++++++++++++++++++++++
+配置主主结构  
+50    57
+主     主
+从     从
+++++++++++++++++++++++++++++
+
+
+
+
+
+

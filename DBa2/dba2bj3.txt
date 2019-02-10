@@ -1,0 +1,2064 @@
+
+[root@room9pc01 ~]# ll perl-Config-Tiny-2.14-7.el7.noarch.rpm \
+> perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  \
+> perl-MIME-Types-1.38-2.el7.noarch.rpm  \
+> perl-Email-Date-Format-1.002-15.el7.noarch.rpm  \
+> perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  \
+> perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  \
+> perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  \
+> perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+-rw-r--r-- 1 root root 25508 10月 23 20:11 perl-Config-Tiny-2.14-7.el7.noarch.rpm
+-rw-r--r-- 1 root root 17524 10月 23 20:11 perl-Email-Date-Format-1.002-15.el7.noarch.rpm
+-rw-r--r-- 1 root root 84300 10月 23 20:11 perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm
+-rw-r--r-- 1 root root 60212 10月 23 20:11 perl-Mail-Sender-0.8.23-1.el7.noarch.rpm
+-rw-r--r-- 1 root root 29460 10月 23 20:11 perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm
+-rw-r--r-- 1 root root 98316 10月 23 20:11 perl-MIME-Lite-3.030-1.el7.noarch.rpm
+-rw-r--r-- 1 root root 39184 10月 23 20:11 perl-MIME-Types-1.38-2.el7.noarch.rpm
+-rw-r--r-- 1 root root 29128 10月 23 20:11 perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# scp  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm  root@192.168.4.51:/root/
+root@192.168.4.51's password: 
+perl-Config-Tiny-2.14-7.el7.noarch.rpm                         100%   25KB  16.4MB/s   00:00    
+perl-Mail-Sender-0.8.23-1.el7.noarch.rpm                       100%   59KB  41.8MB/s   00:00    
+perl-MIME-Types-1.38-2.el7.noarch.rpm                          100%   38KB  46.5MB/s   00:00    
+perl-Email-Date-Format-1.002-15.el7.noarch.rpm                 100%   17KB  25.2MB/s   00:00    
+perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm                  100%   29KB  39.5MB/s   00:00    
+perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm                100%   28KB  34.7MB/s   00:00    
+perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm                      100%   82KB  65.9MB/s   00:00    
+perl-MIME-Lite-3.030-1.el7.noarch.rpm                          100%   96KB  80.8MB/s   00:00    
+[root@room9pc01 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -X 192.168.4.50
+root@192.168.4.50's password: 
+Last login: Tue Oct 23 19:38:44 2018
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@Host50 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 3419 ?        00:00:00 mysqld
+[root@Host50 ~]# mysql  -uroot -p1234 -e "show databases;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+[root@Host50 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 3419 ?        00:00:01 mysqld
+[root@Host50 ~]# mysql -h192.168.4.51 -uadmin -p1234
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 9
+Server version: 5.7.17-log MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
++--------------------+
+1 row in set (0.01 sec)
+
+mysql> create database gamedb;
+Query OK, 1 row affected (0.03 sec)
+
+mysql> create table gamedb.t1(id int);
+Query OK, 0 rows affected (0.24 sec)
+
+mysql> insert into gamedb.t1 values(999);
+Query OK, 1 row affected (0.14 sec)
+
+mysql> select * from gamedb.t1;
++------+
+| id   |
++------+
+|  999 |
++------+
+1 row in set (0.00 sec)
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| gamedb             |
++--------------------+
+2 rows in set (0.00 sec)
+
+mysql> exit
+Bye
+[root@Host50 ~]#  ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+-rw-r--r--. 1 root root 25508 10月 23 21:37 perl-Config-Tiny-2.14-7.el7.noarch.rpm
+-rw-r--r--. 1 root root 17524 10月 23 21:37 perl-Email-Date-Format-1.002-15.el7.noarch.rpm
+-rw-r--r--. 1 root root 84300 10月 23 21:37 perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm
+-rw-r--r--. 1 root root 60212 10月 23 21:37 perl-Mail-Sender-0.8.23-1.el7.noarch.rpm
+-rw-r--r--. 1 root root 29460 10月 23 21:37 perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm
+-rw-r--r--. 1 root root 98316 10月 23 21:37 perl-MIME-Lite-3.030-1.el7.noarch.rpm
+-rw-r--r--. 1 root root 39184 10月 23 21:37 perl-MIME-Types-1.38-2.el7.noarch.rpm
+-rw-r--r--. 1 root root 29128 10月 23 21:37 perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm
+[root@Host50 ~]# yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+[root@Host50 ~]# history |tail -55
+    1  systemctl set-default multi-user.target 
+    2  systemctl stop firewalld.service 
+    3  systemctl disable firewalld.service 
+    4  vim /etc/selinux/config 
+    5  grubby --update-kernel=ALL --args="console=ttyS0"
+    6  reboot 
+    7  echo 123 |passwd  --stdin root
+    8  echo Host50 >/etc/hostname
+    9  nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.50/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes 
+   10  nmcli connection up eth0 
+   11  nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes
+   12  nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.50/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes 
+   13  nmcli connection up eth1 
+   14  nmcli connection add con-name eth2 ifname eth2 type ethernet autoconnect yes
+   15  nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.1.1.30/24  ipv4.gateway 201.1.1.254 connection.autoconnect yes 
+   16  nmcli connection up eth2 
+   17  nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes
+   18  nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.1.2.30/24  ipv4.gateway 201.1.2.254 connection.autoconnect yes 
+   19  nmcli connection up eth3 
+   20  ifconfig | grep 'inet '
+   21  systemctl isolate graphical
+   22  sleep 1 && date
+   23  exit
+   24  bash /root/MySQLsetup.sh
+   25  sleep 20 && date
+   26  exit
+   27  ls
+   28  ps -C mysql
+   29  ss -anpult |grep :3306
+   30  ps -C mysqld
+   31  mysql  -uroot -p1234 -e "show databases;"
+   32  ps -C mysqld
+   33  mysql -h192.168.4.51 -uadmin -p1234
+   34   ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+
+   35  yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+
+[root@Host50 ~]# ls mha4mysql-*
+mha4mysql-manager-0.56.tar.gz  mha4mysql-node-0.56-0.el6.noarch.rpm
+[root@Host50 ~]# yum -y install  mha4mysql-*
+已安装:
+  mha4mysql-node.noarch 0:0.56-0.el6                                                            
+
+作为依赖被安装:
+  perl-DBD-MySQL.x86_64 0:4.023-5.el7                                                           
+
+完毕！
+[root@Host50 ~]# rpm -q mha4mysql-node perl-DBD-MySQL
+mha4mysql-node-0.56-0.el6.noarch
+perl-DBD-MySQL-4.023-5.el7.x86_64
+
+[root@Host50 ~]# rpm -q  perl-Email-Date-Format
+perl-Email-Date-Format-1.002-15.el7.noarch
+
+[root@Host50 ~]# rpm -q perl-Log-Dispatch perl-Mail-Sender perl-Mail-Sendmail
+perl-Log-Dispatch-2.41-1.el7.1.noarch
+perl-Mail-Sender-0.8.23-1.el7.noarch
+perl-Mail-Sendmail-0.79-21.el7.art.noarch
+
+[root@Host50 ~]# rpm -q perl-MIME-Lite  perl-MIME-Types perl-Parallel-ForkManager 
+perl-MIME-Lite-3.030-1.el7.noarch
+perl-MIME-Types-1.38-2.el7.noarch
+perl-Parallel-ForkManager-1.18-2.el7.noarch
+
+[root@Host50 ~]# ls mha4mysql-manager-0.56.tar.gz 
+mha4mysql-manager-0.56.tar.gz
+[root@Host50 ~]# ls mha4mysql-*
+mha4mysql-manager-0.56.tar.gz  mha4mysql-node-0.56-0.el6.noarch.rpm
+
+   40  rpm -q  perl-Config-Tiny
+   41  rpm -q  perl-Email-Date-Format
+   42  rpm -q perl-Log-Dispatch perl-Mail-Sender perl-Mail-Sendmail
+   43  rpm -q perl-MIME-Lite  perl-MIME-Types perl-Parallel-ForkManager 
+[root@Host50 ~]# sed -n '/\[mysqld/,+3p' /etc/my.cnf
+[mysqld]
+validate_password_policy=0
+validate_password_length=4
+
+[root@Host50 ~]# 
+
+rpm -q  perl-Config-Tiny   perl-Email-Date-Format  perl-Log-Dispatch perl-Mail-Sender perl-Mail-Sendmail   perl-MIME-Lite  perl-MIME-Types perl-Parallel-ForkManager 
+
+[root@Host50 ~]# rpm -q  perl-Config-Tiny   perl-Email-Date-Format  perl-Log-Dispatch perl-Mail-Sender perl-Mail-Sendmail   perl-MIME-Lite  perl-MIME-Types perl-Parallel-ForkManager 
+perl-Config-Tiny-2.14-7.el7.noarch
+perl-Email-Date-Format-1.002-15.el7.noarch
+perl-Log-Dispatch-2.41-1.el7.1.noarch
+perl-Mail-Sender-0.8.23-1.el7.noarch
+perl-Mail-Sendmail-0.79-21.el7.art.noarch
+perl-MIME-Lite-3.030-1.el7.noarch
+perl-MIME-Types-1.38-2.el7.noarch
+perl-Parallel-ForkManager-1.18-2.el7.noarch
+[root@Host50 ~]# mysql -h192.168.2.55 -uroot -p1234 -e "show databases;"
+| Database           |
+| information_schema |
+| gamedb             |
+| mysql              |
+| performance_schema |
+| sys                |
+
+[root@Host50 ~]# mysql -h192.168.2.100 -uplj -p1234
+
+mysql> show databases;\
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| db3                |
++--------------------+
+2 rows in set (0.00 sec)
+
+mysql> insert into db3.a values(100);
+Query OK, 1 row affected (0.06 sec)
+
+mysql> select @@hostname;
+No connection. Trying to reconnect...
+Connection id:    30
+Current database: *** NONE ***
+
++------------+
+| @@hostname |
++------------+
+| Host52     |
++------------+
+1 row in set (0.01 sec)
+
+mysql> insert into db3.a values(1011);
+Query OK, 1 row affected (0.08 sec)
+
+
+mysql> select @@hostname;
++------------+
+| @@hostname |
++------------+
+| Host51     |
++------------+
+1 row in set (0.00 sec)
+
+mysql> select * from db3.a;
++------+
+| id   |
++------+
+|  100 |
++------+
+1 row in set (0.00 sec)
+
+mysql> 
+ 
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Host51 ~]# mysql  -uroot -p1234 -e "show databases;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+[root@Host51 ~]# vim /etc/my.cnf
+[root@Host51 ~]# sed -n '/\[mysqld/,+7p' /etc/my.cnf
+[mysqld]
+plugin-load="rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl_semi_sync_master_enabled=1
+rpl_semi_sync_slave_enabled=1
+server_id=51
+log-bin=master51
+binlog-format="mixed"
+validate_password_policy=0
+[root@Host51 ~]# systemctl restart mysqld
+[root@Host51 ~]# ls  /var/lib/mysql/
+auto.cnf         client-key.pem  ib_logfile1      mysql               private_key.pem  sys
+ca-key.pem       ib_buffer_pool  ibtmp1           mysql.sock          public_key.pem
+ca.pem           ibdata1         master51.000001  mysql.sock.lock     server-cert.pem
+client-cert.pem  ib_logfile0     master51.index   performance_schema  server-key.pem
+[root@Host51 ~]# 
+[root@Host51 ~]# mysql -uroot -p1234 
+
+mysql> show variables like  'rpl_semi_sync_%_enabled';
++------------------------------+-------+
+| Variable_name                | Value |
++------------------------------+-------+
+| rpl_semi_sync_master_enabled | ON    |
+| rpl_semi_sync_slave_enabled  | ON    |
++------------------------------+-------+
+2 rows in set (0.00 sec)
+
+mysql> select plugin_name,plugin_status from
+    -> information_schema.plugins where
+    -> plugin_name like '%semi%';
++----------------------+---------------+
+| plugin_name          | plugin_status |
++----------------------+---------------+
+| rpl_semi_sync_master | ACTIVE        |
+| rpl_semi_sync_slave  | ACTIVE        |
++----------------------+---------------+
+2 rows in set (0.00 sec)
+
+mysql> show variables like 'have_dynamic_loading';
++----------------------+-------+
+| Variable_name        | Value |
++----------------------+-------+
+| have_dynamic_loading | YES   |
++----------------------+-------+
+1 row in set (0.00 sec)
+
+
+mysql> grant replication slave on *.* to repluser@'%'
+    -> identified by'1234';
+Query OK, 0 rows affected, 1 warning (10.05 sec)
+
+mysql> show variables like  'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | ON    |
++-----------------+-------+
+1 row in set (0.00 sec)
+
+mysql> set global relay_log_purge=off;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> show variables like  'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | OFF   |
++-----------------+-------+
+1 row in set (0.00 sec)
+
+mysql> show master status;
++-----------------+----------+--------------+------------------+-------------------+
+| File            | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++-----------------+----------+--------------+------------------+-------------------+
+| master51.000001 |      441 |              |                  |                   |
++-----------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
+
+grant replication slave on *.* to repluser@'%'
+ identified by'1234';
+
+mysql> grant all on *.* to root@'%' identified by'1234';
+Query OK, 0 rows affected, 1 warning (10.03 sec)
+
+mysql> show master status;
++-----------------+----------+--------------+------------------+-------------------+
+| File            | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++-----------------+----------+--------------+------------------+-------------------+
+| master51.000003 |      434 |              |                  |                   |
++-----------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
+
+mysql> show variables like 'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | ON    |
++-----------------+-------+
+1 row in set (0.00 sec)
+
+mysql> set global relay_log_purge=off;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> set global relay_log_purge=off;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> show slave status;
+Empty set (0.01 sec)
+
+mysql> select user,host from mysql.user where user="root";
++------+-----------+
+| user | host      |
++------+-----------+
+| root | %         |
+| root | localhost |
++------+-----------+
+2 rows in set (0.00 sec)
+
+mysql> 
+
+
+mysql> quit;
+Bye
+[root@Host51 ~]# 
+[root@Host51 ~]# mysql -uroot -p1234 
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 4
+Server version: 5.7.17-log MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show master status;
++-----------------+----------+--------------+------------------+-------------------+
+| File            | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++-----------------+----------+--------------+------------------+-------------------+
+| master51.000001 |      441 |              |                  |                   |
++-----------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
+
+
+mysql> 
+mysql> show master status;
++-----------------+----------+--------------+------------------+-------------------+
+| File            | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++-----------------+----------+--------------+------------------+-------------------+
+| master51.000001 |      441 |              |                  |                   |
++-----------------+----------+--------------+------------------+-------------------+
+1 row in set (0.01 sec)
+
+mysql> grant all on gamedb.* to admin@'%' identified by'1234';
+Query OK, 0 rows affected, 1 warning (0.03 sec)
+
+mysql> show grants for admin@'%';
++---------------------------------------------------+
+| Grants for admin@%                                |
++---------------------------------------------------+
+| GRANT USAGE ON *.* TO 'admin'@'%'                 |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'admin'@'%' |
++---------------------------------------------------+
+2 rows in set (0.00 sec)
+
+mysql> select * from gamedb.t1;
++------+
+| id   |
++------+
+|  999 |
++------+
+
+1 row in set (0.00 sec)
+
+
+grant all on *.* to root@'%' identified by'1234';
+
+
+mysql> exit
+Bye
+[root@Host51 ~]# for i in {50,52,53,54,55,56,57}
+> do
+> scp  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm  root@192.168.4.${i}:/root/
+> done
+
+[root@Host51 ~]# ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+-rw-r--r--. 1 root root 25508 10月 23 20:30 perl-Config-Tiny-2.14-7.el7.noarch.rpm
+-rw-r--r--. 1 root root 17524 10月 23 20:30 perl-Email-Date-Format-1.002-15.el7.noarch.rpm
+-rw-r--r--. 1 root root 84300 10月 23 20:30 perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm
+-rw-r--r--. 1 root root 60212 10月 23 20:30 perl-Mail-Sender-0.8.23-1.el7.noarch.rpm
+-rw-r--r--. 1 root root 29460 10月 23 20:30 perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm
+-rw-r--r--. 1 root root 98316 10月 23 20:30 perl-MIME-Lite-3.030-1.el7.noarch.rpm
+-rw-r--r--. 1 root root 39184 10月 23 20:30 perl-MIME-Types-1.38-2.el7.noarch.rpm
+-rw-r--r--. 1 root root 29128 10月 23 20:30 perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm
+[root@Host51 ~]# yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+
+show variables like 'relay_log_purge';
+
+ set global relay_log_purge=off;
+
+[root@Host51 ~]# history |tail -50
+
+   21  systemctl isolate graphical
+   22  sleep 1 && date
+   23  exit
+   24  bash /root/MySQLsetup.sh
+   25  sleep 20 && date
+   26  exit
+   27  ls  /var/lib/mysql/
+   28  ps -C mysqld
+   29  mysql  -uroot -p1234 -e "show databases;"
+   30  vim /etc/my.cnf
+   31  sed -n '/\[mysqld/,+7p' /etc/my.cnf
+   32  systemctl restart mysqld
+   33  mysql -uroot -p1234 
+   34  for i in {50,52,53,54,55,56,57}; do scp  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm  root@192.168.4.${i}:/root/; done
+   35  ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   36  yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   37  ls mha4mysql-*
+   38  scp mha4mysql-manager-0.56.tar.gz  mha4mysql-node-0.56-0.el6.noarch.rpm root@192.168.2.50:/root/
+   39  yum -y install  mha4mysql-*
+已安装:
+  mha4mysql-node.noarch 0:0.56-0.el6                                                            
+
+作为依赖被安装:
+  perl-DBD-MySQL.x86_64 0:4.023-5.el7                                                           
+
+完毕！
+[root@Host51 ~]# rpm -q mha4mysql-node perl-DBD-MySQL
+mha4mysql-node-0.56-0.el6.noarch
+perl-DBD-MySQL-4.023-5.el7.x86_64
+[root@Host51 ~]# ls mha4mysql-*
+mha4mysql-manager-0.56.tar.gz  mha4mysql-node-0.56-0.el6.noarch.rpm
+[root@Host51 ~]# sed -n '/\[mysqld/,+8p' /etc/my.cnf
+[mysqld]
+plugin-load="rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl_semi_sync_master_enabled=1
+rpl_semi_sync_slave_enabled=1
+server_id=51
+log-bin=master51
+binlog-format="mixed"
+validate_password_policy=0
+validate_password_length=4
+
+   43  ssh -X 192.168.2.55
+   44  history |tail -50
+[root@Host51 ~]# 
+[root@Host51 ~]# rpm -q  perl-Config-Tiny   perl-Email-Date-Format  perl-Log-Dispatch perl-Mail-Sender perl-Mail-Sendmail   perl-MIME-Lite  perl-MIME-Types perl-Parallel-ForkManager 
+perl-Config-Tiny-2.14-7.el7.noarch
+perl-Email-Date-Format-1.002-15.el7.noarch
+perl-Log-Dispatch-2.41-1.el7.1.noarch
+perl-Mail-Sender-0.8.23-1.el7.noarch
+perl-Mail-Sendmail-0.79-21.el7.art.noarch
+perl-MIME-Lite-3.030-1.el7.noarch
+perl-MIME-Types-1.38-2.el7.noarch
+perl-Parallel-ForkManager-1.18-2.el7.noarch
+[root@Host51 ~]# mysql -h192.168.2.55 -uroot -p1234 -e "show databases;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| gamedb             |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+[root@Host51 ~]# rpm -q mha4mysql-node perl-DBD-MySQL perl-D
+perl-Data-Dumper   perl-Data-OptList  perl-DBD-MySQL     perl-DBD-SQLite    perl-DBI
+[root@Host51 ~]# rpm -q mha4mysql-node perl-DBD-MySQL perl-DBI
+mha4mysql-node-0.56-0.el6.noarch
+perl-DBD-MySQL-4.023-5.el7.x86_64
+perl-DBI-1.627-4.el7.x86_64
+[root@Host51 ~]# ssh-keygen  -f  /root/.ssh/id_rsa  -N  '' ; for i in  {50..57}; do ssh-copy-id 192.168.2.$i; done
+
++---[RSA 2048]----+
+|  o. +           |
+| .o.o +          |
+| o o.o o.. . . . |
+|. o.+o.oo.o . o .|
+|  .oO.= S+ . o . |
+| . . B.o+ o o .  |
+|  .    + o +.+   |
+|        E +.+....|
+|         . o..o.o|
++----[SHA256]-----+
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@192.168.2.50's password: 
+
+
+[root@Host51 ~]# ifconfig eth1:1 192.168.2.100/24
+[root@Host51 ~]# ifconfig eth1
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.51  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet6 fe80::2651:5509:7811:eaa5  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:29:90:c6  txqueuelen 1000  (Ethernet)
+        RX packets 13850  bytes 5512579 (5.2 MiB)
+        RX errors 0  dropped 5  overruns 0  frame 0
+        TX packets 3922  bytes 602706 (588.5 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@Host51 ~]# ifconfig eth1:1
+eth1:1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+        ether 52:54:00:29:90:c6  txqueuelen 1000  (Ethernet)
+
+[root@Host51 ~]# 
+
+mysql> create database db3;create table db3.a(id int);
+Query OK, 1 row affected (0.03 sec)
+
+Query OK, 0 rows affected (0.22 sec)
+
+mysql> grant select,insert on db3.* to plj@'%' identified by'1234';
+Query OK, 0 rows affected, 1 warning (0.03 sec)
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| db3                |
+| gamedb             |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+6 rows in set (0.01 sec)
+
+mysql> exit
+Bye
+[root@Host51 ~]# ifconfig |grep 192.168.2
+        inet 192.168.2.51  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@Host51 ~]# systemctl stop mysqld
+
+[root@Host51 ~]# ifconfig |grep 192.168.2
+        inet 192.168.2.51  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@Host51 ~]# 
+
+mysql> exit
+Bye
+[root@Host51 ~]# systemctl stop mysqld
+
+[root@Host51 ~]# systemctl start mysqld
+[root@Host51 ~]# mysql -uroot -p1234
+
+mysql> show slave status\G
+Empty set (0.00 sec)
+
+mysql> change master to master_host="192.168.2.52",
+    ->   master_user="repluser",
+    ->  master_password="1234",
+    ->  master_log_file="master52.000002",
+    ->  master_log_pos=990;
+Query OK, 0 rows affected, 2 warnings (0.16 sec)
+
+mysql> start slave;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.2.52
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: master52.000002
+          Read_Master_Log_Pos: 990
+               Relay_Log_File: Host51-relay-bin.000002
+                Relay_Log_Pos: 319
+        Relay_Master_Log_File: master52.000002
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+
+                   Last_Errno: 0
+                   Last_Error: 
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 990
+              Relay_Log_Space: 527
+              Until_Condition: None
+
+             Master_Server_Id: 52
+                  Master_UUID: 0886aa8c-d6ba-11e8-9969-5254006a73b9
+             Master_Info_File: /var/lib/mysql/master.info
+                    SQL_Delay: 0
+          SQL_Remaining_Delay: NULL
+      Slave_SQL_Running_State: Slave has read all relay log; waiting for more updates
+           Master_Retry_Count: 86400
+
+mysql> select * from db3.a;
++------+
+| id   |
++------+
+|  100 |
++------+
+1 row in set (0.00 sec)
+
+mysql>  
+mysql> show slave status\G
+Empty set (0.00 sec)
+[root@Host51 ~]# ifconfig |grep 192.168.2
+        inet 192.168.2.51  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@Host51 ~]# ifconfig |grep 192.168.2
+        inet 192.168.2.51  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@Host51 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Host52 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+ 3354 ?        00:00:00 mysqld
+[root@Host52 ~]# mysql  -uroot -p1234 -e "show databases;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+[root@Host52 ~]# mysql -uroot -p1234
+
+[root@Host52 ~]# vim /etc/my.cnf
+[root@Host52 ~]# sed -n '/\[mysqld/,+8p' /etc/my.cnf
+[mysqld]
+plugin-load = "rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl-semi-sync-master-enabled = 1
+rpl-semi-sync-slave-enabled = 1
+server_id=52
+log-bin=master52
+binlog-format="mixed"
+validate_password_policy=0
+validate_password_length=4
+[root@Host52 ~]# systemctl restart mysqld
+[root@Host52 ~]# ls /var/lib/mysql/
+auto.cnf         client-key.pem  ib_logfile1      mysql               private_key.pem  sys
+ca-key.pem       ib_buffer_pool  ibtmp1           mysql.sock          public_key.pem
+ca.pem           ibdata1         master52.000001  mysql.sock.lock     server-cert.pem
+client-cert.pem  ib_logfile0     master52.index   performance_schema  server-key.pem
+[root@Host52 ~]# 
+mysql> show variables like 'relay_log_purge';
+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | ON    |
++-----------------+-------+
+1 row in set (0.00 sec)
+
+mysql> set global relay_log_purge=off;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> show variables like 'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | OFF   |
++-----------------+-------+
+1 row in set (0.00 sec)
+
+mysql> change master to master_host="192.168.4.51",
+    -> master_user="repluser",
+    -> master_password="1234",
+    -> master_log_file="master51.000001",
+    -> master_log_pos=441;
+Query OK, 0 rows affected, 2 warnings (0.37 sec)
+
+mysql> start slave;
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: master51.000001
+          Read_Master_Log_Pos: 441
+               Relay_Log_File: Host52-relay-bin.000002
+                Relay_Log_Pos: 319
+        Relay_Master_Log_File: master51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB: 
+          Replicate_Ignore_DB: 
+           Replicate_Do_Table: 
+       Replicate_Ignore_Table: 
+      Replicate_Wild_Do_Table: 
+  Replicate_Wild_Ignore_Table: 
+                   Last_Errno: 0
+                   Last_Error: 
+
+mysql> system mysql -uroot -p1234 -e "show slave status\G" |grep -i yes
+mysql: [Warning] Using a password on the command line interface can be insecure.
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+mysql>  select * from gamedb.t1;
++------+
+| id   |
++------+
+|  999 |
++------+
+1 row in set (0.00 sec)
+
+mysql> exit
+Bye
+[root@Host52 ~]#  ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+-rw-r--r--. 1 root root 25508 10月 23 21:37 perl-Config-Tiny-2.14-7.el7.noarch.rpm
+-rw-r--r--. 1 root root 17524 10月 23 21:37 perl-Email-Date-Format-1.002-15.el7.noarch.rpm
+-rw-r--r--. 1 root root 84300 10月 23 21:37 perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm
+-rw-r--r--. 1 root root 60212 10月 23 21:37 perl-Mail-Sender-0.8.23-1.el7.noarch.rpm
+-rw-r--r--. 1 root root 29460 10月 23 21:37 perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm
+-rw-r--r--. 1 root root 98316 10月 23 21:37 perl-MIME-Lite-3.030-1.el7.noarch.rpm
+-rw-r--r--. 1 root root 39184 10月 23 21:37 perl-MIME-Types-1.38-2.el7.noarch.rpm
+-rw-r--r--. 1 root root 29128 10月 23 21:37 perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm
+[root@Host52 ~]# yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+
+
+ stop slave;
+change master to master_host="192.168.2.51",
+ master_user="repluser",
+  master_password="1234",
+ master_log_file="master51.000003",
+master_log_pos=434;
+start slave;
+ show slave status\G
+[root@Host52 ~]# history |tail -50
+    1  systemctl set-default multi-user.target 
+    2  systemctl stop firewalld.service 
+    3  systemctl disable firewalld.service 
+    4  vim /etc/selinux/config 
+    5  grubby --update-kernel=ALL --args="console=ttyS0"
+    6  reboot 
+    7  echo 123 |passwd  --stdin root
+    8  echo Host52 >/etc/hostname
+    9  nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.52/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes 
+   10  nmcli connection up eth0 
+   11  nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes
+   12  nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.52/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes 
+   13  nmcli connection up eth1 
+   14  nmcli connection add con-name eth2 ifname eth2 type ethernet autoconnect yes
+   15  nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.1.1.32/24  ipv4.gateway 201.1.1.254 connection.autoconnect yes 
+   16  nmcli connection up eth2 
+   17  nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes
+   18  nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.1.2.32/24  ipv4.gateway 201.1.2.254 connection.autoconnect yes 
+   19  nmcli connection up eth3 
+   20  ifconfig | grep 'inet '
+   21  systemctl isolate graphical
+   22  sleep 1 && date
+   23  exit
+   24  bash /root/MySQLsetup.sh
+   25  sleep 20 && date
+   26  exit
+   27  vim /etc/my.cnf
+   28  sed -n '/\[mysqld/,+8p' /etc/my.cnf
+   29  systemctl restart mysqld
+   30  ls /var/lib/mysql/
+   31  ps -C mysqld
+   32  mysql  -uroot -p1234 -e "show databases;"
+   33  mysql -uroot -p1234
+   34   ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   35  yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   36  ls mha4mysql-*
+   37  yum -y install  mha4mysql-*
+   38  rpm -q mha4mysql-node perl-DBD-MySQL
+   39  ls mha4mysql-*
+   40  sed -n '/\[mysqld/,+8p' /etc/my.cnf
+   41  history |tail -50
+[root@Host52 ~]# 
+[root@Host52 ~]# rpm -q  perl-Config-Tiny   perl-Email-Date-Format  perl-Log-Dispatch perl-Mail-Sender perl-Mail-Sendmail   perl-MIME-Lite  perl-MIME-Types perl-Parallel-ForkManager 
+perl-Config-Tiny-2.14-7.el7.noarch
+perl-Email-Date-Format-1.002-15.el7.noarch
+perl-Log-Dispatch-2.41-1.el7.1.noarch
+perl-Mail-Sender-0.8.23-1.el7.noarch
+perl-Mail-Sendmail-0.79-21.el7.art.noarch
+perl-MIME-Lite-3.030-1.el7.noarch
+perl-MIME-Types-1.38-2.el7.noarch
+perl-Parallel-ForkManager-1.18-2.el7.noarch
+[root@Host52 ~]# mysql -h192.168.2.55 -uroot -p1234 -e "show databases;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| gamedb             |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+[root@Host52 ~]#  rpm -q mha4mysql-node perl-DBD-MySQL perl-DBI
+mha4mysql-node-0.56-0.el6.noarch
+perl-DBD-MySQL-4.023-5.el7.x86_64
+perl-DBI-1.627-4.el7.x86_64
+[root@Host52 ~]# ssh-keygen  -f  /root/.ssh/id_rsa  -N  '' ; for i in  {50..57}; do ssh-copy-id 192.168.2.$i; done
+
++---[RSA 2048]----+
+|       .. o .    |
+|        .o = .   |
+|        o.=oo.   |
+|       = O..+ o  |
+|      o S oo o o |
+|       o Ooo+ . o|
+|        + B+ . +.|
+|         o o. =.*|
+|          .  ..BE|
++----[SHA256]-----+
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+
+Are you sure you want to continue connecting (yes/no)? yes
+
+
+[root@Host52 ~]# mysql -uroot -p1234
+
+mysql> grant all on *.* to root@'%' identified by'1234';
+
+mysql> show slave status;
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Reconnecting after a failed master event read
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: master51.000002
+          Read_Master_Log_Pos: 154
+               Relay_Log_File: Host52-relay-bin.000005
+                Relay_Log_Pos: 365
+        Relay_Master_Log_File: master51.000002
+             Slave_IO_Running: Connecting
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB: 
+          Replicate_Ignore_DB: 
+
+
+mysql> stop slave;
+
+mysql> change master to master_host="192.168.2.51",
+    -> master_user="repluser",
+    ->  master_password="1234",
+    -> master_log_file="master51.000003",
+    -> master_log_pos=434;
+
+mysql> start slave;
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.2.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: master51.000003
+          Read_Master_Log_Pos: 434
+               Relay_Log_File: Host52-relay-bin.000002
+                Relay_Log_Pos: 319
+        Relay_Master_Log_File: master51.000003
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB: 
+          Replicate_Ignore_DB: 
+      
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 434
+              Relay_Log_Space: 527
+   
+  Replicate_Ignore_Server_Ids: 
+             Master_Server_Id: 51
+                  Master_UUID: d29afffe-d6b9-11e8-97ae-5254001b4927
+             Master_Info_File: /var/lib/mysql/master.info
+                    SQL_Delay: 0
+          SQL_Remaining_Delay: NULL
+      Slave_SQL_Running_State: Slave has read all relay log; waiting for more updates
+           Master_Retry_Count: 86400
+ 
+
+mysql>  show variables like 'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | ON    |
++-----------------+-------+
+1 row in set (0.01 sec)
+
+mysql>  set global relay_log_purge=off;
+
+mysql>  show variables like 'relay_log_purge';
+| Variable_name   | Value |
+| relay_log_purge | OFF   |
+
+mysql> select user,host from mysql.user where user="root";
+| user | host      |
++------+-----------+
+| root | %         |
+| root | localhost |
+
+
+mysql> show variables like 'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | OFF   |
++-----------------+-------+
+1 row in set (0.01 sec)
+
+mysql> select user,host from mysql.user;
++-----------+-----------+
+| user      | host      |
++-----------+-----------+
+| admin     | %         |
+| root      | %         |
+| mysql.sys | localhost |
+| root      | localhost |
++-----------+-----------+
+4 rows in set (0.00 sec)
+
+mysql> grant replication slave on *.* to repluser@'%'
+    ->  identified by'1234';
+Query OK, 0 rows affected, 1 warning (0.02 sec)
+
+mysql> stop slave;
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> start slave;
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> select user,host from mysql.user;
++-----------+-----------+
+| user      | host      |
++-----------+-----------+
+| admin     | %         |
+| repluser  | %         |
+| root      | %         |
+| mysql.sys | localhost |
+| root      | localhost |
++-----------+-----------+
+5 rows in set (0.01 sec)
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db3                |
+| gamedb             |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> select * from db3.a;
+| id   |
+|  100 |
+
+mysql> show slave status\G
+Empty set (0.00 sec)
+
+mysql> select * from db3.a;
++------+
+| id   |
++------+
+|  100 |
+| 1011 |
++------+
+2 rows in set (0.00 sec)
+
+mysql> 
+ 
+ 
+[root@Host52 ~]# ifconfig |grep 192.168.2
+        inet 192.168.2.52  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@Host52 ~]# 
+[root@Host52 ~]# systemctl stop mysqld
+[root@Host52 ~]# ifconfig |grep 192.168.2
+        inet 192.168.2.52  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@Host52 ~]# 
+[root@Host52 ~]# ip address 
+ip                 ipcmk              iprdbg             ipsec              iptables-xml
+ip6tables          ipcrm              iprdump            ipset              iptc
+ip6tables-restore  ipcs               iprinit            iptables           iptunnel
+ip6tables-save     ipmaddr            iprsos             iptables-restore   
+ipcalc             iprconfig          iprupdate          iptables-save      
+[root@Host52 ~]# ip  address show |grep 192.168.2
+    inet 192.168.2.52/24 brd 192.168.2.255 scope global eth1
+[root@Host52 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Host53 ~]# sed -n '/\[mysqld/,+8p' /etc/my.cnf
+[mysqld]
+plugin-load = "rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semisync_slave.so"
+rpl-semi-sync-master-enabled = 1
+rpl-semi-sync-slave-enabled = 1
+server_id=53
+log-bin=master53
+binlog-format="mixed"
+validate_password_policy=0
+validate_password_length=4
+[root@Host53 ~]# history |tail -50
+    1  systemctl set-default multi-user.target 
+    2  systemctl stop firewalld.service 
+    3  systemctl disable firewalld.service 
+    4  vim /etc/selinux/config 
+    5  grubby --update-kernel=ALL --args="console=ttyS0"
+    6  reboot 
+    7  echo 123 |passwd  --stdin root
+    8  echo Host53 >/etc/hostname
+    9  nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.53/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes 
+   10  nmcli connection up eth0 
+   11  nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes
+   12  nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.53/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes 
+   13  nmcli connection up eth1 
+   14  nmcli connection add con-name eth2 ifname eth2 type ethernet autoconnect yes
+   15  nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.1.1.33/24  ipv4.gateway 201.1.1.254 connection.autoconnect yes 
+   16  nmcli connection up eth2 
+   17  nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes
+   18  nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.1.2.33/24  ipv4.gateway 201.1.2.254 connection.autoconnect yes 
+   19  nmcli connection up eth3 
+   20  ifconfig | grep 'inet '
+   21  systemctl isolate graphical
+   22  sleep 1 && date
+   23  exit
+   24  bash /root/MySQLsetup.sh
+   25  sleep 20 && date
+   26  exit
+   27  ps -C mysqld
+   28  mysql  -uroot -p1234 -e "show databases;"
+   29  vim /etc/my.cnf
+   30  sed -n '/\[mysqld/,+8p' /etc/my.cnf
+   31  systemctl restart mysqld
+   32  ls /var/lib/mysql/
+   33  mysql -uroot -p1234 -e "set global relay_log_pure=off;show variables like 'relay_log_purge';"
+   34  mysql -uroot -p1234 -e "set global relay_log_purge=off;show variables like 'relay_log_purge';"
+   35  mysql -uroot -p1234 -e "show variables like  'rpl_semi_sync_%_enabled';"
+   36  mysql -uroot -p1234
+   37   ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   38  yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   39  ls mha4mysql-*
+   40  yum -y install  mha4mysql-*
+   41  rpm -q mha4mysql-node perl-DBD-MySQL
+   42  ls mha4mysql-*
+   43  sed -n '/\[mysqld/,+8p' /etc/my.cnf
+   44  history |tail -50
+[root@Host53 ~]# 
+mysql>  stop slave;
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> change master to master_host="192.168.2.51",
+    ->  master_user="repluser",
+    ->   master_password="1234",
+    ->  master_log_file="master51.000003",
+    -> master_log_pos=434;
+Query OK, 0 rows affected, 2 warnings (0.11 sec)
+
+mysql> start slave;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql>  show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.2.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: master51.000003
+          Read_Master_Log_Pos: 434
+               Relay_Log_File: Host53-relay-bin.000002
+                Relay_Log_Pos: 319
+        Relay_Master_Log_File: master51.000003
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB: 
+
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 434
+              Relay_Log_Space: 527
+              Until_Condition: None
+               Until_Log_File: 
+                Until_Log_Pos: 0
+           Master_SSL_Allowed: No
+  
+1 row in set (0.00 sec)
+
+mysql>  show variables like 'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | ON    |
++-----------------+-------+
+1 row in set (0.01 sec)
+
+mysql> 
+mysql>  set global relay_log_purge=off;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql>  show variables like 'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | OFF   |
++-----------------+-------+
+1 row in set (0.00 sec)
+
+mysql> select user,host from mysql.user where user="root";
++------+-----------+
+| user | host      |
++------+-----------+
+| root | %         |
+| root | localhost |
++------+-----------+
+2 rows in set (0.00 sec)
+
+mysql> show variables like 'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | OFF   |
++-----------------+-------+
+1 row in set (0.00 sec)
+
+mysql> select user,host from mysql.user;
++-----------+-----------+
+| user      | host      |
++-----------+-----------+
+| admin     | %         |
+| root      | %         |
+| mysql.sys | localhost |
+| root      | localhost |
++-----------+-----------+
+4 rows in set (0.00 sec)
+
+mysql> grant replication slave on *.* to repluser@'%'
+    ->  identified by'1234';
+Query OK, 0 rows affected, 1 warning (0.03 sec)
+
+mysql> select user,host from mysql.user;
++-----------+-----------+
+| user      | host      |
++-----------+-----------+
+| admin     | %         |
+| repluser  | %         |
+| root      | %         |
+| mysql.sys | localhost |
+| root      | localhost |
++-----------+-----------+
+5 rows in set (0.00 sec)
+
+mysql> stop slave;
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> start slave;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+[root@Host54 ~]# history |tail -50
+    1  systemctl set-default multi-user.target 
+    2  systemctl stop firewalld.service 
+    3  systemctl disable firewalld.service 
+    4  vim /etc/selinux/config 
+    5  grubby --update-kernel=ALL --args="console=ttyS0"
+    6  reboot 
+    7  echo 123 |passwd  --stdin root
+    8  echo Host54 >/etc/hostname
+    9  nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.54/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes 
+   10  nmcli connection up eth0 
+   11  nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes
+   12  nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.54/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes 
+   13  nmcli connection up eth1 
+   14  nmcli connection add con-name eth2 ifname eth2 type ethernet autoconnect yes
+   15  nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.1.1.34/24  ipv4.gateway 201.1.1.254 connection.autoconnect yes 
+   16  nmcli connection up eth2 
+   17  nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes
+   18  nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.1.2.34/24  ipv4.gateway 201.1.2.254 connection.autoconnect yes 
+   19  nmcli connection up eth3 
+   20  ifconfig | grep 'inet '
+   21  systemctl isolate graphical
+   22  sleep 1 && date
+   23  exit
+   24  bash /root/MySQLsetup.sh
+   25  sleep 20 && date
+   26  exit
+   27  ps -C mysqld
+   28  mysql -uroot -p1234
+   29  vim /etc/my.cnf
+   30  sed -n '/\[mysqld/,+3p' /etc/my.cnf
+   31  systemctl restart mysqld
+   32  mysql -uroot -p1234
+   33   ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   34  yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   35  ls mha4mysql-*
+   36  yum -y install  mha4mysql-*
+   37  rpm -q mha4mysql-node perl-DBD-MySQL
+   38  ls mha4mysql-*
+   39  sed -n '/\[mysqld/,+8p' /etc/my.cnf
+   40  history |tail -50
+[root@Host54 ~]# 
+
+mysql> grant all on *.* to root@'%' identified by'1234';
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql>  stop slave;
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> change master to master_host="192.168.2.51",
+    ->  master_user="repluser",
+    ->   master_password="1234",
+    ->  master_log_file="master51.000003",
+    -> master_log_pos=434;
+Query OK, 0 rows affected, 2 warnings (0.09 sec)
+
+mysql> start slave;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql>  show slave status\G
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Host55 ~]# history |tail -50
+    1  systemctl set-default multi-user.target 
+    2  systemctl stop firewalld.service 
+    3  systemctl disable firewalld.service 
+    4  vim /etc/selinux/config 
+    5  grubby --update-kernel=ALL --args="console=ttyS0"
+    6  reboot 
+    7  echo 123 |passwd  --stdin root
+    8  echo Host55 >/etc/hostname
+    9  nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.55/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes 
+   10  nmcli connection up eth0 
+   11  nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes
+   12  nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.55/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes 
+   13  nmcli connection up eth1 
+   14  nmcli connection add con-name eth2 ifname eth2 type ethernet autoconnect yes
+   15  nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.1.1.35/24  ipv4.gateway 201.1.1.254 connection.autoconnect yes 
+   16  nmcli connection up eth2 
+   17  nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes
+   18  nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.1.2.35/24  ipv4.gateway 201.1.2.254 connection.autoconnect yes 
+   19  nmcli connection up eth3 
+   20  ifconfig | grep 'inet '
+   21  systemctl isolate graphical
+   22  sleep 1 && date
+   23  exit
+   24  ps -C mysqld
+   25  mysql  -uroot -p1234 -e "show databases;"
+   26  vim /etc/my.cnf
+   27  sed -n '/\[mysqld/,+3p" /etc/my.cnf
+   28  sed -n "/\[mysqld/,+3p" /etc/my.cnf
+   29  systemctl restart mysqld
+   30  mysql -uroot -p1234
+   31   ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   32  yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   33  bash /root/MySQLsetup.sh
+   34  ls mha4mysql-*
+   35  yum -y install  mha4mysql-*
+   36  rpm -q mha4mysql-node perl-DBD-MySQL
+   37  ls mha4mysql-*
+   38  sed -n '/\[mysqld/,+8p' /etc/my.cnf
+   39  history |tail -50
+[root@Host55 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Host56 mha4mysql-manager-0.56]# history |tail -40
+    9  nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.56/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes 
+   10  nmcli connection up eth0 
+   11  nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes
+   12  nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.56/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes 
+   13  nmcli connection up eth1 
+   14  nmcli connection add con-name eth2 ifname eth2 type ethernet autoconnect yes
+   15  nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.1.1.36/24  ipv4.gateway 201.1.1.254 connection.autoconnect yes 
+ 
+[root@Host56 ~]# 
+[root@Host56 ~]# history |tail -70
+   15  nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.1.1.36/24  ipv4.gateway 201.1.1.254 connection.autoconnect yes 
+   16  nmcli connection up eth2 
+   17  nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes
+   18  nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.1.2.36/24  ipv4.gateway 201.1.2.254 connection.autoconnect yes 
+   19  nmcli connection up eth3 
+   20  ifconfig | grep 'inet '
+   21  systemctl isolate graphical
+   22  sleep 1 && date
+   23  exit
+   24  ls
+   25  ps -C mysql
+   26  ss -anpult |grep :3306
+   27  . MySQLsetup.sh 
+   28  ps -C mysqld
+   29  mysql  -uroot -p1234 -e "show databases;"
+   30   ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   31  yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   32  ls mha4mysql-*
+[root@Host56 ~]# ls mha4mysql-*
+mha4mysql-manager-0.56.tar.gz  mha4mysql-node-0.56-0.el6.noarch.rpm
+[root@Host56 ~]# yum -y install  mha4mysql-*
+
+已安装:
+  mha4mysql-node.noarch 0:0.56-0.el6                                                            
+
+作为依赖被安装:
+  perl-DBD-MySQL.x86_64 0:4.023-5.el7                                                           
+
+完毕！
+[root@Host56 ~]# rpm -q mha4mysql-node perl-DBD-MySQL
+mha4mysql-node-0.56-0.el6.noarch
+perl-DBD-MySQL-4.023-5.el7.x86_64
+
+[root@Host56 ~]# ls mha4mysql-*
+mha4mysql-manager-0.56.tar.gz  mha4mysql-node-0.56-0.el6.noarch.rpm
+
+[root@Host56 ~]# tar -zxf mha4mysql-manager-0.56.tar.gz 
+[root@Host56 ~]# ls mha4mysql-manager-0.56
+mha4mysql-manager-0.56/        mha4mysql-manager-0.56.tar.gz  
+[root@Host56 ~]# ls mha4mysql-manager-0.56/
+AUTHORS  COPYING  inc  Makefile.PL  META.yml  rpm      t
+bin      debian   lib  MANIFEST     README    samples  tests
+
+[root@Host56 ~]# yum -y install perl-DBD-* perl-DBI
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+软件包 perl-DBD-SQLite-1.39-3.el7.x86_64 已安装并且是最新版本
+软件包 perl-DBD-MySQL-4.023-5.el7.x86_64 已安装并且是最新版本
+软件包 perl-DBI-1.627-4.el7.x86_64 已安装并且是最新版本
+
+ sed -n '/\[mysqld/,+3p' /etc/my.cnf
+[mysqld]
+validate_password_policy=0
+validate_password_length=4
+
+[root@Host56 ~]# cd mha4mysql-manager-0.56/;ls
+AUTHORS  COPYING  lib          MANIFEST     MYMETA.yml  rpm      tests
+bin      debian   Makefile     META.yml     pm_to_blib  samples
+blib     inc      Makefile.PL  MYMETA.json  README      t
+[root@Host56 mha4mysql-manager-0.56]# ls bin/
+masterha_check_repl    masterha_conf_host       masterha_master_switch
+masterha_check_ssh     masterha_manager         masterha_secondary_check
+masterha_check_status  masterha_master_monitor  masterha_stop
+
+[root@Host56 bin]# pwd
+/root/mha4mysql-manager-0.56/bin
+
+[root@Host56 bin]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@Host56 bin]# mkdir /root/bin
+[root@Host56 bin]# cp * /root/bin/
+[root@Host56 bin]# ls /root/bin/
+masterha_check_repl    masterha_conf_host       masterha_master_switch
+masterha_check_ssh     masterha_manager         masterha_secondary_check
+masterha_check_status  masterha_master_monitor  masterha_stop
+[root@Host56 bin]# cd
+[root@Host56 ~]# masterha_
+masterha_check_repl       masterha_conf_host        masterha_master_switch
+masterha_check_ssh        masterha_manager          masterha_secondary_check
+masterha_check_status     masterha_master_monitor   masterha_stop
+[root@Host56 ~]# mkdir /etc/mha
+[root@Host56 ~]# cd mha4mysql-manager-0.56/;ls
+AUTHORS  COPYING  lib          MANIFEST     MYMETA.yml  rpm      tests
+bin      debian   Makefile     META.yml     pm_to_blib  samples
+blib     inc      Makefile.PL  MYMETA.json  README      t
+[root@Host56 mha4mysql-manager-0.56]# ls samples/
+conf  scripts
+[root@Host56 mha4mysql-manager-0.56]# ls samples/conf/
+app1.cnf  masterha_default.cnf
+[root@Host56 mha4mysql-manager-0.56]# pwd
+/root/mha4mysql-manager-0.56
+[root@Host56 mha4mysql-manager-0.56]# cd samples/conf/
+[root@Host56 conf]# ls
+app1.cnf  masterha_default.cnf
+[root@Host56 conf]# cp app1.cnf  /etc/mha/
+[root@Host56 conf]# ls /etc/mha/
+app1.cnf
+[root@Host56 conf]# cd
+[root@Host56 ~]# vim /etc/mha/app1.cnf 
+[root@Host56 ~]# vim /etc/mha/app1.cnf 
+[root@Host56 ~]# history |tail -50
+   34  rpm -q mha4mysql-node perl-DBD-MySQL
+   35  ls mha4mysql-*
+
+   36  tar -zxf mha4mysql-manager-0.56.tar.gz 
+   37  ls mha4mysql-manager-0.56/
+   38  yum -y install perl-DBD-* perl-DBI
+   39  rpm -ivh mha4mysql-node-0.56-0.el6.noarch.rpm 
+   40  ls mha4mysql-manager-0.56/
+   41  cd mha4mysql-manager-0.56/
+   42  perl Makefile.PL 
+   43  perl Makefile.pl
+   44  yum -y install perl-ExtUtils-* perl-CPAN-*
+   45  perl Makefile.pl
+   46  perl Makefile.PL 
+   47  make install
+   48  history |tail -40
+   49  cd
+   50  ssh-keygen  -f  /root/.ssh/id_rsa  -N  ''
+   51  for i in  {50..57}; do ssh-copy-id 192.168.2.$i; done
+   52  ssh -X 192.168.2.50
+   53  ssh -X 192.168.2.51
+   54  ssh -X 192.168.2.52
+   55  ssh -X 192.168.2.53
+   56  ssh -X 192.168.2.54
+   57  ssh -X 192.168.2.55
+   58  ssh -X 192.168.2.57
+   59  history |tail -12
+   60  sed -n '/\[mysqld/,+8p' /etc/my.cnf
+   61  cd mha4mysql-manager-0.56/;ls
+   62  ls bin/
+   63  pwd
+   64  cd bin/
+   65  pwe
+   66  pwd
+   67  echo $PATH
+   68  mkdir /root/bin
+   69  cp * /root/bin/
+   70  ls /root/bin/
+   71  cd
+   72  mkdir /etc/mha
+   73  cd mha4mysql-manager-0.56/;ls
+   74  ls samples/
+   75  ls samples/conf/
+   76  pwd
+   77  cd samples/conf/
+   78  ls
+   79  cp app1.cnf  /etc/mha/
+   80  ls /etc/mha/
+   81  cd
+   82  vim /etc/mha/app1.cnf 
+   83  history |tail -50
+   84  history |tail -70
+
+[root@Host56 ~]# rpm -q  perl-Config-Tiny   perl-Email-Date-Format  perl-Log-Dispatch perl-Mail-Sender perl-Mail-Sendmail   perl-MIME-Lite  perl-MIME-Types perl-Parallel-ForkManager 
+perl-Config-Tiny-2.14-7.el7.noarch
+perl-Email-Date-Format-1.002-15.el7.noarch
+perl-Log-Dispatch-2.41-1.el7.1.noarch
+perl-Mail-Sender-0.8.23-1.el7.noarch
+perl-Mail-Sendmail-0.79-21.el7.art.noarch
+perl-MIME-Lite-3.030-1.el7.noarch
+perl-MIME-Types-1.38-2.el7.noarch
+perl-Parallel-ForkManager-1.18-2.el7.noarch
+[root@Host56 ~]#  rpm -q mha4mysql-node perl-DBD-MySQL perl-DBI
+mha4mysql-node-0.56-0.el6.noarch
+perl-DBD-MySQL-4.023-5.el7.x86_64
+perl-DBI-1.627-4.el7.x86_64
+
+
+
+[root@Host56 ~]# yum -y install perl-ExtUtils-* perl-CPAN-* 
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+软件包 perl-ExtUtils-MakeMaker-6.68-3.el7.noarch 已安装并且是最新版本
+软件包 1:perl-ExtUtils-CBuilder-0.28.2.6-292.el7.noarch 已安装并且是最新版本
+软件包 perl-ExtUtils-Install-1.58-292.el7.noarch 已安装并且是最新版本
+软件包 perl-ExtUtils-Embed-1.30-292.el7.noarch 已安装并且是最新版本
+软件包 perl-ExtUtils-Manifest-1.61-244.el7.noarch 已安装并且是最新版本
+软件包 1:perl-ExtUtils-ParseXS-3.18-3.el7.noarch 已安装并且是最新版本
+软件包 perl-CPAN-Meta-2.120921-5.el7.noarch 已安装并且是最新版本
+软件包 perl-CPAN-Meta-Requirements-2.122-7.el7.noarch 已安装并且是最新版本
+软件包 perl-CPAN-1.9800-292.el7.noarch 已安装并且是最新版本
+软件包 perl-CPAN-Meta-YAML-0.008-14.el7.noarch 已安装并且是最新版本
+无须任何处理
+[root@Host56 ~]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@Host56 ~]# ls /root/bin/
+masterha_check_repl    masterha_conf_host       masterha_master_switch
+masterha_check_ssh     masterha_manager         masterha_secondary_check
+masterha_check_status  masterha_master_monitor  masterha_stop
+[root@Host56 ~]# vim /etc/mha/app1.cnf 
+[root@Host56 ~]# cat /etc/mha/app1.cnf
+[server default]
+manager_workdir=/etc/mha
+manager_log=/etc/mha/manager.log
+master_ip_failover_script=/etc/mha/master_ip_failover
+
+ssh_user=root
+ssh_port=22
+
+repl_password=1234
+repl_user=repluser
+
+user=root
+password=1234
+
+[server1]
+hostname=192.168.2.51
+candidate_master=1
+
+[server2]
+hostname=192.168.2.52
+candidate_master=1
+
+[server3]
+hostname=192.168.2.53
+candidate_master=1
+
+[server4]
+hostname=192.168.2.54
+no_master=1
+
+[server5]
+hostname=192.168.2.55
+no_master=1
+
+[root@Host56 ~]# 
+[root@Host56 ~]# ls /etc/mha/
+app1.cnf  app1.cnf.txt  master_ip_failover  master_ip_failover.txt
+
+[root@Host56 ~]# vim /etc/mha/master_ip_failover.txt 
+[root@Host56 ~]# mv /etc/mha/master_ip_failover  /etc/mha/master_ip_failover.old
+[root@Host56 ~]# mv /etc/mha/master_ip_failover.txt  /etc/mha/master_ip_failover
+[root@Host56 ~]# ls /etc/mha/
+app1.cnf  app1.cnf.txt  master_ip_failover  master_ip_failover.old
+[root@Host56 ~]# chmod +x /etc/mha/master_ip_failover
+[root@Host56 ~]# ls /etc/mha/
+app1.cnf  app1.cnf.txt  master_ip_failover  master_ip_failover.old
+
+[root@Host56 ~]# sed -n '/my/p' /etc/mha/master_ip_failover
+my (
+my $vip = '192.168.2.100/24';  # Virtual IP 
+my $key = "1"; 
+my $ssh_start_vip = "/sbin/ifconfig eth1:$key $vip";
+my $ssh_stop_vip = "/sbin/ifconfig eth1:$key down";
+    my $exit_code = 1;
+    my $exit_code = 10;
+      my $new_master_handler = new MHA::DBHelper();
+
+[root@Host56 ~]# masterha_
+masterha_check_repl       masterha_conf_host        masterha_master_switch
+masterha_check_ssh        masterha_manager          masterha_secondary_check
+masterha_check_status     masterha_master_monitor   masterha_stop
+
+[root@Host56 ~]# ls /etc/mha/app1.cnf
+/etc/mha/app1.cnf
+[root@Host56 ~]# masterha_check_ssh  --conf=/etc/mha/app1.cnf
+........................
+Wed Oct 24 14:35:09 2018 - [info] All SSH connection tests passed successfully.
+[root@Host56 ~]# 
+[root@Host56 ~]# ls /etc/mha/
+app1.cnf  app1.cnf.txt  master_ip_failover  master_ip_failover.old
+[root@Host56 ~]# masterha_check_repl  --conf=/etc/mha/app1.cnf
+............................
+Wed Oct 24 14:54:24 2018 - [error][/usr/local/share/perl5/MHA/Server.pm, ln393] 192.168.2.52(192.168.2.52:3306): User repluser does not exist or does not have REPLICATION SLAVE privilege! Other slaves can not start replication from this host.
+Wed Oct 24 14:54:24 2018 - [error][/usr/local/share/perl5/MHA/MasterMonitor.pm, ln424] Error happened on checking configurations.  at /usr/local/share/perl5/MHA/ServerManager.pm line 1403.
+Wed Oct 24 14:54:24 2018 - [error][/usr/local/share/perl5/MHA/MasterMonitor.pm, ln523] Error happened on monitoring servers.
+Wed Oct 24 14:54:24 2018 - [info] Got exit code 1 (Not master dead).
+
+MySQL Replication Health is NOT OK!
+[root@Host56 ~]# 
+
+[root@Host56 ~]# masterha_check_repl  --conf=/etc/mha/app1.cnf
+
+
+MySQL Replication Health is OK.
+
+[root@Host56 ~]# masterha_manager  --conf=/etc/mha/app1.cnf \
+> --remove_dead_master_conf  --ignore_last_failover
+
+
+[root@Host56 ~]# masterha_check_status  --conf=/etc/mha/app1.cnf
+app1 (pid:7881) is running(0:PING_OK), master:192.168.2.51
+
+[root@Host56 ~]# head -5 /etc/mha/app1.cnf 
+[server default]
+manager_workdir=/etc/mha
+manager_log=/etc/mha/manager.log
+master_ip_failover_script=/etc/mha/master_ip_failover
+
+[root@Host56 ~]# ls /etc/mha/
+app1.cnf  app1.master_status.health  manager.log  master_ip_failover
+[root@Host56 ~]# 
+[root@Host56 ~]# cat  -n /etc/mha/master_ip_failover 
+     1	#!/usr/bin/env perl
+     2	
+     3	#  Copyright (C) 2011 DeNA Co.,Ltd.
+     4	#
+     5	#  This program is free software; you can redistribute it and/or modify
+     6	#  it under the terms of the GNU General Public License as published by：
+     7	#  the Free Software Foundation; either version 2 of the License, or
+     8	#  (at your option) any later version.
+     9	#
+    10	#  This program is distributed in the hope that it will be useful,
+    11	#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+    12	#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    13	#  GNU General Public License for more details.
+    14	#
+    15	#  You should have received a copy of the GNU General Public License
+    16	#   along with this program; if not, write to the Free Software
+    17	#  Foundation, Inc.,
+    18	#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+    19	
+    20	## Note: This is a sample script and is not complete. Modify the script based on your environment.
+    21	
+    22	use strict;
+    23	use warnings FATAL => 'all';
+    24	
+    25	use Getopt::Long;
+    26	use MHA::DBHelper;
+    27	
+    28	my (
+    29	  $command,        $ssh_user,         $orig_master_host,
+    30	  $orig_master_ip, $orig_master_port, $new_master_host,
+    31	  $new_master_ip,  $new_master_port,  $new_master_user,
+    32	  $new_master_password
+    33	);
+    34	
+    35	my $vip = '192.168.2.100/24';  # Virtual IP 
+    36	my $key = "1"; 
+    37	my $ssh_start_vip = "/sbin/ifconfig eth1:$key $vip";
+    38	my $ssh_stop_vip = "/sbin/ifconfig eth1:$key down";
+    39	
+    40	GetOptions(
+    41	  'command=s'             => \$command,
+    42	  'ssh_user=s'            => \$ssh_user,
+    43	  'orig_master_host=s'    => \$orig_master_host,
+    44	  'orig_master_ip=s'      => \$orig_master_ip,
+    45	  'orig_master_port=i'    => \$orig_master_port,
+    46	  'new_master_host=s'     => \$new_master_host,
+    47	  'new_master_ip=s'       => \$new_master_ip,
+    48	  'new_master_port=i'     => \$new_master_port,
+    49	  'new_master_user=s'     => \$new_master_user,
+    50	  'new_master_password=s' => \$new_master_password,
+    51	);
+    52	
+    53	exit &main();
+    54	
+    55	sub main {
+    56	  if ( $command eq "stop" || $command eq "stopssh" ) {
+    57	
+    58	    # $orig_master_host, $orig_master_ip, $orig_master_port are passed.
+    59	    # If you manage master ip address at global catalog database,
+    60	    # invalidate orig_master_ip here.
+    61	    my $exit_code = 1;
+    62	    eval {
+    63	
+    64	      # updating global catalog, etc
+    65	      &stop_vip();
+    66	      $exit_code = 0;
+    67	    };
+    68	    if ($@) {
+    69	      warn "Got Error: $@\n";
+    70	      exit $exit_code;
+    71	    }
+    72	    exit $exit_code;
+    73	  }
+    74	  elsif ( $command eq "start" ) {
+    75	
+    76	    # all arguments are passed.
+    77	    # If you manage master ip address at global catalog database,
+    78	    # activate new_master_ip here.
+    79	    # You can also grant write access (create user, set read_only=0, etc) here.
+    80	    my $exit_code = 10;
+    81	    eval {
+    82	      my $new_master_handler = new MHA::DBHelper();
+    83	
+    84	      # args: hostname, port, user, password, raise_error_or_not
+    85	      $new_master_handler->connect( $new_master_ip, $new_master_port,
+    86	        $new_master_user, $new_master_password, 1 );
+    87	
+    88	      ## Set read_only=0 on the new master
+    89	      $new_master_handler->disable_log_bin_local();
+    90	      print "Set read_only=0 on the new master.\n";
+    91	      $new_master_handler->disable_read_only();
+    92	
+    93	      ## Creating an app user on the new master
+    94	      print "Creating app user on the new master..\n";
+    95	      $new_master_handler->enable_log_bin_local();
+    96	      $new_master_handler->disconnect();
+    97	
+    98	      ## Update master ip on the catalog database, etc
+    99	      &start_vip();
+   100	      $exit_code = 0;
+   101	    };
+   102	    if ($@) {
+   103	      warn $@;
+   104	
+   105	      # If you want to continue failover, exit 10.
+   106	      exit $exit_code;
+   107	    }
+   108	    exit $exit_code;
+   109	  }
+   110	  elsif ( $command eq "status" ) {
+   111	
+   112	    # do nothing
+   113	    exit 0;
+   114	  }
+   115	  else {
+   116	    &usage();
+   117	    exit 1;
+   118	  }
+   119	}
+   120	sub start_vip() {
+   121	    `ssh $ssh_user\@$new_master_host \" $ssh_start_vip \"`;
+   122	}
+   123	sub stop_vip() {
+   124	    return 0 unless ($ssh_user);
+   125	    `ssh $ssh_user\@$orig_master_host \" $ssh_stop_vip \"`;
+   126	}
+   127	
+   128	sub usage {
+   129	  print
+   130	"Usage: master_ip_failover --command=start|stop|stopssh|status --orig_master_host=host --orig_master_ip=ip --orig_master_port=port --new_master_host=host --new_master_ip=ip --new_master_port=port\n";
+   131	}
+[root@Host56 ~]# 
+[root@Host56 ~]# masterha_manager  --conf=/etc/mha/app1.cnf --remove_dead_master_conf  --ignore_last_failover^C
+[root@Host56 ~]# ls /etc/mha/
+app1.cnf  manager.log  master_ip_failover
+[root@Host56 ~]# cat /etc/mha/app1.cnf 
+[server default]
+manager_workdir=/etc/mha
+manager_log=/etc/mha/manager.log
+master_ip_failover_script=/etc/mha/master_ip_failover
+
+ssh_user=root
+ssh_port=22
+
+repl_password=1234
+repl_user=repluser
+
+user=root
+password=1234
+
+[server1]
+hostname=192.168.2.51
+candidate_master=1
+
+[server2]
+hostname=192.168.2.52
+candidate_master=1
+
+[server3]
+hostname=192.168.2.53
+candidate_master=1
+
+[server4]
+hostname=192.168.2.54
+no_master=1
+
+[server5]
+hostname=192.168.2.55
+no_master=1
+
+[root@Host56 ~]# masterha_manager  --conf=/etc/mha/app1.cnf --remove_dead_master_conf  --ignore_last_failover
+Wed Oct 24 16:45:47 2018 - [warning] Global configuration file /etc/masterha_default.cnf not found. Skipping.
+Wed Oct 24 16:45:47 2018 - [info].....................
+
+[root@Host56 ~]# masterha_check_status  --conf=/etc/mha/app1.cnf
+app1 is stopped(2:NOT_RUNNING).
+[root@Host56 ~]# masterha_check_status  --conf=/etc/mha/app1.cnf
+app1 master is down and failover is running(50:FAILOVER_RUNNING). master:192.168.2.51
+Check /etc/mha/manager.log for details.
+[root@Host56 ~]# ls /etc/mha/
+app1.cnf                master_ip_failover
+app1.failover.complete  saved_master_binlog_from_192.168.2.51_3306_20181024164607.binlog
+manager.log
+[root@Host56 ~]# cat /etc/mha/app1.cnf 
+[server default]
+manager_log=/etc/mha/manager.log
+manager_workdir=/etc/mha
+master_ip_failover_script=/etc/mha/master_ip_failover
+password=1234
+repl_password=1234
+repl_user=repluser
+ssh_port=22
+ssh_user=root
+user=root
+
+[server2]
+candidate_master=1
+hostname=192.168.2.52
+
+[server3]
+candidate_master=1
+hostname=192.168.2.53
+
+[server4]
+hostname=192.168.2.54
+no_master=1
+
+[server5]
+hostname=192.168.2.55
+no_master=1
+[root@Host56 ~]# 
+
+
+/***********192,168.2.51 的修改-------------------------------
+change master to master_host="192.168.2.52",
+  master_user="repluser",
+ master_password="1234",
+ master_log_file="master52.000002",
+ master_log_pos=990;
+***************************/
+[root@Host56 ~]# vim /etc/mha/app1.cnf
+[root@Host56 ~]# cat /etc/mha/app1.cnf
+[server default]
+manager_log=/etc/mha/manager.log
+manager_workdir=/etc/mha
+master_ip_failover_script=/etc/mha/master_ip_failover
+password=1234
+repl_password=1234
+repl_user=repluser
+ssh_port=22
+ssh_user=root
+user=root
+
+[server1]
+candidate_master=1
+hostname=192.168.2.51
+[server2]
+candidate_master=1
+hostname=192.168.2.52
+
+[server3]
+candidate_master=1
+hostname=192.168.2.53
+
+[server4]
+hostname=192.168.2.54
+no_master=1
+
+[server5]
+hostname=192.168.2.55
+no_master=1
+[root@Host56 ~]# ls /etc/mha/
+app1.cnf
+app1.failover.complete
+app1.master_status.health
+manager.log
+master_ip_failover
+saved_master_binlog_from_192.168.2.51_3306_20181024164607.binlog
+
+[root@Host56 ~]# masterha_manager  --conf=/etc/mha/app1.cnf --remove_dead_master_conf  --ignore_last_failover
+
+[root@Host56 ~]# masterha_check_status  --conf=/etc/mha/app1.cnf
+app1 (pid:9191) is running(0:PING_OK), master:192.168.2.52
+[root@Host56 ~]# 
+[root@Host56 ~]# masterha_manager  --conf=/etc/mha/app1.cnf --remove_dead_master_conf  --ignore_last_failover
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Host57 ~]# history |tail -40
+    1  systemctl set-default multi-user.target 
+    2  systemctl stop firewalld.service 
+    3  systemctl disable firewalld.service 
+    4  vim /etc/selinux/config 
+    5  grubby --update-kernel=ALL --args="console=ttyS0"
+    6  reboot 
+    7  echo 123 |passwd  --stdin root
+    8  echo Host57 >/etc/hostname
+    9  nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.57/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes 
+   10  nmcli connection up eth0 
+   11  nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes
+   12  nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.57/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes 
+   13  nmcli connection up eth1 
+   14  nmcli connection add con-name eth2 ifname eth2 type ethernet autoconnect yes
+   15  nmcli connection modify eth2 ipv4.method manual ipv4.addresses 201.1.1.37/24  ipv4.gateway 201.1.1.254 connection.autoconnect yes 
+   16  nmcli connection up eth2 
+   17  nmcli connection add con-name eth3 ifname eth3 type ethernet autoconnect yes
+   18  nmcli connection modify eth3 ipv4.method manual ipv4.addresses 201.1.2.37/24  ipv4.gateway 201.1.2.254 connection.autoconnect yes 
+   19  nmcli connection up eth3 
+   20  ifconfig | grep 'inet '
+   21  systemctl isolate graphical
+   22  sleep 1 && date
+   23  exit
+   24  ls
+   25  ps -C mysql
+   26  . MySQLsetup.sh 
+   27  cat MySQLsetup.sh
+   28  ps -C mysqld
+   29  mysql  -uroot -p1234 -e "show databases;"
+   30   ll perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   31  yum -y install  perl-Config-Tiny-2.14-7.el7.noarch.rpm perl-Mail-Sender-0.8.23-1.el7.noarch.rpm  perl-MIME-Types-1.38-2.el7.noarch.rpm  perl-Email-Date-Format-1.002-15.el7.noarch.rpm  perl-Mail-Sendmail-0.79-21.el7.art.noarch.rpm  perl-Parallel-ForkManager-1.18-2.el7.noarch.rpm  perl-Log-Dispatch-2.41-1.el7.1.noarch.rpm  perl-MIME-Lite-3.030-1.el7.noarch.rpm 
+   32  ls mha4mysql-*
+   33  yum -y install  mha4mysql-*
+   34  rpm -q mha4mysql-node perl-DBD-MySQL
+   35  ls mha4mysql-*
+   36  sed -n '/\[mysqld/,+8p' /etc/my.cnf
+   37  history |tail -40
+[root@Host57 ~]# 
+
+
+
+
+

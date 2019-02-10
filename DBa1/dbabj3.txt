@@ -1,0 +1,1080 @@
+
+一、选择题
+1. Linux系统中DNS服务进程名为（A）
+A．named  B.httpd  C.ftpd  D.SysLog
+2.在UINX/Linux中，系统Root用户口令信息一半保存的文件夹是（ D ）
+A．autobat  B.service.conf  C.inetd.conf  D.shadow
+
+3. 在下列选项中，属于Linux系统日志服务的是（ D ）
+A．named  B.httpd  C.ftpd  D.SysLog
+
+4.Linux操作系统支持的文件系统类型是（ A ）
+A、EXT3  B.NFT  C.TXT  D.FAT
+
+5.在UINX系统中输入命令“ls –al test”显示如下”-rwx--xr-x 1 root root 100 2013-12-20 23:51 test”对它的含义解释错误的是（ d ）
+A．这是一个文件，而不是目录
+B．文件的拥有者可以对这个文件进行读、写和执行的操作
+C．文件所有者可以读它，也可以执行它
+D、其他所有用户只可以执行它
+
+6.在大多数Linux发行版本中，以下哪个属于块设备（B ）
+A、串行口 B、硬盘 C、虚拟终端 D、打印机
+
+7.怎样了解您在当前目录下还有多大空间（ D ）
+A．use df B. use du / C. use du .  D. use df .
+
+8.以下关于Linux超级权限的说明，不正确的是（）
+A.一般情况下，为了系统的安全，对于一般常规级别的应用，不需要root用户来操作完成
+B.普通用户可以通过su和sudo来获得系统的超级权限
+C.对于系统日志的管理，添加和删除用户等管理工作，必须以root用户登录才能进行
+D．root是系统的超级用户，无论是否为文件和程序的所有者都具有访问权限
+
+9.REDHAT9.0的防火墙软件是哪个（）
+A．ipchains  B.iptables  C.ISA  D.checkpoint
+
+10．显示文件头部的命令是（）
+A．fidsk  B.mount  C.head  D.man
+
+11.删除文件的命令是（）
+A．mkdir  B.rm  C. mv  D. remove
+
+12.显示用户的ID，以及所属组的ID，要使用命令是（）
+A．su  B.who  C.id  D. man
+
+13.Linux根分区的文件系统是（）
+A．FAT16  B.FAT32  C.EXT3  D.NTFS
+
+14．Linux的DNS服务是下列哪个（）
+A．host  B.hosts  C. bind  D.vsftp
+
+15.不能用来关机的命令是（）
+A.shutdown  B.halt  C.init  D.logout
+
+16.以下那个命令修改SAMBA口令（）
+A．smbpasswd  B.passwd  C.smbpassword  D.password
+
+17./dev/ethX表示（）
+A．系统回送接口 B.以太网接口设备 C.令牌环网设备 D.PPP设备
+
+18.GRUB的配置文件是（）
+A./etc/grub  B./boot.ini  C./etc/grub.conf  D./etc/inittab
+
+19.我们将逻辑分区建立在（）上
+A．从分区 B.扩展分区 C.主分区 D.第二分区
+
+20.使用iptables拒绝来自10.10.10.1.访问的正确写法是（）
+A.iptables –I INPUT –s 10.10.10.1 –j ACCEPT
+B. iptables –A INPUT –D 10.10.10.1 –j DROP
+C. iptables –I INPUT –s 10.10.10.1 –j DROP
+D. iptables –A INPUT –s 10.10.10.1 –j ACCEP
+
+21.init是Linux的第一个程序，该程序是根据文件()来建立子进程的
+A./etc  B./etc/inittab  C./etc/modules.conf  D./etc/lilo.conf
+
+22.不是shell具有的功能特点是（）
+A.管道 B.输入输出重定向 C.监视系统 D.解释程序命令
+
+23.如果你的umask设为022，则你创建文件的缺省权限是（）
+A.----w--w- B. -w--w---- C.r-xr-x--- D.rw-r--r--
+
+24．为了修改文件test的许可模式，使其文件属性具有读、写和运行的权限，组和其他用户可以读和运行，可以采用（）方法
+A．chmod 755 test  B. chmod 700 test  C. chmod +rwx test  D.chmod g-w test
+
+25.统计文件占用磁盘空间，我们可以使用命令（）
+A．df  B.du  C.mount  D. in
+
+26在SHELL程序里，判断文件不存在的写法是（ A ）
+A．if [ ! –f “$myfile”];then
+B. if [-d “$myfile”];then
+C. if [-f“$myfile”];then
+D. if [! –d “$myfile”];then
+
+mysql 存储引擎
+连接池  SQL 接口 分析器 
+==============================================
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H50 ~]# mysql -uroot -p1234
+
+mysql> show databases;
+
+mysql> use teadb;show tables;
+
+mysql> select * from stuinfo;
+
+| id | name | age  | likes     |
+| 01 | bob  |   19 | eat,sleep |
+| 02 | NULL |   21 | game,film |
+
+mysql> desc teadb.stuinfo;
+
+| Field | Type        | Null | Key | Default   | Extra   |
+| id    | int(2) unsigned zerofill         | NO   | PRI | NULL      | auto_increment |
+| name  | char(10)                         | NO   |     | NULL      |                |
+| age   | tinyint(2) unsigned              | YES  |     | 19        |                |
+| likes | set('eat','sleep','game','film') | NO   |     | eat,sleep |                |
+
+mysql> show create table  stuinfo\G;
+*************************** 1. row ***************************
+       Table: stuinfo
+Create Table: CREATE TABLE `stuinfo` (
+  `id` int(2) unsigned zerofill NOT NULL AUTO_INCREMENT,
+  `name` char(10) NOT NULL,
+  `age` tinyint(2) unsigned DEFAULT '19',
+  `likes` set('eat','sleep','game','film') NOT NULL DEFAULT 'eat,sleep',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1
+
+mysql> show engines; #列出可用的存储引擎
+
+| Engine    | Support | Comment              | Transactions | XA   | Savepoints |
+| InnoDB    | DEFAULT | Supports transactions, row-level locking, and foreign keys     | YES  | YES  | YES|
+| MRG_MYISAM| YES     | Collection of identical MyISAM tables                          | NO   | NO   | NO |
+| MEMORY    | YES     | Hash based, stored in memory, useful for temporary tables      | NO  | NO   | NO  |
+| BLACKHOLE | YES     | /dev/null storage engine (anything you write to it disappears) | NO  | NO   | NO  |
+| MyISAM    | YES     | MyISAM storage engine         | NO  | NO   | NO  |
+| CSV       | YES     | CSV storage engine             | NO  | NO   | NO  |
+| ARCHIVE   | YES     | Archive storage engine         | NO  | NO   | NO  |
+| PERFORMANCE_SCHEMA | YES     | Performance Schema             | NO  | NO   | NO  |
+| FEDERATED          | NO      | Federated MySQL storage engine    | NULL| NULL| NULL|
+
+mysql> 
+/*默认存储引擎为myisam ---[表级锁]读锁也是共享锁,适用于查询select操作,节约CPU资源
+.frm 表结构 desc 表名;
+.MYI 表索引 show index from 表名\G;
+.MYD 表数据  select * from 表名;
+Myisam 不 [ 支持事物,事物回滚,外键 ]不 支持
+
+[root@DB1 mysql]# ls /var/lib/mysql/db3/{a.frm,a.MYD,a.MYI}
+*/
+ //.frm 表结构/var/lib/mysql/db3/a.frm
+//.MYI 表索引/var/lib/mysql/db3/a.MYI
+ //.MYI 表索引/var/lib/mysql/db3/a.MYI
+//.MYD 表数据 /var/lib/mysql/db3/a.MYD
+/*默认存储引擎为myisam ---[表级锁]读锁也是共享锁,适用于查询select操作,节约CPU资源
+
+/** 默认存储引擎为 innodb  ------[行级锁]适用 于 并发访问量大,写操作
+.frm 表结构 desc 表名;
+   .ibd  index + select 
+innodb 支持事物,事物回滚,外键  #银行业务 适用 事物回滚的 存储引擎 innodb
+注意 :事物回滚是否有效,取决于提交是否成功,若提交成功,则事物回滚无效!
+innodb事物文件   /var/lib/mysql/ib_logfile0
+innodb事物文件   /var/lib/mysql/ib_logfile1
+
+[root@H50 mysql]# ll /var/lib/mysql/ibdata1
+-rw-r-----. 1 mysql mysql 12582912 10月 17 09:41 /var/lib/mysql/ibdata1
+[root@H50 mysql]# 
+////////***
+/**默认存储引擎为 memory 系统重起,数据消失,表结构还在.
+ .frm  
+/var/lib/mysql/db3/c.frm
+ **/
+mysql> create table c(class char(10))engine=MEMORY;
+mysql> insert into c values('abvc');
+mysql> desc c;
+mysql> show index from c\G;
+mysql> select * from c;  
+| class |
+| abvc  |
+[root@DB1 mysql]# ls /var/lib/mysql/db3/
+a.frm  a.MYD  a.MYI [ b.frm  b.ibd ][ c.frm ]  db.opt
+****************/
+
+
+
+mysql> create database db3;
+
+mysql> use db3;
+
+mysql> create table db3.t1(id int);
+
+mysql> show tables;
+| Tables_in_db3 |
+| t1            |
+
+mysql> desc db3.t1;
+| Field | Type    | Null | Key | Default | Extra |
+| id    | int(11) | YES  |     | NULL    |       |
+
+mysql> show create table db3.t1\G;
+*************************** 1. row ***************************
+       Table: t1
+Create Table: CREATE TABLE `t1` (
+  `id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
+1 row in set (0.00 sec)
+
+mysql> quit;
+Bye
+[root@H50 ~]# vim /etc/my.cnf  #设置默认存储引擎 myisam
+[root@H50 ~]# sed -n '/default-storage/p' /etc/my.cnf
+default-storage-engine=myisam
+[root@H50 ~]# systemctl restart mysqld
+[root@H50 ~]# mysql -uroot -p1234  db3
+mysql> select database();
+| database() |
+| db3        |
+
+[root@H50 ~]# cd /var/lib/mysql/;ls
+..............................
+[root@H50 mysql]# ll ib_logfile*  
+-rw-r-----. 1 mysql mysql 50331648 10月 17 09:41 ib_logfile0
+-rw-r-----. 1 mysql mysql 50331648 10月 15 10:19 ib_logfile1
+
+mysql> show status like "%lock%";
+| Innodb_row_lock_time_avg                 | 0     |
+| Innodb_row_lock_time_max                 | 0     |
+| Innodb_row_lock_waits                    | 0     |
+| Key_blocks_not_flushed                   | 0     |
+| Key_blocks_unused                        | 6695  |
+| Key_blocks_used                          | 3     |
+21 rows in set (0.00 sec)
+
+mysql> show status like "Table_lock%";
+| Variable_name         | Value |
+| Table_locks_immediate | 100   |
+| Table_locks_waited    | 0     |
+
+mysql> show variables like '%auto%';
+| Variable_name               | Value |
+| auto_increment_increment    | 1     |
+| auto_increment_offset       | 1     |
+| autocommit                  | ON    |
+| automatic_sp_privileges     | ON    |
+| innodb_autoextend_increment | 64    |
+| innodb_autoinc_lock_mode    | 1     |
+| innodb_stats_auto_recalc    | ON    |
+| sql_auto_is_null            | OFF   |
+
+mysql> set autocommit=off;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> show variables like 'autoco%'; #这里体现事物的隔离性| autocommit  | OFF  |
+| Variable_name | Value |
+| autocommit    | OFF   |
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> create table  db3.t4(id int)engine=innodb;
+
+mysql> insert into db3.t4 values(666);
+
+mysql> commit;
+
+mysql> select * from db3.t4;
+| id   |
+|  666 |
+
+mysql> delete from  db3.t4;
+
+mysql> select * from db3.t4;
+Empty set (0.00 sec)
+
+mysql> rollback; ##事务回滚
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> select * from db3.t4;
+| id   |
+|  666 |
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from db3.t4;
+| id   |
+|  666 |
+
+mysql> 
+/**********再次开启第二个终端
+[root@H50 mysql]# mysql -uroot -p1234 db3
+mysql> show tables;
+| Tables_in_db3 |
+| t1            |
+| t4            |
+mysql> show create table db3.t4\G
+*************************** 1. row ***************************
+       Table: t4
+Create Table: CREATE TABLE `t4` (
+  `id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
+
+mysql> 
+mysql> show variables like 'autoco%'; #这里体现事物的隔离性| autocommit  | ON  |
+| Variable_name | Value |
+| autocommit    | ON    |
+
+mysql> insert into db3.t4 values(999),(110);
+
+mysql> select * from db3.t4; 
+| id   |
+|  666 |
+|  999 |
+|  110 |
+
+mysql> 
+/**********回到先前的 第一个终端 查看
+mysql> select * from db3.t4; 事物特性:隔离性 isolation
+| id   |
+|  666 |
+
+mysql> commit; ##事务提交
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from db3.t4;
+| id   |
+|  666 |
+|  999 |
+|  110 |
+
+mysql> rollback; ##事务提交之后,回滚无效,,事物特性:持久性durability
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from db3.t4;
+| id   |
+|  666 |
+|  999 |
+|  110 |
+
+mysql> set autocommit=on
+    -> ;
+
+mysql> show variables like 'autoco%';
+| Variable_name | Value |
+| autocommit    | ON    |
+
+mysql> show variables like "secure_file_priv";
+| Variable_name    | Value                 |
+| secure_file_priv | /var/lib/mysql-files/ |
+
+mysql> system ls /var/lib/mysql-files/;
+
+mysql> select database();
+| database() |
+| db3        |
+
+mysql> create table db3.user(
+    -> name char(50),password char(1),
+    -> uid int(1),gid int(1),
+    -> comment varchar(150),
+    -> homedir varchar(100),
+    -> shell  char(30));
+
+mysql> desc db3.user;
+| Field    | Type         | Null | Key | Default | Extra |
+| name     | char(50)     | YES  |     | NULL    |       |
+| password | char(1)      | YES  |     | NULL    |       |
+| uid      | int(1)       | YES  |     | NULL    |       |
+| gid      | int(1)       | YES  |     | NULL    |       |
+| comment  | varchar(150) | YES  |     | NULL    |       |
+| homedir  | varchar(100) | YES  |     | NULL    |       |
+| shell    | char(30)     | YES  |     | NULL    |       |
+
+mysql> show create table db3.user\G
+*************************** 1. row ***************************
+       Table: user
+Create Table: CREATE TABLE `user` (
+  `name` char(50) DEFAULT NULL,
+  `password` char(1) DEFAULT NULL,
+  `uid` int(1) DEFAULT NULL,
+  `gid` int(1) DEFAULT NULL,
+  `comment` varchar(150) DEFAULT NULL,
+  `homedir` varchar(100) DEFAULT NULL,
+  `shell` char(30) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+1 row in set (0.00 sec)
+
+mysql> 
+[root@H50 ~]# ls /var/lib/mysql/db3/
+db.opt  t1.frm  t1.ibd  t4.frm  t4.ibd  user.frm  user.MYD  user.MYI
+[root@H50 ~]# 
+mysql> drop table db3.t1;
+
+mysql> system ls /var/lib/mysql/db3/;
+db.opt	t4.frm	t4.ibd	user.frm  user.MYD  user.MYI
+
+mysql> system cp /etc/passwd  /var/lib/mysql-files/;
+mysql> system ls /var/lib/mysql-files/;
+passwd
+mysql> system ls -l /var/lib/mysql-files/passwd;
+-rw-r--r--. 1 root root 2337 10月 17 11:40 /var/lib/mysql-files/passwd
+mysql> 
+---------------/**数据导入的命令格式
+mysql> load data infile  "/var/lib/mysql-files/passwd"
+    -> into table db3.user
+    -> fields terminated by ":"
+    -> lines terminated by "\n";
+
+mysql> alter table db3.user add  id  int(2)  primary key auto_increment  first;
+
+mysql> desc db3.user;
+| Field    | Type         | Null | Key | Default | Extra          |
+| id       | int(2)       | NO   | PRI | NULL    | auto_increment |
+| name     | char(50)     | YES  |     | NULL    |                |
+| password | char(1)      | YES  |     | NULL    |                |
+| uid      | int(1)       | YES  |     | NULL    |                |
+| gid      | int(1)       | YES  |     | NULL    |                |
+| comment  | varchar(150) | YES  |     | NULL    |                |
+| homedir  | varchar(100) | YES  |     | NULL    |                |
+| shell    | char(30)     | YES  |     | NULL    |                |
+
+mysql> select * from db3.user;
+45 rows in set (0.00 sec)
+
+mysql> select * from db3.user  where id between 40 and 45;
+| id | name      | password | uid  | gid  | comment          | homedir          | shell         |
+| 40 | lisi      | x        | 1000 | 1000 | lisi             | /home/lisi       | /bin/bash     |
+| 41 | apache    | x        |   48 |   48 | Apache           | /usr/share/httpd | /sbin/nologin |
+| 42 | mysql     | x        |   27 |   27 | MariaDB Server   | /var/lib/mysql   | /sbin/nologin |
+| 43 | memcached | x        |  991 |  986 | Memcached daemon | /run/memcached   | /sbin/nologin |
+| 44 | nginx     | x        | 1001 | 1001 |                  | /home/nginx      | /sbin/nologin |
+| 45 | ceph      | x        |  167 |  167 | Ceph daemons     | /var/lib/ceph    | /sbin/nologin |
+
+mysql> 
+[root@H50 ~]# mkdir /mydir
+[root@H50 ~]# ls /mydir/
+[root@H50 ~]# chown mysql /mydir/
+[root@H50 ~]# ls -ld  /mydir/
+drwxr-xr-x. 2 mysql root 6 10月 17 14:05 /mydir/
+[root@H50 ~]# vim /etc/my.cnf
+[root@H50 ~]# sed -n '/\[mysqld\]/,+4p' /etc/my.cnf
+[mysqld]
+secure_file_priv=/mydir/
+default-storage-engine=myisam
+validate_password_policy=0
+validate_password_length=4
+[root@H50 ~]# systemctl restart mysqld
+[root@H50 ~]# 
+mysql> show variables like  'secure_file_priv';
+Current database: db3
+
+| Variable_name    | Value   |
+| secure_file_priv | /mydir/ |
+
+mysql> desc teadb.t3;
+| Field | Type                | Null | Key | Default | Extra |
+| age   | tinyint(3) unsigned | YES  |     | NULL    |       |
+| pay   | float(7,2)          | YES  |     | NULL    |       |
+
+mysql> select * from teadb.t3;
+| age  | pay      |
+|  255 | 38000.88 |
+|   18 | 38000.88 |
+mysql> system ls /mydir/;
+a.txt
+mysql> system cat /mydir/a.txt;
+255:38000.88&$18:38000.88&$mysql> 
+mysql> system rm -f  /mydir/a.txt;
+mysql> system ls /mydir/   
+===========-----------/**数据  导 出  的命令格式
+ # 必须有引号outfile "/mydir/b.txt" 
+-------------------#fields terminated by "::" 以  " : : " 作为分隔符号
+-----------------lines terminated by "&$\n"; 以  " &$\n" 作为 行结尾符号
+mysql> select * from teadb.t3  into outfile "/mydir/b.txt" 
+    -> fields terminated by "::" 
+    -> lines terminated by "&$\n";
+
+mysql> system ls /mydir/
+b.txt
+mysql> system cat  /mydir/b.txt
+255::38000.88&$
+18::38000.88&$
+mysql> 
+mysql> show tables;
+| Tables_in_db3 |
+| t4            |
+| user          |
+
+mysql> desc db3.user;
+| Field    | Type         | Null | Key | Default | Extra          |
+| id       | int(2)       | NO   | PRI | NULL    | auto_increment |
+| name     | char(50)     | YES  |     | NULL    |                |
+| password | char(1)      | YES  |     | NULL    |                |
+| uid      | int(1)       | YES  |     | NULL    |                |
+| gid      | int(1)       | YES  |     | NULL    |                |
+| comment  | varchar(150) | YES  |     | NULL    |                |
+| homedir  | varchar(100) | YES  |     | NULL    |                |
+| shell    | char(30)     | YES  |     | NULL    |                |
+
+mysql> show create table db3.user\G;
+*************************** 1. row ***************************
+       Table: user
+Create Table: CREATE TABLE `user` (
+  `id` int(2) NOT NULL AUTO_INCREMENT,
+  `name` char(50) DEFAULT NULL,
+  `password` char(1) DEFAULT NULL,
+  `uid` int(1) DEFAULT NULL,
+  `gid` int(1) DEFAULT NULL,
+  `comment` varchar(150) DEFAULT NULL,
+  `homedir` varchar(100) DEFAULT NULL,
+  `shell` char(30) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=46 DEFAULT CHARSET=latin1
+
+mysql> insert into user values(46,"bob","x",3003,3003,"test user","/home/bob",
+    -> "/shell/bin/bash/");
+
+mysql> insert into user values(null,"bob","x",3003,3003,"test user","/home/bob", "/shell/bin/bash/");
+
+mysql> select * from db3.user where id like "4_%";
+
+| id | name      | password | uid  | gid  | comment          | homedir          | shell            |
+| 40 | lisi      | x        | 1000 | 1000 | lisi             | /home/lisi       | /bin/bash        |
+| 41 | apache    | x        |   48 |   48 | Apache           | /usr/share/httpd | /sbin/nologin    |
+| 42 | mysql     | x        |   27 |   27 | MariaDB Server   | /var/lib/mysql   | /sbin/nologin    |
+| 43 | memcached | x        |  991 |  986 | Memcached daemon | /run/memcached   | /sbin/nologin    |
+| 44 | nginx     | x        | 1001 | 1001 |                  | /home/nginx      | /sbin/nologin    |
+| 45 | ceph      | x        |  167 |  167 | Ceph daemons     | /var/lib/ceph    | /sbin/nologin    |
+| 46 | bob       | x        | 3003 | 3003 | test user        | /home/bob        | /shell/bin/bash/ |
+| 47 | bob       | x        | 3003 | 3003 | test user        | /home/bob        | /shell/bin/bash/ |
+
+mysql> mysql> select * from db3.user where id between 45  and 47 ;
+
+| id | name | password | uid  | gid  | comment      | homedir       | shell            |
+
+| 45 | ceph | x        |  167 |  167 | Ceph daemons | /var/lib/ceph | /sbin/nologin    |
+| 46 | bob  | x        | 3003 | 3003 | test user    | /home/bob     | /shell/bin/bash/ |
+| 47 | bob  | x        | 3003 | 3003 | test user    | /home/bob     | /shell/bin/bash/ |
+
+mysql> insert into db3.user(name,uid,shell)values("tom",2008,"/bin/bash"),
+    -> ("jack",2011,"/sbin/nologin");
+
+mysql> select * from db3.user where id>45;
+
+| id | name | password | uid  | gid  | comment   | homedir   | shell            |
+| 46 | bob  | x        | 3003 | 3003 | test user | /home/bob | /shell/bin/bash/ |
+| 47 | bob  | x        | 3003 | 3003 | test user | /home/bob | /shell/bin/bash/ |
+| 48 | tom  | NULL     | 2008 | NULL | NULL      | NULL      | /bin/bash        |
+| 49 | jack | NULL     | 2011 | NULL | NULL      | NULL      | /sbin/nologin    |
+
+mysql> select name,shell,homedir from db3.user 
+    -> where shell="/bin/bash" and id between 47 and 49;
+
+| name | shell     | homedir |
+| tom  | /bin/bash | NULL    |
+
+mysql> select name  userbieming,uid  user_id from user  
+    -> where shell like "/shell/%" and
+    -> id between 45  and 49;
+
+| userbieming | user_id |
+| bob         |    3003 |
+| bob         |    3003 |
+
+mysql> update user set password="a" where name="bob";
+
+mysql> select * from db3.user where name like "bo%";
+
+| id | name | password | uid  | gid  | comment   | homedir   | shell            |
+
+| 46 | bob  | a        | 3003 | 3003 | test user | /home/bob | /shell/bin/bash/ |
+| 47 | bob  | a        | 3003 | 3003 | test user | /home/bob | /shell/bin/bash/ |
+
+mysql> update db3.user set password="a",comment="student";
+
+
+mysql> select * from db3.user where name like "_a%";
+
+| id | name     | password | uid  | gid  | comment | homedir         | shell         |
+|  3 | daemon   | a        |    2 |    2 | student | /sbin           | /sbin/nologin |
+|  8 | halt     | a        |    7 |    0 | student | /sbin           | /sbin/halt    |
+|  9 | mail     | a        |    8 |   12 | student | /var/spool/mail | /sbin/nologin |
+| 11 | games    | a        |   12 |  100 | student | /usr/games      | /sbin/nologin |
+| 20 | saslauth | a        |  996 |   76 | student | /run/saslauthd  | /sbin/nologin |
+| 23 | radvd    | a        |   75 |   75 | student | /               | /sbin/nologin |
+| 49 | jack     | a        | 2011 | NULL | student | NULL            | /sbin/nologin |
+
+mysql> select name as user_name,gid as gid_user from db3.user #as 别名新名
+    -> where id between 38  and 40;
+
+mysql> select name,uid,gid from user where uid=gid  and id >20;
+
+mysql> select name,uid,gid from user where uid=gid  and id >=36;
+
+mysql> select * from db3.user where shell !="/bin/bash" and id>20;
+
+mysql> insert into user(id,name) values(null,"tom2"),(null,"tom3");
+
+mysql> select * from db3.user where name like "tom%";
+
+| id | name | password | uid  | gid  | comment | homedir | shell     |
+| 51 | tom3 | NULL     | NULL | NULL | NULL    | NULL    | NULL      |
+| 50 | tom2 | NULL     | NULL | NULL | NULL    | NULL    | NULL      |
+| 48 | tom  | a        | 2008 | NULL | student | NULL    | /bin/bash |
+
+mysql> insert into user(id,name,uid,homedir) values(null,"null",1000,1001);
+
+mysql> select * from db3.user where id>=1000;
+
+mysql> select * from db3.user where uid>=1000;
+
+mysql> select * from db3.user where uid>=1000 and name="null";
+
+| id | name | password | uid  | gid  | comment | homedir | shell |
+| 52 | null | NULL     | 1000 | NULL | NULL    | 1001    | NULL  |
+
+mysql> select name,uid,id from db3.user where  name="root"
+    ->  and uid=3;
+
+mysql> select name,uid,id from db3.user where  name="root"  
+    -> or uid=3;
+
+| name | uid  | id |
+| root |    0 |  1 |
+| adm  |    3 |  4 |
+
+mysql> select name,uid,id from db3.user where  name="root" 
+    -> or name="bin" and uid=3;
+| name | uid  | id |
+| root |    0 |  1 |
+
+mysql> select name,uid,id from db3.user where  
+    -> (name="root" or name="bin") and uid=3;
+Empty set (0.00 sec)
+
+mysql> select name,uid,id from db3.user where  
+    -> (name="root" or name="bin") and uid=1;
+| name | uid  | id |
+| bin  |    1 |  2 |
+
+mysql> select name,uid,shell from user where uid not in
+    -> (10,89,100,1111) and name in ("adm","mysql","lisi");
+
+| name  | uid  | shell         |
+| adm   |    3 | /sbin/nologin |
+| lisi  | 1000 | /bin/bash     |
+| mysql |   27 | /sbin/nologin |
+
+mysql> select distinct shell from db3.user;
+
+| shell          |
+| /bin/bash      |
+| /sbin/nologin  |
+| /bin/sync      |
+| /sbin/shutdown |
+| /sbin/halt     |
+| NULL           |
+
+mysql> select distinct shell from  db3.user #distinct去除 重复的记录
+    -> where shell is not null;
+
+| shell          |
+| /bin/bash      |
+| /sbin/nologin  |
+| /bin/sync      |
+| /sbin/shutdown |
+| /sbin/halt     |
+
+5 rows in set (0.00 sec)
+
+mysql> insert into user(name)values(""),("null"),(null);
+
+mysql> select * from db3.user where name like "%";
+...........................
+| 49 | jack    | a        |  2011 |  NULL | student | NULL  | /sbin/nologin|
+| 52 | null    | NULL     |  1000 |  NULL | NULL    | 1001  | NULL    |
+| 53 |         | NULL     |  NULL |  NULL | NULL    | NULL  | NULL    |
+| 54 | null    | NULL     |  NULL |  NULL | NULL    | NULL  | NULL    |
+
+mysql> select * from db3.user where name like "%" and id=53 or id >53;
+
+| id | name | password | uid  | gid  | comment | homedir | shell |
+| 53 |      | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 54 | null | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 55 | NULL | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+
+mysql> select * from db3.user where name="" or name="null" or name is null;
+
+| id | name | password | uid  | gid  | comment | homedir | shell |
+| 52 | null | NULL     | 1000 | NULL | NULL    | 1001    | NULL  |
+| 53 |      | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 54 | null | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 55 | NULL | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+
+mysql> select * from db3.user where name like "%" and id=53 or id >51 and name is null;
+
+| id | name | password | uid  | gid  | comment | homedir | shell |
+| 53 |      | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+| 55 | NULL | NULL     | NULL | NULL | NULL    | NULL    | NULL  |
+
+mysql> select name,uid,gid from db3.user where
+    -> uid regexp '...' and gid >888;
+
+| name                | uid   | gid   |
+| polkitd             |   999 |   998 |
+| libstoragemgmt      |   998 |   996 |
+| colord              |   997 |   995 |
+| chrony              |   995 |   993 |
+| geoclue             |   994 |   991 |
+| nfsnobody           | 65534 | 65534 |
+| setroubleshoot      |   993 |   990 |
+| gnome-initial-setup |   992 |   987 |
+| lisi                |  1000 |  1000 |
+| memcached           |   991 |   986 |
+| nginx               |  1001 |  1001 |
+11 rows in set (0.00 sec)
+
+mysql> select name,uid,gid from db3.user where uid regexp '^...$'
+    -> and gid >990;
+
+| name           | uid  | gid  |
+| polkitd        |  999 |  998 |
+| libstoragemgmt |  998 |  996 |
+| colord         |  997 |  995 |
+| chrony         |  995 |  993 |
+| geoclue        |  994 |  991 |
+5 rows in set (0.00 sec)
+
+mysql> select name,uid,gid from db3.user where name  regexp '^c|d$';
+
+| name      | uid  | gid  |
+| polkitd   |  999 |  998 |
+| colord    |  997 |  995 |
+| radvd     |   75 |   75 |
+| chrony    |  995 |  993 |
+| usbmuxd   |  113 |  113 |
+| sshd      |   74 |   74 |
+| memcached |  991 |  986 |
+| ceph      |  167 |  167 |
+8 rows in set (0.00 sec)
+
+mysql> insert into db3.user(name,gid)values("yaya1",100),
+    -> ("yaya2",200),("yaaa3",300),("yaxa9",900);
+
+mysql> select name,gid,uid from db3.user
+    -> where name regexp '[0-9]' and name regexp '^ya';
+
+| name  | gid  | uid  |
+| yaya1 |  100 | NULL |
+| yaya2 |  200 | NULL |
+| yaaa3 |  300 | NULL |
+| yaxa9 |  900 | NULL |
+4 rows in set (0.00 sec)
+
+mysql> select * from db3.user where id<=10;
+ 10 rows in set (0.00 sec)
+
+mysql> update user set uid=gid+10 where  id<=10;
+10 rows in set (0.00 sec)
+
+mysql> alter table db3.user add age tinyint(2) unsigned
+    -> default 19  after name;
+mysql> desc db3.user;
+
+| Field    | Type                | Null | Key | Default | Extra          |
+| id       | int(2)              | NO   | PRI | NULL    | auto_increment |
+| name     | char(50)            | YES  |     | NULL    |                |
+| age      | tinyint(2) unsigned | YES  |     | 19      |                |
+| password | char(1)             | YES  |     | NULL    |                |
+| uid      | int(1)              | YES  |     | NULL    |                |
+| gid      | int(1)              | YES  |     | NULL    |                |
+| comment  | varchar(150)        | YES  |     | NULL    |                |
+| homedir  | varchar(100)        | YES  |     | NULL    |                |
+| shell    | char(30)            | YES  |     | NULL    |                |
+
+mysql> select name,age,2018-age start from db3.user
+    -> where name="root";
+
+| name | age  | start |
+| root |   19 |  1999 |
+
+mysql> select name,age,2018-age as start 
+    -> from db3.user where name="root";
+
+| name | age  | start |
+| root |   19 |  1999 |
+
+mysql> select  avg(uid) from db3.user where shell !="/bin/bash";
++-----------+
+| avg(uid)  |
++-----------+
+| 1808.4773 |
++-----------+
+1 row in set (0.00 sec)
+
+mysql> select max(uid) as max_uid from db3.user;
+
+| max_uid |
+|   65534 |
+
+mysql> select min(uid) as min_uid,min(gid) mingid  from db3.user;
+
+| min_uid | mingid |
+|      10 |      0 |
+
+mysql> select count(id) from user;
+| count(id) |
+|        57 |
+
+
+mysql> select name,uid,gid,shell from user
+    -> where uid regexp '^...$' order by uid;
+
+| name                | uid  | gid  | shell         |
+| qemu                |  107 |  107 | /sbin/nologin |
+| usbmuxd             |  113 |  113 | /sbin/nologin |
+| polkitd             |  999 |  998 | /sbin/nologin |
+
+16 rows in set (0.00 sec)
+
+mysql> select name,uid,gid,shell from user where uid regexp '^...$' 
+    -> order by uid desc;
+
+| name                | uid  | gid  | shell         |
+| polkitd             |  999 |  998 | /sbin/nologin |
+| libstoragemgmt      |  998 |  996 | /sbin/nologin |
+| usbmuxd             |  113 |  113 | /sbin/nologin |
+| qemu                |  107 |  107 | /sbin/nologin |
+
+16 rows in set (0.00 sec)
+
+mysql> select gid from user  group by gid;
+| gid   |
++-------+
+|  NULL |
+|     0 |
+|     1 |
+|   998 |
+|  1000 |
+|  1001 |
+| 65534 |
++-------+
+45 rows in set (0.00 sec)
+
+mysql> select name,id from user where name like '%' 
+    -> having id between 19 and 30;
+
+| name      | id |
+| colord    | 19 |
+| saslauth  | 20 |
+| abrt      | 21 |
+| rtkit     | 22 |
+| radvd     | 23 |
+| chrony    | 24 |
+| tss       | 25 |
+| usbmuxd   | 26 |
+| geoclue   | 27 |
+| qemu      | 28 |
+| rpcuser   | 29 |
+| nfsnobody | 30 |
+
+12 rows in set (0.00 sec)
+
+mysql> select name,id from user where name like '%'  having name="";
+
+| name | id |
+|      | 53 |
+1 row in set (0.00 sec)
+
+mysql> select name,id from user where name like '%'  having name is null;
+Empty set (0.00 sec)
+
+mysql> select name,id from user where name like '%'  having name="null";
+
+| name | id |
+| null | 52 |
+| null | 54 |
+
+2 rows in set (0.01 sec)
+
+mysql> select name,id,shell from user where name like '%'  having shell is null;
+
+| name  | id | shell |
+| tom3  | 51 | NULL  |
+| tom2  | 50 | NULL  |
+| null  | 52 | NULL  |
+|       | 53 | NULL  |
+| null  | 54 | NULL  |
+| yaya1 | 56 | NULL  |
+| yaya2 | 57 | NULL  |
+| yaaa3 | 58 | NULL  |
+| yaxa9 | 59 | NULL  |
+9 rows in set (0.00 sec)
+
+mysql> select name,id,shell from user limit 3;
+
+| name   | id | shell         |
+| root   |  1 | /bin/bash     |
+| bin    |  2 | /sbin/nologin |
+| daemon |  3 | /sbin/nologin |
+
+3 rows in set (0.00 sec)
+
+mysql> select name,id,shell,gid from db3.user limit 0,2;
+
+| name | id | shell         | gid  |
+| root |  1 | /bin/bash     |    0 |
+| bin  |  2 | /sbin/nologin |    1 |
+
+2 rows in set (0.00 sec)
+
+mysql> select name,id,shell,gid from db3.user limit 7,2;
+
+| name | id | shell         | gid  |
+| halt |  8 | /sbin/halt    |    0 |
+| mail |  9 | /sbin/nologin |   12 |
+
+2 rows in set (0.00 sec)
+
+mysql> select name,id,shell,gid from db3.user where 
+    -> shell !="/bin/bash" limit 3;
+
+| name   | id | shell         | gid  |
+| bin    |  2 | /sbin/nologin |    1 |
+| daemon |  3 | /sbin/nologin |    2 |
+| adm    |  4 | /sbin/nologin |    4 |
+
+3 rows in set (0.00 sec)
+
+mysql> select name,id,shell,gid from db3.user where  shell !="/bin/bash" limit 2,3;
+
+| name | id | shell         | gid  |
+| adm  |  4 | /sbin/nologin |    4 |
+| lp   |  5 | /sbin/nologin |    7 |
+| sync |  6 | /bin/sync     |    0 |
+
+3 rows in set (0.00 sec)
+
+mysql> 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.51
+192.168.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+
+
+
+
+
+
+
+
+
+
+
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.52
+192.168.2.52
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+
+
+
+
+
+
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.53
+192.168.2.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+
+
+
+
+[root@H54 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.54
+192.168.2.54
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H54 ~]#
+
+
+
+
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.55
+192.168.2.55
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H55 ~]#
+
+
+
+[root@H56 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.56
+192.168.2.56
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H56 ~]#
+
+
+[root@H57 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.57
+192.168.2.57
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H57 ~]# 
+
+
+
+

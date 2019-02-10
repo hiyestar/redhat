@@ -1,0 +1,172 @@
+   35  tar -xvf mysql-5.7.17.tar 
+   36  ls *.rpm
+   42  yum -y  install  perl-JSON
+   43  rpm -Uvh mysql-community-*.rpm
+   44  rpm -qa  | grep  -i  mysql
+   50  systemctl  start mysqld
+   51  systemctl  status mysqld
+   59  systemctl  enable mysqld
+   54  ps -C mysqld
+   55  netstat -utnlp  | grep  mysqld
+   68  which  mysql
+   69  rpm -qf  /usr/bin/mysql
+   70  ls /var/log/mysqld.log
+   71  grep  password  /var/log/mysqld.log 
+   72  mysql  -hlocalhost  -uroot -p'YfylUR1w?Ayw'
+mysql> alter user  root@"localhost" identified by "123qqq...A";
+Query OK, 0 rows affected (0.00 sec)
+mysql> show  databases;
+mysql> quit;
+sql
+]#mysql  -hlocalhost  -uroot -p123qqq...A
+mysql> show  databases;
+mysql> create database game;
+mysql> use  game;
+mysql> select database();
+mysql> show tables;
+mysql> create table  game.t1(name  char, age int, sex char);
+mysql> show tables;
+mysql> desc  t1;
+mysql> select  * from  t1; 
+mysql> insert into t1  values("a",19,"m"),("b",21,"g");
+mysql> select  * from  t1; 
+mysql> select  name,age from  t1;
+mysql> update t1 set age=21 where name="a";
+mysql> delete from t1 where  name="b";
+mysql> delete from t1;
+mysql> drop  table  t1;
+mysql> drop  database game;
+mysql> show databases;
+
+create table 学生库；
+use 学生库;
+
+mysql> create table 学生表( 
+姓名 char(15), 
+班级 char(7), 
+家庭地址 char(50) 
+)DEFAULT CHARSET=utf8;
+
+mysql> show create table 学生表;
+mysql> desc 学生表;
+mysql> insert into 学生表 values("张三丰","1806","武当山");
+mysql> select  * from  学生表;
+
+
+mysql> create  database db1;
+mysql> use db1;
+
+mysql> create table t1(
+    -> age  tinyint,
+    -> pay  float(7,2)
+    -> );
+
+mysql> desc t1;
+
+mysql> insert into t1  values(2018,28000.88);
+ERROR 1264 (22003): Out of range value for column 'age' at row 1
+
+mysql> insert into t1  values(18,28000.88);
+Query OK, 1 row affected (0.04 sec)
+
+mysql> select  * from t1;
+
+
+mysql> create table  t2 ( age  tinyint  unsigned);
+mysql> insert into  t2 values(-1);
+ERROR 1264 (22003): Out of range value for column 'age' at row 1
+
+mysql> insert into  t2 values(256);
+ERROR 1264 (22003): Out of range value for column 'age' at row 1
+mysql> insert into  t2 values(156);
+Query OK, 1 row affected (0.04 sec)
+
+mysql> insert into t1  values(60.53,128);
+Query OK, 1 row affected (0.04 sec)
+
+mysql> select  * from t1;
++------+----------+
+| age  | pay      |
++------+----------+
+|   18 | 28000.88 |
+|  -18 | 28000.88 |
+|   61 |   128.00 |
++------+----------+
+
+mysql> create table  t4(name  char(3),homeaddr varchar(30) );
+
+mysql> insert into t4  values("ab","beijing");
+
+mysql> insert into t4  values("jack","beijing");
+ERROR 1406 (22001): Data too long for column 'name' at row 1
+
+mysql> select  * from t4;
+mysql> create table t5(
+    -> name  char(10),
+    -> birthday  date,
+    -> meetting  datetime,
+    -> start     year,
+    -> sktime    time
+    -> );
+
+mysql> desc t5;
++----------+----------+------+-----+---------+-------+
+| Field    | Type     | Null | Key | Default | Extra |
++----------+----------+------+-----+---------+-------+
+| name     | char(10) | YES  |     | NULL    |       |
+| birthday | date     | YES  |     | NULL    |       |
+| meetting | datetime | YES  |     | NULL    |       |
+| start    | year(4)  | YES  |     | NULL    |       |
+| sktime   | time     | YES  |     | NULL    |       |
++----------+----------+------+-----+---------+-------+
+
+mysql> insert into t5 values("bob",20181120,20180928203000,1990,083000);
+
+mysql> select  * from t5;
++------+------------+---------------------+-------+----------+
+| name | birthday   | meetting            | start | sktime   |
++------+------------+---------------------+-------+----------+
+| bob  | 2018-11-20 | 2018-09-28 20:30:00 |  1990 | 08:30:00 |
++------+------------+---------------------+-------+----------+
+
+mysql> create table  t6(
+    -> name  char(5),
+    -> sex enum("boy","girl","no"),
+    -> likes set("eat","sleep","game","it")
+    -> );
+
+mysql> desc t6;
++-------+--------------------------------+------+-----+---------+-------+
+| Field | Type                           | Null | Key | Default | Extra |
++-------+--------------------------------+------+-----+---------+-------+
+| name  | char(5)                        | YES  |     | NULL    |       |
+| sex   | enum('boy','girl','no')        | YES  |     | NULL    |       |
+| likes | set('eat','sleep','game','it') | YES  |     | NULL    |       |
++-------+--------------------------------+------+-----+---------+-------+
+
+mysql> insert into t6 values("bob","man","book,music");
+
+ERROR 1265 (01000): Data truncated for column 'sex' at row 1
+
+mysql> insert into t6 values("bob","boy","book,music");
+
+ERROR 1265 (01000): Data truncated for column 'likes' at row 1
+
+mysql> mysql> insert into t6 values("bob","boy","eat,sleep");
+
+Query OK, 1 row affected (0.02 sec)
+
+mysql> select  * from t6;
++------+------+-----------+
+| name | sex  | likes     |
++------+------+-----------+
+| bob  | boy  | eat,sleep |
++------+------+-----------+
+1 row in set (0.00 sec)
+
+++++++++++++++++++++++++++++++++++++++++++
+创建perdb库，在库下创建dogper表（存储前任信息 字段个数和类型自定义，然后把所有的前任信息存进去）
+
+搭建新的3台数据库服务器ip 地址 192.168.4.51/52/53 把管理员本机登陆秘密设置为123qqq...A
+
+_______________________________

@@ -1,0 +1,1344 @@
+
+binlog 日志
+server_id={服务器id 取值 范围 1 ~ 255 }
+
+
+[root@room9pc01 ~]# for i in {50..55}
+> do
+> scp -o StrictHostKeyChecking=no '/root/桌面/percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm' '/root/桌面/libev-4.15-1.el6.rf.x86_64.rpm' root@192.168.4.$i:/root/
+> done
+
+root@192.168.4.50's password: 
+percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm  100% 7508KB  80.9MB/s   00:00    
+libev-4.15-1.el6.rf.x86_64.rpm                100%   73KB   6.6MB/s   00:00    
+root@192.168.4.51's password: 
+......................
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H50 ~]# ss -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+udp  UNCONN  0  0    *:11211         *:*   users:(("memcached",pid=1027,fd=28))
+udp  UNCONN  0  0    :::11211        :::*  users:(("memcached",pid=1027,fd=29))
+tcp  LISTEN  0  128  *:11211         *:*   users:(("memcached",pid=1027,fd=26))
+tcp  LISTEN  0  128  127.0.0.1:9000  *:*   users:(("php-fpm",pid=1171,fd=0),...
+tcp  LISTEN  0  128  :::11211        :::*  users:(("memcached",pid=1027,fd=27))
+tcp  LISTEN  0  128  :::80           :::*  users:(("httpd",pid=1176,fd=4),...
+tcp  LISTEN  0  80   :::3306         :::*  users:(("mysqld",pid=1349,fd=37))
+[root@H50 ~]# netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1027/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1030/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1027/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1053/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1349/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1027/memcached
+udp6  0  0  :::11211        :::*       1027/memcached
+[root@H50 ~]# id nginx
+uid=1001(nginx) gid=1001(nginx) 组=1001(nginx)
+[root@H50 ~]# ll libev-4.15-1.el6.rf.x86_64.rpm  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+-rw-r--r--. 1 root root   74692 10月 20 08:59 libev-4.15-1.el6.rf.x86_64.rpm
+-rw-r--r--. 1 root root 7688608 10月 20 08:59 percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+[root@H50 ~]# 
+[root@H50 ~]# mysql -uroot -p1234
+mysql> use gamedb;show tables;
+mysql> drop table t1;
+
+mysql> drop database gamedb;
+
+mysql> create database db5; # 注意这时候是空库db5
+
+mysql> use db5;
+
+mysql> system mkdir  /datadir;
+mysql> system ls /datadir/;
+mysql> system cp  -r /var/lib/mysql/ /datadir/; # 复制文件,备份数据库资料
+mysql> system ls /datadir/;
+mysql
+mysql> system chown -R mysql:mysql  /datadir/mysql/;
+mysql> system ls -ld  /datadir/mysql/
+drwxr-x--x. 12 mysql mysql 4096 10月 20 09:11 /datadir/mysql/
+
+mysql> system cp -r /var/lib/mysql  /datadir/mysql.bak;
+mysql> system scp -r /datadir/mysql.bak  192.168.4.51:/root/  #把数据库文件 mysql.bak 同步传递到主机51 上
+
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.4.51' (ECDSA) to the list of known hosts.
+root@192.168.4.51's password: 123
+..............................
+mysql.sock.lock                                                100%    5     7.6KB/s   00:00    
+/datadir/mysql.bak/mysql.sock: No such device or address
+db.opt                                                         100%   65   164.6KB/s   00:00    
+mysql> show databases;
+| Database           |
+| information_schema |
+| db3                |
+| db4                |
+| db44               |
+| db5                |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb              |
+| teadb2             |
+[root@H50 ~]# mysql -uroot -p1234
+
+mysql> create database db55;
+
+mysql> create table db55.a select * from db3.user limit 7;
+
+mysql> desc db55.a;
+| Field    | Type                | Null | Key | Default | Extra |
+| id       | int(2)              | NO   |     | 0       |       |
+| name     | char(50)            | YES  |     | NULL    |       |
+| age      | tinyint(2) unsigned | YES  |     | 19      |       |
+| password | char(1)             | YES  |     | NULL    |       |
+| uid      | int(1)              | YES  |     | NULL    |       |
+| gid      | int(1)              | YES  |     | NULL    |       |
+| comment  | varchar(150)        | YES  |     | NULL    |       |
+| homedir  | varchar(100)        | YES  |     | NULL    |       |
+| shell    | char(30)            | YES  |     | NULL    |       |
+
+mysql> select * from db55.a;
+
+| id | name     | age  | password | uid  | gid  | comment | homedir        | shell          |
+|  1 | root     |   88 | x        |   10 |    0 | student | /root          | /bin/bash      |
+|  2 | bin      |   88 | a        |   11 |    1 | student | /bin           | /sbin/nologin  |
+|  3 | daemon   |   88 | a        |   12 |    2 | student | /sbin          | /sbin/nologin  |
+|  4 | adm      |   88 | a        |   14 |    4 | student | /var/adm       | /sbin/nologin  |
+|  5 | lp       |   88 | a        |   17 |    7 | student | /var/spool/lpd | /sbin/nologin  |
+|  6 | sync     |   88 | a        |   10 |    0 | student | /sbin          | /bin/sync      |
+|  7 | shutdown |   88 | a        |   10 |    0 | student | /sbin          | /sbin/shutdown |
+
+mysql> show databases;
+
+| Database           |
+| information_schema |
+| db3                |
+| db4                |
+| db44               |
+| db5                |
+| db55               |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb              |
+| teadb2             |
+
+mysql> use  db5;show tables;
+Database changed
+Empty set (0.00 sec)
+
+mysql> create database db6;
+
+mysql> use db6;
+
+mysql> show tables;
+Empty set (0.00 sec)
+
+mysql> create table db6.t1 select * from db3.user limit 3;
+
+mysql> select * from db6.t1;
+| id | name   | age  | password | uid  | gid  | comment | homedir | shell         |
+|  1 | root   |   88 | x        |   10 |    0 | student | /root   | /bin/bash     |
+|  2 | bin    |   88 | a        |   11 |    1 | student | /bin    | /sbin/nologin |
+|  3 | daemon |   88 | a        |   12 |    2 | student | /sbin   | /sbin/nologin |
+
+[root@H50 ~]# mysqldump -uroot -p1234 db6 >/datadir/db6.sql  # 1 先备份数据库 db6
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@H50 ~]# 
+
+mysql> drop table db6.t1;show tables;  # 2 drop 数据库db6
+Query OK, 0 rows affected (0.00 sec)
+
+Empty set (0.01 sec)
+
+mysql> source /datadir/db6.sql   # 3 还原数据库db6
+
+mysql> show tables;
+
+| Tables_in_db6 |
+| t1            |
+
+mysql> select * from db6.t1;
+| id | name   | age  | password | uid  | gid  | comment | homedir | shell         |
+|  1 | root   |   88 | x        |   10 |    0 | student | /root   | /bin/bash     |
+|  2 | bin    |   88 | a        |   11 |    1 | student | /bin    | /sbin/nologin |
+|  3 | daemon |   88 | a        |   12 |    2 | student | /sbin   | /sbin/nologin |
+
+mysql> 
+
+
+[root@H50 ~]# ls /datadir/
+mysql  mysql.bak
+[root@H50 ~]# rm -rf /datadir/*
+[root@H50 ~]# ls /datadir/
+[root@H50 ~]# mysqldump -uroot -p1234 -A > /datadir/allbak.sql  #备份 所有 数据库
+
+[root@H50 ~]# head -2 /datadir/allbak.sql
+-- MySQL dump 10.13  Distrib 5.7.17, for Linux (x86_64)
+--
+[root@H50 ~]# mysqldump -uroot -p1234 -B db5 >/datadir/db5.sql  # 注意这是空库db5
+
+[root@H50 ~]# tail -2 /datadir/db5.sql
+
+-- Dump completed on 2018-10-20 10:21:46
+[root@H50 ~]# mysqldump -uroot  -p1234 -B db5  db55 >/datadir/twpdb.sql   #备份数据库db5,db55两个数据库
+
+[root@H50 ~]# mysqldump -uroot -p1234  db55  a >/datadir/db5t_a.sql #备份数据库db55下的表db55.a
+
+[root@H50 ~]# cat -n /datadir/db5t_a.sql |head -14 |tail -1
+    14	/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+[root@H50 ~]# ls /datadir/
+allbak.sql  db5.sql  db5t_a.sql  twpdb.sql
+[root@H50 ~]# scp -r /datadir/ 192.168.4.52:/root/  #把数据库文件 同步传递到主机52 上
+
+Are you sure you want to continue connecting (yes/no)? yes
+
+root@192.168.4.52's password: 
+allbak.sql                                    100%  797KB 109.8MB/s   00:00    
+db5.sql                                       100% 1380     3.5MB/s   00:00    
+twpdb.sql                                     100% 2711     7.1MB/s   00:00    
+db5t_a.sql                                    100% 2437     8.3MB/s   00:00    
+[root@H50 ~]# mysql -uroot -p1234 db6 </datadir/db5.sql  #导入数据到空数据库db6
+mysql: [Warning] Using a password on the command line interface can be insecure.
+[root@H50 ~]# mysql -uroot -p1234
+
+mysql> use db5;show tables;
+Database changed
+Empty set (0.00 sec)
+
+mysql> create table db5.t1(id int);
+
+mysql> insert into db5.t1 values(1110),(1230),(120);
+
+mysql> show variables like '%binlog_format';
+| Variable_name | Value |
+| binlog_format | ROW   |
+
+mysql> exit;
+Bye
+[root@H50 ~]# vim /etc/my.cnf
+[mysqld]
+server_id=50
+log_bin     # 启用默认路径的日志binlog
+binlog_format="mixed"
+#skip_grant_tables
+secure_file_priv=/mydir/
+default-storage-engine=myisam
+validate_password_policy=0
+validate_password_length=4
+
+[root@H50 ~]# systemctl restart mysqld
+[root@H50 ~]# ls /var/lib/mysql/
+auto.cnf         db44            ibdata1      mysql.sock.lock     sys
+ca-key.pem       db5             ib_logfile0  performance_schema  teadb
+ca.pem           db55            ib_logfile1  private_key.pem     teadb2
+client-cert.pem  db6             ibtmp1       public_key.pem
+client-key.pem   H50-bin.000001  l73vRKi      server-cert.pem
+db3              H50-bin.index   mysql        server-key.pem
+db4              ib_buffer_pool  mysql.sock   stut
+[root@H50 ~]# cat /var/lib/mysql/H50-bin.index  #注意主机名 H50
+./H50-bin.000001
+[root@H50 ~]# mysqlbinlog /var/lib/mysql/H50-bin.000001 
+......................................
+#181020 11:37:52 server id 50  end_log_pos 123 CRC32 0xa54b689d 	Start: binlog v 4, server v 5.7.17-log created 181020 11:37:52 at startup
+.................................
+#181020 11:37:52 server id 50  end_log_pos 154 CRC32 0x6090bfd5 	Previous-GTIDs
+# [empty]
+SET @@SESSION.GTID_NEXT= 'AUTOMATIC' /* added by mysqlbinlog */ /*!*/;
+DELIMITER ;
+# End of log file
+/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/;
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/;
+
+[root@H50 ~]# mysqlbinlog /var/lib/mysql/H50-bin.000001 |grep 'server id 50'
+
+#181020 11:37:52 server id 50  end_log_pos 123 CRC32 0xa54b689d 	Start: binlog v 4, server v 5.7.17-log created 181020 11:37:52 at startup
+#181020 11:37:52 server id 50  end_log_pos 154 CRC32 0x6090bfd5 	Previous-GTIDs
+
+mysql> exit;
+Bye
+[root@H50 ~]# mkdir /logdir/
+[root@H50 ~]# chown mysql /logdir/
+[root@H50 ~]# ls -ld /logdir/
+drwxr-xr-x. 2 mysql root 6 10月 20 11:47 /logdir/
+[root@H50 ~]# 
+
+[root@H50 ~]# vim /etc/my.cnf
+[mysqld]
+server_id=50
+#log_bin    
+log_bin=/logdir/plj  #起用自定义的路径 binlog 日志
+binlog_format="mixed"
+#skip_grant_tables
+secure_file_priv=/mydir/
+default-storage-engine=myisam
+validate_password_policy=0
+validate_password_length=4
+#
+[root@H50 ~]# systemctl restart mysqld
+
+[root@H50 ~]# mysql -uroot -p1234
+
+mysql> use db5;
+mysql> show tables;
+| Tables_in_db5 |
+| t1            |
+
+mysql> insert into db5.t1 values(100),(200);
+
+mysql> desc t1;
+| Field | Type    | Null | Key | Default | Extra |
+| id    | int(11) | YES  |     | NULL    |       |
+
+mysql> select * from db5.t1;
+| id   |
+| 1110 |
+| 1230 |
+|  120 |
+|  100 |
+|  200 |
+
+mysql> update db5.t1 set id=888 where id=120;
+
+mysql> select * from db5.t1;
+| id   |
+| 1110 |
+| 1230 |
+|  888 |
+|  100 |
+|  200 |
+
+mysql> delete from db5.t1;
+Query OK, 5 rows affected (0.06 sec)
+
+mysql> select * from db5.t1;
+Empty set (0.00 sec)
+
+mysql> desc db5.t1;
++-------+---------+------+-----+---------+-------+
+| Field | Type    | Null | Key | Default | Extra |
++-------+---------+------+-----+---------+-------+
+| id    | int(11) | YES  |     | NULL    |       |
++-------+---------+------+-----+---------+-------+
+1 row in set (0.00 sec)
+
+mysql> insert into db5.t1 values(100),(200);
+Query OK, 2 rows affected (0.05 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> insert into db5.t1 values(1001),(2001);
+Query OK, 2 rows affected (0.03 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> update db5.t1 set id=888 where id=100;
+Query OK, 1 row affected (0.05 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> show tables;
++---------------+
+| Tables_in_db5 |
++---------------+
+| t1            |
++---------------+
+
+at 1121
+# at 1263
+#181020 14:38:33 server id 50  end_log_pos 1371 CRC32 0x03fb029f 	Query	thread_id=3	exec_time=0	error_code=0
+SET TIMESTAMP=1540017513/*!*/;
+insert into db5.t1 values(100),(200)
+
+# at 2030
+#181020 14:39:05 server id 50  end_log_pos 2108 CRC32 0xa17c6add 	Query	thread_id=3	exec_time=0	error_code=0
+SET TIMESTAMP=1540017545/*!*/;
+COMMIT
+
+
+
+
+
+mysql> 
+[root@H50 ~]# ls /var/lib/mysql/
+auto.cnf         db44            ibdata1      mysql.sock.lock     sys
+ca-key.pem       db5             ib_logfile0  performance_schema  teadb
+ca.pem           db55            ib_logfile1  private_key.pem     teadb2
+client-cert.pem  db6             ibtmp1       public_key.pem
+client-key.pem   H50-bin.000001  l73vRKi      server-cert.pem
+db3              H50-bin.index   mysql        server-key.pem
+db4              ib_buffer_pool  mysql.sock   stut
+[root@H50 ~]# ls /logdir/
+plj.000001  plj.index
+[root@H50 ~]# mysqlbinlog /logdir/plj.000001 |grep -i update
+update db5.t1 set id=888 where id=120
+[root@H50 ~]# mysqlbinlog /logdir/plj.000001 |grep -i select
+[root@H50 ~]# mysqlbinlog /logdir/plj.000001 |grep -i desc
+[root@H50 ~]# mysqlbinlog /logdir/plj.000001 |grep -i insert
+insert into db5.t1 values(100),(200)
+[root@H50 ~]# 
+[root@H50 ~]# mysqldump -uroot -p1234 --all-databases > /root/alldb2.sql #备份数据库所有的数据
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@H50 ~]# file /root/alldb2.sql
+/root/alldb2.sql: UTF-8 Unicode text, with very long lines
+
+[root@H50 ~]#  grep -vE '^/|^-|^$' /root/alldb2.sql | head -3
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `db3` /*!40100 DEFAULT CHARACTER SET latin1 */;
+USE `db3`;
+DROP TABLE IF EXISTS `admin`;
+
+[root@H50 ~]#  grep -v '^/|^-|^$' /root/alldb2.sql | head -3
+
+-- MySQL dump 10.13  Distrib 5.7.17, for Linux (x86_64)
+--
+-- Host: localhost    Database: 
+[root@H50 ~]# 
+[root@H50 ~]# scp  /root/alldb2.sql root@192.168.4.53:/root/  #传递数据库备份文件
+
+[root@H50 ~]# ls /datadir/
+allbak.sql  db5.sql  db5t_a.sql  db6.sql  twpdb.sql
+[root@H50 ~]# mysqldump -uroot -p1234 db5 t1 > /datadir/db5_t1.sql
+
+[root@H50 ~]# 
+at 1121
+# at 1263
+#181020 14:38:33 server id 50  end_log_pos 1371 CRC32 0x03fb029f 	Query	thread_id=3	exec_time=0	error_code=0
+SET TIMESTAMP=1540017513/*!*/;
+insert into db5.t1 values(100),(200)
+
+# at 2030
+#181020 14:39:05 server id 50  end_log_pos 2108 CRC32 0xa17c6add 	Query	thread_id=3	exec_time=0	error_code=0
+SET TIMESTAMP=1540017545/*!*/;
+COMMIT
+[root@H50 ~]#  mysqlbinlog --start-position=1263 --stop-position=2030  /logdir/plj.000001 |mysql -uroot -p1234
+
+[root@H50 ~]# 
+
+[root@H50 ~]# mysqldump -uroot -p1234 db5 t1 > /datadir/db5_t1x.sql
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@H50 ~]#
+mysql> drop table db5.t1;
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> select * from db5.t1;
+ERROR 1146 (42S02): Table 'db5.t1' doesn't exist
+mysql> 
+[root@H50 ~]# ll /datadir/db5_t1x.sql
+-rw-r--r--. 1 root root 1810 10月 20 14:59 /datadir/db5_t1x.sql
+[root@H50 ~]# 
+[root@H50 ~]#  mysqlbinlog /logdir/plj.000001 
+
+# at 2250
+#181020 14:38:33 server id 50  end_log_pos 2358 CRC32 0x9fa5ebe7 	Query	thread_id=3	exec_time=996	error_code=0
+SET TIMESTAMP=1540017513/*!*/;
+insert into db5.t1 values(100),(200)
+
+# at 3017
+#181020 14:39:05 server id 50  end_log_pos 3095 CRC32 0x6a149b59 	Query	thread_id=3	exec_time=964	error_code=0
+SET TIMESTAMP=1540017545/*!*/;
+COMMIT
+
+[root@H50 ~]#  mysqlbinlog --start-position=2250 --stop-position=3017  /logdir/plj.000001 |mysql -uroot -p1234
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1146 (42S02) at line 25: Table 'db5.t1' doesn't exist
+[root@H50 ~]#  mysqlbinlog --start-position=1250 --stop-position=3017  /logdir/plj.000001 |mysql -uroot -p1234
+
+[root@H50 ~]#  mysqlbinlog  --stop-position=3017  /logdir/plj.000001 |mysql -uroot -p1234
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1146 (42S02) at line 36: Table 'db5.t1' doesn't exist
+[root@H50 ~]# 
+[root@H50 ~]# mysqlbinlog \
+    --start-datetime="2018-10-20 14:38:33" \ 
+    --stop-datetime="2018-10-20 14:39:05" \
+    /var/lib/mysql/mysql-bin.000002 | mysql -u root -p1234
+
+mysql> flush privileges;
+
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000001 |     4737 |              |                  |                   |
+
+[root@H50 ~]# ls /logdir/
+plj.000001  plj.index
+
+mysql> flush logs;
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000002 |      154 |              |                  |                   |
+
+[root@H50 ~]# ls /logdir/
+plj.000001  plj.000002  plj.index
+
+[root@H50 ~]# mysql -uroot -p1234 -e  "flush logs"
+mysql: [Warning] Using a password on the command line interface can be insecure.
+[root@H50 ~]# ls /logdir/
+plj.000001  plj.000002  plj.000003  plj.index
+
+[root@H50 ~]# mysqldump -uroot -p1234 --flush-logs db5 >/root/db5x2.sql
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[root@H50 ~]# ls /logdir/
+plj.000001  plj.000002  plj.000003  plj.000004  plj.index
+
+[root@H50 ~]# systemctl restart mysqld
+[root@H50 ~]# ls /logdir/
+plj.000001  plj.000002  plj.000003  plj.000004  plj.000005  plj.index
+[root@H50 ~]# 
+mysql> show master status;
+Current database: db5
+
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000005 |      154 |              |                  |                   |
+1 row in set (0.01 sec)
+
+
+mysql> purge master logs to "plj.000005";
+
+mysql> reset master;
+
+mysql> show master status;
+| File       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| plj.000001 |      154 |              |                  |                   |
+
+mysql> 
+[root@H50 ~]# ls /logdir/
+plj.000001  plj.index
+[root@H50 ~]# mysqlbinlog /logdir/plj.000001 
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=1*/;
+/*!50003 SET @OLD_COMPLETION_TYPE=@@COMPLETION_TYPE,COMPLETION_TYPE=0*/;
+DELIMITER /*!*/;
+# at 4
+#181020 15:50:41 server id 50  end_log_pos 123 CRC32 0x618a2272 	Start: binlog v 4, server v 5.7.17-log created 181020 15:50:41 at startup
+# Warning: this binlog is either in use or was not closed properly.
+ROLLBACK/*!*/;
+BINLOG '
+Ud7KWw8yAAAAdwAAAHsAAAABAAQANS43LjE3LWxvZwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAABR3spbEzgNAAgAEgAEBAQEEgAAXwAEGggAAAAICAgCAAAACgoKKioAEjQA
+AXIiimE=
+'/*!*/;
+# at 123
+#181020 15:50:41 server id 50  end_log_pos 154 CRC32 0xd5429e9e 	Previous-GTIDs
+# [empty]
+SET @@SESSION.GTID_NEXT= 'AUTOMATIC' /* added by mysqlbinlog */ /*!*/;
+DELIMITER ;
+# End of log file
+/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/;
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/;
+[root@H50 ~]# 
+
+[root@H50 ~]# ls libev-4.15-1.el6.rf.x86_64.rpm  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm 
+libev-4.15-1.el6.rf.x86_64.rpm  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+
+[root@H50 ~]# yum -y install libev-4.15-1.el6.rf.x86_64.rpm  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+
+已安装:
+  libev.x86_64 0:4.15-1.el6.rf             percona-xtrabackup-24.x86_64 0:2.4.7-1.el7            
+
+作为依赖被安装:
+  perl-Digest.noarch 0:1.17-245.el7              perl-Digest-MD5.x86_64 0:2.52-3.el7             
+
+完毕！
+[root@H50 ~]# rpm -ql  libev-4.15-1.el6.rf  percona-xtrabackup-24
+/usr/lib64/libev.so.4
+/usr/lib64/libev.so.4.0.0
+/usr/share/doc/libev-4.15
+/usr/share/doc/libev-4.15/Changes
+/usr/share/doc/libev-4.15/LICENSE
+/usr/share/doc/libev-4.15/README
+/usr/bin/innobackupex
+/usr/bin/xbcloud
+/usr/bin/xbcloud_osenv
+/usr/bin/xbcrypt
+/usr/bin/xbstream
+/usr/bin/xtrabackup
+/usr/share/doc/percona-xtrabackup-24-2.4.7
+/usr/share/doc/percona-xtrabackup-24-2.4.7/COPYING
+/usr/share/man/man1/innobackupex.1.gz
+/usr/share/man/man1/xbcrypt.1.gz
+/usr/share/man/man1/xbstream.1.gz
+/usr/share/man/man1/xtrabackup.1.gz
+
+[root@H50 ~]# man innobackupex
+[root@H50 ~]#  
+[root@H50 ~]# man xtrabackup
+[root@H50 ~]# xtrabackup --help
+   --target-dir=name   destination directory
+  --backup            take backup to target-dir
+  --stats             calc statistic of datadir (offline mysqld is recommended)
+
+[root@H50 ~]# rpm -qpi percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm 
+警告：percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm: 头V4 DSA/SHA1 Signature, 密钥 ID cd2efd2a: NOKEY
+Name        : percona-xtrabackup-24
+Version     : 2.4.7
+Release     : 1.el7
+Architecture: x86_64
+Install Date: (not installed)
+Group       : Applications/Databases
+Size        : 32462102
+License     : GPLv2
+Signature   : DSA/SHA1, 2017年04月17日 星期一 22时19分23秒, Key ID 1c4cbdcdcd2efd2a
+Source RPM  : percona-xtrabackup-24-2.4.7-1.el7.src.rpm
+Build Date  : 2017年04月17日 星期一 22时18分13秒
+Build Host  : v-centos-7-x64-01.ci.percona.com
+Relocations : (not relocatable)
+URL         : http://www.percona.com/software/percona-xtrabackup
+Summary     : XtraBackup online backup for MySQL / InnoDB
+Description :
+Percona XtraBackup is OpenSource online (non-blockable) backup solution for InnoDB and XtraDB engines
+[root@H50 ~]# 
+[root@H50 ~]# rpm -q  perl-DBD-MySQL 
+perl-DBD-MySQL-4.023-5.el7.x86_64
+[root@H50 ~]# 
+[root@H50 ~]# vim /etc/my.cnf
+ 
+[mysqld]
+server_id=50
+#log_bin
+log_bin=/logdir/plj
+binlog_format="mixed"
+#skip_grant_tables
+secure_file_priv=/mydir/
+#default-storage-engine=myisam #注释,启用默认的存储引擎
+validate_password_policy=0
+validate_password_length=4
+#
+[root@H50 ~]# systemctl restart mysqld
+
+mysql> show engines\G
+*************************** 1. row ***************************
+      Engine: InnoDB
+     Support: YES
+     Comment: Supports transactions, row-level locking, and foreign keys
+Transactions: YES
+          XA: YES
+  Savepoints: YES
+*************************** 2. row ***************************
+      Engine: MRG_MYISAM
+     Support: YES
+     Comment: Collection of identical MyISAM tables
+Transactions: NO
+          XA: NO
+  Savepoints: NO
+*************************** 3. row ***************************
+      Engine: MEMORY
+     Support: YES
+     Comment: Hash based, stored in memory, useful for temporary tables
+Transactions: NO
+          XA: NO
+  Savepoints: NO
+
+
+mysql> show databases;
+ERROR 2006 (HY000): MySQL server has gone away
+No connection. Trying to reconnect...
+Connection id:    3
+Current database: *** NONE ***
+
+| Database           |
++--------------------+
+| information_schema |
+| db4                |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb2             |
++--------------------+
+7 rows in set (0.01 sec)
+
+mysql> show engines\G
+*************************** 1. row ***************************
+      Engine: InnoDB
+     Support: DEFAULT
+     Comment: Supports transactions, row-level locking, and foreign keys
+Transactions: YES
+          XA: YES
+  Savepoints: YES
+*************************** 2. row ***************************
+      Engine: MRG_MYISAM
+     Support: YES
+     Comment: Collection of identical MyISAM tables
+Transactions: NO
+          XA: NO
+  Savepoints: NO
+*************************** 3. row ***************************
+      Engine: MEMORY
+     Support: YES
+     Comment: Hash based, stored in memory, useful for temporary tables
+Transactions: NO
+          XA: NO
+  Savepoints: NO
+
+9 rows in set (0.00 sec)
+
+mysql> create database db5;
+Query OK, 1 row affected (0.03 sec)
+
+mysql> create table db5.a(id int);
+Query OK, 0 rows affected (0.36 sec)
+
+mysql> insert into db5.a values(110),(110),(110);
+Query OK, 3 rows affected (0.06 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+
+mysql> select * from db5.a;
++------+
+| id   |
++------+
+|  110 |
+|  110 |
+|  110 |
++------+
+3 rows in set (0.00 sec)
+
+mysql> exit;
+Bye
+[root@H50 ~]# mkdir /allbak
+[root@H50 ~]# innobackupex --host localhost --user root \
+> --password 1234  --port 3306 /allbak/
+...................................
+181020 16:47:21 [00]        ...done
+xtrabackup: Transaction log of lsn (3060506) to (3060515) was copied.
+181020 16:47:22 completed OK!
+[root@H50 ~]# ls /allbak/
+2018-10-20_16-47-11
+[root@H50 ~]# ls /allbak/2018-10-20_16-47-11/
+backup-my.cnf  ib_buffer_pool  performance_schema  teadb2                  xtrabackup_info
+db4            ibdata1         stut                xtrabackup_binlog_info  xtrabackup_logfile
+db5            mysql           sys                 xtrabackup_checkpoints
+[root@H50 ~]# mv /allbak/2018-10-20_16-47-11/*  /allbak/
+[root@H50 ~]# ls /allbak/
+2018-10-20_16-47-11  ib_buffer_pool      stut                    xtrabackup_checkpoints
+backup-my.cnf        ibdata1             sys                     xtrabackup_info
+db4                  mysql               teadb2                  xtrabackup_logfile
+db5                  performance_schema  xtrabackup_binlog_info
+[root@H50 ~]# rm -rf /allbak/
+[root@H50 ~]# ls /allbak/
+ls: 无法访问/allbak/: 没有那个文件或目录
+              ---------=== --datbase="mysql sys performance_schema db1 db2"
+[root@H50 ~]# mkdir /allbak/   
+[root@H50 ~]# innobackupex --host localhost --user root --password 1234  --port 3306 \
+> --no-timestamp  /allbak/
+.....................................
+xtrabackup: Transaction log of lsn (3060506) to (3060515) was copied.
+181020 16:50:50 completed OK!
+[root@H50 ~]# ls /allbak/  # 必须保证先有备份数据库
+backup-my.cnf  ib_buffer_pool  performance_schema  teadb2                  xtrabackup_info
+db4            ibdata1         stut                xtrabackup_binlog_info  xtrabackup_logfile
+db5            mysql           sys                 xtrabackup_checkpoints
+
+[root@H50 ~]# systemctl stop mysqld  #  注意停止数据库服务
+[root@H50 ~]# innobackupex  ^C
+[root@H50 ~]# ls /var/lib/mysql/
+auto.cnf         client-key.pem  H50-bin.index   ib_logfile1         private_key.pem  stut
+ca-key.pem       db4             ib_buffer_pool  l73vRKi             public_key.pem   sys
+ca.pem           db5             ibdata1         mysql               server-cert.pem  teadb2
+client-cert.pem  H50-bin.000001  ib_logfile0     performance_schema  server-key.pem
+[root@H50 ~]# ls /var/lib/mysql/ -ld
+drwxr-x--x. 9 mysql mysql 4096 10月 20 17:00 /var/lib/mysql/
+[root@H50 ~]# ll /var/lib/mysql/ 
+总用量 110668
+-rw-r-----. 1 mysql mysql       56 10月 15 10:19 auto.cnf
+-rw-------. 1 mysql mysql     1679 10月 15 10:19 ca-key.pem
+--------------------...............
+-rw-r--r--. 1 root  root         0 10月 15 10:54 l73vRKi
+drwxr-x---. 2 mysql mysql     4096 10月 15 10:19 mysql
+drwxr-x---. 2 mysql mysql     8192 10月 15 10:19 performance_schema
+drwxr-x---. 2 mysql mysql      166 10月 18 21:28 stut
+drwxr-x---. 2 mysql mysql     8192 10月 15 10:19 sys
+drwxr-x---. 2 mysql mysql       60 10月 15 15:29 teadb2
+
+[root@H50 ~]# rm -rf /var/lib/mysql/*
+[root@H50 ~]# ls /var/lib/mysql/ 
+恢复数据
+
+通过XtraBackup工具备份的数据库目录，若要恢复到另一个MySQL服务器，需要先做一个“--apply-log --redo-only ”的准备操作。
+1）准备恢复“完整备份”
+完成准备以后，最终/backup可用来重建MySQL服务器。这种情况下，
+需要先做一个“--apply-log --redo-only ”的准备操作，以确保数据一致性：
+[root@dbsvr1 ~]#innobackupex  --user=root --password=12345678 --apply-log  --redo-only /backup/
+******************/
+[root@H50 ~]# innobackupex --apply-log /allbak/  
+
+InnoDB: Shutdown completed; log sequence number 3060776
+181020 17:09:09 completed OK!
+
+[root@H50 ~]# innobackupex --copy-back  /allbak/
+
+181020 17:10:45 [01]        ...done
+181020 17:10:45 completed OK!
+
+[root@H50 ~]# ls /var/lib/mysql/
+db4             ibdata1      ibtmp1              stut    xtrabackup_binlog_pos_innodb
+db5             ib_logfile0  mysql               sys     xtrabackup_info
+ib_buffer_pool  ib_logfile1  performance_schema  teadb2
+
+[root@H50 ~]# ls /var/lib/mysql/sys/ -ld
+drwxr-x---. 2 root root 8192 10月 20 17:10 /var/lib/mysql/sys/
+
+[root@H50 ~]# chown -R mysql:mysql /var/lib/mysql/
+[root@H50 ~]# ls  -ld  /var/lib/mysql/
+drwxr-x--x. 9 mysql mysql 252 10月 20 17:10 /var/lib/mysql/
+
+[root@H50 ~]# ls  -ld  /var/lib/mysql/mysql/
+drwxr-x---. 2 mysql mysql 4096 10月 20 17:10 /var/lib/mysql/mysql/
+
+[root@H50 ~]# systemctl start mysqld
+[root@H50 ~]# mysql -uroot -p1234 -e "show databases;"
+| Database           |
+| information_schema |
+| db4                |
+| db5                |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb2             |
+[root@H50 ~]# mysql -uroot -p1234 -e "select * from db5.a;"
+| id   |
+|  110 |
+|  110 |
+|  110 |
+[root@H50 ~]# 
+mysql> insert into db5.a values(222),(202);
+
+mysql> system mkdir /fullbak;
+
+步骤二：innobackupex完整备份、增量备份操作
+
+--host 主机名
+
+--port 3306
+
+--user 用户名
+
+--password 密码
+
+--databases="库名"
+
+--databases="库1 库2"
+
+--databases="库.表"
+
+--no-timestamp 不用日期命名备份文件存储的子目录，使用备份的数据库名做备份目录名
+
+--no-timestmap 不使用日期命名备份目录名
+[root@H50 ~]# innobackupex  --user root --password 1234 \
+> --no-timestamp   /fullbak
+
+xtrabackup: Transaction log of lsn (3062723) to (3062732) was copied.
+181020 17:30:56 completed OK!
+
+[root@H50 ~]# ls /fullbak/
+backup-my.cnf  ib_buffer_pool  performance_schema  teadb2                  xtrabackup_info
+db4            ibdata1         stut                xtrabackup_binlog_info  xtrabackup_logfile
+
+[root@H50 ~]# innobackupex  --user root --password 1234  --incremental /newdir1 --incremental-basedir=/fullbak  --no-timestamp    #第一次增量备份完成/newdir1
+
+xtrabackup: Transaction log of lsn (3062723) to (3062732) was copied.
+181020 17:34:45 completed OK!
+
+[root@H50 ~]# ls -ld /fullbak/
+drwxr-xr-x. 9 root root 271 10月 20 17:30 /fullbak/
+[root@H50 ~]# ls  -ld  /newdir1/
+drwxr-x---. 9 root root 4096 10月 20 17:34 /newdir1/
+[root@H50 ~]# ls /newdir1/
+backup-my.cnf  ib_buffer_pool  mysql               sys                     xtrabackup_checkpoints
+db4            ibdata1.delta   performance_schema  teadb2                  xtrabackup_info
+db5            ibdata1.meta    stut                xtrabackup_binlog_info  xtrabackup_logfile
+[root@H50 ~]# 
+[root@H50 ~]# ls /fullbak/
+backup-my.cnf  ib_buffer_pool  performance_schema  teadb2                  xtrabackup_info
+db4            ibdata1         stut                xtrabackup_binlog_info  xtrabackup_logfile
+db5            mysql           sys                 xtrabackup_checkpoints
+[root@H50 ~]# 
+
+mysql> create database testdb6;
+
+mysql> create table testdb6.t1(id int,name char(22));
+
+mysql> insert into testdb6.t1 values(110,"firefox"),(120,"help");
+
+mysql> select * from testdb6.t1;
+
+| id   | name    |
+|  110 | firefox |
+|  120 | help    |
+
+mysql> 
+
+[root@H50 ~]# innobackupex  --user root --password 1234  --incremental /newdir2 --incremental-basedir=/newdir1   --no-timestamp 
+
+xtrabackup: Transaction log of lsn (3068954) to (3068963) was copied.
+181020 17:46:16 completed OK!
+[root@H50 ~]# ls /newdir1
+backup-my.cnf   ibdata1.delta       stut                    xtrabackup_checkpoints
+db4             ibdata1.meta        sys                     xtrabackup_info
+db5             mysql               teadb2                  xtrabackup_logfile
+ib_buffer_pool  performance_schema  xtrabackup_binlog_info
+[root@H50 ~]# ls /newdir2
+backup-my.cnf   ibdata1.delta       stut     xtrabackup_binlog_info
+db4             ibdata1.meta        sys      xtrabackup_checkpoints
+db5             mysql               teadb2   xtrabackup_info
+ib_buffer_pool  performance_schema  testdb6  xtrabackup_logfile
+[root@H50 ~]# 
+[root@H50 ~]# cat /newdir1/xtrabackup_checkpoints 
+backup_type = incremental
+from_lsn = 3062723
+to_lsn = 3062723
+last_lsn = 3062732
+compact = 0
+recover_binlog_info = 0
+[root@H50 ~]# cat /newdir2/xtrabackup_checkpoints 
+backup_type = incremental
+from_lsn = 3062723
+to_lsn = 3068954
+last_lsn = 3068963
+compact = 0
+recover_binlog_info = 0
+[root@H50 ~]# cat /fullbak/xtrabackup_checkpoints 
+backup_type = full-backuped
+from_lsn = 0
+to_lsn = 3062723
+last_lsn = 3062732
+compact = 0
+recover_binlog_info = 0
+[root@H50 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.51
+192.168.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H51 ~]# netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1093/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1085/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1093/memcached
+tcp6  0  0  :::3306         :::*       LISTEN          1609/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1093/memcached
+udp6  0  0  :::11211        :::*       1093/memcached
+[root@H51 ~]# id nginx
+uid=1001(nginx) gid=1001(nginx) 组=1001(nginx)
+[root@H51 ~]# ll libev-4.15-1.el6.rf.x86_64.rpm  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+-rw-r--r--. 1 root root   74692 10月 20 08:59 libev-4.15-1.el6.rf.x86_64.rpm
+-rw-r--r--. 1 root root 7688608 10月 20 08:59 percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+[root@H51 ~]# 
+[root@H51 ~]# rm -rf  /var/lib/mysql  # 注意删除库数据
+
+[root@H51 ~]# systemctl  stop mysqld
+[root@H51 ~]# ls /root/mysql.bak/
+.....................................
+
+[root@H51 ~]# chown -R  mysql:mysql  /var/lib/mysql/
+chown: 无法访问"/var/lib/mysql/": 没有那个文件或目录
+
+[root@H51 ~]# mkdir -m 2755 /var/lib/mysql/
+
+[root@H51 ~]# chown -R  mysql:mysql  /var/lib/mysql/
+[root@H51 ~]# ls -ld /var/lib/mysql/
+drwxr-sr-x. 2 mysql mysql 6 10月 20 09:29 /var/lib/mysql/
+
+[root@H51 ~]# chmod g-s /var/lib/mysql/
+[root@H51 ~]# ls -ld /var/lib/mysql/
+drwxr-xr-x. 2 mysql mysql 6 10月 20 09:29 /var/lib/mysql/
+
+[root@H51 ~]# ls  /var/lib/mysql/
+[root@H51 ~]# cp -r /root/mysql.bak/ /var/lib/mysql/  #把主机50 传来的数据库文件复制到本机数据库目录下
+--------------更好的做法是cp -r /root/mysql.bak/*  /var/lib/mysql/ 注意 * 号
+
+[root@H51 ~]# ls /var/lib/mysql/mysql.bak/
+............................................
+[root@H51 ~]# mv /var/lib/mysql/mysql.bak/*  /var/lib/mysql/
+
+[root@H51 ~]# ls /var/lib/mysql/
+..............................................
+
+[root@H51 ~]# chown -R mysql:mysql /var/lib/mysql/
+[root@H51 ~]# ls -ld /var/lib/mysql/
+drwxr-xr-x. 13 mysql mysql 4096 10月 20 09:36 /var/lib/mysql/
+
+[root@H51 ~]# ls  /var/lib/mysql/mysql*
+...................................
+[root@H51 ~]# ls  /var/lib/mysql/     
+auto.cnf         db3             ibdata1      mysql               public_key.pem   teadb
+ca-key.pem       db4             ib_logfile0  mysql.bak           server-cert.pem  teadb2
+ca.pem           db44            ib_logfile1  mysql.sock.lock     server-key.pem
+client-cert.pem  db5             ibtmp1       performance_schema  stut
+client-key.pem   ib_buffer_pool  l73vRKi      private_key.pem     sys
+您在 /var/spool/mail/root 中有新邮件
+[root@H51 ~]# ls  /var/lib/mysql/mysql.bak/
+[root@H51 ~]# rm -rf /var/lib/mysql/mysql.bak/
+[root@H51 ~]# ls  /var/lib/mysql/   # 这时的主机51 的数据库 资料和主机50 的数据库文件 一模一样
+auto.cnf         db3             ibdata1      mysql               server-cert.pem  teadb2
+ca-key.pem       db4             ib_logfile0  mysql.sock.lock     server-key.pem
+ca.pem           db44            ib_logfile1  performance_schema  stut
+client-cert.pem  db5             ibtmp1       private_key.pem     sys
+client-key.pem   ib_buffer_pool  l73vRKi      public_key.pem      teadb
+
+[root@H51 ~]# systemctl restart mysqld
+
+[root@H51 ~]# mysql -uroot -p1234 -e "show databases;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| db3                |
+| db4                |
+| db44               |
+| db5                |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb              |
+| teadb2             |
++--------------------+
+[root@H51 ~]# mysql -uroot -p1234
+
+mysql> use stut;show tables;
+
+| Tables_in_stut |
++----------------+
+| Course         |
+| Score          |
+| Student        |
+| Teacher        |
++----------------+
+4 rows in set (0.00 sec)
+
+mysql> select * from Score;
++-----+-------+--------+
+| Sno | Cno   | Degree |
++-----+-------+--------+
+| 103 | 3-245 |   86.0 |
+| 105 | 3-245 |   75.0 |
+| 109 | 3-245 |   68.0 |
+| 103 | 3-105 |   92.0 |
+| 105 | 3-105 |   88.0 |
+| 109 | 3-105 |   76.0 |
+| 101 | 3-105 |   64.0 |
+| 107 | 3-105 |   91.0 |
+| 108 | 3-105 |   78.0 |
+| 101 | 6-166 |   85.0 |
+| 107 | 6-166 |   79.0 |
+| 108 | 6-166 |   81.0 |
++-----+-------+--------+
+12 rows in set (0.00 sec)
+
+mysql> exit;
+Bye
+[root@H51 ~]# ls /home/
+lisi  nginx
+[root@H51 ~]# id mysql
+uid=27(mysql) gid=27(mysql) 组=27(mysql)
+[root@H51 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.52
+192.168.2.52
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H52 ~]# netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1084/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1082/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1084/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1162/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1605/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1084/memcached
+udp6  0  0  :::11211        :::*       1084/memcached
+[root@H52 ~]# id nginx
+uid=1001(nginx) gid=1001(nginx) 组=1001(nginx)
+[root@H52 ~]# ll libev-4.15-1.el6.rf.x86_64.rpm  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+-rw-r--r--. 1 root root   74692 10月 20 08:59 libev-4.15-1.el6.rf.x86_64.rpm
+-rw-r--r--. 1 root root 7688608 10月 20 08:59 percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+
+[root@H52 ~]# ls /root/datadir/  #确认主机50 已经传来数据库文件备份资料
+allbak.sql  db5.sql  db5t_a.sql  twpdb.sql
+
+[root@H52 ~]# mysql -uroot -p1234; 
+
+mysql> create database db5;
+
+mysql> create database db55;
+
+[root@H52 ~]# mysql -uroot -p1234 < /root/datadir/twpdb.sql  # 导入多个库 可以不写库名
+mysql: [Warning] Using a password on the command line interface can be insecure.
+
+[root@H52 ~]# mysql -uroot -p1234 db5 < /root/datadir/db5.sql  #导入一个库必须写库名
+mysql: [Warning] Using a password on the command line interface can be insecure.
+[root@H52 ~]# echo $?
+0
+[root@H52 ~]# mysql -uroot -p1234; 
+ 
+mysql> use db5;
+
+mysql> show tables;  # 注意导入的库db5 原本没有表,是空库
+Empty set (0.00 sec)
+
+mysql> use db55;show tables; # 注意导入的库db55 原本有表db55.a
+| Tables_in_db55 |
+| a              |
+
+mysql> select * from db55.a; 
+| id | name     | age  | password | uid  | gid  | comment | homedir        | shell          |
+|  1 | root     |   88 | x        |   10 |    0 | student | /root          | /bin/bash      |
+|  2 | bin      |   88 | a        |   11 |    1 | student | /bin           | /sbin/nologin  |
+|  3 | daemon   |   88 | a        |   12 |    2 | student | /sbin          | /sbin/nologin  |
+|  4 | adm      |   88 | a        |   14 |    4 | student | /var/adm       | /sbin/nologin  |
+|  5 | lp       |   88 | a        |   17 |    7 | student | /var/spool/lpd | /sbin/nologin  |
+|  6 | sync     |   88 | a        |   10 |    0 | student | /sbin          | /bin/sync      |
+|  7 | shutdown |   88 | a        |   10 |    0 | student | /sbin          | /sbin/shutdown |
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db5                |
+| db55               |
+| mysql              |
+| performance_schema |
+| sys                |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.53
+192.168.2.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1076/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1066/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1076/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1137/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1802/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1076/memcached
+udp6  0  0  :::11211        :::*       1076/memcached
+[root@H53 ~]# id nginx
+uid=1001(nginx) gid=1001(nginx) 组=1001(nginx)
+[root@H53 ~]# ll libev-4.15-1.el6.rf.x86_64.rpm  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+-rw-r--r--. 1 root root   74692 10月 20 08:59 libev-4.15-1.el6.rf.x86_64.rpm
+-rw-r--r--. 1 root root 7688608 10月 20 08:59 percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+[root@H53 ~]# 
+
+
+[root@H53 ~]# mysql -uroot -p1234
+
+mysql> create database db5;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> create database db55;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> exit;
+Bye
+[root@H53 ~]# ls /root/alldb2.sql 
+/root/alldb2.sql
+[root@H53 ~]# mysql -uroot -p1234 < /root/alldb2.sql
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| db3                |
+| db4                |
+| db44               |
+| db5                |
+| db55               |
+| db6                |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb              |
+| teadb2             |
++--------------------+
+13 rows in set (0.00 sec)
+
+mysql> use db5;show tables;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
++---------------+
+| Tables_in_db5 |
++---------------+
+| t1            |
++---------------+
+1 row in set (0.00 sec)
+
+mysql> select * from db5.t1;
++------+
+| id   |
++------+
+| 1110 |
+| 1230 |
+|  888 |
+|  100 |
+|  200 |
++------+
+5 rows in set (0.00 sec)
+
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H54 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.54
+192.168.2.54
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H54 ~]# netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1024/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1009/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1024/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1032/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1348/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1024/memcached
+udp6  0  0  :::11211        :::*       1024/memcached
+[root@H54 ~]# id nginx
+uid=1001(nginx) gid=1001(nginx) 组=1001(nginx)
+[root@H54 ~]# ll libev-4.15-1.el6.rf.x86_64.rpm  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+-rw-r--r--. 1 root root   74692 10月 20 08:59 libev-4.15-1.el6.rf.x86_64.rpm
+-rw-r--r--. 1 root root 7688608 10月 20 08:59 percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+[root@H54 ~]#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.55
+192.168.2.55
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H55 ~]# netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1014/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1018/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1014/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1027/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1330/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1014/memcached
+udp6  0  0  :::11211        :::*       1014/memcached
+[root@H55 ~]# id nginx
+uid=1001(nginx) gid=1001(nginx) 组=1001(nginx)
+[root@H55 ~]# ll libev-4.15-1.el6.rf.x86_64.rpm  percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+-rw-r--r--. 1 root root   74692 10月 20 08:59 libev-4.15-1.el6.rf.x86_64.rpm
+-rw-r--r--. 1 root root 7688608 10月 20 08:59 percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+[root@H55 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1513 @@
+
+备份MySQL Master（192.168.4.10）上现有的库
+如果服务器已经启用binlog，建议对日志做一次重置，否则可忽略：
+[root@dbsvr1 ~]# mysql -u root -p
+Enter password:                                  //以数据库用户root登入
+.. ..
+mysql> RESET MASTER;                              //重置binlog日志
+
+
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H50 ~]# netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1022/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1037/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1022/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1051/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1337/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1022/memcached
+udp6  0  0  :::11211        :::*       1022/memcached
+[root@H50 ~]# ls /fullbak/
+backup-my.cnf   ibdata1             sys                     xtrabackup_info
+db4             mysql               teadb2                  xtrabackup_logfile
+db5             performance_schema  xtrabackup_binlog_info
+ib_buffer_pool  stut                xtrabackup_checkpoints
+
+[root@H50 ~]# ls /newdir1/
+backup-my.cnf   ibdata1.meta        teadb2
+db4             mysql               xtrabackup_binlog_info
+db5             performance_schema  xtrabackup_checkpoints
+ib_buffer_pool  stut                xtrabackup_info
+ibdata1.delta   sys                 xtrabackup_logfile
+
+[root@H50 ~]# ls /newdir2/
+backup-my.cnf   ibdata1.delta       stut     xtrabackup_binlog_info
+db4             ibdata1.meta        sys      xtrabackup_checkpoints
+db5             mysql               teadb2   xtrabackup_info
+ib_buffer_pool  performance_schema  testdb6  xtrabackup_logfile
+
+[root@H50 ~]# mysql -uroot -p1234 -e "show databases;"
+
+| Database           |
+| information_schema |
+| db4                |
+| db5                |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb2             |
+| testdb6            |
+
+
+mysql> quit;
+Bye             关闭mysql服务，并将/var/lib/mysql/下的文件删除，假设数据被删除。
+            为了以防实验失败,最好先备份复制文件/var/lib/mysql/*
+[root@H50 ~]# systemctl stop mysqld
+
+[root@H50 ~]# rm -rf /var/lib/mysql/*
+
+[root@H50 ~]# ls -ld /var/lib/mysql/
+drwxr-x--x. 2 mysql mysql 6 10月 22 09:19 /var/lib/mysql/
+
+[root@H50 ~]# cat /fullbak/xtrabackup_checkpoints 
+backup_type = full-backuped
+from_lsn = 0
+to_lsn = 3062723
+last_lsn = 3062732
+compact = 0
+recover_binlog_info = 0
+[root@H50 ~]# cat /newdir1/xtrabackup_checkpoints 
+backup_type = incremental
+from_lsn = 3062723
+to_lsn = 3062723
+last_lsn = 3062732
+compact = 0
+recover_binlog_info = 0
+[root@H50 ~]# cat /newdir2/xtrabackup_checkpoints 
+backup_type = incremental
+from_lsn = 3062723
+to_lsn = 3068954
+last_lsn = 3068963
+compact = 0
+recover_binlog_info = 0
+[root@H50 ~]# which innobackupex 
+/usr/bin/innobackupex
+-------------------------1）准备恢复“完整备份”
+完成准备以后，最终/fullbak/ 可用来重建MySQL服务器。
+这种情况下，需要先做一个“--apply-log --redo-only ”的准备操作，以确保数据一致性
+
+[root@H50 ~]# innobackupex  --apply-log  --redo-only  /fullbak/
+.......................
+innobackupex version 2.4.7 based on MySQL server 5.7.13 Linux (x86_64) (revision id: 6f7a799)
+xtrabackup: cd to /fullbak/
+....................................
+InnoDB: Shutdown completed; log sequence number 3062741
+InnoDB: Number of pools: 1
+181022 09:24:09 completed OK!
+
+[root@H50 ~]# cat /fullbak/xtrabackup_checkpoints 
+backup_type = log-applied
+from_lsn = 0
+to_lsn = 3062723
+last_lsn = 3062732
+compact = 0
+recover_binlog_info = 0
+[root@H50 ~]#                                               准备恢复“增量备份/newdir1/”
+[root@H50 ~]# innobackupex  --apply-log  --redo-only /fullbak/ --incremental-dir=/newdir1/
+
+181022 09:34:33 completed OK!
+
+[root@H50 ~]# cat /fullbak/xtrabackup_checkpoints 
+backup_type = log-applied
+from_lsn = 0
+to_lsn = 3062723
+last_lsn = 3062732
+compact = 0
+recover_binlog_info = 0
+                                                                           准备恢复“增量备份/newdir2/”
+[root@H50 ~]# innobackupex  --apply-log  --redo-only /fullbak/ --incremental-dir=/newdir2/
+
+181022 09:44:09 completed OK!
+[root@H50 ~]# cat /fullbak/xtrabackup_checkpoints 
+backup_type = log-applied
+from_lsn = 0
+to_lsn = 3068954
+last_lsn = 3068963
+compact = 0
+recover_binlog_info = 0
+
+3）恢复“完整备份+增量备份”
+完成准备以后，最终仍然是/fullbak 用来重建MySQL服务器，但这种情况下需提前合并相关增量备份的数据
+
+[root@H50 ~]# innobackupex  --user  root --password  1234 \
+> --copy-back  /fullbak/
+.......................................
+181022 09:48:45 completed OK!
+
+[root@H50 ~]# cat /fullbak/xtrabackup_checkpoints 
+backup_type = log-applied
+from_lsn = 0
+to_lsn = 3068954
+last_lsn = 3068963
+compact = 0
+recover_binlog_info = 0
+
+[root@H50 ~]# rm -rf /newdir{1,2}/
+
+[root@H50 ~]# ls /newdir*
+ls: 无法访问/newdir*: 没有那个文件或目录
+[root@H50 ~]# ls /var/lib/mysql/
+db4  ib_buffer_pool  mysql               stut  teadb2   xtrabackup_binlog_pos_innodb
+db5  ibdata1         performance_schema  sys   testdb6  xtrabackup_info
+                   恢复后，/var/lib/mysql下文件属组与属主皆为root，需要更改为mysql
+[root@H50 ~]# chown -R mysql:mysql /var/lib/mysql/
+
+[root@H50 ~]# systemctl start mysqld
+
+[root@H50 ~]# mysql -uroot -p1234 -e "show databases;";
+mysql: [Warning] Using a password on the command line interface can be insecure.
+| Database           |
+| information_schema |
+| db4                |
+| db5                |
+| mysql              |
+| performance_schema |
+| stut               |
+| sys                |
+| teadb2             |
+| testdb6            |
+[root@H50 ~]# mysql -uroot -p1234 -e "insert into db5.a values(2000);select * from db5.a;";
+mysql: [Warning] Using a password on the command line interface can be insecure.
+| id   |
+|  110 |
+|  110 |
+|  110 |
+|  222 |
+|  202 |
+| 2000 |
+[root@H50 ~]# du  -sh /fullbak/
+35M	/fullbak/
+[root@H50 ~]# mysql -uroot -p1234
+
+mysql> use db5;
+
+mysql> desc db5.a;
+
+| Field | Type    | Null | Key | Default | Extra |
+| id    | int(11) | YES  |     | NULL    |       |
+
+mysql> create table db5.b(id int);
+
+mysql> insert into db5.b values(119),(120);
+Query OK, 2 rows affected (0.07 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> show tables;
+| Tables_in_db5 |
+| a             |
+| b             |
+
+mysql> desc db5.b;
+
+| Field | Type    | Null | Key | Default | Extra |
+| id    | int(11) | YES  |     | NULL    |       |
+
+mysql> 
+
+[root@H50 ~]# innobackupex  --user root --password  1234  --no-timestamp --databases="db5"  /db5bak
+
+181022 10:22:37 completed OK!
+
+[root@H50 ~]# ls /db5bak/
+backup-my.cnf  ib_buffer_pool  xtrabackup_binlog_info  xtrabackup_info
+db5            ibdata1         xtrabackup_checkpoints  xtrabackup_logfile
+
+[root@H50 ~]# cat /db5bak/xtrabackup_checkpoints 
+backup_type = full-backuped
+from_lsn = 0
+to_lsn = 3075678
+last_lsn = 3075687
+compact = 0
+recover_binlog_info = 0
+[root@H50 ~]# ls /db5bak/db5/  #*.ibd 表空间文件
+a.frm  a.ibd  b.frm  b.ibd  db.opt
+[root@H50 ~]# ls /var/lib/mysql/db5/ 
+a.frm  a.ibd  b.frm  b.ibd  db.opt
+[root@H50 ~]# 
+
+mysql> drop table db5.a;
+
+[root@H50 ~]# ls /var/lib/mysql/db5/
+b.frm  b.ibd  db.opt
+            手动创建a表 且表结构必须和删除时的表结构相同
+mysql> create table db5.a(id int); 
+
+[root@H50 ~]# ls /var/lib/mysql/db5/
+a.frm  a.ibd  b.frm  b.ibd  db.opt
+[root@H50 ~]# 
+                    删除 db5.a表的表空间文件
+mysql> alter table db5.a  discard  tablespace;
+mysql> show tables;
+| Tables_in_db5 |
+| a             |
+| b             |
+mysql> select * from db5.a;      # 提示db5.a表的表空间文件已经被删除
+ERROR 1814 (HY000): Tablespace has been discarded for table 'a'
+mysql> 
+[root@H50 ~]# ls /var/lib/mysql/db5/
+a.frm  b.frm  b.ibd  db.opt
+[root@H50 ~]#
+
+mysql> system ls /db5bak/
+backup-my.cnf  ib_buffer_pool  xtrabackup_binlog_info  xtrabackup_info
+db5	       ibdata1	       xtrabackup_checkpoints  xtrabackup_logfile
+mysql> system ls /db5bak/db5
+a.frm  a.ibd  b.frm  b.ibd  db.opt
+mysql> 
+                        从 /db5bak/ 导出表信息 到数据库目录 /var/lib/mysql/db5/ 下
+[root@H50 ~]# innobackupex  --user root --password 1234 \
+> --databases="db5"  --apply-log  --export /db5bak/
+........................
+181022 10:45:39 completed OK!
+
+[root@H50 ~]# ls /db5bak/db5/
+a.cfg  a.exp  a.frm  a.ibd  b.cfg  b.exp  b.frm  b.ibd  db.opt
+
+       从 /db5bak/ 导出表信息 并复制到数据库目录 /var/lib/mysql/db5/下
+[root@H50 ~]# cp /db5bak/db5/a.cfg  /db5bak/db5/a.{exp,ibd} /var/lib/mysql/db5/
+
+[root@H50 ~]# ls -l /var/lib/mysql/db5/a.*
+-rw-r--r--. 1 root  root    365 10月 22 10:49 /var/lib/mysql/db5/a.cfg
+-rw-r-----. 1 root  root  16384 10月 22 10:49 /var/lib/mysql/db5/a.exp
+-rw-r-----. 1 mysql mysql  8556 10月 22 10:31 /var/lib/mysql/db5/a.frm
+-rw-r-----. 1 root  root  98304 10月 22 10:49 /var/lib/mysql/db5/a.ibd
+[root@H50 ~]# chown mysql:mysql /var/lib/mysql/db5/a.*
+[root@H50 ~]# ls -l /var/lib/mysql/db5/a.*
+-rw-r--r--. 1 mysql mysql   365 10月 22 10:49 /var/lib/mysql/db5/a.cfg
+-rw-r-----. 1 mysql mysql 16384 10月 22 10:49 /var/lib/mysql/db5/a.exp
+-rw-r-----. 1 mysql mysql  8556 10月 22 10:31 /var/lib/mysql/db5/a.frm
+-rw-r-----. 1 mysql mysql 98304 10月 22 10:49 /var/lib/mysql/db5/a.ibd
+[root@H50 ~]# 
+
+mysql> select * from db5.a;
+ERROR 1814 (HY000): Tablespace has been discarded for table 'a'
+                    #导入表空间 
+mysql> alter table db5.a  import tablespace;
+
+mysql> select * from db5.a;
+| id   |
++------+
+|  110 |
+|  110 |
+|  110 |
+|  222 |
+|  202 |
+| 2000 |
+
+mysql> 
+[root@H50 ~]# rm -rf /db5bak/db5/a.{cfg,exp} #删除已经没用的表信息文件a.{cfg,exp}
+[root@H50 ~]# ls /db5bak/db5/
+a.frm  a.ibd  b.cfg  b.exp  b.frm  b.ibd  db.opt
+[root@H50 ~]# 
+
+mysql> select * from db5.a;
+| id   |
+|  110 |
+|  110 |
+|  110 |
+|  222 |
+|  202 |
+| 2000 |
+
+mysql> select * from db5.
+| id   |
+|  119 |
+|  120 |
+mysql> exit;
+Bye
+[root@H50 ~]# ping -c1 -i0.2 -w1 192.168.4.50
+
+[root@H50 ~]# ping -c1 -i0.2 -w1 192.168.4.51
+
+[root@H50 ~]# ping -c1 -i0.2 -w1 192.168.4.52
+
+[root@H50 ~]# ping -c1 -i0.2 -w1 192.168.4.53
+
+[root@H50 ~]#  mysql -uroot -p1234 -e "show engines\G " |sed -n 2,4p
+
+      Engine: InnoDB
+     Support: DEFAULT
+     Comment: Supports transactions, row-level locking, and foreign keys
+[root@H50 ~]#
+[root@H50 ~]# sed -n  '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+server_id=50
+#log_bin
+log_bin=/logdir/plj
+binlog_format="mixed"
+#skip_grant_tables
+[root@H50 ~]# mysql -uadmin -h192.168.4.51 -p1234 -e "show databases;"
+
+| Database           |
+| information_schema |
+| db1                |
+| mysql              |
+
+[root@H50 ~]# mysql -uadmin -h192.168.4.51 -p1234 -e "show grants;"
+
+| Grants for admin@%                                               |
+| GRANT USAGE ON *.* TO 'admin'@'%'                                |
+| GRANT ALL PRIVILEGES ON `db3`.* TO 'admin'@'%' WITH GRANT OPTION |
+| GRANT INSERT ON `mysql`.* TO 'admin'@'%'                         |
+| GRANT SELECT, INSERT, UPDATE ON `db1`.* TO 'admin'@'%'           |
+
+[root@H50 ~]# mysql -uadmin -h192.168.4.51 -p1234
+
+mysql> use db1;
+
+mysql> insert into db1.a values(99),(110);
+
+mysql> select * from db1.a;
+| id   |
+|   99 |
+|  110 |
+
+mysql> update db1.a set id=999 where id=99;
+
+mysql> insert into db1.a values(660),(6666); 
+
+mysql> insert into db1.a values(6990),(6006);
+
+mysql> select * from db1.a;
+
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+
+mysql> insert into db1.a values(7000),(7700);
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+| 7000 |
+| 7700 |
+mysql> exit
+Bye
+[root@H50 ~]# mysql -uadmin -h192.168.4.51 -p1234
+
+mysql> select user();
+| user()             |
+| admin@192.168.4.50 |
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db1                |
+| mysql              |
+
+mysql> use db1;show tables;
+| Tables_in_db1 |
+| a             |
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+| 7000 |
+| 7700 |
+
+mysql> update db1.a set id=7777 where id between 1000 and 6999;
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 7777 |
+| 7777 |
+| 7777 |
+| 7000 |
+| 7700 |
+
+mysql> 
+
+
+
+
+
+
+ 
+
+
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.51
+192.168.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H51 ~]#  netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1081/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1060/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1081/memcached
+tcp6  0  0  :::3306         :::*       LISTEN          1917/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1081/memcached
+udp6  0  0  :::11211        :::*       1081/memcached
+[root@H51 ~]# mysql -uroot -p1234 -e "drop  database stut;";
+[root@H51 ~]# mysql -uroot -p1234 -e "show databases;";
+[root@H51 ~]# mysql -uroot -p1234 -e "show engines\G " |sed -n 2,4p
+
+      Engine: InnoDB
+     Support: DEFAULT
+     Comment: Supports transactions, row-level locking, and foreign keys
+[root@H51 ~]# 
+---------------------------------------------配置 主 服务器 ----------------------------
+[mysqld]
+server_id=51   指定服务器ID号
+#log_bin  #启用指定的binlog 日志mysqlbinlog  /var/lib/mysql/mysql51.000001  |grep insert
+log_bin=mysql51  #默认根路径是 /var/lib/mysql/
+binlog_format="mixed"  #指定日志格式
+validate_password_policy=0
+validate_password_length=4
+
+/*************
+binlog_do_db=db1,db2,db3 设置主服务器对哪些 库记录日志
+binlog_ignore_db=db4,db5 设置主服务器 对哪些数据库不记录日志
+这二项不可同时设置,只能二选一
+-------------------------------配置 主 服务器  -----------------------
+[root@H51 ~]# vim /etc/my.cnf
+[root@H51 ~]# sed -n  '/\[mysqld/,+5p'  /etc/my.cnf
+[mysqld]
+server_id=51
+#log_bin
+log_bin=mysql51
+binlog_format="mixed"
+validate_password_policy=0
+[root@H51 ~]#
+
+mysql> show master status;
+Empty set (0.00 sec)
+
+[root@H51 ~]# systemctl restart mysqld
+[root@H51 ~]# ls /var/lib/mysql/
+auto.cnf         ib_buffer_pool  l73vRKi         mysql.sock.lock     server-key.pem
+ca-key.pem       ibdata1         mysql           performance_schema  sys
+ca.pem           ib_logfile0     mysql51.000001  private_key.pem
+client-cert.pem  ib_logfile1     mysql51.index   public_key.pem
+client-key.pem   ibtmp1          mysql.sock      server-cert.pem
+
+[root@H51 ~]# ls /var/lib/mysql/mysql51*
+/var/lib/mysql/mysql51.000001  /var/lib/mysql/mysql51.index
+
+[root@H51 ~]#   =============授权 数据库 从服务器 用户 repluser
+mysql> grant replication slave  on *.*  to
+    -> repluser@'%' identified by'1234';
+
+mysql> show master status;  #日志文件名 mysql51.000001 #偏移位置 441
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql51.000001 |      441 |              |                  |                   |
+
+mysql> 
+[root@H51 ~]# mysqlbinlog  /var/lib/mysql/mysql51.000001  # 查看自动 新建的日志
+
+Aa0Aofg=
+'/*!*/;
+# at 123
+#181022 14:20:32 server id 51  end_log_pos 154 CRC32 0x1ef488a9 	Previous-GTIDs
+# [empty]
+# at 154
+#181022 14:23:06 server id 51  end_log_pos 219 CRC32 0x2570c40f 	Anonymous_GTID	......................
+# at 219
+..................
+# End of log file
+/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/;
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/;
+[root@H51 ~
+
+mysql> select host,user from mysql.user where user like 'repl%';
+| host | user     |
+| %    | repluser |
+
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql51.000001 |      441 |              |                  |                   |
+
+mysql> show slave status;
+Empty set (0.01 sec)
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> create database db1;
+
+mysql> create table db1.a(id int);
+   =============授权 数据库 被 客户端使用的 客户用户 admin
+mysql> grant select,insert,update on db1.* 
+    -> to admin@'%' identified by'1234';
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db1                |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> select * from db1.a;
+
+| id   |
+|  999 |
+|  110 |
+
+mysql> 
+[root@H51 ~]# mysqldump -uroot -p1234 db1 > /root/db1.sql
+
+[root@H51 ~]# ll /root/db1.sql
+-rw-r--r--. 1 root root 1762 10月 22 15:38 /root/db1.sql
+
+[root@H51 ~]# scp /root/db1.sql 192.168.4.53:/root/
+
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql51.000001 |     1613 |              |                  |                   |
+
+mysql> select * from db1.a;
+
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+[root@H51 ~]# ls /var/lib/mysql/mysql51.*
+/var/lib/mysql/mysql51.000001  /var/lib/mysql/mysql51.index
+[root@H51 ~]# mysqlbinlog /var/lib/mysql/mysql51.000001 |grep insert
+insert into db1.a values(99),(110)
+insert into db1.a values(660),(6666)
+insert into db1.a values(6990),(6006)
+[root@H51 ~]# 
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+| 7000 |
+| 7700 |
+
+mysql> show slave status\G
+Empty set (0.00 sec)
+
+mysql> show master status;
+
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql51.000001 |     2458 |              |                  |                   |
+
+mysql> exit;
+Bye
+[root@H51 ~]# mysql -uroot -p1234
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 7777 |
+| 7777 |
+| 7777 |
+| 7000 |
+| 7700 |
+
+mysql> 
+
+
+
+
+
+
+ 
+
+
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.52
+192.168.2.52
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H52 ~]#  netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1053/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1056/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1053/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1092/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1635/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1053/memcached
+udp6  0  0  :::11211        :::*       1053/memcached
+[root@H52 ~]# mysql -uroot -p1234 -e "show databases;";
+[root@H52 ~]# vim /etc/my.cnf
+[root@H52 ~]# systemctl restart mysqld
+[root@H52 ~]# sed -n  '/\[mysqld/,+5p'  /etc/my.cnf
+[mysqld]
+server_id=52
+log-bin=mysql52    #启用指定的binlog 日志mysqlbinlog 
+
+validate_password_policy=0
+validate_password_length=4
+[root@H52 ~]# mysql -h192.168.4.51 -urepluser -p1234 -e "show databases;"
+| Database           |
+| information_schema |
+[root@H52 ~]# mysql -uroot -p1234
+
+mysql> show slave status;
+Empty set (0.01 sec)
+
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql52.000001 |      154 |              |                  |                   |
+
+mysql> change master to
+    -> master_host="192.168.4.51",
+    -> master_log_file="mysql51.000001",
+    -> master_log_pos=441,
+    -> master_password="1234",
+    -> master_user="repluser",
+    -> \c
+mysql> change master to
+    -> master_host="192.168.4.51", #数据库主库IP地址
+    -> master_log_file="mysql51.000001",  #数据库主库 的有效binlog日志文件
+    -> master_log_pos=441, ##数据库主库的binlog 日志 当前偏移位置
+    -> master_password="1234",
+    -> master_user="repluser"; #主库授权从数据库的"从服务器名"
+Query OK, 0 rows affected, 2 warnings (0.37 sec)
+
+mysql> start slave; #启动slave 进程
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> system mysql -uroot -p1234 -e "show slave status\G" |head -10
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql51.000001
+          Read_Master_Log_Pos: 441
+               Relay_Log_File: H52-relay-bin.000002
+                Relay_Log_Pos: 318
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql51.000001
+          Read_Master_Log_Pos: 441
+               Relay_Log_File: H52-relay-bin.000002
+                Relay_Log_Pos: 318
+        Relay_Master_Log_File: mysql51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+........................................
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 441
+              Relay_Log_Space: 523
+.........................................
+             Master_Server_Id: 51
+                  Master_UUID: b17b9cef-d020-11e8-a64d-525400ada98b
+             Master_Info_File: /var/lib/mysql/master.info
+........................................
+           Master_TLS_Version: 
+1 row in set (0.00 sec)
+
+mysql> show databases;
+
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> show databases;
+| Database           |
+| information_schema |
+| db1                |
+| mysql              |
+| performance_schema |
+| sys                |
+
+mysql> select user,host from mysql.user where user="admin";
+
+| user  | host |
+| admin | %    |
+
+mysql> select * from db1.a;
+| id   |
+|   99 |
+|  110 |
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+mysql> stop slave;
+
+mysql> show slave status\G
+
+mysql> start slave;
+
+mysql> show slave status\G
+
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql51.000001
+          Read_Master_Log_Pos: 2176
+               Relay_Log_File: H52-relay-bin.000003
+                Relay_Log_Pos: 600
+        Relay_Master_Log_File: mysql51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+ Master_Server_Id: 51
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql52.000001 |      154 |              |                  |                   |
+
+mysql> 
+
+mysql> 
+[root@H52 ~]# ls /var/lib/mysql/
+auto.cnf         ib_buffer_pool  mysql            performance_schema  sys
+ca-key.pem       ibdata1         mysql52.000001   private_key.pem
+ca.pem           ib_logfile0     mysql52.index    public_key.pem
+client-cert.pem  ib_logfile1     mysql.sock       server-cert.pem
+client-key.pem   ibtmp1          mysql.sock.lock  server-key.pem
+
+/var/lib/mysql/H52-relay-bin.000001  中继日志
+/var/lib/mysql/H52-relay-bin.index  中继索引文件
+
+[root@H52 ~]# ls /var/lib/mysql/
+auto.cnf              H52-relay-bin.index  mysql               public_key.pem
+ca-key.pem            ib_buffer_pool       mysql52.000001      relay-log.info
+ca.pem                ibdata1              mysql52.index       server-cert.pem
+client-cert.pem       ib_logfile0          mysql.sock          server-key.pem
+client-key.pem        ib_logfile1          mysql.sock.lock     sys
+H52-relay-bin.000001  ibtmp1               performance_schema
+H52-relay-bin.000002  master.info          private_key.pem
+[root@H52 ~]# 
+[root@H52 ~]# mysqlbinlog  /var/lib/mysql/H52-relay-bin.000002 |grep insert
+insert into db1.a values(99),(110)
+insert into db1.a values(660),(6666)
+[root@H52 ~]# 
+[root@H52 ~]# mysqlbinlog  /var/lib/mysql/mysql52.000001  |grep insert
+[root@H52 ~]# 
+
+
+[root@H52 ~]# vim /etc/my.cnf
+[mysqld]
+log_slave_updates  #从数据库服务器 记录从库更新,允许链条式 复制(A-b-c-d)
+server_id=52
+log-bin=slave52    #默认根路径是 /var/lib/mysql/
+binlog_format="mixed"  #binlog日志格式 mixed
+validate_password_policy=0
+validate_password_length=4
+ 
+/*************适用与从数据库的选项 --------------------------------------
+relay_log=H52-relay-bin 指定中继日志文件名
+replicate_do_db=数据库名x  # 仅仅复制指定的库x,其他库将被忽略,此选项可设置多条
+replicate_ignore_db=数据库名y #不复制 指定的数据库y, 任选 这两项的其一
+
+[root@H52 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+
+[mysqld]
+log_slave_updates  #从数据库服务器 记录从库更新,允许链条式 复制(A-b-c-d)
+server_id=52
+log-bin=slave52
+binlog_format="mixed"  #binlog日志格式 mixed
+validate_password_policy=0
+
+[root@H52 ~]# systemctl restart mysqld
+mysql> exit;
+Bye
+[root@H52 ~]# mysql -uroot -p1234
+   ）新建一个备份从数据库服务器 用户repluser2， 授予从数据库服务器repluser2 有复制权限
+mysql> grant replication slave  on *.* to
+    -> repluser2@'%' identified by'1234';
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql51.000001
+          Read_Master_Log_Pos: 2176
+               Relay_Log_File: H52-relay-bin.000005
+                Relay_Log_Pos: 318
+        Relay_Master_Log_File: mysql51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+          Exec_Master_Log_Pos: 2176
+              Relay_Log_Space: 523
+/********主机192.168.4.51 数据库信息------------------------------------
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql51.000001 |     2176 |              |                  |                   |
+*****************/
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| slave52.000001 |      442 |              |                  |                   |
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+| 7000 |
+| 7700 |
+[root@H52 ~]# ls /var/lib/mysql/
+auto.cnf              H52-relay-bin.index  mysql52.000001      server-cert.pem
+ca-key.pem            ib_buffer_pool       mysql52.index       server-key.pem
+ca.pem                ibdata1              mysql.sock          slave52.000001
+client-cert.pem       ib_logfile0          mysql.sock.lock     slave52.index
+client-key.pem        ib_logfile1          performance_schema  sys
+db1                   ibtmp1               private_key.pem
+H52-relay-bin.000004  master.info          public_key.pem
+H52-relay-bin.000005  mysql                relay-log.info
+[root@H52 ~]# head -8 /var/lib/mysql/master.info 
+25
+mysql51.000001    #数据库主库 的有效binlog日志文件
+2458
+192.168.4.51
+repluser
+1234
+3306
+60
+[root@H52 ~]# mysqlbinlog /var/lib/mysql/slave52.000001  |grep insert
+insert into db1.a values(7000),(7700)
+[root@H52 ~]# cat /var/lib/mysql/slave52.index 
+./slave52.000001
+[root@H52 ~]#  
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql51.000001
+          Read_Master_Log_Pos: 2458
+               Relay_Log_File: H52-relay-bin.000005
+                Relay_Log_Pos: 600
+        Relay_Master_Log_File: mysql51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+          Exec_Master_Log_Pos: 2458
+              Relay_Log_Space: 805
+
+1 row in set (0.00 sec)
+
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| slave52.000001 |      724 |              |                  |                   |
+
+mysql> stop slave;
+
+mysql> show slave status\G
+
+             Slave_IO_Running: No
+            Slave_SQL_Running: No
+              Replicate_Do_DB: 
+
+
+mysql> exit;
+Bye
+[root@H52 ~]# ls /var/lib/mysql/{master.info,relay-log.info}
+/var/lib/mysql/master.info  /var/lib/mysql/relay-log.info
+[root@H52 ~]# ls /var/lib/mysql/*relay-bin.*
+/var/lib/mysql/H52-relay-bin.000004  /var/lib/mysql/H52-relay-bin.index
+/var/lib/mysql/H52-relay-bin.000005
+[root@H52 ~]#  
+[root@H52 ~]# rm -rf /var/lib/mysql/H52-relay-bin.*
+[root@H52 ~]# ls  /var/lib/mysql/{master,relay-log}.info
+/var/lib/mysql/master.info  /var/lib/mysql/relay-log.info
+[root@H52 ~]# rm -rf /var/lib/mysql/{master,relay-log}.info
+[root@H52 ~]# 
+[root@H52 ~]# ls /var/lib/mysql/
+auto.cnf         db1             ibtmp1          mysql.sock.lock     server-key.pem
+ca-key.pem       ib_buffer_pool  mysql           performance_schema  slave52.000001
+ca.pem           ibdata1         mysql52.000001  private_key.pem     slave52.index
+client-cert.pem  ib_logfile0     mysql52.index   public_key.pem      sys
+client-key.pem   ib_logfile1     mysql.sock      server-cert.pem
+[root@H52 ~]# 
+[root@H52 ~]# systemctl restart mysqld
+[root@H52 ~]#
+[root@H52 ~]# mysql -uroot -p1234
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+| 7000 |
+| 7700 |
+
+mysql> show slave status\G
+Empty set (0.00 sec)
+
+mysql> show master status ;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| slave52.000002 |      154 |              |                  |                   |
+
+mysql> start slave;
+ERROR 1200 (HY000): The server is not configured as slave; fix in config file or with CHANGE MASTER TO
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.53
+192.168.2.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H53 ~]#  netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1061/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1060/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1061/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1089/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1721/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1061/memcached
+udp6  0  0  :::11211        :::*       1061/memcached
+[root@H53 ~]# mysql -uroot -p1234 -e "show databases;";
+
+| Database           |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+[root@H53 ~]# ls /var/lib/mysql/
+auto.cnf         client-key.pem  ib_logfile1  mysql.sock.lock     server-cert.pem
+ca-key.pem       ib_buffer_pool  ibtmp1       performance_schema  server-key.pem
+ca.pem           ibdata1         mysql        private_key.pem     sys
+client-cert.pem  ib_logfile0     mysql.sock   public_key.pem
+[root@H53 ~]# ll /root/db1.sql 
+-rw-r--r--. 1 root root 1762 10月 22 15:39 /root/db1.sql
+[root@H53 ~]# vim /etc/my.cnf
+[root@H53 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+server_id=53     //指定服务器ID号，不要与Master的相同
+log_bin=mysql53   //启动SQL日志，并指定文件名前缀
+validate_password_policy=0
+validate_password_length=4
+/*********在生产环境中，还可以根据需要设置更详细的同步选项。
+比如，指定当主、从网络中断时的重试超时时间（slave-net-timeout=60 ）等，
+具体可参考MySQL手册。
+[root@H53 ~]# systemctl restart mysqld
+
+[root@H53 ~]# mysql -uroot -p1234
+
+mysql> create database db1;
+
+mysql> use db1;
+    /******** mysql -u root -p1234 < /mytest.sql # 导入多个库 可以不写库名
+/***** mysql -uroot -p1234 db1 < /root/db1.sql  #导入一个库必须写库名
+执行导入操作：  /***必须先指定数据库名 db1 ，否则数据导入失败，数据是空的
+mysql> source /root/db1.sql
+
+mysql> show tables; 
+
+| Tables_in_db1 |
+| a             |
+
+mysql> select * from db1.a;
+
+| id   |
+|  999 |
+|  110 |
+
+mysql> show master status;
+
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql53.000001 |      154 |              |                  |                   |
+
+mysql> show slave status;
+Empty set (0.00 sec)
+
+/***************主机master 192.168.4.51 数据库信息----------------------------
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql51.000001 |     1613 |              |                  |                   |
+*********************/
+
+mysql> change master to master_host="192.168.4.51",
+    -> master_user="repluser",
+    -> master_password="1234",
+    -> master_log_file="mysql51.000001", # 对应Master的日志文件
+    -> master_log_pos=1613;  # 对应Master的日志偏移位置
+
+mysql> start slave;
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.51
+                  Master_User: repluser
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql51.000001
+          Read_Master_Log_Pos: 1613
+               Relay_Log_File: H53-relay-bin.000002
+                Relay_Log_Pos: 318
+        Relay_Master_Log_File: mysql51.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB: 
+ ..................................................
+          Exec_Master_Log_Pos: 1613
+              Relay_Log_Space: 523
+.......................................................
+             Master_Server_Id: 51
+                  Master_UUID: b17b9cef-d020-11e8-a64d-525400ada98b
+             Master_Info_File: /var/lib/mysql/master.info
+........................
+      Slave_SQL_Running_State: Slave has read all relay log; waiting for more updates
+           Master_Retry_Count: 86400
+..................................
+           Master_TLS_Version: 
+1 row in set (0.00 sec)
+
+mysql> 
+/*********/***************主机master 192.168.4.51 数据库信息----------------------------
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql51.000001 |     1613 |              |                  |                   |
+*********************/Last_IO_Errno: 0
+                Last_IO_Error: 
+///////如果报错,解决办法  mysql> stop slave;
+change master to master_log_pos=1613;
+***************/
+
+mysql> select database();
+| database() |
+| db1        |
+
+mysql> show tables;
+| Tables_in_db1 |
+| a             |
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| mysql53.000001 |      154 |              |                  |                   |
+
+mysql> show slave status\G
+
+mysql> exit;
+Bye
+[root@H53 ~]# systemctl stop mysqld
+[root@H53 ~]# ls /var/lib/mysql/maste*
+/var/lib/mysql/master.info
+
+[root@H53 ~]# ls /var/lib/mysql/H53-relay-bin.*
+/var/lib/mysql/H53-relay-bin.000001  /var/lib/mysql/H53-relay-bin.index
+/var/lib/mysql/H53-relay-bin.000002
+
+[root@H53 ~]# ls /var/lib/mysql/relay-log*
+/var/lib/mysql/relay-log.info
+
+[root@H53 ~]# ls /var/lib/mysql/
+auto.cnf         db1                   ibdata1      mysql53.000001      relay-log.info
+ca-key.pem       H53-relay-bin.000001  ib_logfile0  mysql53.index       server-cert.pem
+ca.pem           H53-relay-bin.000002  ib_logfile1  performance_schema  server-key.pem
+client-cert.pem  H53-relay-bin.index   master.info  private_key.pem     sys
+client-key.pem   ib_buffer_pool        mysql        public_key.pem
+[root@H53 ~]# vim /etc/my.cnf
+
+[mysqld]
+#server_id=53
+#log_bin=mysql53
+validate_password_policy=0
+validate_password_length=4
+
+[root@H53 ~]# rm -rf /var/lib/mysql/master.info
+[root@H53 ~]# rm -rf /var/lib/mysql/H53-relay-bin.*
+[root@H53 ~]# rm -rf /var/lib/mysql/relay-log.info 
+[root@H53 ~]# systemctl start mysqld
+[root@H53 ~]# ls /var/lib/mysql/
+auto.cnf         db1             ibtmp1          mysql.sock.lock     server-key.pem
+ca-key.pem       ib_buffer_pool  mysql           performance_schema  sys
+ca.pem           ibdata1         mysql53.000001  private_key.pem
+client-cert.pem  ib_logfile0     mysql53.index   public_key.pem
+client-key.pem   ib_logfile1     mysql.sock      server-cert.pem
+[root@H53 ~]# 
+[root@H53 ~]# vim /etc/my.cnf
+[mysqld]
+server_id=53
+#log_bin=mysql53
+validate_password_policy=0
+validate_password_length=4
+
+[root@H53 ~]# systemctl restart mysqld
+[root@H53 ~]
+
+/*****************------------------------主机master 192.168.4.52 数据库信息
+mysql> grant replication slave  on *.* to
+    -> repluser2@'%' identified by'1234';
+
+mysql> show master status;
+| File           | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+| slave52.000001 |      442 |              |                  |                   |
+************************/
+mysql> show slave status;
+Empty set (0.00 sec)
+
+mysql> change master to master_host="192.168.4.52",
+    -> master_user="repluser2",  #主库 52授权从数据库 53 的"从服务器名repluser2"
+    -> master_password="1234",
+    -> master_log_file="slave52.000001",  # 对应Master的日志文件
+    -> master_log_pos=442;   # 对应Master的日志偏移位置
+
+mysql> start slave;  //启动复制
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.52
+                  Master_User: repluser2
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: slave52.000001
+          Read_Master_Log_Pos: 442
+               Relay_Log_File: H53-relay-bin.000002
+                Relay_Log_Pos: 318
+        Relay_Master_Log_File: slave52.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+................................................
+          Exec_Master_Log_Pos: 442
+              Relay_Log_Space: 523
+..........................................
+             Master_Server_Id: 52
+                  Master_UUID: 35f321d0-d05b-11e8-90e2-52540075078d
+             Master_Info_File: /var/lib/mysql/master.info
+                    SQL_Delay: 0
+          SQL_Remaining_Delay: NULL
+      Slave_SQL_Running_State: Slave has read all relay log; waiting for more updates
+           Master_Retry_Count: 86400
+......................................
+           Master_TLS_Version: 
+1 row in set (0.00 sec)
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+| 7000 |
+| 7700 |
+[root@H53 ~]# ls /var/lib/mysql/
+auto.cnf              H53-relay-bin.000002  master.info         private_key.pem
+ca-key.pem            H53-relay-bin.index   mysql               public_key.pem
+ca.pem                ib_buffer_pool        mysql53.000001      relay-log.info
+client-cert.pem       ibdata1               mysql53.index       server-cert.pem
+client-key.pem        ib_logfile0           mysql.sock          server-key.pem
+db1                   ib_logfile1           mysql.sock.lock     sys
+H53-relay-bin.000001  ibtmp1                performance_schema
+
+/*************[root@H52 ~]# sed -n '/\[mysqld/,+5p' /etc/my.cnf
+[mysqld]
+log_slave_updates  #从数据库服务器 记录从库更新,允许链条式 复制(A-b-c-d)
+server_id=52
+log-bin=slave52   # slave52.000001   #注意192.168.4.52 ---- [  mysqld ] log-bin=slave52
+binlog_format="mixed"  #binlog日志格式 mixed
+**************/
+
+[root@H53 ~]# head -8 /var/lib/mysql/master.info 
+25
+slave52.000001   #注意192.168.4.52 ---- [  mysqld ] log-bin=slave52
+724
+192.168.4.52
+repluser2
+1234
+3306
+60
+[root@H53 ~]# mysqlbinlog /var/lib/mysql/mysql53.000001 |grep insert
+[root@H53 ~]# mysqlbinlog /var/lib/mysql/H53-relay-bin.000002  |grep insert
+insert into db1.a values(7000),(7700)
+[root@H53 ~]#  
+mysql> show slave status\G
+
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.4.52
+                  Master_User: repluser2
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: slave52.000001
+          Read_Master_Log_Pos: 724
+               Relay_Log_File: H53-relay-bin.000002
+                Relay_Log_Pos: 600
+        Relay_Master_Log_File: slave52.000001
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB: 
+ 
+
+mysql> show master status;
+Empty set (0.00 sec)
+
+mysql> stop slave;
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: 
+                  Master_Host: 192.168.4.52
+                  Master_User: repluser2
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: slave52.000001
+          Read_Master_Log_Pos: 724
+               Relay_Log_File: H53-relay-bin.000002
+                Relay_Log_Pos: 600
+        Relay_Master_Log_File: slave52.000001
+             Slave_IO_Running: No
+            Slave_SQL_Running: No
+mysql> exit;
+Bye
+[root@H53 ~]# head -8 /var/lib/mysql/master.info 
+25
+slave52.000001
+724
+192.168.4.52
+repluser2
+1234
+3306
+60
+[root@H53 ~]# mysqlbinlog /var/lib/mysql/mysql53.000001 |grep insert
+
+[root@H53 ~]# mysqlbinlog /var/lib/mysql/H53-relay-bin.000002  |grep insert
+insert into db1.a values(7000),(7700)
+
+[root@H53 ~]# ls /var/lib/mysql/{master.info,relay-log.info}
+/var/lib/mysql/master.info  /var/lib/mysql/relay-log.info
+
+[root@H53 ~]# ls /var/lib/mysql/H53-relay-bin.*
+/var/lib/mysql/H53-relay-bin.000001  /var/lib/mysql/H53-relay-bin.index
+/var/lib/mysql/H53-relay-bin.000002
+
+[root@H53 ~]# rm -rf /var/lib/mysql/H53-relay-bin.*
+
+[root@H53 ~]# ls /var/lib/mysql/{master,relay-log}.info
+/var/lib/mysql/master.info  /var/lib/mysql/relay-log.info
+
+[root@H53 ~]# rm -rf /var/lib/mysql/{master,relay-log}.info
+
+[root@H53 ~]# ls /var/lib/mysql/
+auto.cnf         db1             ibtmp1          mysql.sock.lock     server-key.pem
+ca-key.pem       ib_buffer_pool  mysql           performance_schema  sys
+ca.pem           ibdata1         mysql53.000001  private_key.pem
+client-cert.pem  ib_logfile0     mysql53.index   public_key.pem
+client-key.pem   ib_logfile1     mysql.sock      server-cert.pem
+[root@H53 ~]# 
+[root@H53 ~]# systemctl restart mysqld
+[root@H53 ~]# 
+[root@H53 ~]# mysql -uroot -p1234
+
+mysql> select * from db1.a;
+| id   |
+|  999 |
+|  110 |
+|  660 |
+| 6666 |
+| 6990 |
+| 6006 |
+| 7000 |
+| 7700 |
+
+mysql> show slave status;
+Empty set (0.00 sec)
+
+mysql> show master status; ## /etc/my.cnf #空的原因#log_bin=mysql53没有开启binlog日志
+Empty set (0.00 sec)
+
+mysql> start slave;
+ERROR 1200 (HY000): The server is not configured as slave; fix in config file or with CHANGE MASTER TO
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+[root@H54 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.54
+192.168.2.54
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H54 ~]#  netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1014/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1023/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1014/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1039/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1346/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1014/memcached
+udp6  0  0  :::11211        :::*       1014/memcached
+[root@H54 ~]# 
+
+ 
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.55
+192.168.2.55
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H55 ~]#  netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1025/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1029/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1025/memcached
+tcp6  0  0  :::80           :::*       LISTEN          1041/httpd
+tcp6  0  0  :::3306         :::*       LISTEN          1328/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1025/memcached
+udp6  0  0  :::11211        :::*       1025/memcached
+[root@H55 ~]# 
+ 
+
+ 
+
+[root@H56 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.56
+192.168.2.56
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H56 ~]#  netstat  -anpult |egrep ":80|:11211|:9000|:3306" |column -t
+tcp   0  0  0.0.0.0:11211   0.0.0.0:*  LISTEN          1036/memcached
+tcp   0  0  127.0.0.1:9000  0.0.0.0:*  LISTEN          1023/php-fpm:   maste
+tcp6  0  0  :::11211        :::*       LISTEN          1036/memcached
+tcp6  0  0  :::3306         :::*       LISTEN          1343/mysqld
+udp   0  0  0.0.0.0:11211   0.0.0.0:*  1036/memcached
+udp6  0  0  :::11211        :::*       1036/memcached
+[root@H56 ~]# 
+ 
+
+
+ 
+
+
