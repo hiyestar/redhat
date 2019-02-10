@@ -1,4 +1,4 @@
-
+﻿
 
 https://mirror
 
@@ -22,7 +22,8 @@ linux系统中安装软件的方法
 3、编译安装./configure(配置)make(编译成二进制文件等)makeinstall(安装)【优点】可以定制
 【缺点】复杂、效率低4、定制化制作rpm包,搭建yum仓库,把定制的rpm包放在
 
-安装epel源 1.yum -y install epel-release2. 
+安装epel源 1.yum -y install epel-release
+2. 
 修改/etc/yum.repos.d/epel.repo,将#baseurl和mirrorlist
 修改为baseurl和#mirrorlist
 如下
