@@ -94,7 +94,13 @@ sleep 4
 rpm -qa |grep -i mariadb
 systemctl stop mariadb;systemctl disable mariadb;
 ss -anpult |grep :3306
-rpm  -e  --nodeps  mariadb-server  mariadb
+rpm  -e  --nodeps  mariadb-server  mariadb  
+/***
+/*** ## rpm  -e  --nodeps  cyrus-sasl-gssapi  # -e  --nodeps 的作用是【 一定要删除 】
+  ##  rpm  -e    cyrus-sasl-gssapi  ## rpm  -e  卸载软件
+    --nodeps就是安装【卸载】时不检查依赖关系
+*******/
+
 rm -rf /var/lib/mysql/
 rm -rf /etc/my.cnf*
 yum -y install perl-JSON 
