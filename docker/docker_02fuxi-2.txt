@@ -1,0 +1,2356 @@
+
+
+https://hub.docker.com/ 官网
+======================================================
+IaaS(Infrastructure as a Service)      | PaaS：Platform-as-a-Service
+         基础设施即服务                           |           平台即服务
+- - - 虚拟机 面向架构 ,构建IAAS平台 - - - - - - - -|- - - - - Docker面向应用, 构建PAAS平台 - - - - - - 
+                                                   |            用户空间实例=容器
+                                                   |  基于进程容器(Process container)的轻量级VM
+ 纯软件的虚拟化Guest OS允许运行多个操作系统   |       容器 docker 相互之间不会有任何接口
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -| - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Hypervisor即VMM(virtual machine monitor)|  (Host Operating System)
+    中间软件层  即  虚拟机监视器                  |           主操作系统
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                    基础设施(Infrastructure)
+======================================================
+
+			             OSI参考模型(七层框架)
+
+          [5] 应用层        |<----------协议--------->|	        应用层     (计算机) APDU [是应用层协议数据单元]
+                HTTP  FTP  TFTP  SMTP  SNMP  DNS
+                    上层数据
+6  接口      
+             表示层         |-----------协议-----------|         表示层              PPDU [是表示层协议数据单元]
+5  接口
+ 	     会话层         |-----------协议-----------|         会话层              SPDU [是会话层协议数据单元]
+4  接口      
+      	  [4] 传输层        <----------协议--------->         传输层     (防火墙) TPDU [是传输层协议数据单元,即 segment "数据段"]
+                TCP      UDP
+                TCP头部     上层数据
+3  接口
+       	  [3] 网络层        <----------协议--------->         网络层     (路由器)  package 数据包
+                ICMP  IGMP    IP   ARP   RARP
+                IP头部   TCP头部     上层数据
+2  接口
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧
+                MAC头部  IP头部   TCP头部   上层数据
+1  接口   
+          [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流
+
+          层            主机A                              主机B          数据单元
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+====================
+dpdk是 intel 公司发布的一款数据包转发处理套件. 
+它运行于linux userspace。
+这组套件包括了linux 进程所需要的大部分组件。
+
+但缺少一个传统的tcp/ip 协议栈。
+其他应用程序没办法方便的通过dpdk对外通信。
+可以移植一个TCP/IP协议栈到dpdk。
+
+DPDK(因特尔intel内核,tcp/ip协议栈重写) +  LVS  +  FULLNAT  +  OSPF
+--------------------------------------------------------------
+DPVS(开源,小米公司)= DPDK  +  LVS  +  FULLNAT
+DPVS + OSPF  主流大型架构
+---------------------------------------------------------------------------------
+
+常用的名词
+VS：Virtual Server，虚拟服务器，也称为Director
+RS：Real Server(lvs)，真正的服务器，集群中各节点
+
+OS ：【操作系统 Operating System 】
+
+CIP：客户端IP,用户的IP
+
+VIP：Director 虚拟服务器 向 外部 提供服务的IP
+VIP: LVS虚拟的IP，用于用户访问
+
+RIP：集群节点 真正的服务器 的 IP
+RIP: Real Server 的IP
+
+DIP：Director 虚拟服务器 与 RS真正的服务器 通信的IP
+DIP: LVS Director调度器自已的IP
+
+LIP: LVS Director调度器指定的local address 【内网ip地址】，FULLNAT模式下专用的
+
+LB  ：负载调度器（Load Balancer）
+
+IDC（Internet Data Center）
+TTL Time To Live
+  该字段指定IP包 被 路由器 丢弃之前 允许通过的 最大网段数量
+STP 生成树
+STP spanning tree
+ -----------------------------------------
+
+============================
+  - - -- LVS-NAT  - -- cip vip(dip) (rip) - -- -
+src-ip  -->   dst-ip
+cip     -1->   vip(dip内)
+dip(内) -2->   rip(内)
+(rip内) -3->  (dip内)vip
+vip     -4->  cip
+-------------------------------------------------------------------------
+
+--------------------------------------------------
+ FULLNAT工作流程 cip vip(lip) (dip)[伪装公网vip] (rip) ---
+
+    src-ip    -->     dst-ip
+
+  cip(客户端IP) --1-> vip(公网)[lip(内网)，FULLNAT模式]
+
+               OSPF
+  注意 这一步可以进行路由转发, 链接多个子服务器 lvs-nat模式
+
+lip(内网ip地址) --2-> dip(内网兼伪装公网vip)
+dip(内网兼伪装公网vip) -3->  rip(内)
+ (rip内)       --4->  (dip内)伪装公网vip
+伪装公网vip     --5->  cip
+
+=============================
+
+[root@room9pc01 ~]# ssh -o StrictHostKeyChecking=no  -X  192.168.2.15
+root@192.168.2.15's password: 1
+Last login: Fri Dec 21 15:39:44 2018 from 192.168.2.254
+[root@Va5 ~]# ifdown  eth0
+[root@Va5 ~]# ifdown  eth1
+[root@Va5 ~]# ifconfig  |grep  'inet '
+        inet 192.168.2.15  netmask 255.255.255.0  broadcast 192.168.2.255
+................
+[root@Va5 ~]# ping  114.114.114.114
+connect: 网络不可达
+[root@Va5 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+169.254.0.0     0.0.0.0         255.255.0.0     U     1004   0        0 eth2
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
+[root@Va5 ~]# route  add  default  gw  192.168.2.14
+
+[root@Va5 ~]# ping  114.114.114.114
+PING 114.114.114.114 (114.114.114.114) 56(84) bytes of data.
+^C
+--- 114.114.114.114 ping statistics ---
+11 packets transmitted, 0 received, 100% packet loss, time 9999ms
+
+[root@Va5 ~]# 
+------------------------------  Va4 -------------------
+
+[root@Va4 ~]# service  iptables  status  |grep -io active
+Redirecting to /bin/systemctl status iptables.service
+Active
+active
+
+[root@Va4 ~]# iptables  -t nat  -nL
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24   
+ 
+[root@Va4 ~]# iptables  -t  nat  -I  POSTROUTING  -s  192.168.2.0/24 \
+> -o  eth0  -j  MASQUERADE
+
+[root@Va4 ~]# iptables  -t  nat  -nL  POSTROUTING  
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+MASQUERADE  all  --  192.168.2.0/24       0.0.0.0/0           
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24 
+   
+[root@Va4 ~]# 
+-------------------------  Va5 -------------------
+[root@Va5 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.2.14    0.0.0.0         UG    0      0        0 eth2
+169.254.0.0     0.0.0.0         255.255.0.0     U     1004   0        0 eth2
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+[root@Va5 ~]# ping  114.114.114.114  -c4
+PING 114.114.114.114 (114.114.114.114) 56(84) bytes of data.
+64 bytes from 114.114.114.114: icmp_seq=1 ttl=73 time=24.2 ms
+64 bytes from 114.114.114.114: icmp_seq=2 ttl=74 time=24.5 ms
+64 bytes from 114.114.114.114: icmp_seq=3 ttl=67 time=24.8 ms
+64 bytes from 114.114.114.114: icmp_seq=4 ttl=70 time=25.3 ms
+
+--- 114.114.114.114 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+rtt min/avg/max/mdev = 24.227/24.745/25.392/0.456 ms
+[root@Va5 ~]# 
+
+物理机上查找上网用的网卡
+打开路由转发
+sysctl -w net.ipv4.ip_forward=1
+设置伪装上网
+[root@room9pc19 docker]# iptables -t nat -I POSTROUTING  \ 
+ -s 192.168.4.0/24 -o enp2s0 -j MASQUERADE
+
+在虚拟机里面设置默认路由
+ip route replace default via 192.168.4.254
+
+-----------------------------------------------------
+
+[root@room9pc01 ~]# ls /var/git/
+iso-tar-rpm
+[root@room9pc01 ~]# ls /var/git/iso-tar-rpm/*.iso
+/var/git/iso-tar-rpm/CentOS7-1708.iso
+/var/git/iso-tar-rpm/CentOS-7-x86_64-DVD-1804.iso
+/var/git/iso-tar-rpm/rhcs2.0-rhosp9-20161113-x86_64.iso
+
+[root@room9pc01 ~]# tail -3   /etc/fstab
+UUID=bb62e9f9-f903-40e2-be01-730eb61cc7ea /    ext4    defaults        1 1
+UUID=d60728be-85d6-4b5d-8ca8-b29016db27f1 /var/lib/libvirt/images ext4    defaults    1 2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+
+[root@room9pc01 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -4
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+rpm                      rpm                                                  23
+repolist: 5,009
+
+[root@room9pc01 ~]# vim  /etc/yum.repos.d/.CentOS7-1708.repo
+
+[root@room9pc01 ~]# ls  /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz  packagekit-media.repo  repo  rhel7.repo  rpm.repo
+
+[root@room9pc01 ~]# cat /etc/yum.repos.d/.CentOS7-1708.repo
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://127.0.0.1/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+
+[root@room9pc01 ~]# mkdir   /var/ftp/CentOS7-1708
+
+[root@room9pc01 ~]# mount  -o  loop,ro  -t  iso9660  /var/git/iso-tar-rpm/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+
+[root@room9pc01 ~]# ls  /var/ftp/CentOS7-1708/
+CentOS_BuildTag  GPL       LiveOS    RPM-GPG-KEY-CentOS-7
+EFI              images    Packages  RPM-GPG-KEY-CentOS-Testing-7
+EULA             isolinux  repodata  TRANS.TBL
+
+[root@room9pc01 ~]# du  -sh  /var/git/iso-tar-rpm/CentOS7-1708.iso 
+8.1G	/var/git/iso-tar-rpm/CentOS7-1708.iso
+
+[root@room9pc01 ~]# systemctl  is-active  vsftpd
+active
+[root@room9pc01 ~]# systemctl  is-enabled  vsftpd
+enabled
+
+[root@room9pc01 ~]# mv   /etc/yum.repos.d/.CentOS7-1708.repo  /etc/yum.repos.d/CentOS7-1708.repo
+[root@room9pc01 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -5源标识                      源名称                                   状态
+CentOS7-1708     CentOS7-1708                      9,591
+rhel7            rhel-server-7.4-x86_64-dvd.iso    4,986
+rpm              rpm                               23
+repolist: 14,600
+
+[root@room9pc01 ~]# mount  -o  loop,ro  -t  iso9660  /var/git/iso-tar-rpm/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+
+mount: /var/git/iso-tar-rpm/CentOS7-1708.iso 已经挂载
+
+[root@room9pc01 ~]# umount  /var/ftp/CentOS7-1708/
+
+[root@room9pc01 ~]# ls  /var/ftp/CentOS7-1708/
+[root@room9pc01 ~]# ll  /etc/rc.local 
+lrwxrwxrwx. 1 root root 13 3月  19 2018 /etc/rc.local -> rc.d/rc.local
+
+[root@room9pc01 ~]# ll  /etc/rc.d/rc.local 
+-rwxr-xr-x. 1 root root 568 12月 18 10:02 /etc/rc.d/rc.local
+
+[root@room9pc01 ~]# vim  /etc/rc.local
+
+[root@room9pc01 ~]# tail  -2  /etc/rc.local
+
+echo -e  "nameserver 176.121.0.100\nsearch tedu.cn" >/etc/resolv.conf
+mount  -o  loop,ro  -t  iso9660  /var/git/iso-tar-rpm/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+[root@room9pc01 ~]# .  /etc/rc.local
+
+[root@room9pc01 ~]# 2018/12/21 16:59:27 *************************************************************
+.......................
+2018/12/21 16:59:27 *************************************************************
+2018/12/21 16:59:27 listen tcp4 0.0.0.0:1017: bind: address already in use
+
+[1]+  退出 1                /usr/bin/crack_pycharm
+[root@room9pc01 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -5
+源标识                  源名称                                状态
+CentOS7-1708       CentOS7-1708                  9,591
+rhel7              rhel-server-7.4-x86_64-dvd.iso   4,986
+rpm                rpm                           23
+repolist: 14,600
+
+[root@room9pc01 ~]# cat  local.repo.txt
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@room9pc01 ~]# for i  in  192.168.0.1{1..9};  \
+ do scp  -o  StrictHostKeyChecking=no  local.repo.txt  \
+ root@$i:/etc/yum.repos.d/local.repo ; done
+................ 00:00 
+
+------------------- namespace ---------------------
+
+Namespace并不是Linux才推出的东西，
+早在很久之前，Unix上就有类似的东西，
+而HPUX和Solaris商用的Conatiner更是以前就有推出。
+而在Linux的2.6之后的版本Namespace就逐步的被加了进来。
+
+Linux Namespace的6大类型
+
+项番	类型	               功能说明
+No.1	MNT Namespace	提供磁盘挂载点和文件系统的隔离能力
+No.2	IPC Namespace	提供进程间通信的隔离能力
+No.3	Net Namespace	提供网络隔离能力
+No.4	UTS Namespace	提供主机名隔离能力
+No.5	PID Namespace	提供进程隔离能力
+No.6	User Namespace	提供用户隔离能力
+
+--------------------- 
+
+[root@room9pc01 ~]# ll  /etc/redhat-release 
+lrwxrwxrwx. 1 root root 14 3月  19 2018 /etc/redhat-release -> centos-release
+
+[root@room9pc01 ~]# ll /etc/centos-release
+-rw-r--r--. 1 root root 38 8月  30 2017 /etc/centos-release
+
+[root@room9pc01 ~]# cat  /etc/centos-release
+CentOS Linux release 7.4.1708 (Core) 
+
+[root@room9pc01 ~]# for i  in  192.168.0.1{1,2}; \
+> do  scp  -o  StrictHostKeyChecking=no        \
+> /var/git/iso-tar-rpm/{docker_images.zip,docker-engine-1.12.1-1.el7.centos.x86_64.rpm,docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm}      \
+> root@$i:/root/
+> done
+
+root@192.168.0.11's password: 1
+docker_images.zip                                     100%  246MB 123.1MB/s   00:02    
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          100%   19MB 121.8MB/s   00:00    
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  100%   28KB   2.9MB/s   00:00    
+root@192.168.0.12's password: 1
+docker_images.zip                                     100%  246MB 123.1MB/s   00:02    
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          100%   19MB 134.4MB/s   00:00    
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  100%   28KB   2.5MB/s   00:00    
+
+[root@room9pc01 ~]# mkdir  /var/ftp/docker
+
+[root@room9pc01 ~]# ls  /var/ftp/
+CentOS7-1708  docker  pub  rhel7  share
+
+[root@room9pc01 ~]# cd  /var/ftp/docker/;ls
+
+[root@room9pc01 docker]# cp  -f  /var/git/iso-tar-rpm/{docker_images.zip,docker-engine-1.12.1-1.el7.centos.x86_64.rpm,docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm}  ./
+
+[root@room9pc01 docker]# ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@room9pc01 docker]# createrepo   .  ## 创建yum 源
+
+Spawning worker 0 with 1 pkgs
+................
+[root@room9pc01 docker]# ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@room9pc01 docker]# 
+
+[root@hiys ~]# vim /etc/named.conf
+ 12 options {
+ 13         listen-on port 53 { 192.168.1.254; };
+ 14 //      listen-on-v6 port 53 { ::1; };
+ 15         directory       "/var/named";
+ 16         dump-file       "/var/named/data/cache_dump.db";
+ 17         statistics-file "/var/named/data/named_stats.txt";
+ 18         memstatistics-file "/var/named/data/named_mem_stats.txt";
+ 19         allow-query     { any; };  ## 允许任意人 查询
+ 20         forwarders   { 114.114.114.114; };  # /转发dns,真机的服务器地址
+
+ 31         recursion yes;
+ 32 
+    33		dnssec-enable no;  ## 不加密
+    34		dnssec-validation no;  ## 不加密
+
+[root@hiys ~]# systemctl start named && systemctl enable named
+Created symlink from /etc/systemd/system/multi-user.target.wants/named.service to /usr/lib/systemd/system/named.service.
+[root@hiys ~]# systemctl is-active named
+active
+[root@hiys ~]# systemctl is-enabled  named
+enabled
+[root@hiys ~]# 
+[root@hiys ~]# which dig
+/usr/bin/dig
+[root@hiys ~]# dig ntp.aliyun.com
+
+; <<>> DiG 9.9.4-RedHat-9.9.4-50.el7 <<>> ntp.aliyun.com
+..............................
+
+[root@room9pc01 ~]# nslookup  ntp.aliyun.com
+Server:		176.121.0.100
+Address:	176.121.0.100#53
+
+Non-authoritative answer:
+Name:	ntp.aliyun.com
+Address: 203.107.6.88
+
+[root@room9pc01 ~]# 
+
+------------------------ Va1  ---------------------
+
+[root@room9pc01 ~]# ssh -o StrictHostKeyChecking=no  -X  192.168.0.11
+root@192.168.0.11's password: 
+Last login: Fri Dec 21 09:32:25 2018 from 192.168.0.254
+
+[root@Va1 ~]# free  -m |column  -t
+       total used  free  shared  buff/cache  available
+Mem:   3951  122   3688    8           140        3629
+Swap:  2047  0     2047
+
+[root@Va1 ~]# lsblk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+
+[root@Va1 ~]# cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[root@Va1 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -4
+源标识                      源名称                                         状态
+CentOS7-1708                CentOS7-1708                                   9,591
+rhel7                       rhel-server-7.4-x86_64-dvd.iso                 4,986
+repolist: 14,577
+
+[root@Va1 ~]# systemctl  is-enabled  firewalld
+Failed to get unit file state for firewalld.service: No such file or directory
+[root@Va1 ~]#  systemctl  is-active  firewalld
+unknown
+[root@Va1 ~]# systemctl  mask  firewalld  ## 把服务指向空链接 /dev/null
+Created symlink from /etc/systemd/system/firewalld.service to /dev/null.
+
+[root@Va1 ~]# getenforce 
+Disabled
+
+[root@Va1 ~]# ls
+anaconda-ks.cfg                                       ip.sh  文档
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          公共   下载
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  模板   音乐
+docker_images.zip                                     视频   桌面
+......................
+[root@Va1 ~]# mkdir  /var/git
+
+[root@Va1 ~]# ls  /var/git/
+
+[root@Va1 ~]# cp  -f  docker*  /var/git/
+
+[root@Va1 ~]# ls  /var/git/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@Va1 ~]# which  createrepo 
+/usr/bin/createrepo
+[root@Va1 ~]# rpm  -qf  /usr/bin/createrepo 
+createrepo-0.9.9-28.el7.noarch
+
+[root@Va1 ~]# createrepo  /var/git/   ## 创建 yum 仓库源
+
+Spawning worker 0 with 1 pkgs
+...................
+Sqlite DBs complete
+
+[root@Va1 ~]# ls  /var/git/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@Va1 ~]# cd  /var/git/
+[root@Va1 git]# vim  /etc/hosts
+[root@Va1 git]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va1 git]# vim  /etc/yum.repos.d/local.repo 
+[root@Va1 git]# cat  /etc/yum.repos.d/local.repo
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[docker]
+name=docker-engine
+baseurl=file:///var/git/
+gpgckeck=0
+enabled=1
+[root@Va1 git]# ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@Va1 git]# yum  search  docker
+....................
+CentOS7-1708                                             | 3.6 kB     00:00     
+docker                                                   | 2.9 kB     00:00     
+rhel7                                                    | 4.1 kB     00:00     
+docker/primary_db                                          | 3.4 kB   00:00     
+============================= N/S matched: docker ==============================
+pcp-pmda-docker.x86_64 : Performance Co-Pilot (PCP) metrics from the Docker
+                       : daemon
+docker-engine.x86_64 : The open-source application container engine
+docker-engine-selinux.noarch : SELinux Policies for the open-source application
+                             : container engine
+
+  名称和简介匹配 only，使用“search all”试试。
+
+[root@Va1 git]# yum  -y  install  docker-engine  
+....................
+您已启用软件包 GPG 签名检查，这样很好。
+不过您尚未安装任何 GPG 公钥。
+.................
+-----------------------  提示 您尚未安装任何 GPG 公钥  没有签名
+               ###    后面加上 --nogpgcheck 参数 即可
+
+[root@Va1 ~]# yum  -y  install  docker-engine  --nogpgcheck
+...................
+已安装:
+  docker-engine.x86_64 0:1.12.1-1.el7.centos                                             
+
+作为依赖被安装:
+  docker-engine-selinux.noarch 0:1.12.1-1.el7.centos                                     
+
+完毕！
+[root@Va1 ~]# rpm  -qa  |grep  docker-engine
+docker-engine-selinux-1.12.1-1.el7.centos.noarch
+docker-engine-1.12.1-1.el7.centos.x86_64
+
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           3951         149        3623           8         178        3581
+Swap:          2047           0        2047
+[root@Va1 ~]# uname  -r
+3.10.0-693.el7.x86_64
+
+[root@Va1 ~]# uname  -a
+Linux Va1 3.10.0-693.el7.x86_64 #1 SMP Thu Jul 6 19:56:57 EDT 2017 x86_64 x86_64 x86_64 GNU/Linux
+ 
+
+[root@Va1 ~]# echo  $$  ## 确认当前进程PID
+2195
+
+[root@Va1 ~]# ls  -l  /proc/$$/ns  ## 确认当前进程的各个namespace
+总用量 0
+lrwxrwxrwx 1 root root 0 12月 22 09:38 ipc -> ipc:[4026531839]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 mnt -> mnt:[4026531840]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 net -> net:[4026531956]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 user -> user:[4026531837]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 uts -> uts:[4026531838]
+
+项番	内容说明
+No.1	linux会在/proc下创建所对应的进程相关的信息，ns则为Namespace的信息
+No.2	$$为当前进程PID，/proc/$$/ns下的Namespace的个数回随着Linux内核的
+        高低不同显示的个数不同，因为Linux所支持的Namespace不是一次到位的
+No.3	mnt:[4026531840]，不同的Namespace都有不同的编号，
+        比如32968的mnt的namespace的编号就是4026531840
+
+--------------------- 
+------------------------  namespace  ----------------
+Linux Namespace的6大类型
+
+项番	类型	               功能说明
+No.1	MNT Namespace	提供磁盘挂载点和文件系统的隔离能力
+No.2	IPC Namespace	提供进程间通信的隔离能力
+No.3	Net Namespace	提供网络隔离能力
+No.4	UTS Namespace	提供主机名隔离能力
+No.5	PID Namespace	提供进程隔离能力
+No.6	User Namespace	提供用户隔离能力
+
+--------------------- cgroup ------------ 
+mnt 是“mount”的缩写，是装入硬盘驱动器分区和其他设备的标准位置。
+
+--------------------- cgroup ------------ 
+
+docker 通过 cgroup 来控制容器使用的资源配额，
+包括 CPU、内存、磁盘三大方面，
+基本覆盖了常见的资源配额和使用量控制。
+
+cgroup 是 Control Groups 的缩写，
+是 Linux 内核提供的一种可以
+限制、记录、隔离 进程组 所使用的物理资源(如 cpu、memory、磁盘IO等等) 的机制，
+被 LXC、docker 等很多项目用于实现进程资源控制。
+
+cgroup 将任意进程进行分组化管理的 Linux 内核功能。
+cgroup 本身是提供将进程进行分组化管理的功能和接口的基础结构，
+I/O 或内存的分配控制等具体的资源管理功能是通过这个功能来实现的。
+这些具体的资源管理功能称为 cgroup 子系统，
+有以下几大子系统实现：
+
+blkio：设置限制每个块设备的输入输出控制。例如:磁盘，光盘以及 usb 等等。
+cpu：使用调度程序为 cgroup 任务提供 cpu 的访问。
+cpuacct：产生 cgroup 任务的 cpu 资源报告。
+cpuset：如果是多核心的 cpu，
+   这个子系统会为 cgroup 任务分配单独的 cpu 和内存。
+devices：允许或拒绝 cgroup 任务对设备的访问。
+freezer：暂停和恢复 cgroup 任务。
+memory：设置每个 cgroup 的内存限制以及产生内存资源报告。
+net_cls：标记每个网络包以供 cgroup 方便使用。
+ns：命名空间子系统。
+perf_event：增加了对每 group 的监测跟踪的能力，
+        可以监测属于某个特定的 group 的所有线程以及运行在特定CPU上的线程。
+
+目前 docker 只是用了其中一部分子系统，实现对资源配额和使用的控制。
+
+ 一、CPU资源配额控制
+二、对内存的限额  
+三、对 Block IO 的限制
+
+--------------------- 
+[root@Va1 ~]# systemctl  is-active   docker  &&  systemctl is-enabled  docker
+active
+enabled
+[root@Va1 ~]# docker images  -a
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID   IMAGE     COMMAND    CREATED     STATUS       PORTS       NAMES
+
+[root@Va1 ~]# 
+/******
+创建网络
+
+在安装docker Engine时会自动创建一个默认的bridge网络docker0。 
+此外，还可以创建自己的bridge网络或overlay网络。
+
+bridge网络依附于运行Docker Engine的单台主机上，而overlay网络能够覆盖运行各自Docker Engine的多主机环境中。
+
+创建bridge网络比较简单如下：
+
+ # 不指定网络驱动时默认创建的bridge网络
+docker  network  create  --subnet=172.18.0.1/16  docker1
+
+docker network create  -d bridge --subnet=172.18.0.1/16   simple-network
+
+ # 查看网络内部信息
+ docker network inspect simple-network
+
+ # 应用到容器时，可进入容器内部使用ifconfig查看容器的网络详情
+
+但是创建一个overlay网络就需要一些前提条件（具体操作请参考Docker容器网络相关内容）： 
+- key-value store（Engine支持Consul、Etcd和ZooKeeper等分布式存储的key-value store）
+ 
+- 集群中所有主机已经连接到key-value store 
+- swarm集群中每个主机都配置了下面的daemon参数 
+- –cluster-store 
+- –cluster-store-opt 
+- –cluster-advertise 
+
+然后创建overlay网络：
+
+# 创建网络时，使用参数`-d`指定驱动类型为overlay
+docker network create -d overlay my-multihost-network
+
+就使用--subnet选项创建子网而言，bridge网络只能指定一个子网，而overlay网络支持多个子网。
+
+在bridge和overlay网络驱动下创建的网络可以指定不同的参数，
+具体请参考：https://docs.docker.com/engine/userguide/networking/work-with-networks/
+
+创建三个容器，分别前两个使用默认网络启动容器，第三个使用自定义bridge网络启动。 
+然后再将第二个容器添加到自定义网络。这三个容器的网络情况如下
+
+第一个容器：只有默认的docker0
+第二个容器：属于两个网络——docker0、自定义网络
+第三个容器：只属于自定义网络
+说明：通过容器启动指定的网络会覆盖默认bridge网络docker0。
+
+# 创建三个容器 conTainer1,container2,container3
+docker run -itd --name=container1 busybox
+docker run -itd --name=container2 busybox
+# 创建网络mynet
+docker network create -d bridge --subnet 172.25.0.0/16 mynet
+# 将容器containerr2连接到新建网络mynet
+docker network connect mynet container2
+# 使用mynet网络来容器container3
+docker run --net=mynet --ip=172.25.3.3 -itd --name=container3 busybox
+
+移除网络要求网络中所有的容器关闭或断开与此网络的连接时，才能够使用移除命令：
+
+# 断开最后一个连接到mynet网络的容器
+docker network disconnet mynet container3
+# 移除网络
+docker network rm mynet
+
+https://blog.csdn.net/u012891504/article/details/77367140
+
+
+
+创建一个docker网络my-docker
+
+docker network create -d bridge \
+--subnet=192.168.0.0/24 \
+--gateway=192.168.0.100 \
+--ip-range=192.168.0.0/24 \
+my-docker
+利用刚才创建的网络启动一个容器
+
+#docker run --network=my-docker --ip=192.168.0.5 -itd --name=con_name -h lb01 image_name
+--network   #指定容器网络
+--ip        #设定容器ip地址
+-h          #给容器设置主机名
+查看容器pid
+
+#方法一：
+docker top con_name
+
+#方法二：
+docker inspect --format "{{.State.Pid}}" con_name
+
+运行dockerfile并给dockerfile创建的镜像建立名字
+
+docker build -t mysql:3.6.34 `pwd`
+
+mariadb容器启动前需先设置密码方法
+docker run -d -P -e MYSQL_ROOT_PASSWORD=password  img_id
+
+docker修改镜像名
+docker tag imageid name:tag
+
+进入docker容器脚本
+[root@docker ~]# cat nsenter.sh 
+PID=`docker inspect --format "{{.State.Pid}}" $1`
+nsenter -t $PID -u --mount -i -n -p
+
+创建一个网络
+docker network create --driver bridge --subnet 172.22.16.0/24 --gateway 172.22.16.1 my_net2
+
+将容器添加到my_net2网络 connect
+docker network connect my_net2 oldboy1
+
+
+
+第一步：创建自定义网络
+备注：这里选取了172.172.0.0网段，也可以指定其他任意空闲的网段
+备注1：这里是固定IP地址的一个应用场景的延续，仅作记录用，可忽略不看。
+
+docker network create --subnet=172.172.0.0/16 docker-ice
+注：docker-ice为自定义网桥的名字，可自己任意取名。
+
+第二步：在你自定义的网段选取任意IP地址作为你要启动的container的静态IP地址
+备注：这里在第二步中创建的网段中选取了172.172.0.10作为静态IP地址。这里以启动docker-ice为例。
+docker run -d --net docker-ice --ip 172.172.0.10 ubuntu:16.04
+
+备注2：如果需要将指定IP地址的容器出去的请求的源地址改为宿主机上的其他可路由IP地址，
+可用iptables来实现。
+比如将静态IP地址 172.18.0.10出去的请求的源地址改成公网IP104.232.36.109(前提是本机存在这个IP地址)，
+可执行如下命令：
+iptables -t nat -I POSTROUTING -o eth0 -d  0.0.0.0/0 -s 172.18.0.10  -j SNAT --to-source 104.232.36.109
+
+[root@Va1 ~]# ifconfig   docker0
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:1cff:fe98:1a8a  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:1c:98:1a:8a  txqueuelen 0  (Ethernet)
+....................
+
+[root@Va1 ~]# docker  network  create  --subnet=172.17.1.1/16  docker1
+Error response from daemon: cannot create network 83d5a2c091c79adeda65c1879ae772bcf0243044c4354f94aaf217a96821595f (br-83d5a2c091c7): conflicts with network e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e (docker0): networks have overlapping IPv4
+/*******
+conflicts with network    网络冲突
+networks have overlapping IPv4  网络与IPv4重叠
+
+docker0   e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e
+
+私有 ip 地址的范围：
+A类地址范围：10.0.0.0—10.255.255.255
+B类地址范围：172.16.0.0---172.31.255.555
+C类地址范围：192.168.0.0---192.168.255.255
+
+----------------------------  创建一个docker网络 docker1 -----------------------
+                                 ## 注意子网格式 错误,应该是 172.18.0.0/16
+[root@Va1 ~]# docker  network  create  --subnet=172.18.0.1/16  docker1
+
+417bc39e9b21c3cb50f71b5a623cdeb0407a98b65ce630e832da44fa1a647a53
+
+[root@Va1 ~]# ifconfig 
+br-417bc39e9b21: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+.............
+
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+.........................
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.11  netmask 255.255.255.0  broadcast 192.168.0.255
+................
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+.....................
+
+[root@Va1 ~]# docker  network  ls   ## 查看docker网络
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+417bc39e9b21        docker1             bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local   
+
+/*********
+docker0          inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0 
+   e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e
+
+br-417bc39e9b21: inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+   417bc39e9b21c3cb50f71b5a623cdeb0407a98b65ce630e832da44fa1a647a53
+****/
+----------------------------  创建一个docker网络 docker2 -------------------
+                                         ## 注意子网格式 错误,应该是 172.19.0.0/16
+[root@Va1 ~]# docker network create -d bridge --subnet=172.19.0.1/16  docker2
+
+0e15fbeddda141375b9988453304b2191b87ef738442a76fa23a85ae35a0c14c
+
+[root@Va1 ~]# docker  network  ls
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+417bc39e9b21        docker1             bridge              local               
+0e15fbeddda1        docker2             bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local               
+
+/*********
+docker0          inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0 
+   e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e
+
+br-417bc39e9b21: inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+   417bc39e9b21c3cb50f71b5a623cdeb0407a98b65ce630e832da44fa1a647a53
+
+br-0e15fbeddda1: inet 172.19.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+   0e15fbeddda141375b9988453304b2191b87ef738442a76fa23a85ae35a0c14c
+
+****/
+
+[root@Va1 ~]# ifconfig  
+br-0e15fbeddda1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.19.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+......................
+br-417bc39e9b21: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+...................
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+..........................
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.11  netmask 255.255.255.0  broadcast 192.168.0.255
+.........................
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+....................
+[root@Va1 ~]# 
+[root@Va1 ~]# ifconfig  |awk '/inet /{print  $2}'
+172.19.0.1
+172.18.0.1
+172.17.0.1
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+
+ # 查看网络内部信息
+ docker network inspect NAME
+
+[root@Va1 ~]# docker  network  ls
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+417bc39e9b21        docker1             bridge              local               
+0e15fbeddda1        docker2             bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local  
+
+[root@Va1 ~]# docker  network  inspect   bridge  ##  查看网络内部信息
+[
+    {
+        "Name": "bridge",
+        "Id": "e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+  ............................
+    }
+]
+[root@Va1 ~]# 
+[root@Va1 ~]# docker  network  inspect   docker1   ##  查看网络内部信息
+[
+    {
+        "Name": "docker1",
+        "Id": "417bc39e9b21c3cb50f71b5a623cdeb0407a98b65ce630e832da44fa1a647a53",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.1/16"
+                }
+..........................
+    }
+]
+[root@Va1 ~]# docker  network  inspect   docker2    ##  查看网络内部信息
+[
+    {
+        "Name": "docker2",
+        "Id": "0e15fbeddda141375b9988453304b2191b87ef738442a76fa23a85ae35a0c14c",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.19.0.1/16"
+                }
+  ..........................
+]
+[root@Va1 ~]# docker  network   rm  docker1   # # 移除网络docker1
+docker1
+[root@Va1 ~]# docker  network   rm  docker2   # 移除网络docker2
+docker2
+[root@Va1 ~]# docker  network   ls
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local               
+[root@Va1 ~]# ifconfig  |awk '/inet /{print  $2}'
+172.17.0.1
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+---------------------------- 创建自定义 网络  docker1 -------------------------
+
+[root@Va1 ~]# docker  network  create  --driver  bridge  \
+> --subnet=172.18.0.0/16    --gateway=172.18.0.1     \
+> --ip-range=172.18.0.0/16   docker1
+
+36c303b8ab2d419634b159a5da51c871cba495c7906cbe48f7e49069ebdb1238
+
+[root@Va1 ~]# docker  network   ls
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+36c303b8ab2d        docker1             bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local  
+             
+[root@Va1 ~]# docker  network  inspect   docker1   ##  查看网络内部信息
+[
+    {
+        "Name": "docker1",
+        "Id": "36c303b8ab2d419634b159a5da51c871cba495c7906cbe48f7e49069ebdb1238",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "IPRange": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Containers": {},
+        "Options": {},
+        "Labels": {}
+    }
+]
+[root@Va1 ~]# docker  network  inspect   bridge  ##  查看网络内部信息
+[
+    {
+        "Name": "bridge",
+        "Id": "e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Containers": {},
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "1500"
+        },
+        "Labels": {}
+    }
+]
+[root@Va1 ~]# 
+[root@Va1 ~]# ifconfig  |awk '/inet /{print  $2}'172.18.0.1
+172.17.0.1
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+
+[root@Va1 ~]# ifconfig  |head  -12
+br-36c303b8ab2d: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:5e:15:25:26  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:1cff:fe98:1a8a  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:1c:98:1a:8a  txqueuelen 0  (Ethernet)
+[root@Va1 ~]# 
+           ---------- 利用 默认创建的 网络 docker0 启动一个容器        --------------------
+
+[root@Va1 ~]# docker  run  --network=bridge  --ip=172.17.0.11  -td  centos:latest
+
+64afbfe0c3aaf1711c2bfebc0224631e80a66897d5c7e31a02e8c0ef31d5df12
+docker: Error response from daemon: User specified IP address is supported on user defined networks only.
+  守护进程的错误响应 : 仅在用户定义的网络上支持用户指定的IP地址
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va1 ~]# docker  ps -a
+CONTAINER ID  IMAGE        COMMAND      CREATED      STATUS  PORTS    NAMES
+64afbfe0c3aa  centos:latest "/bin/bash" 39 seconds ago  Created   adoring_kirch
+
+[root@Va1 ~]# docker  rm   adoring_kirch  ## 删除容器
+adoring_kirch
+[root@Va1 ~]# docker  ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va1 ~]# 
+
+Error response from daemon 
+守护进程的错误响应
+User specified IP address is supported on user defined networks only
+仅在用户定义的网络上支持用户指定的IP地址。
+----------------------------------------------------------------------------------
+[root@Va1 ~]# docker  create  --help |grep  -E "\--network|--ip|--name"
+
+      --ip string                   Container IPv4 address (e.g. 172.30.100.104)
+      --ip6 string                  Container IPv6 address (e.g. 2001:db8::33)
+      --ipc string                  IPC namespace to use
+      --name string                 Assign a name to the container
+      --network string              Connect a container to a network (default "default")
+      --network-alias value         Add network-scoped alias for the container (default [])
+
+---- -利用刚才创建的网络docker1  创建一个容器 设置 ip 和 容器名自定义 centos-172.18.0.11--------
+
+[root@Va1 ~]# docker  create  --network=docker1  --ip=172.18.0.11  \
+>   --name=centos-172.18.0.11  centos:latest
+
+9b4d9c117136695a7aa3884b0d963a01d8dbcb940e3fc6732dbcd062f694d450
+
+
+-------------利用默认的网络 bridge(docker0)  创建一个容器 容器名自定义 --------------
+
+[root@Va1 ~]# docker  create   --name=centos-1   centos:latest
+
+00846b40439e753e0a1b6b57afa481275f044cfe4972543679555a4eb9c7b733
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+
+[root@Va1 ~]# docker  ps -a
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+00846b40439e  centos:latest  "/bin/bash"  13 seconds ago  Created   centos-1
+9b4d9c117136  centos:latest  "/bin/bash"  2 minutes ago   Created  centos-172.18.0.11
+
+[root@Va1 ~]# docker   rm   centos-1  ## 删除容器
+centos-1
+[root@Va1 ~]# docker   rm   centos-172.18.0.11  ## 删除容器
+centos-172.18.0.11
+
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+
+[root@Va1 ~]# docker  images 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@Va1 ~]# docker   run  -td  centos:latest  /bin/bash  ## 创建新容器 并且后台-d 运行
+
+d1b04d35429696149f03b0543c3dee278e245d74a4782e3839437a797a862f43
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+d1b04d354296        centos:latest       "/bin/bash"         About a minute ago   Up About a minute                       gigantic_pike
+
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+d1b04d354296        centos:latest       "/bin/bash"         About a minute ago   Up About a minute                       gigantic_pike
+
+----- docker exec 进入容器,退出时不会关闭容器 ----------------------
+ ## docker  exec  -it  容器id前三或五位  运行镜像里的 命令
+
+[root@Va1 ~]# docker   exec  -it   d1b  /bin/bash  ## 注意 必须有 镜像里的 命令
+
+[root@d1b04d354296 /]# hostname
+d1b04d354296
+[root@d1b04d354296 /]# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 10:21 ?        00:00:00 /bin/bash
+root        13     0  0 10:23 ?        00:00:00 /bin/bash
+root        26    13  0 10:31 ?        00:00:00 ps -ef
+
+[root@d1b04d354296 /]# pstree  -p
+bash: pstree: command not found
+
+[root@d1b04d354296 /]# cd  /etc/yum.repos.d/
+
+[root@d1b04d354296 yum.repos.d]# ls
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Sources.repo  CentOS-fasttrack.repo
+CentOS-CR.repo    CentOS-Media.repo      CentOS-Vault.repo
+
+[root@d1b04d354296 yum.repos.d]# mkdir  repo; mv  *.repo   repo
+[root@d1b04d354296 yum.repos.d]# ls
+repo
+[root@d1b04d354296 yum.repos.d]# ls  repo/ |wc  -l
+7
+[root@d1b04d354296 yum.repos.d]# vim  local.repo
+bash: vim: command not found
+[root@d1b04d354296 yum.repos.d]# vi   local.repo
+[root@d1b04d354296 yum.repos.d]# cat   local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[root@d1b04d354296 yum.repos.d]# yum  clean  all >/dev/null &&  yum repolist |tail -3
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+repolist: 9591
+
+[root@d1b04d354296 yum.repos.d]# yum  -y  install  net-tools  vim-enhanced |tail -4
+  vim-filesystem.x86_64 2:7.4.160-2.el7                                         
+  which.x86_64 0:2.20-7.el7                                                     
+
+Complete!
+[root@d1b04d354296 yum.repos.d]#  ifconfig 
+ 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:acff:fe11:2  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:ac:11:00:02  txqueuelen 0  (Ethernet)
+ ....................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+...............
+[root@d1b04d354296 yum.repos.d]# cd
+[root@d1b04d354296 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           3951         193        3001           8         756        3488
+Swap:          2047           0        2047
+[root@d1b04d354296 ~]# echo  $$  ##确认当前进程PID
+13
+[root@d1b04d354296 ~]# exit
+exit
+---- --- ---------- docker exec 进入容器,退出时不会关闭容器 ----------------------
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+d1b04d354296        centos:latest       "/bin/bash"         22 minutes ago      Up 22 minutes                           gigantic_pike
+
+----------------------------------  查看容器pid  #方法一：-----------------
+
+[root@Va1 ~]# docker  top   gigantic_pike
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                8598                8585                0                   18:21               pts/1               00:00:00            /bin/bash
+
+----------------------------------  查看容器pid  #方法2：-----------------
+
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       800     1  0 09:00 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      8598  8585  0 18:21 pts/1    00:00:00 /bin/bash
+root      8937  2254  0 18:47 pts/0    00:00:00 grep --color=auto /bin/bash
+
+----------------------------------  查看容器pid  #方法3：-----------------
+docker  inspect {镜像名|容器名|网络} # 查看{镜像|容器|网络}底层详细信息和属性
+
+[root@Va1 ~]# docker  inspect  --format  "{{.State.Pid}}"   gigantic_pike
+8598
+
+----------------------------  查看容器pid  #方法4：-----------------
+
+[root@Va1 ~]# docker  inspect   gigantic_pike   |grep  "\"Pid\":"
+            "Pid": 8598,
+
+
+[root@Va1 ~]# docker  inspect   gigantic_pike  \
+> |egrep  "\"Path\":|Status|HostnamePath|\"Name\": \"/"
+
+        "Path": "/bin/bash",
+            "Status": "running",
+        "HostnamePath": "/var/lib/docker/containers/d1b04d35429696149f03b0543c3dee278e245d74a4782e3839437a797a862f43/hostname",
+        "Name": "/gigantic_pike",  ## 容器实际名称
+
+[root@Va1 ~]# 
+-----------------------------------------------------------------------------------
+ - - - - - - - --   - - - -- - - - - --  --- -  --- -- - - - -- -- - - -- 
+ redhat    |   debian
+----------------------------------------------------------------------------------
+  rhel     |   debian
+  centos   |   ubuntu
+  selinux  |
+------------------------------------------------------------------------------
+yum Yellowdog Update Manager| apt-get   .deb
+rpm redhat package manager  | dpkg 是Debian package的简写
+-------------------------------------------------------------------------------------------
+  ----------------------------- ## 进入终端-t 后台-d 运行 -------------------
+
+[root@Va1 ~]# docker  run  -td  nginx  /bin/bash    ## 注意 ubuntu
+
+75f8af7d6f1d9c0cedd4e2b277d99f5e8654f3d7a4c8ca7b87196a3f9ff78934
+
+----- docker exec 进入容器,退出时不会关闭容器 ----------------------
+ ## docker  exec  -it  容器id前三或五位  运行镜像里的 命令
+
+[root@Va1 ~]# docker   exec  -it   75f8   /bin/bash
+
+root@75f8af7d6f1d:/# hostname
+75f8af7d6f1d
+root@75f8af7d6f1d:/# echo  $$  ## 当前进程号
+5
+root@75f8af7d6f1d:/# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 11:06 ?        00:00:00 /bin/bash
+root         5     0  0 11:07 ?        00:00:00 /bin/bash
+root        10     5  0 11:09 ?        00:00:00 ps -ef
+
+root@75f8af7d6f1d:/# ip  address show   ## 查看ip
+
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+...........................
+27: eth0@if28: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.3/16 scope global eth0
+    ........................
+
+root@75f8af7d6f1d:/# dpkg  -l  |tail  -3
+ii  udev                      215-17+deb8u5            amd64        /dev/ and hotplug management daemon
+ii  util-linux                2.25.2-6                 amd64        Miscellaneous system utilities
+ii  zlib1g:amd64              1:1.2.8.dfsg-2+b1        amd64        compression library - runtime
+
+root@75f8af7d6f1d:/# ls  /etc/nginx/
+conf.d		koi-utf  mime.types  nginx.conf   uwsgi_params
+fastcgi_params	koi-win  modules     scgi_params  win-utf
+
+root@75f8af7d6f1d:/# ls  /etc/nginx/conf.d/
+default.conf
+
+root@75f8af7d6f1d:/# vi  /etc/nginx/conf.d/default.conf 
+bash: vi: command not found
+root@75f8af7d6f1d:/# vim  /etc/nginx/conf.d/default.conf
+bash: vim: command not found
+
+root@75f8af7d6f1d:/# ls  /usr/
+bin  games  include  lib  local  sbin  share  src
+
+root@75f8af7d6f1d:/# ls  /usr/share/nginx/
+html
+root@75f8af7d6f1d:/# ls  /usr/share/nginx/html/
+50x.html  index.html
+
+root@75f8af7d6f1d:/# ping  172.17.0.1  -c2
+
+PING 172.17.0.1 (172.17.0.1): 56 data bytes
+64 bytes from 172.17.0.1: icmp_seq=0 ttl=64 time=0.163 ms
+64 bytes from 172.17.0.1: icmp_seq=1 ttl=64 time=0.097 ms
+......................
+
+root@75f8af7d6f1d:/# ping  172.17.0.2  -c2
+PING 172.17.0.2 (172.17.0.2): 56 data bytes
+64 bytes from 172.17.0.2: icmp_seq=0 ttl=64 time=0.163 ms
+64 bytes from 172.17.0.2: icmp_seq=1 ttl=64 time=0.091 ms
+................
+
+root@75f8af7d6f1d:/# ping  172.17.0.3  -c2
+PING 172.17.0.3 (172.17.0.3): 56 data bytes
+64 bytes from 172.17.0.3: icmp_seq=0 ttl=64 time=0.095 ms
+64 bytes from 172.17.0.3: icmp_seq=1 ttl=64 time=0.097 ms
+................
+root@75f8af7d6f1d:/# exit
+exit
+
+[root@Va1 ~]# docker   exec  -it   75f8   /bin/bash  ## 以 exec 方式进入容器
+
+root@75f8af7d6f1d:/# ls  /usr/share/nginx/
+html
+root@75f8af7d6f1d:/# ls  /usr/share/      
+................................
+common-licenses  fontconfig   java	       nginx	 readline
+
+root@75f8af7d6f1d:/# ls  /etc/nginx/
+conf.d		koi-utf  mime.types  nginx.conf   uwsgi_params
+fastcgi_params	koi-win  modules     scgi_params  win-utf
+
+root@75f8af7d6f1d:/# exit
+exit
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID    IMAGE      COMMAND    CREATED      STATUS    PORTS       NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         39 minutes ago      Up 39 minutes       80/tcp, 443/tcp     thirsty_wright
+d1b04d354296        centos:latest       "/bin/bash"         About an hour ago   Up About an hour                        gigantic_pike
+
+[root@Va1 ~]# docker  restart  75f8af7d6f1d  ## 重启容器
+75f8af7d6f1d
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID    IMAGE      COMMAND    CREATED      STATUS    PORTS       NAMES
+
+75f8af7d6f1d        nginx               "/bin/bash"         40 minutes ago      Up 10 seconds       80/tcp, 443/tcp     thirsty_wright
+
+d1b04d354296        centos:latest       "/bin/bash"         About an hour ago   Up About an hour                        gigantic_pike
+
+[root@Va1 ~]# elinks  -dump  http://172.17.0.3  ## 原因 没有开启 nginx 服务
+ELinks: 拒绝连接
+
+[root@Va1 ~]# docker   exec  -it   75f8   /bin/bash
+
+root@75f8af7d6f1d:/# which  nginx
+/usr/sbin/nginx
+root@75f8af7d6f1d:/# ls  /usr/sbin/
+add-shell	   e2freefrag	 nginx		      service
+....................
+
+root@75f8af7d6f1d:/# ls  /usr/sbin/nginx  -l
+-rwxr-xr-x 1 root root 1132376 Oct 11  2016 /usr/sbin/nginx
+root@75f8af7d6f1d:/# nginx
+root@75f8af7d6f1d:/# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 11:47 ?        00:00:00 /bin/bash
+root         5     0  0 11:49 ?        00:00:00 /bin/bash
+root        13     0  0 11:50 ?        00:00:00 nginx: master process nginx
+nginx       14    13  0 11:50 ?        00:00:00 nginx: worker process
+root        15     5  0 11:50 ?        00:00:00 ps -ef
+root@75f8af7d6f1d:/# exit
+exit
+^P^P[root@Va1 ~]# 
+[root@Va1 ~]# elinks  -dump  http://172.17.0.3
+                               Welcome to nginx!
+......................
+   Thank you for using nginx.
+
+References
+
+   Visible links
+   1. http://nginx.org/
+   2. http://nginx.com/
+/***************************
+ ## Env 表示设置的环境变量 ,设置搜索命令路径
+                 ## Cmd 表示默认的容器启动的命令
+
+[root@Va1 ~]#  docker  inspect  75f8  |grep -A2  -n  "\"Env\": \["
+125:            "Env": [
+126-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+127-                "NGINX_VERSION=1.11.5-1~jessie"
+
+[root@Va1 ~]# 
+[root@Va1 ~]# docker  rm  $(docker  stop  $(docker  ps  -q)) #删除 正在运行的容器
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                       PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         About an hour ago   Exited (137) 9 minutes ago                       thirsty_wright
+d1b04d354296        centos:latest       "/bin/bash"         2 hours ago         Exited (137) 9 minutes ago                       gigantic_pike
+[root@Va1 ~]# docker  start  75f8
+75f8
+[root@Va1 ~]# docker  ps
+CONTAINER ID    IMAGE      COMMAND    CREATED      STATUS    PORTS       NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         About an hour ago   Up 9 seconds        80/tcp, 443/tcp     thirsty_wright
+[root@Va1 ~]# docker  top
+"docker top" requires at least 1 argument(s).
+See 'docker top --help'.
+
+Usage:  docker top CONTAINER [ps OPTIONS]
+
+Display the running processes of a container
+
+[root@Va1 ~]# docker  top  75f8
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                10372               10358               0                   20:26               pts/1               00:00:00            /bin/bash
+[root@Va1 ~]# elinks  -dump  http://172.17.0.3
+^C
+[root@Va1 ~]# 
+[root@Va1 ~]# docker   exec  -it  75f8  /bin/bash
+
+root@75f8af7d6f1d:/# ls  /usr/sbin/nginx  -l
+-rwxr-xr-x 1 root root 1132376 Oct 11  2016 /usr/sbin/nginx
+
+root@75f8af7d6f1d:/# ls   /usr/share/nginx/html/
+50x.html  index.html
+
+root@75f8af7d6f1d:/# echo  "75f8af7d6f1d \/usr\/share\/nginx\/html\/index.html" > /usr/share/nginx/html/index.html 
+root@75f8af7d6f1d:/# /usr/sbin/nginx    root@75f8af7d6f1d:/# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 12:26 ?        00:00:00 /bin/bash
+root         5     0  0 12:33 ?        00:00:00 /bin/bash
+root        12     0  0 12:36 ?        00:00:00 nginx: master process /usr/sbin/nginx
+nginx       13    12  0 12:36 ?        00:00:00 nginx: worker process
+root        14     5  0 12:36 ?        00:00:00 ps -ef
+root@75f8af7d6f1d:/# exit
+exit
+^P^P   ## Ctrl +p   +q  退出 (卡机的时候)
+[root@Va1 ~]# elinks  -dump  http://172.17.0.2
+   75f8af7d6f1d \/usr\/share\/nginx\/html\/index.html
+
+[root@Va1 ~]# pstree  -p  |head  -3
+systemd(1)-+-ModemManager(667)-+-{ModemManager}(746)
+           |                   `-{ModemManager}(757)
+           |-abrt-watch-log(681)
+
+查看进程有多少个线程:pstree -p pid (pstree -p pid |wc -l 可以查看线程总数)
+
+[root@Va1 ~]# pstree  -p  0
+?()─┬─kthreadd(2)─┬─ata_sff(277)
+    │             ├─bioset(22)
+    │             ├─bioset(368)
+    │             ├─bioset(380)
+......................
+    │             ├─xfsalloc(394)
+    │             └─xprtiod(504)
+    └─systemd(1)─┬─ModemManager(667)─┬─{ModemManager}(746)
+                 │                   └─{ModemManager}(757)
+                 ├─abrt-watch-log(681)
+                 ├─abrt-watch-log(684)
+..........................
+                 ├─dbus-daemon(688)
+                 ├─dnsmasq(1317)───dnsmasq(1318)
+                 ├─dockerd(1091)─┬─docker-containe(1230)─┬─docker-containe(10358)─┬─ba+
+..............................................................................
+                 │               │                       │                        └─{d+
+                 │               │                       ├─docker-containe(10425)─┬─ng+
+.................................................................................................
+                 │               │                       │                        └─{d+
+.............................................................................
+                 │               │                       └─{docker-containe}(2830)
+                 │               ├─{dockerd}(1129)
+..................................................
+                 │               └─{dockerd}(7678)
+                 ├─gssproxy(742)─┬─{gssproxy}(747)
+....................................
+                 │               └─{gssproxy}(751)
+                 ├─httpd(1098)─┬─httpd(1130)
+..............................................
+                 │             └─httpd(1134)
+                 ├─irqbalance(669)
+                 ├─libvirtd(1094)─┬─{libvirtd}(1208)
+....................................
+                 │                └─{libvirtd}(1226)
+                 ├─lsmd(761)
+                 ├─lvmetad(501)
+                 ├─master(1207)─┬─pickup(10463)
+                 │              └─qmgr(1219)
+................................
+                 ├─smartd(664)
+                 ├─sshd(1090)───sshd(2252)───bash(2254)───pstree(10481)
+                 ├─systemd-journal(473)
+                 ├─systemd-logind(676)
+                 ├─systemd-udevd(513)
+                 └─tuned(1083)─┬─{tuned}(1247)
+                               ├─{tuned}(1248)
+                               ├─{tuned}(1249)
+                               └─{tuned}(1250)
+
+查看进程有多少个线程:pstree -p pid (pstree -p pid |wc -l 可以查看线程总数)
+
+[root@Va1 ~]# pstree  -p  0  |wc  -l
+191
+[root@Va1 ~]# pstree  -p  1  |wc  -l
+103
+[root@Va1 ~]# pstree  -p  1230 |wc  -l
+24
+[root@Va1 ~]# ps  -ef  |grep sshd
+root      1090     1  0 09:01 ?        00:00:00 /usr/sbin/sshd -D
+root      2252  1090  0 10:31 ?        00:00:01 sshd: root@pts/0
+root     10515  2254  0 21:04 pts/0    00:00:00 grep --color=auto sshd
+    
+[root@Va1 ~]# docker  attach  75f8
+^P
+^P
+^P^P
+^P
+^P    继续执行 则ctrl +p q  # 先按p 后按q
+^P    ##  Ctrl +  p  q  正常退出且不关闭容器
+^C   ## 卡机 状态  Ctrl +  c
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         2 hours ago         Up 45 minutes       80/tcp, 443/tcp     thirsty_wright
+
+[root@Va1 ~]# docker  stop  75f8  #### 卡机 状态 不能关闭
+^C
+[root@Va1 ~]# docker  top  75f8    #### 卡机 状态 不能查看 容器的pid号
+^C
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root     10372 10358  0 20:26 pts/1    00:00:00 /bin/bash
+root     10588  2254  0 21:12 pts/0    00:00:00 grep --color=auto /bin/bash
+[root@Va1 ~]# kill   -9  10372   #最简单粗暴的杀招
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va1 ~]# 
+
+[root@Va1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         2 hours ago         Up About a minute   80/tcp, 443/tcp     thirsty_wright
+[root@Va1 ~]# docker  attach  75f8
+
+[root@Va1 ~]# docker  attach  75f8
+^P
+^P
+^C
+[root@Va1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         2 hours ago         Up 2 minutes        80/tcp, 443/tcp     thirsty_wright
+
+
+
+
+
+
+
+
+docker attach 进入容器  exit 会导致 容器关闭
+docker  attach  容器id前三或五位
+
+
+查看容器pid
+
+#方法一：
+docker top con_name
+
+#方法二：
+docker inspect --format "{{.State.Pid}}" con_name
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -o StrictHostKeyChecking=no  -X  192.168.0.12
+.................
+[root@Va2 ~]# free  -m  |column  -t
+       total used  free  shared  buff/cache  available
+Mem:   3951  117   3693    8           140        3634
+Swap:  2047  0     2047
+[root@Va2 ~]# lsblk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   20G  0 disk 
+
+[root@Va2 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -4
+源标识                      源名称                                  状态
+CentOS7-1708         CentOS7-1708                      9,591
+rhel7                rhel-server-7.4-x86_64-dvd.iso    4,986
+repolist: 14,577
+
+[root@Va2 ~]# cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@Va2 ~]# uname  -r
+3.10.0-693.el7.x86_64
+
+[root@Va2 ~]# cat  /etc/redhat-release 
+Red Hat Enterprise Linux Server release 7.4 (Maipo)
+
+[root@Va2 ~]# ll  /etc/redhat-release
+-rw-r--r--. 1 root root 52 6月  29 2017 /etc/redhat-release
+
+[root@Va2 ~]# systemctl  is-active  firewalld
+unknown
+[root@Va2 ~]# systemctl  is-enabled  firewalld
+Failed to get unit file state for firewalld.service: No such file or directory
+
+[root@Va2 ~]# getenforce 
+Disabled
+[root@Va2 ~]# systemctl  mask  firewalld   ## 把服务指向空链接 /dev/null
+Created symlink from /etc/systemd/system/firewalld.service to /dev/null.
+
+[root@Va2 ~]# ls
+anaconda-ks.cfg                                       ip.sh  文档
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          公共   下载
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  模板   音乐
+docker_images.zip                                     视频   桌面
+initial-setup-ks.cfg                                  图片
+
+[root@Va2 ~]# mkdir   /var/git/
+
+[root@Va2 ~]# ls   /var/git/
+
+[root@Va2 ~]# cp   -f  docker*    /var/git/
+
+[root@Va2 ~]# cd  /var/git/;ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@Va2 git]# createrepo   .  ## 创建 yum 仓库源
+
+Spawning worker 0 with 1 pkgs
+Spawning worker 1 with 1 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+[root@Va2 git]# ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@Va2 git]# ls  repodata/
+.......-primary.xml.gz
+repomd.xml
+
+[root@Va2 git]# vim  /etc/hosts
+[root@Va2 git]# cat   /etc/hosts
+
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va2 git]# vim  /etc/yum.repos.d/local.repo 
+[root@Va2 git]# cat  /etc/yum.repos.d/local.repo
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[docker]
+name=docker-engine
+baseurl=ftp://192.168.0.254/docker
+gpgckeck=0
+enabled=1
+
+[root@Va2 git]# yum clean all >/dev/null &&  yum repolist  |tail  -4
+CentOS7-1708                CentOS7-1708                                   9,591
+docker                      docker-engine                                      2
+rhel7                       rhel-server-7.4-x86_64-dvd.iso                 4,986
+repolist: 14,579
+[root@Va2 git]#  yum  -y  install  docker-engine  |tail  -4
+
+ 已安装:
+  docker-engine.x86_64 0:1.12.1-1.el7.centos                                                    
+
+作为依赖被安装:
+  docker-engine-selinux.noarch 0:1.12.1-1.el7.centos                                            
+
+完毕！
+[root@Va2 git]#  vim /etc/yum.conf 
+[root@Va2 git]# grep  -B7  -A3  -n "gpgcheck="  /etc/yum.conf
+1-[main]
+2-cachedir=/var/cache/yum/$basearch/$releasever
+3-keepcache=0
+4-debuglevel=2
+5-logfile=/var/log/yum.log
+6-exactarch=1
+7-obsoletes=1
+8:gpgcheck=0
+9-plugins=1
+10-installonly_limit=3
+11-
+
+[root@Va2 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           3951         145        3628           8         178        3585
+Swap:          2047           0        2047
+[root@Va2 ~]# uname  -r
+3.10.0-693.el7.x86_64
+
+[root@Va2 ~]# uname   -a
+Linux Va2 3.10.0-693.el7.x86_64 #1 SMP Thu Jul 6 19:56:57 EDT 2017 x86_64 x86_64 x86_64 GNU/Linux
+
+======================================================
+IaaS(Infrastructure as a Service)      | PaaS：Platform-as-a-Service
+         基础设施即服务                           |           平台即服务
+- - - 虚拟机 面向架构 ,构建IAAS平台 - - - - - - - -|- - - - - Docker面向应用, 构建PAAS平台 - - - - - - 
+                                                   |            用户空间实例=容器
+                                                   |  基于进程容器(Process container)的轻量级VM
+ 纯软件的虚拟化Guest OS允许运行多个操作系统   |       容器 docker 相互之间不会有任何接口
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -| - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Hypervisor即VMM(virtual machine monitor)|  (Host Operating System)
+    中间软件层  即  虚拟机监视器                  |           主操作系统
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                    基础设施(Infrastructure)
+======================================================
+------------------------  namespace  ----------------
+Linux Namespace的6大类型
+
+项番	类型	               功能说明
+No.1	MNT Namespace	提供磁盘挂载点和文件系统的隔离能力
+No.2	IPC Namespace	提供进程间通信的隔离能力
+No.3	Net Namespace	提供网络隔离能力
+No.4	UTS Namespace	提供主机名隔离能力
+No.5	PID Namespace	提供进程隔离能力
+No.6	User Namespace	提供用户隔离能力
+
+[root@Va2 ~]# systemctl  is-active  docker
+active
+[root@Va2 ~]# systemctl  is-enabled   docker
+enabled
+
+[root@Va2 ~]# docker  ps   -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va2 ~]# docker  images  -a
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+newnamebb           newtag              59788edf1f3e        11 weeks ago        1.154 MB
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+docker容器常用命令
+
+docker run命令
+类似于git pull命令。
+git pull命令
+就是git fetch 和 git merge两个命令的组合，
+同样的，docker run
+就是docker create 和 docker start两个命令的组合。
+
+//运行容器 -i 交互式 -t 终端 -d 后台
+PID为1的进程 （根进程）就是系统 （pstree -p）
+docker run -itd 镜像名：标签 命令 （交互式后台进程）
+
+docker attach 容器ID 进入后退出后容器就完蛋了 
+如果想让他继续执行 则ctrl +p q  # 先按p 后按q
+
+docker run  -itd  镜像名  运行镜像的命令  ## 运行容器
+
+docker ps 查看正在运行的容器列表
+docker  ps  -a   查看所有的容器列表
+docker  ps   -aq  仅显示所有的容器id
+
+[root@Va1 ~]# docker  ps  -q  # 仅显示正在运行的容器id
+6be54aeda02f
+
+docker stop   容器id前三或五位    # 关闭容器
+[root@Va1 ~]# docker   stop  6be54aeda02f
+6be54aeda02f
+
+docker start|stop|restart 容器ID
+docker start   容器id前三或五位  # 启动容器
+docker restart 重启容器
+
+docker attach 进入容器  exit 会导致 容器关闭
+docker  attach  容器id前三或五位
+
+docker exec 进入容器,退出时不会关闭容器
+docker  exec  -it  容器id前三或五位  运行命令
+
+docker inspect  镜像名  ## 查看容器底层信息
+
+docker top 查看容器进程列表
+
+docker rm 删除容器  ## 必须先关闭容器,才可以删除
+
+
+
+1 容器的核心技术有哪几种？
+
+参考答案
+Cgroups（Control Groups）-进程资源管理
+NameSpace-进程隔离
+SELinux安全
+2 阐述docker的优缺点
+
+参考答案
+优点：
+相比于传统的虚拟化技术，容器更加简洁高效
+传统虚拟机需要给每个VM安装操作系统
+容器使用的共享公共库和程序
+缺点：
+容器的隔离性没有虚拟化强
+共用Linux内核，安全性有先天缺陷
+SELinux难以驾驭
+监控容器和容器排错是挑战
+3 如何上传，下载镜像
+
+参考答案
+下载镜像
+[root@docker1 ~]# docker  pull  rhel7
+上传镜像
+[root@docker1 ~]# docker  push  rhel7
+
+4 docker镜像常用命令有哪些
+
+参考答案
+docker images 查看镜像列表
+docker history  镜像名  ## 查看镜像制作历史
+
+docker inspect 镜像名  # 查看镜像底层信息
+docker pull 下载镜像
+docker push 上传镜像
+
+docker rmi   镜像名  ## 删除本地镜像
+
+docker save  镜像名 > 镜像名.tar  # 镜像另存为tar包
+
+docker load  < tar包名   #使用tar包导入镜像
+
+docker search  镜像名   ## 搜索镜像
+docker tag  旧的镜像名:旧标签  新镜像名称:新标签  ## 修改镜像名称和标签
+
+5 docker容器常用命令有哪些
+
+参考答案
+docker run命令
+类似于git pull命令。
+git pull命令
+就是git fetch 和 git merge两个命令的组合，
+同样的，docker run
+就是docker create 和 docker start两个命令的组合。
+
+docker ps 查看容器列表
+docker stop 关闭容器
+docker start 启动容器
+docker restart 重启容器
+docker attach|exec 进入容器
+docker inspect 查看容器底层信息
+docker top 查看容器进程列表
+docker rm 删除容器
+
+
+一、Docker简介
+
+       Docker 是一个开源的应用容器引擎，
+让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，
+然后发布到任何流行的 Linux 机器上，也可以实现虚拟化。
+容器 相互之间不会有任何接口。
+Docker是一个构建在LXC之上的,
+基于进程容器(Process container)的轻量级VM解决方案。
+
+1.Docker与传统的VM对比
+
+      传统的虚拟化技术
+
+        1、纯软件的虚拟化是通过对于硬件层的模拟从而实现
+          允许运行多个操作系统。
+               Guest OS运行在VMM之上
+Hypervisor
+ 一种运行在基础物理服务器 和 操作系统之间的中间软件层，
+可允许 多个操作系统和 应用 共享硬件。
+也可叫做VMM（ virtual machine monitor ），
+即 虚拟机监视器。
+               VMM（Virtual Machine Monitor）运行在Host OS之上
+               Host OS负责真正的对于底层硬件的调用
+基础设施(Infrastructure)。
+主操作系统(Host Operating System)。
+        2、硬件辅助虚拟化需要硬件层面对于虚拟化的支持，类似Interl-TV技术等，
+          具有更高的运行效率。
+
+          system-level virtualization
+             系统级虚拟化
+        1、server virtualization method where the kernel 
+          allows multiple isolated user space instances.
+            内核允许的多个隔离的用户空间实例的服务器虚拟化方法 
+          2、  不需要模拟硬件层 
+          3、共享同一个Host OS的Kernal
+        4、user space instance = Container
+               用户空间实例=容器
+
+1. SaaS：Software-as-a-Service（软件即服务）
+提供给客户的服务是运营商运行在云计算基础设施上的应用程序
+2. PaaS：Platform-as-a-Service（平台即服务）
+提供给消费者的服务是
+  开发语言 和 工具（例如Java，python, .Net等）
+  商家将软件研发的平台 作为一种服务，
+  以SaaS的模式提交给用户。
+因此，PaaS也是SaaS模式的一种应用。
+但是，PaaS的出现可以加快SaaS的发展，尤其是加快SaaS应用的开发速度。
+
+3. IaaS： Infrastructure-as-a-Service（基础设施即服务）
+提供给消费者的服务是对所有计算基础设施的利用，
+包括处理CPU、内存、存储、网络和其它基本的计算资源，
+用户能够部署和运行任意软件，包括操作系统和应用程序
+
+======================================================
+IaaS(Infrastructure as a Service)      | PaaS：Platform-as-a-Service
+         基础设施即服务                           |           平台即服务
+- - - 虚拟机 面向架构 ,构建IAAS平台 - - - - - - - -|- - - - - Docker面向应用, 构建PAAS平台 - - - - - - 
+                                                   |            用户空间实例=容器
+                                                   |  基于进程容器(Process container)的轻量级VM
+ 纯软件的虚拟化Guest OS允许运行多个操作系统   |       容器 docker 相互之间不会有任何接口
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -| - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Hypervisor即VMM(virtual machine monitor)|  (Host Operating System)
+    中间软件层  即  虚拟机监视器                  |           主操作系统
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                    基础设施(Infrastructure)
+======================================================
+
+2、Docker核心技术
+
+1、CGroups限制容器的资源使用(cpu时间片、内存)
+
+      1、资源限制（Resource Limitation）：
+         cgroups可以对进程组使用的资源总额进行限制。
+          如设定应用运行时使用内存的上限，
+          一旦超过这个配额就发出OOM（Out of Memory）。
+
+       2、优先级分配（Prioritization）：通过分配的CPU时间片数量及硬盘IO带宽大小，
+             实际上就相当于控制了进程运行的优先级。
+       3、资源统计（Accounting）： cgroups可以统计系统的资源使用量，
+           如CPU使用时长、内存用量等等，这个功能非常适用于计费。
+       4、进程控制（Control）：cgroups可以对进程组执行挂起、恢复等操作。
+
+2、Namespace机制，实现容器间的隔离（网络、进程表）
+
+        1、pid，容器有自己独立的进程表和1号进程
+        2、net，容器有自己独立的network info
+        3、ipc，在ipc通信时候，需要加入额外信息来标示进程 
+        4、mnt，每个容器有自己唯一的目录挂载
+        5、utc，每个容器有独立的hostname和domain
+
+3、chroot，文件系统的隔离（对文件系统根目录隔离）
+
+        1、隔离根文件系统
+
+3、docker实现
+
+1、docker也是container技术的实现，最早使用LXC作为container的引擎
+
+         最新版本的docker使用libcontainer替换了lxc
+
+2、采用aufs文件系统来管理Image和container
+
+        1、advanced multi layer unification filesystem
+                先进的多层统一文件系统
+
+           2、可以实现把多个不同目录的内容合并在一起
+           3、运行read-only和read-write目录并存
+
+3、基于C/S架构的实现，Server端使用UnixSocket，也可以切换到TcpProtocol
+
+4、docker hub（Docker的仓库）
+
+1、类似于Github的服务，用来分发Image
+2、大量标准的Image，例如Tutum/Ubuntu, Tutum/Mysql
+
+5、docker的局限性
+
+1、基于Linux64的，不能再32bit的环境下运行
+2、GuestOS只能是Linux Base
+3、隔离性相对于KVM等虚拟化技术有所欠缺
+4、采用cgroup的resource control对于cpu的度量很难
+5、container随着用户进程的停止而销毁
+
+6、docker和LXC的区别
+
+1、docker更专注的部署，而LXC专注于进程的隔离
+2、docker有更好的api的方便对于docker容器的管理
+3、dockerfile让image的创建变的容易
+4、通过docker hub方便image的分享
+--------------------- 
+
+
+------------------------  namespace  ----------------
+Linux Namespace的6大类型
+
+项番	类型	               功能说明
+No.1	MNT Namespace	提供磁盘挂载点和文件系统的隔离能力
+No.2	IPC Namespace	提供进程间通信的隔离能力
+No.3	Net Namespace	提供网络隔离能力
+No.4	UTS Namespace	提供主机名隔离能力
+No.5	PID Namespace	提供进程隔离能力
+No.6	User Namespace	提供用户隔离能力
+
+--------------------- cgroup ------------ 
+
+docker 通过 cgroup 来控制容器使用的资源配额，
+包括 CPU、内存、磁盘三大方面，
+基本覆盖了常见的资源配额和使用量控制。
+
+cgroup 是 Control Groups 的缩写，
+是 Linux 内核提供的一种可以
+限制、记录、隔离进程组所使用的物理资源(如 cpu、memory、磁盘IO等等) 的机制，
+被 LXC、docker 等很多项目用于实现进程资源控制。
+
+cgroup 将任意进程进行分组化管理的 Linux 内核功能。
+cgroup 本身是提供将进程进行分组化管理的功能和接口的基础结构，
+I/O 或内存的分配控制等具体的资源管理功能是通过这个功能来实现的。
+这些具体的资源管理功能称为 cgroup 子系统，
+有以下几大子系统实现：
+
+blkio：设置限制每个块设备的输入输出控制。例如:磁盘，光盘以及 usb 等等。
+cpu：使用调度程序为 cgroup 任务提供 cpu 的访问。
+cpuacct：产生 cgroup 任务的 cpu 资源报告。
+cpuset：如果是多核心的 cpu，
+   这个子系统会为 cgroup 任务分配单独的 cpu 和内存。
+devices：允许或拒绝 cgroup 任务对设备的访问。
+freezer：暂停和恢复 cgroup 任务。
+memory：设置每个 cgroup 的内存限制以及产生内存资源报告。
+net_cls：标记每个网络包以供 cgroup 方便使用。
+ns：命名空间子系统。
+perf_event：增加了对每 group 的监测跟踪的能力，
+        可以监测属于某个特定的 group 的所有线程以及运行在特定CPU上的线程。
+
+目前 docker 只是用了其中一部分子系统，实现对资源配额和使用的控制。
+
+可以使用 stress 工具来测试 CPU 和内存。
+使用下面的 Dockerfile 来创建一个基于 Ubuntu 的 stress 工具镜像。
+
+# Version 0.0.1
+FROM ubuntu:14.04
+MAINTAINER wzlinux "admin@wzlinux.com"
+RUN sed -i 's/archive.ubuntu.com/cn.archive.ubuntu.com/g' /etc/apt/sources.list
+RUN sed -i 's/security.ubuntu/cn.archive.ubuntu/g' /etc/apt/sources.list
+RUN apt-get -y update && apt-get -y install stress
+docker build -t ubuntu:stress . 
+
+  一、CPU资源配额控制
+
+我们第一次可能出现下面的警告信息。
+
+WARNING: Your kernel does not support cgroup swap limit.WARNING: Your
+kernel does not support swap limit capabilities.
+需要我们修改 grub 开启这个功能，我们需要编辑文件 /etc/default/grub，修改成如下信息。
+
+GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"
+然后重启服务器即可。
+
+二、对内存的限额
+
+与操作系统类似，容器可使用的内存包括两部分：物理内存和 swap。
+ Docker 通过下面两组参数来控制容器内存的使用量。
+
+-m 或 --memory：设置内存的使用限额，例如 100M, 2G。
+--memory-swap：设置 内存+swap 的使用限额。
+
+三、对 Block IO 的限制
+
+Block IO 是另一种可以限制容器使用的资源。
+ Block IO 指的是磁盘的读写，docker 可通过设置权重、限制 bps 和 iops 的方式控制容器读写磁盘的带宽。
+
+------------------
+
+[root@room9pc01 ~]# cat  /etc/yum.conf  |wc  -l
+26
+[root@room9pc01 ~]# grep  -B7  -A2  -n "gpgcheck=1"  /etc/yum.conf 
+1-[main]
+2-cachedir=/var/cache/yum/$basearch/$releasever
+3-keepcache=0
+4-debuglevel=2
+5-logfile=/var/log/yum.log
+6-exactarch=1
+7-obsoletes=1
+8:gpgcheck=1
+9-plugins=1
+10-installonly_limit=5
+[root@room9pc01 ~]# sed  -i  "/gpgcheck/s/1/0/"  /etc/yum.conf 
+[root@room9pc01 ~]# grep  -B7  -A2  -n "gpgcheck=1"  /etc/yum.conf 
+[root@room9pc01 ~]# grep  -B7  -A2  -n "gpgcheck=0"  /etc/yum.conf 
+1-[main]
+2-cachedir=/var/cache/yum/$basearch/$releasever
+3-keepcache=0
+4-debuglevel=2
+5-logfile=/var/log/yum.log
+6-exactarch=1
+7-obsoletes=1
+8:gpgcheck=0
+9-plugins=1
+10-installonly_limit=5
+[root@room9pc01 ~]# 
+-----------------------------------------------------------------------------------
+ - - - - - - - --   - - - -- - - - - --  --- -  --- -- - - - -- -- - - -- 
+ redhat    |   debian
+----------------------------------------------------------------------------------
+  rhel     |   debian
+  centos   |   ubuntu
+  selinux  |
+------------------------------------------------------------------------------
+yum Yellowdog Update Manager| apt-get   .deb
+rpm redhat package manager  | dpkg 是Debian package的简写
+-------------------------------------------------------------------------------------------
+dpkg –I name.deb  查看 包的详细信息（其中的I为大写的i）；  （—info)
+dpkg –c name.deb  查看 包的内容；  （—contents)
+dpkg –i name.deb  安装一个 deb 包；     (--install),如果出现缺少依赖，可以运行 sudo apt-get -f install ,它可以修复依赖，而dpkg不会自动下载依赖的;（后面提到）
+dpkg –r name       删除一个 deb 包，但保留其配置；   (--remove)
+dpkg –P name       删除一个 deb 包，包括保留其配置；    (--purge)
+dpkg –l name        简单列出包的相关信息；       （—list)
+dpkg –L name        列出安装的包的相关文件；     (—listfiles)
+dpkg –s name       列出包的相关细节信息；
+
+apt-get 命令
+
+我们装完linux后的第一件事情就是安装软件了,
+下面的命令可以在Ubuntu发行版或基于Debain的发行版上快速的安装软件:
+sudo apt-get install package-name  ：安装包；
+
+如果要移除软件你则需要使用以下命令:
+sudo apt-get remove package-name
+
+但是移除软件并不能将软件包及其配置文件删除,要删除这些需要使用下面的命令:
+sudo apt-get purge package-name
+
+要搜索软件包可以使用以下命令:
+sudo apt-cache search package-name
+apt-cache show package-name   显示包的相关信息，
+例如描述、版本、大小、依赖以及冲突。
+
+获取最新的软件包套件资讯；
+更改了/etc/apt/sources.list 后需要运行这个命令以令改动生效。
+sudo apt-get update
+
+ 更新所有有新版本的套件：
+sudo apt-get upgrade
+
+apt-get autoclean  
+如果硬盘空间不大，可以定期运行这个程序，
+将已经删除了的软件包的.deb安装文件从硬盘中删除掉。
+
+apt-get clean      类似上面的命令，但它删除包缓存中的所有包。
+这是个为硬盘腾地方的好办法,
+包的缓存路径为 /var/cache/apt/archives
+
+apt-get -f install   
+在Linux中使用命令
+ apt-get install 或 dpkg -i 时有时候会出现依赖错误， 
+此时，紧接着执行：apt-get -f install 即可.
+ -f的作用用于修复依赖损坏处，-f ,fix broken;
+-------------------------------------------------------------------------------
+=========Ubuntu(Debian)的aptitude与apt-get的区别和联系 =============
+aptitude 与 apt-get 一样，
+是 Debian 及其衍生系统中功能极其强大的包管理工具。
+与 apt-get 不同的是，
+aptitude 在处理依赖问题上更佳一些。
+举例来说，
+aptitude 在删除一个包时，
+会同时删除本身所依赖的包。
+这样，系统中不会残留无用的包，整个系统更为干净。
+以下是一些常用 aptitude 命令
+
+命令 作用
+aptitude update 更新可用的包列表
+aptitude upgrade 升级可用的包
+aptitude dist-upgrade 将系统升级到新的发行版
+aptitude install pkgname 安装包
+aptitude remove pkgname 删除包
+aptitude purge pkgname 删除包及其配置文件
+aptitude search string 搜索包
+aptitude show pkgname 显示包的详细信息
+aptitude clean 删除下载的包文件
+aptitude autoclean 仅删除过期的包文件
+
+=================ubuntu 下dpkg 与apt-get ======================
+
+dpkg     -i      <package>        //安装软件
+dpkg     -r                       //移除一个已经安装的软件包    
+dpkg     -P                       //unstall software and 配置文件
+dpkg     -L                       //列出安装的软件包清单
+dpkg     -s                       //显示软件包的安装状态
+
+dpkg 和 apt的区别： 
+dpkg安装的时候需要自己手动添加安装包的依赖文件以及配置文件， 
+而apt就不需要了，它会自动的添加安装包的依赖，两者是两种不同的软件包管理
+
+APT的工作原理： 
+采用软件仓库机制，软件源，一般在/etc/apt/sources.list列出最适合访问的镜像站点地址
+
+apt-get   子命令     optional
+1
+update          下载更新软件包列表信息
+upgrade         将系统中所有软件包升级到最新版本
+install         下载所需软件包并进行安装配置
+remove          卸载软件包
+autoremove      将不满足依赖关系的软件包自动卸载
+source          下载源码包
+build-dep       为源码包构建所需的编译环境
+dist-upgrade    发布版升级
+dselect-upgrade 根据dselete的选择来进行软件包升级
+clean           删除缓存区所有已下载的包文件
+autoclean       删除缓存区中老版本的已下载的包文件
+check           检查系统中依赖关系的完整性
+
+apt-get check=====apt-get -f install
+apt-get --reinstall install      //重新安装软件
+apt-get remove                  //仅卸载软件包还有依赖文件
+apt-get --purge remove         //完全卸载，删除配置文件
+
+
+apt-get clean                //清除缓冲区的文件
+apt-get autoclean            //只保留最新版
+
+软件包查询：
+
+apt-cache show          //获取软件包的详细内容
+apt-cahce policy        //查询软件包的状态
+apt-cache depends       //查询软件包的依赖
+apt-cache rdepends      //被哪个所依赖
+
+

@@ -1,0 +1,2129 @@
+ 
+标准Http协议支持六种请求方法，即：
+1、GET  发送一个请求来取得服务器上的某一资源
+
+2、POST 向服务器发送数据,数据存放位置由服务器自己决定
+
+3、PUT  向服务器发送数据,指定了数据资源的在服务器中存放的位置
+
+4、Delete 删除服务器中的某一个资源
+
+5、HEAD  发送一个请求,不含有呈现数据，仅含有HTTP头信息
+
+6、Options 用于获取当前URL所支持的方法,若请求成功，则会在HTTP头中包含一个名为“Allow”的头，
+             值是所支持的方法，如“GET, POST”。
+
+ELK是一整套解决方案，是三个软件产品的首字母缩写，很多公司都在使用，
+ 如：Sina、携程、华为、美团等
+
+ELK分别代表的意思
+Elasticsearch：负责日志检索和储存
+Logstash：负责日志的收集和分析、处理
+Kibana：负责日志的可视化
+这三款软件都是开源软件，通常是配合使用，而且又先后归于Elastic.co公司名下，故被简称为ELK
+
+ ELK可以实现什么功能
+
+在海量日志系统的运维中，
+可用于解决分布式日志数据集中式查询和管理、系统监控，
+包含系统硬件和应用各个组件的监控、故障排查、安全信息和事件管理、报表功能
+
+Elasticsearch主要特点
+
+1、实时分析
+2、分布式实时文件存储，并将每一个字段都编入索引
+3、文档导向，所有的对象全部是文档
+4、高可用性，易扩展，支持集群（Cluster） 、 分片和复制（Shards 和 Replicas）
+5、接口友好，支持JSON
+
+
+
+关系型   --------  非关系型
+MySQL    ?--?  NoSQL
+Database  ---->   Index
+Table        ---->   Type
+Row          ---->   Document
+Column    ---->   Filed
+
+ELK组成：
+    - E：是指Elasticsearch，完成数据的存储和检索
+    - L：是Logstash，完成数据的采集、过滤及解析
+    - K：Kibana，以WEB方式展示
+
+elastic
+英 [ɪˈlæstɪk]   美 [ɪˈlæstɪk]  
+adj. 有弹力的;可伸缩的;灵活的
+n. 松紧带，橡皮圈
+
+stash
+英 [stæʃ]   美 [stæʃ]  
+n. 隐（贮）藏物;（旧）藏身处
+v. 贮藏;隐藏，藏匿;〈英〉停止
+
+elasticsearch 弹性搜索
+
+logstash 原木
+
+log stash 原木充填
+
+curl 命令
+
+访问一个网页
+curl http://www.baidu.com
+
+显示头信息
+curl -I http://www.baidu.com
+
+显示详细的交互信息
+curl -v http://www.baidu.com
+
+把网页内存保存为文件
+curl -o urfile http://www.baidu.com
+
+
+Elasticsearch基本概念及核心配置文件详解
+
+ 　　Elasticsearch5.X,下列的是Elasticsearch2.X系类配置，其实很多配置都是相互兼容的
+
+1. 配置文件
+
+config/elasticsearch.yml   主配置文件
+config/jvm.options         jvm参数配置文件
+cofnig/log4j2.properties   日志配置文件
+2. 基本概念
+
+接近实时（NRT）
+
+Elasticsearch 是一个接近实时的搜索平台。
+这意味着，从索引一个文档直到这个文档能够被搜索到有一个很小的延迟（通常是 1 秒）。
+集群（cluster）
+
+代表一个集群，集群中有多个节点（node），
+其中有一个为主节点，这个主节点是可以通过选举产生的，
+主从节点是对于集群内部来说的。
+es的一个概念就是去中心化，
+字面上理解就是无中心节点，这是对于集群外部来说的，
+因为从外部来看es集群，在逻辑上是个整体，
+你与任何一个节点的通信和与整个es集群通信是等价的。
+
+索引（index）
+ElasticSearch将它的数据存储在一个或多个索引（index）中。
+用SQL领域的术语来类比，索引就像数据库，
+可以向索引写入文档或者从索引中读取文档，
+并通过ElasticSearch内部使用Lucene将数据写入索引或从索引中检索数据。
+
+文档（document）
+文档（document）是ElasticSearch中的主要实体。
+对所有使用ElasticSearch的案例来说，他们最终都可以归结为对文档的搜索。文档由字段构成。
+
+映射（mapping）
+所有文档写进索引之前都会先进行分析，
+如何将输入的文本分割为词条、哪些词条又会被过滤，这种行为叫做映射（mapping）。
+一般由用户自己定义规则。
+
+类型（type）
+每个文档都有与之对应的类型（type）定义。
+这允许用户在一个索引中存储多种文档类型，并为不同文档提供类型提供不同的映射。
+
+分片（shards）
+代表索引分片，es可以把一个完整的索引分成多个分片，
+这样的好处是可以把一个大的索引拆分成多个，
+分布到不同的节点上。
+
+构成分布式搜索。
+分片的数量只能在索引创建前指定，并且索引创建后不能更改。
+5.X默认不能通过配置文件定义分片
+
+副本（replicas）
+代表索引副本，
+es可以设置多个索引的副本，
+副本的作用一是提高系统的容错性，
+当个某个节点某个分片损坏或丢失时可以从副本中恢复。
+二是提高es的查询效率，
+es会自动对搜索请求进行负载均衡。
+
+数据恢复（recovery）
+代表数据恢复或叫数据重新分布，
+es在有节点加入或退出时会根据机器的负载对索引分片进行重新分配，
+挂掉的节点重新启动时也会进行数据恢复。
+
+GET /_cat/health?v   #可以看到集群状态
+
+数据源（River）
+代表es的一个数据源，
+也是其它存储方式（如：数据库）同步数据到es的一个方法。
+它是以插件方式存在的一个es服务，
+通过读取river中的数据并把它索引到es中，
+官方的river有
+couchDB的，
+RabbitMQ的，
+Twitter的，
+Wikipedia的，
+river这个功能将会在后面的文件中重点说到。
+
+网关（gateway）
+代表es索引的持久化存储方式，
+es默认是先把索引存放到内存中，
+当内存满了时再持久化到硬盘。
+当这个es集群关闭再重新启动时就会从gateway中读取索引数据。
+es支持多种类型的gateway，
+有本地文件系统（默认），分布式文件系统，
+Hadoop的HDFS和amazon的s3云存储服务。
+
+自动发现（discovery.zen）
+代表es的自动发现节点机制，es是一个基于p2p的系统，
+它先通过广播寻找存在的节点，
+再通过多播协议来进行节点之间的通信，
+同时也支持点对点的交互。
+
+5.X关闭广播，需要自定义
+
+通信（Transport）
+代表es内部节点或集群与客户端的交互方式，
+默认内部是使用tcp协议进行交互，
+同时它支持http协议（json格式）、
+thrift、servlet、memcached、zeroMQ等的传输协议（通过插件方式集成）。
+节点间通信端口默认：9300-9400
+
+分片和复制（shards and replicas）
+
+　　一个索引可以存储超出单个结点硬件限制的大量数据。
+比如，一个具有10亿文档的索引占据1TB的磁盘空间，
+而任一节点可能没有这样大的磁盘空间来存储或者单个节点处理搜索请求，
+响应会太慢。
+
+为了解决这个问题，Elasticsearch提供了将索引划分成多片的能力，这些片叫做分片。
+当你创建一个索引的时候，你可以指定你想要的分片的数量。
+每个分片本身也是一个功能完善并且独立的“索引”，
+这个“索引” 可以被放置到集群中的任何节点上。
+
+分片之所以重要，主要有两方面的原因：
+
+允许你水平分割/扩展你的内容容量
+允许你在分片（位于多个节点上）之上进行分布式的、并行的操作，
+进而提高性能/吞吐量 
+至于一个分片怎样分布，
+它的文档怎样聚合回搜索请求，
+是完全由Elasticsearch管理的，
+对于作为用户的你来说，
+这些都是透明的。
+在一个网络/云的环境里，失败随时都可能发生。
+在某个分片/节点因为某些原因处于离线状态或者消失的情况下，
+故障转移机制是非常有用且强烈推荐的。
+为此， Elasticsearch允许你创建分片的一份或多份拷贝，
+这些拷贝叫做复制分片，或者直接叫复制。
+
+复制之所以重要，有两个主要原因：
+
+在分片/节点失败的情况下，复制提供了高可用性。
+复制分片不与原/主要分片置于同一节点上是非常重要的。
+因为搜索可以在所有的复制上并行运行，复制可以扩展你的搜索量/吞吐量
+总之，每个索引可以被分成多个分片。
+一个索引也可以被复制0次（即没有复制） 或多次。
+一旦复制了，每个索引就有了主分片（作为复制源的分片）和复制分片（主分片的拷贝）。
+分片和复制的数量可以在索引创建的时候指定。
+在索引创建之后，你可以在任何时候动态地改变复制的数量，但是你不能再改变分片的数量。
+
+5.X默认5:1   5个主分片，1个复制分片
+默认情况下，Elasticsearch中的每个索引分配5个主分片和1个复制。
+这意味着，如果你的集群中至少有两个节点，你的索引将会有5个主分片和另外5个复制分片（1个完全拷贝），这样每个索引总共就有10个分片。
+
+elasticsearch . yml 详解
+
+
+##################### Elasticsearch Configuration Example ##################### 
+#
+# 只是挑些重要的配置选项进行注释,其实自带的已经有非常细致的英文注释了!
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/modules.html
+#
+################################### Cluster ################################### 
+# 代表一个集群,集群中有多个节点,其中有一个为主节点,这个主节点是可以通过选举产生的,主从节点是对于集群内部来说的. 
+# es的一个概念就是去中心化,字面上理解就是无中心节点,这是对于集群外部来说的,因为从外部来看es集群,在逻辑上是个整体,你与任何一个节点的通信和与整个es集群通信是等价的。 
+# cluster.name可以确定你的集群名称,当你的elasticsearch集群在同一个网段中elasticsearch会自动的找到具有相同cluster.name的elasticsearch服务. 
+# 所以当同一个网段具有多个elasticsearch集群时cluster.name就成为同一个集群的标识. 
+
+# cluster.name: elasticsearch 
+
+#################################### Node ##################################### 
+# https://www.elastic.co/guide/en/elasticsearch/reference/5.1/modules-node.html#master-node
+# 节点名称同理,可自动生成也可手动配置. 
+# node.name: node-1
+
+# 允许一个节点是否可以成为一个master节点,es是默认集群中的第一台机器为master,如果这台机器停止就会重新选举master. 
+# node.master: true 
+
+# 允许该节点存储数据(默认开启) 
+# node.data: true 
+
+# 配置文件中给出了三种配置高性能集群拓扑结构的模式,如下： 
+# 1. 如果你想让节点从不选举为主节点,只用来存储数据,可作为负载器 
+# node.master: false 
+# node.data: true 
+# node.ingest: true  #默认true
+
+# 2. 如果想让节点成为主节点,且不存储任何数据,并保有空闲资源,可作为协调器 
+# node.master: true 
+# node.data: false
+# node.ingest: true
+
+# 3. 如果想让节点既不称为主节点,又不成为数据节点,那么可将他作为搜索器,从节点中获取数据,生成搜索结果等 
+# node.master: false 
+# node.data: false 
+# node.ingest: true
+#
+
+# 4. 仅作为协调器 
+# node.master: false 
+# node.data: false
+# node.ingest: false
+
+# 监控集群状态有一下插件和API可以使用: 
+# Use the Cluster Health API [http://localhost:9200/_cluster/health], the 
+# Node Info API [http://localhost:9200/_nodes] or GUI tools # such as <http://www.elasticsearch.org/overview/marvel/>, 
+
+
+# A node can have generic attributes associated with it, which can later be used 
+# for customized shard allocation filtering, or allocation awareness. An attribute 
+# is a simple key value pair, similar to node.key: value, here is an example: 
+# 每个节点都可以定义一些与之关联的通用属性，用于后期集群进行碎片分配时的过滤
+# node.rack: rack314 
+
+# 默认情况下，多个节点可以在同一个安装路径启动，如果你想让你的es只启动一个节点，可以进行如下设置
+# node.max_local_storage_nodes: 1 
+
+#################################### Index #################################### 
+# 设置索引的分片数,默认为5 
+#index.number_of_shards: 5 
+
+# 设置索引的副本数,默认为1: 
+#index.number_of_replicas: 1 
+
+# 配置文件中提到的最佳实践是,如果服务器够多,可以将分片提高,尽量将数据平均分布到大集群中去
+# 同时,如果增加副本数量可以有效的提高搜索性能 
+# 需要注意的是,"number_of_shards" 是索引创建后一次生成的,后续不可更改设置 
+# "number_of_replicas" 是可以通过API去实时修改设置的 
+
+#################################### Paths #################################### 
+# 配置文件存储位置 
+# path.conf: /path/to/conf 
+
+# 数据存储位置(单个目录设置) 
+# path.data: /path/to/data 
+# 多个数据存储位置,有利于性能提升 
+# path.data: /path/to/data1,/path/to/data2 
+
+# 临时文件的路径 
+# path.work: /path/to/work 
+
+# 日志文件的路径 
+# path.logs: /path/to/logs 
+
+# 插件安装路径 
+# path.plugins: /path/to/plugins 
+
+#################################### Plugin ################################### 
+# 设置插件作为启动条件,如果一下插件没有安装,则该节点服务不会启动 
+# plugin.mandatory: mapper-attachments,lang-groovy 
+
+################################### Memory #################################### 
+# 当JVM开始写入交换空间时（swapping）ElasticSearch性能会低下,你应该保证它不会写入交换空间 
+# 设置这个属性为true来锁定内存,同时也要允许elasticsearch的进程可以锁住内存,linux下可以通过 `ulimit -l unlimited` 命令 
+# bootstrap.mlockall: true 
+
+# 确保 ES_MIN_MEM 和 ES_MAX_MEM 环境变量设置为相同的值,以及机器有足够的内存分配给Elasticsearch 
+# 注意:内存也不是越大越好,一般64位机器,最大分配内存别才超过32G 
+
+############################## Network And HTTP ############################### 
+# 设置绑定的ip地址,可以是ipv4或ipv6的,默认为0.0.0.0 
+# network.bind_host: 192.168.0.1   #只有本机可以访问http接口
+
+# 设置其它节点和该节点交互的ip地址,如果不设置它会自动设置,值必须是个真实的ip地址 
+# network.publish_host: 192.168.0.1 
+
+# 同时设置bind_host和publish_host上面两个参数 
+# network.host: 192.168.0.1    #绑定监听IP
+
+# 设置节点间交互的tcp端口,默认是9300 
+# transport.tcp.port: 9300 
+
+# 设置是否压缩tcp传输时的数据，默认为false,不压缩
+# transport.tcp.compress: true 
+
+# 设置对外服务的http端口,默认为9200 
+# http.port: 9200 
+
+# 设置请求内容的最大容量,默认100mb 
+# http.max_content_length: 100mb 
+
+# 使用http协议对外提供服务,默认为true,开启 
+# http.enabled: false 
+
+###################### 使用head等插件监控集群信息，需要打开以下配置项 ###########
+# http.cors.enabled: true
+# http.cors.allow-origin: "*"
+# http.cors.allow-credentials: true
+
+################################### Gateway ################################### 
+# gateway的类型,默认为local即为本地文件系统,可以设置为本地文件系统 
+# gateway.type: local 
+
+# 下面的配置控制怎样以及何时启动一整个集群重启的初始化恢复过程 
+# (当使用shard gateway时,是为了尽可能的重用local data(本地数据)) 
+
+# 一个集群中的N个节点启动后,才允许进行恢复处理 
+# gateway.recover_after_nodes: 1 
+
+# 设置初始化恢复过程的超时时间,超时时间从上一个配置中配置的N个节点启动后算起 
+# gateway.recover_after_time: 5m 
+
+# 设置这个集群中期望有多少个节点.一旦这N个节点启动(并且recover_after_nodes也符合), 
+# 立即开始恢复过程(不等待recover_after_time超时) 
+# gateway.expected_nodes: 2
+
+ ############################# Recovery Throttling ############################# 
+# 下面这些配置允许在初始化恢复,副本分配,再平衡,或者添加和删除节点时控制节点间的分片分配 
+# 设置一个节点的并行恢复数 
+# 1.初始化数据恢复时,并发恢复线程的个数,默认为4 
+# cluster.routing.allocation.node_initial_primaries_recoveries: 4 
+
+# 2.添加删除节点或负载均衡时并发恢复线程的个数,默认为2 
+# cluster.routing.allocation.node_concurrent_recoveries: 2 
+
+# 设置恢复时的吞吐量(例如:100mb,默认为0无限制.如果机器还有其他业务在跑的话还是限制一下的好) 
+# indices.recovery.max_bytes_per_sec: 20mb 
+
+# 设置来限制从其它分片恢复数据时最大同时打开并发流的个数,默认为5 
+# indices.recovery.concurrent_streams: 5 
+# 注意: 合理的设置以上参数能有效的提高集群节点的数据恢复以及初始化速度 
+
+################################## Discovery ################################## 
+# 设置这个参数来保证集群中的节点可以知道其它N个有master资格的节点.默认为1,对于大的集群来说,可以设置大一点的值(2-4) 
+# discovery.zen.minimum_master_nodes: 1 
+# 探查的超时时间,默认3秒,提高一点以应对网络不好的时候,防止脑裂 
+# discovery.zen.ping.timeout: 3s 
+
+# For more information, see 
+# <http://elasticsearch.org/guide/en/elasticsearch/reference/current/modules-discovery-zen.html> 
+
+# 设置是否打开多播发现节点.默认是true. 
+# 当多播不可用或者集群跨网段的时候集群通信还是用单播吧 
+# discovery.zen.ping.multicast.enabled: false 
+
+# 这是一个集群中的主节点的初始列表,当节点(主节点或者数据节点)启动时使用这个列表进行探测 
+# discovery.zen.ping.unicast.hosts: ["host1", "host2:port"] 
+
+# Slow Log部分与GC log部分略,不过可以通过相关日志优化搜索查询速度 
+
+################  X-Pack ###########################################
+# 官方插件 相关设置请查看此处
+# https://www.elastic.co/guide/en/x-pack/current/xpack-settings.html
+# 
+############## Memory(重点需要调优的部分) ################ 
+# Cache部分: 
+# es有很多种方式来缓存其内部与索引有关的数据.其中包括filter cache 
+
+# filter cache部分: 
+# filter cache是用来缓存filters的结果的.默认的cache type是node type.node type的机制是所有的索引内部的分片共享filter cache.node type采用的方式是LRU方式.即:当缓存达到了某个临界值之后，es会将最近没有使用的数据清除出filter cache.使让新的数据进入es. 
+
+# 这个临界值的设置方法如下：indices.cache.filter.size 值类型：eg.:512mb 20%。默认的值是10%。 
+
+# out of memory错误避免过于频繁的查询时集群假死 
+# 1.设置es的缓存类型为Soft Reference,它的主要特点是据有较强的引用功能.只有当内存不够的时候,才进行回收这类内存,因此在内存足够的时候,它们通常不被回收.另外,这些引用对象还能保证在Java抛出OutOfMemory异常之前,被设置为null.它可以用于实现一些常用图片的缓存,实现Cache的功能,保证最大限度的使用内存而不引起OutOfMemory.在es的配置文件加上index.cache.field.type: soft即可. 
+
+# 2.设置es最大缓存数据条数和缓存失效时间,通过设置index.cache.field.max_size: 50000来把缓存field的最大值设置为50000,设置index.cache.field.expire: 10m把过期时间设置成10分钟. 
+# index.cache.field.max_size: 50000 
+# index.cache.field.expire: 10m 
+# index.cache.field.type: soft 
+
+# field data部分&&circuit breaker部分： 
+# 用于fielddata缓存的内存数量,主要用于当使用排序,faceting操作时,elasticsearch会将一些热点数据加载到内存中来提供给客户端访问,但是这种缓存是比较珍贵的,所以对它进行合理的设置. 
+
+# 可以使用值：eg:50mb 或者 30％(节点 node heap内存量),默认是：unbounded #indices.fielddata.cache.size： unbounded 
+# field的超时时间.默认是-1,可以设置的值类型: 5m #indices.fielddata.cache.expire: -1 
+
+# circuit breaker部分: 
+# 断路器是elasticsearch为了防止内存溢出的一种操作,每一种circuit breaker都可以指定一个内存界限触发此操作,这种circuit breaker的设定有一个最高级别的设定:indices.breaker.total.limit 默认值是JVM heap的70%.当内存达到这个数量的时候会触发内存回收
+
+# 另外还有两组子设置： 
+#indices.breaker.fielddata.limit:当系统发现fielddata的数量达到一定数量时会触发内存回收.默认值是JVM heap的70% 
+#indices.breaker.fielddata.overhead:在系统要加载fielddata时会进行预先估计,当系统发现要加载进内存的值超过limit * overhead时会进行进行内存回收.默认是1.03 
+#indices.breaker.request.limit:这种断路器是elasticsearch为了防止OOM(内存溢出),在每次请求数据时设定了一个固定的内存数量.默认值是40% 
+#indices.breaker.request.overhead:同上,也是elasticsearch在发送请求时设定的一个预估系数,用来防止内存溢出.默认值是1 
+
+# Translog部分: 
+# 每一个分片(shard)都有一个transaction log或者是与它有关的预写日志,(write log),在es进行索引(index)或者删除(delete)操作时会将没有提交的数据记录在translog之中,当进行flush 操作的时候会将tranlog中的数据发送给Lucene进行相关的操作.一次flush操作的发生基于如下的几个配置 
+#index.translog.flush_threshold_ops:当发生多少次操作时进行一次flush.默认是 unlimited #index.translog.flush_threshold_size:当translog的大小达到此值时会进行一次flush操作.默认是512mb 
+#index.translog.flush_threshold_period:在指定的时间间隔内如果没有进行flush操作,会进行一次强制flush操作.默认是30m #index.translog.interval:多少时间间隔内会检查一次translog,来进行一次flush操作.es会随机的在这个值到这个值的2倍大小之间进行一次操作,默认是5s 
+#index.gateway.local.sync:多少时间进行一次的写磁盘操作,默认是5s 
+
+# 以上的translog配置都可以通过API进行动态的设置 - See more at: http://bigbo.github.io/pages/2015/04/10/elasticsearch_config/#sthash.AvOSUcQ4.dpuf
+
+
+
+ 关系型   --------  非关系型
+MySQL    ?--?  NoSQL
+Database  ---->   Index
+Table        ---->   Type
+Row          ---->   Document
+Column    ---->   Filed
+
+ELK组成：
+    - E：是指Elasticsearch [非关系型数据库,最重要]，完成数据的存储和检索
+    - L：是Logstash[可使用 docker 容器技术,数据次重要]，完成数据的采集、过滤及解析
+    - K：Kibana [与 apache 作用相同 ] ，以WEB方式展示 
+
+Linux  apache    mysql[关系型]       php[处理后台程序]
+L        A         M                  P
+L        K         E                  L
+Linux  kibana elasticsearch[非关系型] logstash[处理日志的工作[ java开发的 ]]
+
+
+禁用 防火墙，禁用 selinux
+
+elasticsearch 安装
+1、安装 openjdk 包
+yum install -y java-1.8.0-openjdk-devel
+
+验证
+java -version
+jps
+
+安装 elasticsearch 
+rpm -ivh elasticsearch-2.3.4.rpm
+
+修改配置文件启动服务
+network.host: ip.xx.xx.xx
+systemctl start elasticsearch
+
+验证
+systemctl status elasticsearch
+netstat -ltunp
+
+通过浏览器访问
+http://192.168.4.11:9200/
+
+elastic
+英 [ɪˈlæstɪk]   美 [ɪˈlæstɪk]  
+adj. 有弹力的;可伸缩的;灵活的
+n. 松紧带，橡皮圈
+
+elasticsearch
+弹性搜索
+
+elasticsearch 集群安装
+在多台机器上安装部署 java-1.8.0-openjdk-devel，elasticsearch-2.3.4.rpm
+修改 hosts 文件，保证所有机器通过名称能 ping 通集群中的其他机器
+
+禁用防火墙 和 selinux
+禁用防火墙 和 selinux
+禁用防火墙 和 selinux
+
+在所有节点修改配置文件 /etc/elasticsearch/elasticsearch.yml 
+cluster.name: my-elk01
+node.name: node5
+network.host: 0.0.0.0
+discovery.zen.ping.unicast.hosts: ["node1", "node2", "node3", "node5"]
+
+启动所有节点的 elasticsearch 服务
+通过浏览器可以访问任意节点的 http://ip.xx.xx.xx:9200/
+
+验证集群是否正常，访问
+http://192.168.4.15:9200/_cluster/health?pretty
+
+{
+  "cluster_name" : "my-elk01", #集群名称
+  "status" : "green", # 表示正常
+  "timed_out" : false,
+  "number_of_nodes" : 5, #当前节点数量
+  "number_of_data_nodes" : 5,
+  "active_primary_shards" : 0,
+  "active_shards" : 0,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 0,
+  "delayed_unassigned_shards" : 0,
+  "number_of_pending_tasks" : 0,
+  "number_of_in_flight_fetch" : 0,
+  "task_max_waiting_in_queue_millis" : 0,
+  "active_shards_percent_as_number" : 100.0
+}
+
+插件的安装 head  kopf  bigdesk
+1 拷贝插件 zip 包到一个目录
+2 /usr/share/elasticsearch/bin/plugin install file:///插件的位置/插件包.zip 安装
+
+3 验证：
+安装完成以后可以通过
+/usr/share/elasticsearch/bin/plugin list 看到我们已经安装的插件的名称
+
+4 访问head 插件
+它展现ES集群的拓扑结构
+可以通过它来进行索引（Index）和节点（Node）级别的操作
+它提供一组针对集群的查询API，并将结果以json和表格形式返回
+它提供一些快捷菜单，用以展现集群的各种状态
+http://192.168.4.11:9200/_plugin/head/
+
+
+5 kopf 插件安装
+kopf是一个ElasticSearch的管理工具，它提供了对ES集群操作的API。
+/usr/share/elasticsearch/bin/plugin install file:///xxx-kopf.zip
+
+访问地址
+http://192.168.4.11:9200/_plugin/kopf/
+
+6 bigdesk 插件安装
+bigdesk是elasticsearch的一个集群监控工具
+可以通过它来查看es集群的各种状态，
+如：cpu、内存使用情况，索引数据、搜索情况，http连接数等。
+/usr/share/elasticsearch/bin/plugin install file:///bigdesk-xxx.zip
+
+访问地址
+http://192.168.4.11:9200/_plugin/bigdesk/
+
+使用RESTful API操作elasticsearch
+curl -XPUT 'http://192.168.4.11:9200/school/' -d '{
+    "settings":{
+        "index":{
+            "number_of_shards": 5,
+            "number_of_replicas": 1
+        }
+    }
+}'
+
+获取索引配置信息：
+curl -XGET 'http://192.168.4.11:9200/school/_settings/'
+curl -XGET 'http://192.168.4.11:9200/_all/_settings/'
+
+创建文档
+curl -XPUT 'http://192.168.4.11:9200/school/students/1' -d '{
+    "title": "devops",
+    "name":{
+        "first": "guzhang",
+        "last": "wu"
+    },
+    "age": 25
+}'
+
+查询文档信息
+curl -XGET 'http://192.168.4.11:9200/school/students/1'
+curl -XGET 'http://192.168.4.11:9200/school/students/1?_source=name,age'
+
+更新文档信息
+curl -XPOST 'http://192.168.4.11:9200/school/students/1/_update' -d '{
+    "doc":{
+        "age": 30
+    }
+}'
+
+删除文档信息
+curl -XDELETE 'http://192.168.4.14:9200/school/students/1'
+
+批量导入数据
+curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @shakespeare.json
+curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @logs.jsonl
+curl -XPOST 'http://192.168.4.14:9200/accounts/act/_bulk?pretty' --data-binary @accounts.json
+
+批量查询数据
+curl -XGET 'http://192.168.4.11:9200/_mget?pretty' -d '{ 
+    "docs":[
+        {
+            "_index": "accounts",
+            "_type:": "act",
+            "_id": 1
+        },
+        {
+            "_index": "accounts",
+            "_type:": "act",
+            "_id": 2
+        },
+        {
+            "_index": "shakespeare",
+            "_type:": "scene",
+            "_id": 1
+        }
+    ]
+}'
+
+json 是什么，格式怎么书写
+
+[root@Va2 ~]# ls  /etc/httpd/
+conf  conf.d  conf.modules.d  logs  modules  run
+
+[root@Va2 ~]# grep  -Evn  "#|^$"   /etc/httpd/conf/httpd.conf
+31:ServerRoot "/etc/httpd"
+42:Listen  80
+56:Include conf.modules.d/*.conf
+66:User apache
+67:Group apache
+86:ServerAdmin root@localhost
+95:ServerName  127.0.0.1
+102:<Directory />
+103:    AllowOverride none
+104:    Require all denied
+105:</Directory>
+119:DocumentRoot "/var/www/html"
+124:<Directory "/var/www">
+125:    AllowOverride None
+127:    Require all granted
+128:</Directory>
+131:<Directory "/var/www/html">
+144:    Options Indexes FollowSymLinks
+151:    AllowOverride None
+156:    Require all granted
+157:</Directory>
+163:<IfModule dir_module>
+164:    DirectoryIndex index.html
+165:</IfModule>
+171:<Files ".ht*">
+172:    Require all denied
+173:</Files>
+182:ErrorLog "logs/error_log"
+189:LogLevel warn
+191:<IfModule log_config_module>
+196:    LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+197:    LogFormat "%h %l %u %t \"%r\" %>s %b" common
+199:    <IfModule logio_module>
+201:      LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
+...............
+255:<Directory "/var/www/cgi-bin">
+256:    AllowOverride None
+257:    Options None
+258:    Require all granted
+259:</Directory>
+...............
+348:EnableSendfile on
+353:IncludeOptional conf.d/*.conf
+[root@Va2 ~]# 
+
+
+[root@Va2 ~]# ls  /etc/httpd/logs/
+access_log  access_log-20190113  error_log  error_log-20190113
+
+[root@Va2 ~]# ll  /etc/httpd/logs/
+.................
+
+[root@Va2 ~]# 
+127.0.0.1 - - [13/Jan/2019:17:42:41 +0800] "GET / HTTP/1.1" 200 43 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+1     2     3
+12   0-9   0-9
+
+1   \d   \d
+2    0-5
+      5    0-5
+    0-4  \d
+
+非单词字符：\W
+\W 匹配任何非单词字符。\W 语言元素等效于以下字符类：
+[^\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Nd}\p{Pc}\p{Lm}]
+
+单词字符：\w
+\w 与任何单词字符匹配。单词字符是下表中列出的任何 Unicode 类别的成员。
+类别	描述
+Ll	字母，小写
+Lu	字母，大写
+Lt	字母，首字母大写
+Lo	字母，其他
+Lm	字母，修饰符
+Nd	数字，十进制数
+Pc	标点，连接符。 此类别包含 10 个字符，最常用的字符是 LOWLINE 字符 (_)，u+005F。
+如果指定了符合 ECMAScript 的行为，则 \w 等效于 [a-zA-Z_0-9]。
+
+正则表达式构造：
+\p{名称}
+匹配属于 Unicode 常规类别或命名块的任何字符，其中，名称是类别缩写或命名块的名称。
+负 Unicode 类别或 Unicode 块：\P {}
+Unicode 标准为每个常规类别分配一个字符。
+例如，特定字符可以是大写字母（由 Lu 类别表示），
+十进制数字（Nd 类别）、数学符号（Sm 类别）或段落分隔符（Zl 类别）。
+Unicode 标准中的特定字符集也占据连续码位的特定区域或块。
+例如，可在 \u0000 和 \u007F 之间找到基本拉丁字符集，
+并可在 \u0600 和 \u06FF 之间找到阿拉伯语字符集。
+
+正则表达式构造：
+\P{名称}
+匹配不属于 Unicode 常规类别或命名块的任何字符，其中，名称是类别缩写或命名块的名称。
+
+正则表达式常用通配符
+（1）'^'匹配以该字符后面的字符开头的字符串
+（2）'$'匹配以该字符后面的字符结尾的字符串
+（3）'.'匹配任何一个单字符
+（4）'[...]'匹配在方括号内的任何字符。例如，“[abc]" 匹配a、b或c。
+字符的范围可以使用一个'-'，“[a-z]”匹配任何字母，而“[0-9]”匹配任何数字
+正字符组：[ ]
+正字符组指定一个字符列表，其中的任何一个字符可出现在输入字符串中以便进行匹配。
+此字符列表可以单独指定和/或作为范围指定。
+
+（5）'*' 匹配零个或多个在他前面的字符。例如，“x*”匹配任何数量的'*'字符，“[0-9]*”匹配任何数量的数字，
+而“.*”匹配任何数量的任何字符。
+
+?\d  匹配零个或一个 十进制数字字符  ## 注意 . 点和 ? 问号的区别
+.\d  匹配 一个  十进制数字字符
+
+通配符类型：
+. 表示任意字符
+? 表示出现0次或1次
+* 表示 出现0次或多次
++ 表示出现1次或 多次
+{m,n} 表示出现至少m次，最多n次
+{m,} 表示出现最少m次，最多不限
+{m}表示就出现m次
+      *：匹配任意长度的任意字符
+       ？：匹配 零个或 任意单个字符
+       [ ]：匹配指定范围内的任意单个字符
+       [^]：匹配指定范围之外的任意单个字符
+       [:space:]：空白字符
+       [:punct:]：标点符号
+  [:lower:]：小写字母
+ [:upper:]：大写字母
+ [:alpha:]：大小写字母
+ [:digit:]：数字
+   [:alnum:]：数字和大小写字母
+
+标点符号
+[计]punctuation; 
+  interpunction
+
+punctuation
+标点符号,
+
+interpunction
+标点，标点符号
+
+alphabet n. 字母表;字母系统;入门，初步
+ 
+==============================
+
+正则表达式构造
+
+\p{名称}
+匹配属于 Unicode 常规类别或命名块的任何字符
+
+\P{名称}
+匹配不属于 Unicode 常规类别或命名块的任何字符
+
+非单词字符：\W
+\W 匹配任何非单词字符。\W 语言元素等效于以下字符类：
+[^\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Nd}\p{Pc}\p{Lm}]
+
+单词字符：\w
+\w 与任何单词字符匹配
+
+类别	描述
+Ll	字母，小写
+Lu	字母，大写
+Lt	字母，首字母大写
+Lo	字母，其他
+Lm	字母，修饰符
+Nd	数字，十进制数
+Pc	标点，连接符。 此类别包含 10 个字符，最常用的字符是 LOWLINE 字符 (_)，u+005F。
+如果指定了符合 ECMAScript 的行为，则 \w 等效于 [a-zA-Z_0-9]。
+
+?\d  匹配零个或一个 十进制数字字符  ## 注意 . 点和 ? 问号的区别
+.\d  匹配 一个  十进制数字字符
+
+
+通配符类型：
+. 表示任意字符
+? 表示出现0次或1次   ？：匹配 零个或 任意单个字符
+* 表示 出现0次或多次    *：匹配任意长度的任意字符
++ 表示出现1次或 多次
+{m,n} 表示出现至少m次，最多n次
+{m,} 表示出现最少m次，最多不限
+{m}表示就出现m次
+分组
+基本正则表达式中支持分组，而在扩展正则表达式中，分组的功能更加强大，也可以说才是真正的分组，用法如下：
+()：分组，后面可以使用\1 \2 \3...引用前面的分组
+
+   [ ]：匹配指定范围内的任意单个字符
+   [^]：匹配指定范围之外的任意单个字符
+
+\w : 字母数字 对应大写是非 \W 非字母数字
+\b: 空白 \B
+\<,> : 单词的首尾
+
+  [:space:]：空白字符
+  [:punct:]：标点符号
+  [:lower:]：小写字母
+ [:upper:]：大写字母
+ [:alpha:]：大小写字母
+ [:digit:]：数字
+   [:alnum:]：数字和大小写字母
+
+
+2 正则表达式中的字符类
+ 正字符组：[ ]
+ 负字符组：[^]
+ 任意字符： .
+  Unicode类别或Unicode块：\p{}
+  负 Unicode 类别或 Unicode 块：\P {}
+ 单词字符：\w
+ 非单词字符：\W
+  空白字符：\s
+  非空白字符：\S
+  十进制数字字符：\d
+  非数字字符：\D
+
+
+标点符号
+[计]punctuation; 
+  interpunction
+
+punctuation 标点符号
+interpunction 标点，标点符号
+alphabet n. 字母表;字母系统;入门，初步
+
+显示所有以a或者m开头的文件： 
+  ls -l [am]*
+显示所有文件名中包含了数字的文件：
+ ls -l *[0-9]* 或者ls -l *[[:digit:]]*
+
+
+1     2     3
+12   0-9   0-9
+
+1   \d   \d
+2    0-5
+      5    0-5
+    0-4  \d
+
+25[0-5]|2[0-4]\d|1?\d?\d
+
+?\d
+?\d  匹配零个或一个 十进制数字字符  ## 注意 . 点和 ? 问号的区别
+.\d  匹配 一个  十进制数字字符
+
+精确匹配ip地址
+((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)
+
+模糊匹配ip地址
+([12]?\d?\d\.){3}[12]?\d?\d
+模糊匹配ip地址
+([12](?\d){2}\.){3}[12](?\d){2}
+模糊匹配ip地址
+[0-9.]+
+
+[root@Va2 ~]# cat  /etc/httpd/logs/access_log
+127.0.0.1 - - [13/Jan/2019:17:42:41 +0800] "GET / HTTP/1.1" 200 43 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+127.0.0.1 - - [13/Jan/2019:17:45:00 +0800] "GET / HTTP/1.1" 200 67 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+()  ()  ()  \1   \2   \3  分组匹配 组名函数名
+
+(?<ip>[0-9]+).*[(?<time>.+)\]  [A-Z]+
+
+
+重定向stdin 0  stdout 1 stderr 2
+内核启动的时候默认打开这三个I/O设备文件：
+标准输入文件stdin，得到文件描述符 0
+标准输出文件stdout，得到文件描述符 1
+标准错误输出文件stderr，得到文件描述符 2。
+
+Linux重定向操作符 功能描述
+> 将命令输出写入文件或设备，而不是命令提示符或句柄
+< 从文件而不是从键盘或句柄读入命令输入
+>> 将命令输出添加到文件末尾而不删除文件中已有的信息
+>& 将一个句柄的输出写入到另一个句柄的输入中
+
+<& 从一个句柄读取输入并将其写入到另一个句柄输出中
+
+| 从一个命令中读取输出并将其写入另一个命令的输入中;也称为管道操作符
+
+使用"2>&1" 把标准错误stderr重定向到标准输出stdout；
+2、使用"&>"把标准正确和错误stderr重定向到标准输出stdout；
+
+
+一个文件描述符 是文件系统为了跟踪这个打开的文件而分配给它的一个数字. 
+也可以的将其理解为文件指针的一个简单版本. 与C语言中文件句柄的概念很相似.
+
+关闭文件描述符
+
+&- 关闭标准输出
+n&- 表示将 n 号输出关闭
+
+n<&-
+关闭输入文件描述符 n.
+0<&-, <&-
+关闭 stdin.
+n>&-
+关闭输出文件描述符 n.
+1>&-, >&-
+关闭 stdout.
+
+2>&1 也就是 FD2＝FD1 ，
+这里并不是说FD2 的值等于FD1的值，
+因为 > 是改变送出的数据信道，
+也就是说把 FD2 的 “数据输出通道” 改为 FD1 的 “数据输出通道”
+
+linux exec与重定向
+exec和source都属于bash内部命令（builtins commands），
+在bash下输入man exec
+或man source可以查看所有的内部命令信息。
+source命令，不再产生新的shell，而在当前shell下执行一切命令
+
+exec
+在bash下输入man exec，找到exec命令解释处，可以看到
+”No new process is created.”这样的解释，
+这就是说exec命令不产生新的子进程。
+
+exec与source的区别
+
+exec命令在执行时会把当前的shell process关闭，然后换到后面的命令继续执行。
+
+系统调用exec是以新的进程去代替原来的进程，但进程的PID保持不变。
+因此，可以这样认为，exec系统调用并没有创建新的进程，
+只是替换了原来进程上下文的内容。
+原进程的代码段，数据段，堆栈段被新的进程所代替。
+
+一个进程主要包括以下几个方面的内容:
+
+一个可以执行的程序
+与进程相关联的全部数据(包括变量，内存，缓冲区)
+程序上下文(程序计数器PC,保存程序执行的位置)
+exec是一个函数簇，由6个函数组成，分别是以excl和execv打头的。
+
+执行exec系统调用，一般都是这样，
+用fork()函数新建立一个进程，
+然后让进程去执行exec调用。
+在fork()建立新进程之后，父进各与子进程共享代码段，但数据空间是分开的，
+
+但父进程会把自己数据空间的内容copy到子进程中去，
+还有上下文也会copy到子进程中去。
+
+而为了提高效率，采用一种写时copy的策略，
+即创建子进程的时候，并不copy父进程的地址空间，父子进程拥有共同的地址空间，
+
+只有当子进程需要写入数据时(如向缓冲区写入数据),
+这时候会复制地址空间，复制缓冲区到子进程中去。
+从而父子进程拥有独立的地址空间。
+而对于fork()之后执行exec后，这种策略能够很好的提高效率，
+如果一开始就copy,那么exec之后，子进程的数据会被放弃，被新的进程所代替。
+
+
+fork是linux的系统调用，
+用来创建子进程（child process）。
+子进程是父进程(parent process)的一个副本，
+从父进程那里获得一定的资源分配以及继承父进程的环境。
+子进程与父进程唯一不同的地方在于pid（process id）。
+
+环境变量（传给子进程的变量，遗传性是本地变量和环境变量的根本区别）
+只能单向从父进程传给子进程。
+不管子进程的环境变量如何变化，
+都不会影响父进程的环境变量。
+
+bash shell的命令分为两类：
+外部命令和内部命令。
+外部命令是通过系统调用或独立的程序实现的，如sed、awk等等。
+内部命令是由特殊的文件格式（.def）所实现，
+如cd、history、exec等等。
+
+执行一个shell命令行时通常会自动打开三个标准文件，
+即标准输入文件（stdin），通常对应终端的键盘；
+标准输出文件（stdout）
+和标准错误输出文件（stderr），这两个文件都对应终端的屏幕。
+
+进程将从标准输入文件中得到输入数据，
+将正常输出数据输出到标准输出文件，
+而将错误信息送到标准错误文件中
+
+[root@Va2 ~]# ll  whileawk.txt  
+-rw-r--r-- 1 root root 14995005440 1月  13 15:34 whileawk.txt
+[root@Va2 ~]# >  whileawk.txt
+[root@Va2 ~]# ll  whileawk.txt
+-rw-r--r-- 1 root root 0 1月  14 15:41 whileawk.txt
+[root@Va2 ~]# cat  whileawk.txt 
+[root@Va2 ~]# cat  wenjian.txt 
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+[root@Va2 ~]# 
+命令wc统计指定文件 以空格 或 回车换行符号 作为 单词分隔符
+命令wc统计指定文件包含的 行数 3行、单词数 6个 和 字符总数23(包含空格和回车键符号)
+[root@Va2 ~]# wc
+ab abc
+abcd
+123 ctrl d
+      3       6      23
+从键盘键入的所有文本都出现在屏幕上，但并没有什么结果，
+直至按下ctrl+d，wc才将命令结果写在屏幕上
+
+[root@Va2 ~]# wc  <  wenjian.txt
+ 3  3 27
+命令wc统计指定文件包含的 行数 3行、单词数 3个 和 字符总数27(包含空格和回车键符号)
+
+Linux重定向操作符 功能描述
+> 将命令输出写入文件或设备，而不是命令提示符或句柄
+< 从文件而不是从键盘或句柄读入命令输入
+>> 将命令输出添加到文件末尾而不删除文件中已有的信息
+>& 将一个句柄的输出写入到另一个句柄的输入中
+
+<& 从一个句柄读取输入并将其写入到另一个句柄输出中
+
+| 从一个命令中读取输出并将其写入另一个命令的输入中;也称为管道操作符
+
+使用"2>&1" 把标准错误stderr重定向到标准输出stdout；
+2、使用"&>"把标准正确和错误stderr重定向到标准输出stdout；
+
+[root@Va2 ~]# sed  -i  3d   new.txt 
+
+[root@Va2 ~]# cat  new.txt 
+
+[root@Va2 ~]# id  lily2 > new.txt
+id: lily2: no such user
+
+[root@Va2 ~]# cat  new.txt 
+
+[root@Va2 ~]# id  lily2 > new.txt  2>&1 #把标准错误stderr重定向到标准输出stdout
+
+[root@Va2 ~]# cat  new.txt 
+id: lily2: no such user
+
+[root@Va2 ~]# id  lily3  2> new.txt 
+[root@Va2 ~]# cat  new.txt 
+id: lily3: no such user
+
+
+exec 4<&1          # 备份当前stdout
+exec 1>1.txt
+ 
+n<&-
+关闭输入文件描述符 n.
+
+while read line;do echo $line; done < 1
+ 
+exec 1<&4          # 恢复stdout
+exec 4>&-
+
+n>&-
+关闭输出文件描述符 n.
+
+重定向stdin 0  stdout 1 stderr 2
+内核启动的时候默认打开这三个I/O设备文件：
+标准输入文件stdin，得到文件描述符 0
+标准输出文件stdout，得到文件描述符 1
+标准错误输出文件stderr，得到文件描述符 2。
+
+-------------------另外一个终端窗口  pts/1-------------------
+[root@Va1 ~]# tty
+/dev/pts/1
+[root@Va1 ~]# echo  hi pts/0 I am pts/1 > /dev/pts/0
+[root@Va1 ~]# tty
+/dev/pts/1
+
+--------------------第一个终端窗口  pts/0-------------------
+
+[root@Va1 ~]# hi pts/0 I am pts/1   ## 收到pts/1 发给本终端 /dev/pts/0 的信息
+
+[root@Va1 ~]# tty
+/dev/pts/0
+[root@Va1 ~]# echo  yes  pts/0  > /dev/pts/1
+[root@Va1 ~]# who
+root     pts/0        2019-01-14 13:13 (192.168.0.254)
+root     pts/1        2019-01-14 16:17 (192.168.0.254)
+
+-----------------另外一个终端窗口  pts/1---------------
+[root@Va1 ~]# tty
+/dev/pts/1
+[root@Va1 ~]# yes pts/0  # 收到pts/0 发给本终端 /dev/pts/1 的信息
+
+[root@Va1 ~]# man  bash  |grep  -EnA3  "/dev/fd"
+978:       /dev/fd    方式为打开的文件命名的系统中才可用。   
+                         它的形式是   <(list)   或者是   >(list)。 
+          进程   list   运行时的输入或输出被连接到一个   FIFO   或者   /dev/fd  中的文件。
+          文件的名称作为一个参数被传递到当前命令，作为扩展的结果。   
+     如果使用   >(list)    形式，向文件写入相当于为     list     提供输入。
+     如果使用  <(list)    形式，可以读作为参数传递 的文件来获得 list 的输出。
+1105:              /dev/fd/fd
+1106-                     如果 fd 是一个合法的整数，文件描述符 fd 将被复制。
+
+1347:       如果某操作的任何    file    参数的形式是    /dev/fd/n，
+      那么将检查    文件描述符  n。
+     如果某操作的  file  参数是   /dev/stdin，   /dev/stdout   或者   /dev/stderr
+1349-       之一，将分别检查文件描述符 0，1 和 2。
+
+
+[root@Va1 ~]# man  bash  |grep  -EnA3  "\/dev\/tcp\/host\/port"
+...................
+[root@Va1 ~]# man  bash  |grep  -EnA1  "\/dev\/std"
+...................
+[root@Va1 ~]# man  bash  |grep  -EnA3  "/dev/tcp/host/port"
+1192:              /dev/tcp/host/port
+1193-                     如果 host 是一个合法的主机名或 Internet  地址，并且  port
+1194-                     是  一个整数端口号或服务名，bash  试图建立与相应的 socket
+1195-                     (套接字) 的 TCP 连接。
+
+[root@Va1 ~]# man  bash  |grep  -EnA1  "/dev/std"
+1186:              /dev/stdin
+1187-                     文件描述符 0 被复制。
+1188:              /dev/stdout
+1189-                     文件描述符 1 被复制。
+1190:              /dev/stderr
+1191-                     文件描述符 2 被复制。
+--
+1437:       n。如果某操作的  file  参数是 /dev/stdin， /dev/stdout 或者 /dev/stderr
+1438-       之一，将分别检查文件描述符 0，1 和 2。
+
+[root@Va1 ~]# man  bash  |grep  -EnA3  "/dev/udp/host/port"
+1196:              /dev/udp/host/port
+1197-                     如果 host 是一个合法的主机名或 Internet  地址，并且  port
+1198-                     是  一个整数端口号或服务名，bash  试图建立与相应的 socket
+1199-                     (套接字) 的 UDP 连接。
+[root@Va1 ~]# 
+
+重定向stdin 0  stdout 1 stderr 2
+内核启动的时候默认打开这三个I/O设备文件：
+标准输入文件stdin，得到文件描述符 0
+标准输出文件stdout，得到文件描述符 1
+标准错误输出文件stderr，得到文件描述符 2。
+
+一个文件描述符 是文件系统为了跟踪这个打开的文件而分配给它的一个数字. 
+也可以的将其理解为文件指针的一个简单版本. 与C语言中文件句柄的概念很相似.
+
+关闭文件描述符
+
+&- 关闭标准输出
+n&- 表示将 n 号输出关闭
+
+n<&-
+关闭输入文件描述符 n.
+0<&-, <&-
+关闭 stdin.
+n>&-
+关闭输出文件描述符 n.
+1>&-, >&-
+关闭 stdout.
+
+2>&1 也就是 FD2＝FD1 ，
+这里并不是说FD2 的值等于FD1的值，
+因为 > 是改变送出的数据信道，
+也就是说把 FD2 的 “数据输出通道” 改为 FD1 的 “数据输出通道”
+
+表头文件 #include<unistd.h>
+#include<fcntl.h>
+定义函数 int fcntl(int fd , int cmd);
+int fcntl(int fd,int cmd,long arg);
+int fcntl(int fd,int cmd,struct flock * lock);
+函数说明 fcntl()用来操作文件描述词的一些特性。
+参数fd代表欲设置的文件描述词，参数cmd代表欲操作的指令。
+
+close（关闭文件）
+相关函数 open，fcntl，shutdown，unlink，fclose
+表头文件 #include<unistd.h>
+定义函数 int close(int fd);
+函数说明 当使用完文件后若已不再需要则可使用close()关闭该文件，
+二close()会让数据写回磁盘，并释放该文件所占用的资源。
+参数fd为先前由open()或creat()所返回的文件描述词。
+返回值 若文件顺利关闭则返回0，发生错误时返回-1。
+错误代码 EBADF 参数fd 非有效的文件描述词或该文件已关闭
+
+定义函数 int flock(int fd,int operation);
+函数说明 
+flock()会依参数operation所指定的方式对参数fd所指的文件做各种锁定或解除锁定的动作。
+此函数只能锁定整个文件，无法锁定文件的某一区域。
+参数 operation有下列四种情况:
+LOCK_SH 建立共享锁定。多个进程可同时对同一个文件作共享锁定。
+LOCK_EX 建立互斥锁定。一个文件同时只有一个互斥锁定。
+LOCK_UN 解除文件锁定状态。
+LOCK_NB 无法建立锁定时，此操作可不被阻断，马上返回进程。
+通常与LOCK_SH或LOCK_EX 做OR(|)组合。
+单一文件无法同时建立共享锁定和互斥锁定，
+而当使用dup()或fork()时文件描述词不会继承此种锁定。
+返回值 返回0表示成功，若有错误则返回-1，
+错误代码存于errno。
+
+关于fcntl(fd, F_SETFD, FD_CLOEXEC)设置exec时close的属性
+
+snd_ctl_hw_open
+#define SNDRV_FILE_CONTROL    ALSA_DEVICE_DIRECTORY "controlC%i"
+sprintf(filename, SNDRV_FILE_CONTROL, card); // 路径/dev/snd/controlC0
+
+fd = snd_open_device(filename, fmode);
+
+fcntl(fd, F_SETFD, FD_CLOEXEC); // 这里设置为FD_CLOEXEC表示
+当程序执行exec函数时本fd将被系统自动关闭,
+表示不传递给exec创建的新进程, 
+如果设置为fcntl(fd, F_SETFD, 0);
+那么本fd将保持打开状态复制到exec创建的新进程中[luther.gliethttp].
+进入内核系统调用
+sys_fcntl
+do_fcntl
+    case F_SETFD:
+        err = 0;
+        set_close_on_exec(fd, arg & FD_CLOEXEC);
+
+void fastcall set_close_on_exec(unsigned int fd, int flag)
+{
+    struct files_struct *files = current->files;
+    struct fdtable *fdt;
+    spin_lock(&files->file_lock);
+    fdt = files_fdtable(files);
+    if (flag)
+        FD_SET(fd, fdt->close_on_exec);
+    else
+        FD_CLR(fd, fdt->close_on_exec);
+    spin_unlock(&files->file_lock);
+}
+
+man fcntl看到的对FD_CLOEXEC解释
+
+find  进一步的操作，这个时候exec的作用就显现出来了。
+　　-exec  参数后面跟的是 command 命令，它的终止是以“；”为结束标志的，
+所以这句命令后面的分号" ; "是不可缺少的，
+考虑到各个系统中分号" ; "会有不同的意义，
+所以前面加反斜杠" / "。　　
+
+　{} 花括号代表前面find查找出来的文件名
+
+　find . -type f -exec ls -l {} \; 　　
+## find 命令匹配到了当前目录下的所有普通文件，并在 -exec 选项中使用 ls -l 命令将它们列出
+
+[root@Va2 ~]# find  /root/  -type  f  -iname  "we*"  -exec  cat   {} \;
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+
+[root@Va2 ~]# find  /root/  -type  f  -name  "w*"  -exec  ls  -l  {} \;
+-rw-r--r-- 1 root root 27 1月  12 17:36 /root/wenjian.txt
+
+[root@Va2 ~]# find  /root/  -type  f  -name  "wenj*"  -exec  cp  -f  {}  new.txt \;
+
+[root@Va2 ~]# find  /root/  -type  f  -iname  "Ne*"  -exec  cat  {} \;
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+[root@Va2 ~]# find  /root/  -type  f  -iname  "Ne*"  -exec  ls  -l  {} \;
+-rw-r--r-- 1 root root 27 1月  14 17:55 /root/new.txt
+
+
+
+常用命令语法及范例
+ 
+exec 0
+exec 1>outfilename # 打开文件outfilename作为stdout
+exec 2>errfilename # 打开文件errfilename作为 stderr
+exec 1&-           # 关闭 FD1
+exec 5>&-          # 关闭 FD5
+ 
+exec 4<&1          # 备份当前stdout至FD4
+exec 1>1.txt       # stdout重定向至1.txt
+exec 1<&4          # 恢复stdout
+exec 4>&-          # 关闭 FD4
+ 
+exec 3<&0:这个命令就是将操作符3也指向标准输入
+
+# 重定向操作范例
+cat > 1 <<EOF
+11 22 33 44 55
+66 22 33 11 33
+324 25 63 634 745
+EOF
+cat > 2 <<EOF
+> 1.txt
+EOF
+ 
+exec 4<&1          # 备份当前stdout至FD4
+exec 1>1.txt       # stdout重定向至1.txt
+exec 1<&4          # 恢复stdout
+exec 4>&-          # 关闭 FD4
+ 
+http://xstarcd.github.io/wiki/shell/exec_redirect.html
+
+while read line;do echo $line; done < 1
+ 
+exec 1<&4          # 恢复stdout
+exec 4>&-
+ 
+sh ./2
+cat 1.txt
+
+[root@Va2 ~]# echo   012345  > new.txt 
+[root@Va2 ~]# cat  new.txt
+012345
+[root@Va2 ~]# exec  3<>  new.txt  # 打开"File"并且给它分配fd 3
+[root@Va2 ~]# read  -n  4 <&3   # 只读4个字符
+[root@Va2 ~]# echo  -n  ..xx  >&3
+[root@Va2 ~]# cat   new.txt
+0123..xx[root@Va2 ~]# ll  new.txt
+-rw-r--r-- 1 root root 8 1月  14 18:46 new.txt
+[root@Va2 ~]# exec  3>&-  # 关闭fd 3
+[root@Va2 ~]# ll  new.txt
+-rw-r--r-- 1 root root 8 1月  14 18:46 new.txt
+[root@Va2 ~]# cat   new.txt
+0123..xx[root@Va2 ~]# 
+
+[root@Va2 ~]# echo  -e  "..xx\nwww "
+..xx
+www 
+[root@Va2 ~]# echo  -e  ..xx\nwww 
+..xxnwww
+[root@Va2 ~]# 
+
+~]# exec  3<>  new.txt  # 打开"new.txt"并且给它分配fd 3
+
+n<&-
+关闭输入文件描述符 n.
+21 exec 0<&6 6<&-
+22 # 现在将stdin从fd #6中恢复, 因为刚才我们把stdin重定向到#6了,
+23 #+ 然后关闭fd #6 ( 6<&- ), 好让这个描述符继续被其他进程所使用
+
+exec 1&-           # 关闭 FD1
+exec 5>&-          # 关闭 FD5
+
+[root@Va2 ~]# ll  new2.txt 
+-rw-r--r-- 1 root root 15 1月  14 18:59 new2.txt
+[root@Va2 ~]# cat  new2.txt
+add test  word
+[root@Va2 ~]# >  new2.txt
+
+[root@Va2 ~]# cat  new2.txt
+
+[root@Va2 ~]# cat  > new2.txt  <<eof
+add test  word
+eof
+
+[root@Va2 ~]# cat  >> new2.txt  <<eof
+add test2  test2
+eof
+
+[root@Va2 ~]# cat   new2.txt 
+add test  word
+add test2  test2
+[root@Va2 ~]# 
+
+关闭文件描述符
+
+&- 关闭标准输出
+n&- 表示将 n 号输出关闭
+
+n<&-
+关闭输入文件描述符 n.
+0<&-, <&-
+关闭 stdin.
+n>&-
+关闭输出文件描述符 n.
+1>&-, >&-
+关闭 stdout.
+
+~]# exec  3<>  new.txt  # 打开"new.txt"并且给它分配fd 3
+
+[root@Va2 ~]# echo   012345  > new.txt 
+[root@Va2 ~]# cat  new.txt
+012345
+[root@Va2 ~]# exec  3<>  new.txt  # 打开"File"并且给它分配fd 3
+[root@Va2 ~]# read  -n  4 <&3   # 只读4个字符
+[root@Va2 ~]# echo  -n  ..xx  >&3
+[root@Va2 ~]# cat   new.txt
+0123..xx[root@Va2 ~]# ll  new.txt
+-rw-r--r-- 1 root root 8 1月  14 18:46 new.txt
+[root@Va2 ~]# exec  3>&-  # 关闭fd 3
+[root@Va2 ~]# ll  new.txt
+-rw-r--r-- 1 root root 8 1月  14 18:46 new.txt
+[root@Va2 ~]# cat   new.txt
+0123..xx[root@Va2 ~]# 
+
+
+[root@Va2 ~]# cat new2.txt 
+add test  word
+add test2  test2
+
+[root@Va2 ~]# exec  4<  > new2.txt
+-bash: 未预期的符号 `>' 附近有语法错误
+
+[root@Va2 ~]# exec  4<> new2.txt  # 打开"文件new2.txt"并且给它分配fd 4 (输入文件描述符4)
+
+[root@Va2 ~]# cat  new2.txt 
+add test  word
+add test2  test2
+
+[root@Va2 ~]# read  -n  3  <&4  # 只读 3 个字符
+
+[root@Va2 ~]# echo  -e  "test3\ntest4444" >&4  ##重定向写入fd(输入文件描述符4)
+
+[root@Va2 ~]# cat  new2.txt 
+addtest3
+test4444
+ test2  test2
+
+[root@Va2 ~]# exec  4> new2.txt 
+
+[root@Va2 ~]# cat  new2.txt 
+
+[root@Va2 ~]# cat  new2.txt >&4
+cat: new2.txt：输入文件是输出文件
+
+[root@Va2 ~]# exec  3>&-  # 关闭fd 3
+
+[root@Va2 ~]# exec  4>&-
+[root@Va2 ~]# cat  new2.txt 
+=======================
+
+[root@Va2 ~]# cat  new2.txt   ## 注意 new2.txt 是空文件
+[root@Va2 ~]# touch    new3.txt  ## 创建新文件new3.txt
+[root@Va2 ~]# cat  new3.txt
+
+[root@Va2 ~]# exec  5<> new2.txt   打开"文件new2.txt"并且给它分配fd(输入文件描述符5)
+
+[root@Va2 ~]# echo -e "haha55\nHixixi" >&5 ##重定向写入fd(输入文件描述符5)
+
+[root@Va2 ~]# cat   new2.txt 
+haha55
+Hixixi
+[root@Va2 ~]# exec  6> new3.txt  ##设置fd(输出文件描述符 6)
+[root@Va2 ~]# ll  new3.txt
+-rw-r--r-- 1 root root 0 1月  14 20:03 new3.txt
+[root@Va2 ~]# cat   new2.txt 
+haha55
+Hixixi
+[root@Va2 ~]# cat   new2.txt  >&6 ## 重定向输出到达 自定义fd 文件
+[root@Va2 ~]# cat   new2.txt 
+haha55
+Hixixi
+[root@Va2 ~]# cat   new3.txt  ##结果{ >&6 重定向输出}
+haha55
+Hixixi
+[root@Va2 ~]# 
+关闭文件描述符
+
+&- 关闭标准输出
+n&- 表示将 n 号输出关闭
+
+n<&-
+关闭输入文件描述符 n.
+0<&-, <&-
+关闭 stdin.
+n>&-
+关闭输出文件描述符 n.
+1>&-, >&-
+关闭 stdout.
+/***********
+[root@Va2 ~]# exec  5<> new2.txt   打开"文件new2.txt"并且给它分配fd(输入文件描述符5)
+[root@Va2 ~]# echo -e "haha55\nHixixi" >&5 ##重定向写入fd(输入文件描述符5)
+
+[root@Va2 ~]# exec  6> new3.txt  ##设置fd(输出文件描述符 6)
+[root@Va2 ~]# cat   new2.txt  >&6 ## 重定向输出到达 自定义fd 文件
+*********/
+[root@Va2 ~]# exec  5<&-  && echo  $?  关闭输入文件描述符 5
+0
+[root@Va2 ~]# exec  6>&-  && echo  $?  关闭输出文件描述符 6
+0
+[root@Va2 ~]# cat   new2.txt 
+haha55
+Hixixi
+[root@Va2 ~]# cat   new3.txt 
+haha55
+Hixixi
+/***********
+read [-ers] [-a aname] [-d delim] [-i text] [-n nchars] [-N nchars] [-p prompt] [-t timeout] [-u fd] [name ...]
+参数说明:
+-a 后跟一个变量，该变量会被认为是个数组，然后给其赋值，默认是以空格为分割符。
+-d 后面跟一个标志符，其实只有其后的第一个字符有用，作为结束的标志。
+-p 后面跟提示信息，即在输入前打印提示信息。
+
+-e 在输入的时候可以使用命令补全功能。
+
+-n 后跟一个数字，定义输入文本的长度，很实用。
+
+-r 屏蔽\，如果没有该选项，则\作为一个转义字符，有的话 \就是个正常的字符了。
+-s 安静模式，在输入字符时不再屏幕上显示，例如login时输入密码。
+-t 后面跟秒数，定义输入字符的等待时间。
+-u 后面跟fd，从文件描述符中读入，该文件描述符可以是exec新开启的。
+*********/
+-t 参数指定 read 命令等待输入的秒数，当计时满时，read命令返回一个非零退出状态。
+
+#!/bin/bash
+if read -t 5 -p "输入网站名:" name
+then
+    echo "你输入的网站名是 $website"
+else
+    echo "\n抱歉，你输入超时了。"
+fi
+
+[root@Va1 ~]# vim  baidu.sh
+
+[root@Va1 ~]# cat  baidu.sh
+#!/bin/bash
+exec   9<> /dev/tcp/www.baidu.com/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: www.baidu.com\r\n"  >&9
+echo  -ne  "User-Agent: curl" >&9
+echo  -e  "\r\n"  >&9
+cat   <&9
+
+
+[root@Va1 ~]# .  baidu.sh  
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Cache-Control: private, no-cache, no-store, proxy-revalidate, no-transform
+Connection: Keep-Alive
+Content-Length: 2381
+Content-Type: text/html
+Date: Mon, 14 Jan 2019 13:16:51 GMT
+Etag: "588604dd-94d"
+Last-Modified: Mon, 23 Jan 2017 13:27:57 GMT
+Pragma: no-cache
+Server: bfe/1.0.8.18
+Set-Cookie: BDORZ=27315; max-age=86400; domain=.baidu.com; path=/
+
+<!DOCTYPE html>
+<!--STATUS OK--><html> <head><meta http-equiv=content-type content=text/................_...............u.com/duty/>使用百度前必读</a>&nbsp; <a href=http://jianyi.baidu.com/ class=cp-feedback>意见反馈</a>&nbsp;京ICP证030173号&nbsp; <img src=//www.baidu.com/img/gs.gif> </p> </div> </div> </div> </body> </html>
+^C
+[root@Va1 ~]# vim  baidu.sh
+
+[root@Va1 ~]# cat  baidu.sh
+#!/bin/bash
+exec   9<> /dev/tcp/$1/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: $1\r\n"  >&9
+echo  -ne  "User-Agent: curl" >&9   ##注意空格 curl
+echo  -e  "\r\n"  >&9
+cat   <&9
+
+[root@Va1 ~]# . baidu.sh  www.sohu.com
+
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Content-Length: 211469
+Connection: keep-alive
+Server: nginx
+Date: Mon, 14 Jan 2019 13:20:34 GMT
+Cache-Control: max-age=60
+X-From-Sohu: X-SRC-Cached
+FSS-Cache: HIT from 3963534.5929624.5300396
+Accept-Ranges: bytes
+FSS-Proxy: Powered by 4356756.6716062.5693624
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>搜狐</title>
+<meta name="Keywords" content="搜狐,门户网站,新媒体,网络媒体,新闻,财经,体育,娱乐,时尚,汽车,房产,科技,图片,论坛,微博,博客,视频,电影,电视剧"/>
+<meta name="Description" content="搜狐网为用户提供24小时不间断的最新资讯，及搜索、邮件等网络服务。内容包括全球热点事件、突发新闻、时事评论、热播影视剧、体育赛事、行业动态、生活服务信息，以及论坛、博客、微博、我的搜狐等互动空间。" />
+...................
+
+
+
+
+
+[root@Va1 ~]# vim  baidu.sh 
+[root@Va1 ~]# cat   baidu.sh
+#!/bin/bash
+exec   9<> /dev/tcp/$1/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: $1\r\n"  >&9
+echo  -ne  "User-Agent: elinks" >&9  ##注意空格 elinks
+echo  -e  "\r\n"  >&9
+cat   <&9
+
+[root@Va1 ~]# . baidu.sh  www.sohu.com 
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Content-Length: 211854
+Connection: keep-alive
+Server: nginx
+Date: Mon, 14 Jan 2019 13:29:12 GMT
+Cache-Control: max-age=60
+X-From-Sohu: X-SRC-Cached
+FSS-Cache: HIT from 4160145.6322843.5497010
+Accept-Ranges: bytes
+FSS-Proxy: Powered by 4356756.6716062.5693624
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>搜狐</title>
+<meta name="Keywords" content="搜狐,门户网站,新媒体,网络媒体,新闻,财经,体育,娱乐,时尚,汽车,房产,科技,图片,论坛,微博,博客,视频,电影,电视剧"/>
+
+
+elasticsearch . yml 详解
+
+
+##################### Elasticsearch Configuration Example ##################### 
+#
+# 只是挑些重要的配置选项进行注释,其实自带的已经有非常细致的英文注释了!
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/modules.html
+#
+################################### Cluster ################################### 
+# 代表一个集群,集群中有多个节点,其中有一个为主节点,这个主节点是可以通过选举产生的,主从节点是对于集群内部来说的. 
+# es的一个概念就是去中心化,字面上理解就是无中心节点,这是对于集群外部来说的,因为从外部来看es集群,在逻辑上是个整体,你与任何一个节点的通信和与整个es集群通信是等价的。 
+# cluster.name可以确定你的集群名称,当你的elasticsearch集群在同一个网段中elasticsearch会自动的找到具有相同cluster.name的elasticsearch服务. 
+# 所以当同一个网段具有多个elasticsearch集群时cluster.name就成为同一个集群的标识. 
+
+# cluster.name: elasticsearch 
+
+#################################### Node ##################################### 
+# https://www.elastic.co/guide/en/elasticsearch/reference/5.1/modules-node.html#master-node
+# 节点名称同理,可自动生成也可手动配置. 
+# node.name: node-1
+
+# 允许一个节点是否可以成为一个master节点,es是默认集群中的第一台机器为master,如果这台机器停止就会重新选举master. 
+# node.master: true 
+
+# 允许该节点存储数据(默认开启) 
+# node.data: true 
+
+# 配置文件中给出了三种配置高性能集群拓扑结构的模式,如下： 
+# 1. 如果你想让节点从不选举为主节点,只用来存储数据,可作为负载器 
+# node.master: false 
+# node.data: true 
+# node.ingest: true  #默认true
+
+# 2. 如果想让节点成为主节点,且不存储任何数据,并保有空闲资源,可作为协调器 
+# node.master: true 
+# node.data: false
+# node.ingest: true
+
+# 3. 如果想让节点既不称为主节点,又不成为数据节点,那么可将他作为搜索器,从节点中获取数据,生成搜索结果等 
+# node.master: false 
+# node.data: false 
+# node.ingest: true
+#
+
+# 4. 仅作为协调器 
+# node.master: false 
+# node.data: false
+# node.ingest: false
+
+# 监控集群状态有一下插件和API可以使用: 
+# Use the Cluster Health API [http://localhost:9200/_cluster/health], the 
+# Node Info API [http://localhost:9200/_nodes] or GUI tools # such as <http://www.elasticsearch.org/overview/marvel/>, 
+
+
+# A node can have generic attributes associated with it, which can later be used 
+# for customized shard allocation filtering, or allocation awareness. An attribute 
+# is a simple key value pair, similar to node.key: value, here is an example: 
+# 每个节点都可以定义一些与之关联的通用属性，用于后期集群进行碎片分配时的过滤
+# node.rack: rack314 
+
+# 默认情况下，多个节点可以在同一个安装路径启动，如果你想让你的es只启动一个节点，可以进行如下设置
+# node.max_local_storage_nodes: 1 
+
+#################################### Index #################################### 
+# 设置索引的分片数,默认为5 
+#index.number_of_shards: 5 
+
+# 设置索引的副本数,默认为1: 
+#index.number_of_replicas: 1 
+
+# 配置文件中提到的最佳实践是,如果服务器够多,可以将分片提高,尽量将数据平均分布到大集群中去
+# 同时,如果增加副本数量可以有效的提高搜索性能 
+# 需要注意的是,"number_of_shards" 是索引创建后一次生成的,后续不可更改设置 
+# "number_of_replicas" 是可以通过API去实时修改设置的 
+
+#################################### Paths #################################### 
+# 配置文件存储位置 
+# path.conf: /path/to/conf 
+
+# 数据存储位置(单个目录设置) 
+# path.data: /path/to/data 
+# 多个数据存储位置,有利于性能提升 
+# path.data: /path/to/data1,/path/to/data2 
+
+# 临时文件的路径 
+# path.work: /path/to/work 
+
+# 日志文件的路径 
+# path.logs: /path/to/logs 
+
+# 插件安装路径 
+# path.plugins: /path/to/plugins 
+
+#################################### Plugin ################################### 
+# 设置插件作为启动条件,如果一下插件没有安装,则该节点服务不会启动 
+# plugin.mandatory: mapper-attachments,lang-groovy 
+
+################################### Memory #################################### 
+# 当JVM开始写入交换空间时（swapping）ElasticSearch性能会低下,你应该保证它不会写入交换空间 
+# 设置这个属性为true来锁定内存,同时也要允许elasticsearch的进程可以锁住内存,linux下可以通过 `ulimit -l unlimited` 命令 
+# bootstrap.mlockall: true 
+
+# 确保 ES_MIN_MEM 和 ES_MAX_MEM 环境变量设置为相同的值,以及机器有足够的内存分配给Elasticsearch 
+# 注意:内存也不是越大越好,一般64位机器,最大分配内存别才超过32G 
+
+############################## Network And HTTP ############################### 
+# 设置绑定的ip地址,可以是ipv4或ipv6的,默认为0.0.0.0 
+# network.bind_host: 192.168.0.1   #只有本机可以访问http接口
+
+# 设置其它节点和该节点交互的ip地址,如果不设置它会自动设置,值必须是个真实的ip地址 
+# network.publish_host: 192.168.0.1 
+
+# 同时设置bind_host和publish_host上面两个参数 
+# network.host: 192.168.0.1    #绑定监听IP
+
+# 设置节点间交互的tcp端口,默认是9300 
+# transport.tcp.port: 9300 
+
+# 设置是否压缩tcp传输时的数据，默认为false,不压缩
+# transport.tcp.compress: true 
+
+# 设置对外服务的http端口,默认为9200 
+# http.port: 9200 
+
+# 设置请求内容的最大容量,默认100mb 
+# http.max_content_length: 100mb 
+
+# 使用http协议对外提供服务,默认为true,开启 
+# http.enabled: false 
+
+###################### 使用head等插件监控集群信息，需要打开以下配置项 ###########
+# http.cors.enabled: true
+# http.cors.allow-origin: "*"
+# http.cors.allow-credentials: true
+
+################################### Gateway ################################### 
+# gateway的类型,默认为local即为本地文件系统,可以设置为本地文件系统 
+# gateway.type: local 
+
+# 下面的配置控制怎样以及何时启动一整个集群重启的初始化恢复过程 
+# (当使用shard gateway时,是为了尽可能的重用local data(本地数据)) 
+
+# 一个集群中的N个节点启动后,才允许进行恢复处理 
+# gateway.recover_after_nodes: 1 
+
+# 设置初始化恢复过程的超时时间,超时时间从上一个配置中配置的N个节点启动后算起 
+# gateway.recover_after_time: 5m 
+
+# 设置这个集群中期望有多少个节点.一旦这N个节点启动(并且recover_after_nodes也符合), 
+# 立即开始恢复过程(不等待recover_after_time超时) 
+# gateway.expected_nodes: 2
+
+ ############################# Recovery Throttling ############################# 
+# 下面这些配置允许在初始化恢复,副本分配,再平衡,或者添加和删除节点时控制节点间的分片分配 
+# 设置一个节点的并行恢复数 
+# 1.初始化数据恢复时,并发恢复线程的个数,默认为4 
+# cluster.routing.allocation.node_initial_primaries_recoveries: 4 
+
+# 2.添加删除节点或负载均衡时并发恢复线程的个数,默认为2 
+# cluster.routing.allocation.node_concurrent_recoveries: 2 
+
+# 设置恢复时的吞吐量(例如:100mb,默认为0无限制.如果机器还有其他业务在跑的话还是限制一下的好) 
+# indices.recovery.max_bytes_per_sec: 20mb 
+
+# 设置来限制从其它分片恢复数据时最大同时打开并发流的个数,默认为5 
+# indices.recovery.concurrent_streams: 5 
+# 注意: 合理的设置以上参数能有效的提高集群节点的数据恢复以及初始化速度 
+
+################################## Discovery ################################## 
+# 设置这个参数来保证集群中的节点可以知道其它N个有master资格的节点.默认为1,对于大的集群来说,可以设置大一点的值(2-4) 
+# discovery.zen.minimum_master_nodes: 1 
+# 探查的超时时间,默认3秒,提高一点以应对网络不好的时候,防止脑裂 
+# discovery.zen.ping.timeout: 3s 
+
+# For more information, see 
+# <http://elasticsearch.org/guide/en/elasticsearch/reference/current/modules-discovery-zen.html> 
+
+# 设置是否打开多播发现节点.默认是true. 
+# 当多播不可用或者集群跨网段的时候集群通信还是用单播吧 
+# discovery.zen.ping.multicast.enabled: false 
+
+# 这是一个集群中的主节点的初始列表,当节点(主节点或者数据节点)启动时使用这个列表进行探测 
+# discovery.zen.ping.unicast.hosts: ["host1", "host2:port"] 
+
+# Slow Log部分与GC log部分略,不过可以通过相关日志优化搜索查询速度 
+
+################  X-Pack ###########################################
+# 官方插件 相关设置请查看此处
+# https://www.elastic.co/guide/en/x-pack/current/xpack-settings.html
+# 
+############## Memory(重点需要调优的部分) ################ 
+# Cache部分: 
+# es有很多种方式来缓存其内部与索引有关的数据.其中包括filter cache 
+
+# filter cache部分: 
+# filter cache是用来缓存filters的结果的.默认的cache type是node type.node type的机制是所有的索引内部的分片共享filter cache.node type采用的方式是LRU方式.即:当缓存达到了某个临界值之后，es会将最近没有使用的数据清除出filter cache.使让新的数据进入es. 
+
+# 这个临界值的设置方法如下：indices.cache.filter.size 值类型：eg.:512mb 20%。默认的值是10%。 
+
+# out of memory错误避免过于频繁的查询时集群假死 
+# 1.设置es的缓存类型为Soft Reference,它的主要特点是据有较强的引用功能.只有当内存不够的时候,才进行回收这类内存,因此在内存足够的时候,它们通常不被回收.另外,这些引用对象还能保证在Java抛出OutOfMemory异常之前,被设置为null.它可以用于实现一些常用图片的缓存,实现Cache的功能,保证最大限度的使用内存而不引起OutOfMemory.在es的配置文件加上index.cache.field.type: soft即可. 
+
+# 2.设置es最大缓存数据条数和缓存失效时间,通过设置index.cache.field.max_size: 50000来把缓存field的最大值设置为50000,设置index.cache.field.expire: 10m把过期时间设置成10分钟. 
+# index.cache.field.max_size: 50000 
+# index.cache.field.expire: 10m 
+# index.cache.field.type: soft 
+
+# field data部分&&circuit breaker部分： 
+# 用于fielddata缓存的内存数量,主要用于当使用排序,faceting操作时,elasticsearch会将一些热点数据加载到内存中来提供给客户端访问,但是这种缓存是比较珍贵的,所以对它进行合理的设置. 
+
+# 可以使用值：eg:50mb 或者 30％(节点 node heap内存量),默认是：unbounded #indices.fielddata.cache.size： unbounded 
+# field的超时时间.默认是-1,可以设置的值类型: 5m #indices.fielddata.cache.expire: -1 
+
+# circuit breaker部分: 
+# 断路器是elasticsearch为了防止内存溢出的一种操作,每一种circuit breaker都可以指定一个内存界限触发此操作,这种circuit breaker的设定有一个最高级别的设定:indices.breaker.total.limit 默认值是JVM heap的70%.当内存达到这个数量的时候会触发内存回收
+
+# 另外还有两组子设置： 
+#indices.breaker.fielddata.limit:当系统发现fielddata的数量达到一定数量时会触发内存回收.默认值是JVM heap的70% 
+#indices.breaker.fielddata.overhead:在系统要加载fielddata时会进行预先估计,当系统发现要加载进内存的值超过limit * overhead时会进行进行内存回收.默认是1.03 
+#indices.breaker.request.limit:这种断路器是elasticsearch为了防止OOM(内存溢出),在每次请求数据时设定了一个固定的内存数量.默认值是40% 
+#indices.breaker.request.overhead:同上,也是elasticsearch在发送请求时设定的一个预估系数,用来防止内存溢出.默认值是1 
+
+# Translog部分: 
+# 每一个分片(shard)都有一个transaction log或者是与它有关的预写日志,(write log),在es进行索引(index)或者删除(delete)操作时会将没有提交的数据记录在translog之中,当进行flush 操作的时候会将tranlog中的数据发送给Lucene进行相关的操作.一次flush操作的发生基于如下的几个配置 
+#index.translog.flush_threshold_ops:当发生多少次操作时进行一次flush.默认是 unlimited #index.translog.flush_threshold_size:当translog的大小达到此值时会进行一次flush操作.默认是512mb 
+#index.translog.flush_threshold_period:在指定的时间间隔内如果没有进行flush操作,会进行一次强制flush操作.默认是30m #index.translog.interval:多少时间间隔内会检查一次translog,来进行一次flush操作.es会随机的在这个值到这个值的2倍大小之间进行一次操作,默认是5s 
+#index.gateway.local.sync:多少时间进行一次的写磁盘操作,默认是5s 
+
+# 以上的translog配置都可以通过API进行动态的设置 - See more at: http://bigbo.github.io/pages/2015/04/10/elasticsearch_config/#sthash.AvOSUcQ4.dpuf
+
+
+lftp命令详解
+
+lftp.sh自动上传脚本：
+
+复制代码
+#!/bin/bash
+echo -e "\nScript start at \033[43;35m `date "+%H:%M:%S"` \033[0m"
+echo -e "\033[1;34m-----------------------------------------------------------------------\033[0m"
+cd /root/upload ; rm -fr /root/upload/*
+git clone git@10.35.33.29:xiaoban/server-api/xiaoban-server.git
+mv /root/upload/xiaoban-server/* /root/upload/ ; rm -fr /root/upload/xiaoban-server
+tar zcvf code.tar.gz ./* >/dev/null
+
+
+lftp << EOF
+open ftp://xiaoban:xiaoban@2018@ftp.wjoyxt.ren
+cd
+put /root/upload/code.tar.gz
+close 
+bye
+EOF
+rm -fr /root/upload/*
+echo -e "\033[1;34m-----------------------------------------------------------------------\033[0m"
+echo -e "Script end at \033[43;35m `date "+%H:%M:%S"` \033[0m \n "
+
+复制代码
+ 
+
+使用lftp相比使用ftp的优势较多，可以显示上传下载的百分比进度以及可以上传下载文件夹。
+
+-----------------------------------------------------------------------------
+
+1、登录ftp
+代码:
+lftp 用户名:密码@ftp地址:传送端口（默认21）
+用法
+(1)lftp username:password@127.0.0.1:21
+(2)lftp username@127.0.0.1 回车     ##默认21端口 回车后输入密码
+(3)lftp 127.0.0.1 回车   ##回车后 login 登录
+(4)lftp 回车 --> open 127.0.0.1 --> login 登录
+
+2、lftp中文乱码问题
+登录后看到的都是中文乱码(因为一般本地都是utf-8的编码),怎么半呢，用 set 命令来解决
+
+set ftp:charset gbk(或者 gb2312 或 utf-8) ##设置ftp端的编码格式
+set file:charset utf-8 (...同上) ##设置本地编码格式
+
+附:set命令的技巧 (1)输入set 查看已经设置好的命令 (2)set -a 查看所有可以设置的命令清晰网
+
+3、查找ftp端文件
+
+ls *.txt ##查找当前目录下的所有txt文件
+ls ./123/ ##列出123目录下所有文件
+find . -name "*.txt"   ##递归查找站点上所有的txt文件
+find ./xx -name "*.txt" ##查找xx目录下所有的txt文件
+
+附1: ls第二次读取的是本地缓存,可以用 rels 代替 ls 或者catch off / catch on 来开关catch,catch flush清空本地catch
+附2: 浏览本地目录的命令可用 !ls , 如 !ls /usr/local/bin/
+
+4、下载文件
+
+下载文件之前要先设置好本地的目录，用来存放下载的文件
+lcd /home/123/web   ##设置本地存放目录 默认为 /home/usr
+
+get 123.txt     ##下载123.txt文件到 /home/123/web 中
+get -c 123.txt ##断点续传下载
+mget *.txt     ##批量下载所有txt文件
+mget -c *.txt ##断点续传
+mget -c ./123/aaa/*.txt   ##断点续传、批量下载ftp端aaa目录下的所有txt文件
+
+pget -c -n 10 file.dat
+##以最多10个线程以允许断点续传的方式下载file.dat
+##可以通过设置 set pget:default-n 5 的值而使用默认值。
+
+mirror aaa/
+##将aaa目录整个的下载下来，子目录也会自动复制 本地自动建立目录
+
+5、上传文件
+
+put 123.txt     ##同下载
+mput *.txt     ##同下载
+
+mirror -R aaa/ ##同下载
+
+6、设置被动/非被动模式
+
+set ftp:passive-mode 1 ## 1 被动 0非主动
+
+多任务处理
+
+ctrl+z ##将当前进行的任务移交后台处理
+wait   ##将后台处理任务调至前台查看
+jobs   ##查看后台进行的任务列表
+kill all 或者 job_no ##删除所有任务 或 指定的任务
+
+##将任务加入任务列表
+queue get 123.txt
+queue put 234.txt
+queue mirror aaa/ 
+
+queue ##查看任务列表
+jobs   ##查看后台任务列表
+
+queue start ##开始任务列表
+queue stop ##停止任务列表
+
+其他命令清晰网 
+
+alias []
+定义别名
+alias less more
+alias reconnect "close; cd ."
+直接输入 alias 即可看到目前定义了那些别名。如果只输入 alias name 的话, 则是取消 name 这个别名。
+
+bookmark SUBCMD
+设定书签, 可将目前站台及所在目录设成书签, 下次可直接进来, 不用再 cd 来 cd 去的
+
+bookmark add name 用来新增名称为 name 的书签
+bookmark del name 删除名称为 name 的书签
+bookmark list 显示目前有设定那些书签(另外直接打 bookmark 和 bookmark list 的结果一样)
+bookmark edit 呼叫编辑器修改书签 (~/.lftp/bookmarks)
+
+cd 切换远端目录
+
+cache SUBCMD
+管理 lftp 的 cache
+
+rels []
+从 cache 中显示远端档案列表
+rels 则不会从 cache 中读取
+
+recls opts [path/]pattern
+从 cache 中显示远端的档案列表, 应该算是 ls 的加强版, 有很多参数可用,应该是可用来产生各种不同>的档案列表以供其他程式使用。
+recls 则不会从 cache 中读取
+
+du options
+计算远端整个目录占用容量
+
+get OPTS -o
+抓取远端档案 清晰网 
+
+get rfile -o lfile
+抓 rfile 到本地改名为 lfile
+-c 为续传
+-E 抓档完成后, 将远端的档案砍了
+-a 为 ascii mode, 预设为 binary mode
+-O 设定 base directory 为本地端放档案的目录
+
+mget OPTS
+下载远端档案(可用 wildcard expansion 也就是 *)
+
+pget OPTS -o
+使用多个连结来下载档案, 预设为五个。
+-n 3 为叁个连结
+
+jobs -v
+显示目前有那些程序在背景执行
+-v 显示详细的资讯(-v 可多加几个来显示更详细的资讯)
+
+lcd
+切换本地端的目录
+
+mirror OPTS remote [local]
+下载整个目录(楼上的 get 只能用来抓档案)
+-c 续传
+-e 这个要小心一些, 比较远端和本地端的档案, 假如远端没有的, 就将本地端的档案删除, 也就是将本地端和远端资料同步。
+-R 上传整个目录
+-n 只下载较新的档案
+-r 不用递回到目录中
+--parallel=n 同时下载 n 个档案(预设一次只下载一个)清晰网 
+
+module name args
+载入模组
+
+put OPTS -o
+上传档案
+
+mput OPTS
+上传档案(可用 wildcard expansion 也就是 *)
+
+mv
+将远端的 file1 改名为 file2
+
+mrm
+用 wildcard expansion 方式来删除远端档案
+
+open OPTS
+开启某个站台
+open -u , -p site
+
+queue OPTS []
+将 cmd 放到伫列中等待执行
+-d index 将编号为 index 的 job 删除
+-m index new_index 将编号为 index 的 job 移至编号 new_index, 插队专用。
+-n index 在编号 index 之前新增一个 job
+
+wait []
+将背景执行中的程序移至前景(也可用 fg)
+
+kill all|
+删除全部的 jobs 或 job_no
+
+repeat delay command
+每隔 delay 秒, 重覆执行 command, 预设是每隔一秒
+
+rm -r -f
+移除远端档案
+
+mkdir -p
+建立远端目录
+
+rmdir -f
+移除远端目录
+
+set OPT []
+设定变数
+直接键入 set 可看目前定义了那些变数
+
+source
+读取 file, 并执行 file 中的命令(应该是和 bash 中的 source 命令是一样的吧)
+
+debug [|off] -o
+设定 debug level 为 level
+-o 将输出导向至 file
+
+exit [|bg]
+结束 lftp
+此时若还有 jobs, 则会将 lftp 放至背景执行, 继续未完成的工作
+
+history -w file-r file-c|-l cnt
+和 bash 中的 history 功能一样
+
+renlist []
+只显示远端的档名
+
+pwd -p
+显示目前远端所在目录
+-p 连登入密码也显示
+
+scache []
+只打 scache 显示目前所有的 session, 加上 session_no 可切换至其他的 session,
+对於同时开启多个站台或同个站台不同目录间切换。
+
+国内的大多数ftp服务器使用的中文编码是gbk，而linxu大多数版本（包括debian，redhat，centOS，fc等版本）默认的编码是utf-8,于是会出现访问ftp服务器是出现中文乱码的问题，解决办法有两种：
+1、临时解决
+用lftp登录到ftp服务器上，设置远程服务器编码为gbk，而设置本地编码为utf-8，做法为：输入下面两个命令：
+set ftp:charset gbk
+set file:charset utf8
+
+2、永久解决
+在目录$HOME/.lftp编辑文件（如果没有则建立）rc,输入下面两行，设置远程编码为gbk，本地编码为utf-8：
+set ftp:charset gbk
+set file:charset utf8
+这种方法会导致访问utf8编码的服务器时出现中文乱码，不过就目前国内环境来说机会比较少。如果出现乱码时则临时输入下面两行就可以了：
+set ftp:charset utf8
+set file:charset utf8
+
+另外一个用的很多的图形界面的ftp客户端是gftp，在选项中可以选择编码，用惯了win下客户端的人应该能够很快的早到编码选择的地方，选择服务器端的编码为gbk就可以了。
+
+
+
