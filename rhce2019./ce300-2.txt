@@ -1,0 +1,1032 @@
+
+/**************************** 非必须  操作 *****************
+
+[root@room9pc27 ~]# rht-vmctl   reset  classroom  &&  sleep 5
+classroom [OK]
+域 classroom 已开始
+
+[root@room9pc27 ~]# rht-vmctl   reset  server  &&  sleep 5
+server [OK]
+域 server 已开始
+
+[root@room9pc27 ~]# rht-vmctl   reset  desktop 
+......
+
+[root@room9pc01 ~]# cp -rpf /var/lib/libvirt/images/content/   /
+
+[root@room9pc27 ~]# ls  /content/
+content  courses  lost+found  rhel7.0
+[root@room9pc27 ~]# ls  /var/lib/libvirt/images/content/
+content  courses  lost+found  rhel7.0
+
+******************/
+
+
+RHCE7-EX300模拟测试
+考试说明,请仔细阅读
+
+配置SELINUX
+配置SSH访问
+自定义用户环境
+配置防火墙端口转发
+配置链路聚合
+配置IPv6地址
+配置本地邮件服务
+通过Samba发布共享目录
+配置多用户Samba挂载
+配置NFS共享服务
+挂载NFS共享
+实现一个Web服务
+配置安全Web服务
+配置虚拟主机
+配置Web内容访问
+实现动态Web内容
+创建一个脚本
+创建一个添加用户的脚本
+配置iSCSI服务端
+配置iSCSI客户端
+配置一个数据库
+数据库查询
+
+---------------------------------------------------
+考试说明
+
+您在考试过程中将使用的两个系统的信息如下：
+ * server0.example.com(ServerX) 是一个主要的服务器
+ * desktop0.example.com(DesktopX)主要用作客户端
+两个系统的root密码为redhat
+系统的IP地址由DHCP提供，您可以视其正常，或者您可以按以下信息重新设置为静态IP：
+ * server0.example.com ：172.25.0.11
+ * desktop0.example.com ：172.25.0.10
+ * 子网掩码为：255.255.255.0
+ * 默认网关为：172.25.0.254
+
+您的系统是DNS域 .example.com 的成员，
+所有在DNS域 .example.com 中的系统都在子网172.25.0.0/24中，
+同样在这个子网中的系统都在DNS域 .example.com 中。
+除非特别指明，
+所有要求配置的网络都必须能被 .example.com 域中的系统访问。
+
+classroom.example.com 提供了集中认证的服务域 .example.com，
+两个系统 server0 和 desktop0 已经预先配置成此域的客户端，
+
+------------------------------------- 模拟 考试环境 ,如果知道 ip 直接ssh 进去 ------------------
+
+[root@room9pc27 ~]# virsh  console   server
+连接到域 server
+换码符为 ^]
+
+
+Red Hat Enterprise Linux Server 7.0 (Maipo)
+Kernel 3.10.0-123.el7.x86_64 on an x86_64
+
+localhost login: root
+Password:  redhat    # 输入 考试环境的密码
+Last login: Sat Feb 16 19:42:08 from 172.25.0.250
+[root@localhost ~]# ifconfig  |head  -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.25.0.110  netmask 255.255.255.0  broadcast 172.25.0.255
+
+---------------------   #注意主机名环境已设置,如果重复设置主机名,一定要看清楚 主机名--------------
+
+[root@localhost ~]# hostnamectl  set-hostname   server0.example.com 
+[root@localhost ~]# hostname
+server0.example.com
+
+[root@localhost ~]# cat   /etc/hostname 
+server0.example.com
+[root@localhost ~]#    敲 Ctrl + ]  退出
+
+[root@room9pc27 ~]# ssh  -X 172.25.0.110
+.............
+[root@server0 ~]# cat  /etc/hostname 
+server0.example.com
+
+[root@server0 ~]# nmcli  connection  show
+名称         UUID                                  类型            设备 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0 
+
+
+[root@server0 ~]# nmcli  connection  modify "System eth0"  ipv4.method  manual  ipv4.addresses  '172.25.0.11/24  172.25.0.254' ipv4.dns 172.25.254.254 connection.autoconnect  yes
+
+[root@server0 ~]# nmcli  connection  up  "System eth0" 
+
+^^^^^^^ 这时候ip地址变了,ssh链接信息改变,直接关闭终端窗口,再开一个终端ssh 进去
+
+[root@room9pc27 ~]# ssh  172.25.0.11
+Last login: Sat Feb 16 19:56:39 2019 from 172.25.0.250
+[root@server0 ~]# cat  /etc/hostname 
+server0.example.com
+[root@server0 ~]# hostname
+server0.example.com
+[root@server0 ~]# ifconfig |awk '/inet /{print  $2}'
+172.25.0.11
+127.0.0.1
+[root@server0 ~]# nmcli  connection show
+名称         UUID                                  类型            设备 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0 
+
+[root@server0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 
+DEVICE=eth0
+BOOTPROTO=none
+ONBOOT=yes     ##开启自动启用网络连接（默认值为no）
+TYPE=Ethernet
+USERCTL=yes    # 允许普通用户控制此接口
+IPV6INIT=no
+PERSISTENT_DHCLIENT=1
+IPADDR0=172.25.0.11   #设置IP地址 只有在BOOTPROTO=(none | static)时设置才有效
+PREFIX0=24
+GATEWAY0=172.25.0.254
+DNS1=172.25.254.254     #主要的DNS设备
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+NAME="System eth0"
+UUID=5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  #设备标识号
+
+[root@server0 ~]# 
+
+/****************
+[root@room9pc27 ~]# ifconfig  |head  -2
+enp1s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.210.31  netmask 255.255.255.0  broadcast 176.121.210.255
+
+#enp1s0 #en：代表enthernet（以太网）
+  #p1s0代表PCI接口的物理位置为(1, 0), 其中横座标代表bus，纵座标代表slot
+************/
+
+
+[root@room9pc27 ~]# virsh   console  desktop
+连接到域 desktop
+换码符为 ^]
+
+
+Red Hat Enterprise Linux Server 7.0 (Maipo)
+Kernel 3.10.0-123.el7.x86_64 on an x86_64
+
+desktop0 login: root
+Password: redhat
+Last login: Fri Jan 12 18:54:00 from 172.25.0.250
+[root@desktop0 ~]# ifconfig  |grep  "inet "
+        inet 172.25.0.10  netmask 255.255.255.0  broadcast 172.25.0.255
+        inet 127.0.0.1  netmask 255.0.0.0
+
+[root@desktop0 ~]#    敲 Ctrl + ]  退出
+
+[root@room9pc27 ~]# ssh  desktop
+Last login: Sat Feb 16 19:42:44 2019 from 172.25.0.250
+
+[root@desktop0 ~]# ls  /etc/sysconfig/network-scripts/
+ifcfg-eth0   ifdown-ppp       ifup-eth     ifup-sit
+..................
+/********************
+
+BOOTPROTO="static｜none" #启动静态IP地址（BOOTPROTO=dhcp启用动态获取IP）
+USERCTL="yes|no"        #是否允许普通用户控制此接口
+PEERDNS＝"yes|no"         #是不是接受DHCP服务器指派的DNS服务器地址
+PERSISTENT_DHCLIENT=1   #可始终保持DHCP地址(在DHCP服务器/路由器授予IP租约之前连续请求IP租约)
+                             # 默认情况下，此选项处于关闭状态。
+************/
+
+[root@desktop0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 
+DEVICE=eth0
+BOOTPROTO=dhcp
+ONBOOT=yes
+TYPE=Ethernet
+USERCTL=yes   # 允许普通用户控制此接口
+PEERDNS=yes   # 接受DHCP服务器指派的DNS服务器地址
+IPV6INIT=no
+PERSISTENT_DHCLIENT=1   #可始终保持DHCP  ip地址
+
+[root@desktop0 ~]# ll  /etc/hostname
+ls: 无法访问/etc/hostname: 没有那个文件或目录
+
+
+-----------------------------  重新 重复 设置主机名 是为了生成配置文件 /etc/hostname  -----------
+
+[root@desktop0 ~]# hostnamectl  set-hostname  desktop0.example.com
+
+[root@desktop0 ~]# cat  /etc/hostname 
+desktop0.example.com
+
+[root@desktop0 ~]# hostname
+desktop0.example.com
+
+[root@desktop0 ~]# nmcli  connection show
+名称         UUID                                  类型            设备 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0 
+
+[root@desktop0 ~]# nmcli  connection modify  "System eth0"  ipv4.method  manual  ipv4.addresses  '172.25.0.10/24  172.25.0.254'  ipv4.dns  172.25.254.254  connection.autoconnect   yes
+
+[root@desktop0 ~]# nmcli  connection  up  'System eth0' 
+
+^^^^^^^ 这时候ip地址变了,ssh链接信息改变,直接关闭终端窗口,再开一个终端ssh 进去
+
+[root@room9pc27 ~]# ssh   172.25.0.10
+Last login: Sat Feb 16 20:18:49 2019 from 172.25.0.250
+[root@desktop0 ~]# ifconfig  |awk  '/inet /{print $2}'
+172.25.0.10
+127.0.0.1
+[root@desktop0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 
+DEVICE=eth0
+BOOTPROTO=none
+ONBOOT=yes
+TYPE=Ethernet
+USERCTL=yes
+IPV6INIT=no
+PERSISTENT_DHCLIENT=1
+IPADDR0=172.25.0.10
+PREFIX0=24
+GATEWAY0=172.25.0.254
+DNS1=172.25.254.254
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+NAME="System eth0"
+UUID=5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03
+
+[root@desktop0 ~]# hostname
+desktop0.example.com
+
+[root@desktop0 ~]# cat  /etc/hostname 
+desktop0.example.com
+
+[root@desktop0 ~]# cat  /etc/resolv.conf 
+# Generated by NetworkManager
+search example.com
+nameserver 172.25.254.254
+
+[root@desktop0 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.25.0.254    0.0.0.0         UG    1024   0        0 eth0
+172.25.0.0      0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@desktop0 ~]# 
+
+
+
+考试说明
+
+您在考试过程中将使用的两个系统的信息如下：
+ * server0.example.com(ServerX) 是一个主要的服务器
+ * desktop0.example.com(DesktopX)主要用作客户端
+两个系统的root密码为redhat
+系统的IP地址由DHCP提供，您可以视其正常，或者您可以按以下信息重新设置为静态IP：
+ * server0.example.com ：172.25.0.11
+ * desktop0.example.com ：172.25.0.10
+ * 子网掩码为：255.255.255.0
+ * 默认网关为：172.25.0.254
+
+您的系统是DNS域 .example.com 的成员，
+所有在DNS域 .example.com 中的系统都在子网172.25.0.0/24中，
+同样在这个子网中的系统都在DNS域 .example.com 中。
+除非特别指明，
+所有要求配置的网络都必须能被 .example.com 域中的系统访问。
+
+classroom.example.com 提供了集中认证的服务域 .example.com，
+两个系统 server0 和 desktop0 已经预先配置成此域的客户端，
+此域提供了下列用户帐号（模拟环境酌情创建）：
+ * ldapuser0 （密码：kerberos)
+ * fleyd （密码：redhat)
+ * sergio （密码：redhat)
+ * krishna （密码：redhat)
+
+防火墙默认是打开的，
+在您认为是适当的时候可以关闭。
+
+其他的关于防火墙的设置可能在单独的要求中。
+
+在评分之前您的系统会被重新启动，
+所以请您确保您所做的所有修改和服务配置在重新启动之后仍然能够生效，而无需人工干预。
+所有考试用的虚拟机实例必须能重启之后进入正确的用户级别，而无需人工协助。
+如果考试用的虚拟机不能启动或不能正常启动，
+将被评零分。
+您在考试中使用的Red Hat Enterprise Linux操作系统版本对应的分发包可以
+通过YUM在下面的链接中找到：http://content.example.com/rhel7.0/x86_64/dvd
+一部分要求包含了主机安全、确定您的对主机安全限制没有阻挡要求允许的主机或网络。
+虽然您正确配置了网络服务但本来允许访问的主机或网络被阻挡。
+这样也不会得分。
+您将会注意到一些要求明确不允许服务被域 my133t.org 访问，
+这个域的系统在 172.34.0.0/255.255.255.0 子网中，
+并且这些子网中的系统都属于域 my133t.org 。
+注意一些考试题目可能依赖于其他考试题目。
+比如说，在考试题目中可能要求您针对一个用户执行一系列的限制，
+但是这个用户的创建可能是在其他题目中要求的。
+为了方便您的标识，
+每个考试题目都有一些选取按钮以协助您去标识哪个题目您已经完成了，哪些还没有。
+当然，如果您觉得用不着，您也可以不去理会这些按钮。
+
+
+------------------------------------  1 . 配置SELinux
+确保您的两个虚拟机的SELinux处于强制启用模式
+
+[root@server0 ~]# setenforce  0
+[root@server0 ~]# getenforce   
+Permissive
+
+[root@server0 ~]# setenforce  1  #临时配置强制启用模式
+[root@server0 ~]# getenforce 
+Enforcing
+
+[root@server0 ~]# vim  /etc/selinux/config  #永久配置强制启用模式
+
+[root@server0 ~]# egrep  -nv  "^#|^$"  /etc/selinux/config  #查看结果
+7:SELINUX=enforcing
+12:SELINUXTYPE=targeted
+
+
+[root@desktop0 ~]# vim  /etc/selinux/config 
+[root@desktop0 ~]# grep  -Pnv  "^(\s*#|$)"  /etc/selinux/config
+7:SELINUX=enforcing
+12:SELINUXTYPE=targeted
+[root@desktop0 ~]# setenforce   1
+[root@desktop0 ~]# getenforce 
+Enforcing
+
+
+
+==================2. 配置 SSH 访问=====================
+2. 配置 SSH 访问
+按以下要求配置 SSH 访问：
+用户能够从
+域 example.com 内的客户端 SSH 远程访问您的两个虚拟机系统
+在域 my133t.org 内的客户端不能访问您的两个虚拟机系统
+
+/*********** 考试说明
+您将会注意到一些要求明确不允许服务被域 my133t.org 访问，
+这个域的系统在 172.34.0.0/255.255.255.0 子网中，
+并且这些子网中的系统都属于域 my133t.org 。
+*****/
+/***************
+正则表达式分类：
+1、基本的正则表达式（Basic Regular Expression 又叫 Basic RegEx  简称 BREs）
+                           # grep 指令后不跟任何参数，则表示要使用 ”BREs“ 
+                                             # sed 指令默认是使用"BREs"
+
+2、扩展的正则表达式（Extended Regular Expression 又叫 Extended RegEx 简称 EREs）
+                               #  grep 指令后跟 ”-E" 参数，则表示要使用 “EREs“
+                               # egrep 指令后不跟任何参数，则表示要使用 “EREs”
+                                 # sed 命令参数 “-r ” ， 则表示要使用“EREs"
+
+3、Perl 的正则表达式（Perl Regular Expression 又叫 Perl RegEx 简称 PREs）
+                        #  grep 指令后跟 “-P" 参数，则表示要使用 “PREs"
+                       #  egrep 指令后跟 “-P" 参数，则表示要使用 “PREs"
+egrep 支持：EREs、PREs 正则表达式
+egrep 指令后不跟任何参数，则表示要使用 “EREs”
+egrep 指令后跟 “-P" 参数，则表示要使用 “PREs"
+ grep 与 egrep 的处理对象：文本文件
+
+sed 正则表达式特点
+# sed 文本工具支持：BREs、EREs
+sed 指令默认是使用"BREs"
+sed 命令参数 “-r ” ，则表示要使用“EREs"
+sed 处理的对象：文本文件
+
+Awk（gawk）正则表达式特点
+1）Awk 文本工具支持：EREs
+awk 指令默认是使用 “EREs"
+
+2）Awk 文本工具处理文本的特点
+# awk 处理的对象：文本文件
+# awk 处理操作：主要是对列进行操作
+
+正则表达式的一些用法
+\d
+[root@server0 ~]# egrep  -P  "\d"   /etc/ssh/sshd_config 
+egrep: egrep 只能使用 egrep 匹配语法
+[root@server0 ~]# grep  -P  "\d"   /etc/ssh/sshd_config  |tail -1
+DenyUsers   *@*.my133t.org  *@172.34.0.*
+
+# grep -o   # 刚好显示匹配到的内容
+# grep -P   # 以支持Perl的正则匹配内容来显示内容，但有时候版本不同，可能会报错
+
+[root@desktop0 ~]# echo  -e  "ab\ncd23d\nefend"
+ab
+cd23d
+efend
+[root@desktop0 ~]# echo  -e  "ab\ncd23d\nefend"  |grep -o  [0-9]
+2
+3
+[root@desktop0 ~]# echo  -e  "ab\ncd23d\nefend"  |grep -oP  "\d"
+2
+3
+
+匹配一个数字字符。等价于[0-9]。
+\D
+匹配一个非数字字符。等价于[^0-9]。
+\n
+匹配一个换行符。等价于\x0a和\cJ。
+\r
+匹配一个回车符。等价于\x0d和\cM。
+\s
+匹配任何空白字符，包括空格、制表符、换页符等等。等价于[ \f\n\r\t\v]。
+\S
+匹配任何非空白字符。等价于[^ \f\n\r\t\v]。
+--------------------- 
+常见3中类型正则表达式比较 -------------------------------------------------------------------------------------------
+字符    |          说明       |    Basic RegEx      | Extended RegEx | python RegEx | Perl regEx |
+^$               匹配空行     |          ^$             |           ^$        |        ^$         |      ^$
+()              匹配表达式     |  不支持(但可以使用\(\)  |            ()        |         ()         |      ()
+？   匹配前面的子表达式0次或1次,等价于{0,1} |   不支持,同\?  |      ？       |          ？        |      ？
+*   匹配前面的子表达式0次或多次,等价于{0, }|        *        |      *        |         *          |      *
++   匹配前面的子表达式1次或多次,等价于{1, } |  不支持,同\+  |      +        |         +         |      +
+
+{n}  n必须是一个0或者正整数，匹配子表达式n次 |不支持,同\{n\} |   {n}       |        {n}        |     {n}
+{n,} n必须是一个0或者正整数，匹配子表达式大于等于n次| 不支持,同\{n,\}  |   {n,}    |    {n,}  |    {n,}
+{n,m} m和n均为非负整数,n <= m,最少匹配n次且最多匹配m次 |不支持,同\{n,m\} |  {n,m} | {n,m}  |    {n,m}
+x|y        匹配 x 或 y   |  不支持,同x\|y       |        x|y      |      x|y      |   x|y
+
+[0-9] 匹配从0到9中的任意一个数字字符,注意要写成递增   |        [0-9]      |     [0-9]     |    [0-9]   |    [0-9]
+\d 匹配从0到9中的任意一个数字字符,等价于[0-9]  |    不支持    |   不支持      |        \d       |    \d
+\D 匹配非数字字符,等价于[^0-9]  |       不支持         |           不支持      |         \D       |    \D
+\s  匹配任何空白字符，包括空格、制表符、换页符等 |   不支持  |   不支持      |         \s       |    \s
+
+[:alnum:] 匹配任何一个字母或数字,[A-Za-z0-9] |  [:alnum:]    |   [:alnum:]   |     [:alnum:]     |    [:alnum:]
+[:alpha:] 匹配任何一个字母,[A－Za－z]         |   [:alpha:]   |    [:alpha:]   |     [:alpha:]     |    [:alpha:]
+[:digit:] 匹配任何一个数字,[0-9]）             |   [:digit:]   |    [:digit:]   |     [:digit:]     |     [:digit:]
+
+[:lower:] 匹配任何一个小写字母,[a-z]  |    [:lower:]    |   [:lower:]    |    [:lower:]   |   [:lower:]
+[:upper:] 匹配任何一个大写字母,[A-Z]  |    [:upper:]    |   [:upper:]    |    [:upper:]   |   [:upper:]
+
+***********/
+
+ssh是linux远程登录的安全协议，是 C/S 模式的架构，
+配置文件分为
+服务器端配置文件 [/etc/ssh/sshd_config] 
+与客户端配置文件 默认配置文件[/etc/ssh/ssh_config]  
+  用户配置文件[~/.ssh/config]
+sshd_config 是服务端主配置文件。
+这个文件的宿主应当是root，权限最大可以是"644"
+
+相关的 allow/deny 指令按照下列顺序处理：
+DenyUsers, AllowUsers, DenyGroups, AllowGroups
+
+DenyGroups 这个指令后面跟着一串用  空格 分隔的 组名列表(其中可以使用"*"和"?"通配符)。
+默认允许所有组登录。
+# 例如  DenyGroups  zu1  zu2   # 设置几个群组 组1  zu2 被拒绝登录
+#DenyGroups    <组名1>  <组名2>  <组名3> ...##指定禁止通过远程访问的组，多个组以空格隔开
+
+DenyUsers  这个指令后面跟着一串用 " 空格 " 分隔的用户名列表(其中可以使用"*"和"?"通配符)。
+默认允许所有用户登录。
+如果使用了这个指令，那么这些用户将被拒绝登录
+配置SSH访问（+防火墙）【##】
+# vim  /etc/ssh/sshd_config
+DenyUsers    用户名1@客户机地址   用户名2@客户机地址  
+#AllowUsers  用户名1@客户机地址   用户名2@客户机地址  
+
+[root@server0 ~]# cat  -n   /etc/ssh/sshd_config  |grep  -i  maxauth
+    50	#MaxAuthTries 6    #指定尝试输入密码的次数
+
+--- sshd_config 是服务端主配置文件,由 sshd服务 拒绝 在域 my133t.org 内的客户端 访问本机  -------
+
+[root@server0 ~]# vim  /etc/ssh/sshd_config   #服务端主配置文件
+
+[root@server0 ~]# egrep   -nv  "^\s*#|^$"   /etc/ssh/sshd_config  |tail
+..................
+147:Subsystem sftp	/usr/libexec/openssh/sftp-server
+158:DenyUsers   *@*.my133t.org  *@172.34.0.*
+
+[root@server0 ~]# egrep   -nv  "^#|^$"   /etc/ssh/sshd_config  |tail
+............
+147:Subsystem sftp	/usr/libexec/openssh/sftp-server
+158:DenyUsers   *@*.my133t.org  *@172.34.0.*
+
+[root@server0 ~]# tail  -2  /etc/ssh/sshd_config 
+#	ForceCommand cvs server
+DenyUsers   *@*.my133t.org  *@172.34.0.*
+
+[root@server0 ~]# systemctl  restart  sshd  && systemctl  enable  sshd  #注意重启sshd服务
+
+/***************
+firewalld自身并不具备防火墙的功能，
+而是和iptables一样需要通过内核的netfilter来实现，
+也就是说firewalld和 iptables一样，
+他们的作用都是用于维护规则，
+而真正使用规则干活的是内核的netfilter
+*******/
+
+[root@server0 ~]# rpm  -q   firewalld  firewall-config
+firewalld-0.3.9-7.el7.noarch
+firewall-config-0.3.9-7.el7.noarch
+
+[root@server0 ~]# systemctl  is-active  firewalld.service 
+active
+[root@server0 ~]# systemctl  is-enabled  firewalld.service 
+enabled
+[root@server0 ~]# firewall-cmd  --state  #查看运行状态
+running
+
+------------------------  由防火墙解决 拒绝  在域 my133t.org 内的客户端 访问  本机  -------------
+---------------------  将一个source地址 172.34.0.0/24 绑定到指定的zone=block (只可绑定一次 ) --------
+[root@server0 ~]# firewall-cmd   --permanent   --add-source=172.34.0.0/24  --zone=block
+success
+
+-----------------------  查看指定级别 block 的所有信息 ------------------
+
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --list-all
+block
+  interfaces: 
+  sources: 172.34.0.0/24
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+-------------------------  列出指定zone=block 的所有绑定的source地址 ---------------------
+
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --list-sources 
+172.34.0.0/24
+
+-------- 查询指定zone=block 是否跟指定source地址 172.34.0.0/24 进行了绑定(只可绑定一个唯一的区域级别,如block)------
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --query-source=172.34.0.0/24
+yes
+
+------------------------- 反向查询 , 根据 source 查询所对应的zone -------
+[root@server0 ~]# firewall-cmd   --get-zone-of-source=172.34.0.0/24
+block
+
+[root@server0 ~]# firewall-cmd   --reload  # 更新规则，不重启firewalld 服务
+success
+
+[root@server0 ~]# firewall-cmd   --complete-reload  # 更新规则，重启firewalld 服务
+success
+
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+public
+
+
+=======================  desktop0  ===================
+
+[root@desktop0 ~]# 
+[root@desktop0 ~]# vim  /etc/ssh/sshd_config 
+
+[root@desktop0 ~]# tail  -2  /etc/ssh/sshd_config
+#	ForceCommand cvs server
+DenyUsers  *@*.my133t.org   *@172.34.0.*
+
+[root@desktop0 ~]# systemctl  restart  sshd  && systemctl  enable  sshd
+
+[root@desktop0 ~]# rpm  -q firewalld  firewall-config
+firewalld-0.3.9-7.el7.noarch
+firewall-config-0.3.9-7.el7.noarch
+
+[root@desktop0 ~]# systemctl  is-enabled  firewalld
+enabled
+[root@desktop0 ~]# firewall-cmd  --state 
+running
+
+------------------  列出指定zone=block 的所有绑定的source地址 -------------
+[root@desktop0 ~]# firewall-cmd  --permanent   --zone=block  --list-sources 
+
+---------------------  由防火墙解决 拒绝  在域 my133t.org 内的客户端 访问  本机  -------------
+-----------  将一个source地址 172.34.0.0/24 绑定到指定的zone=block (只可绑定一个唯一的区域级别,如block ) ----
+
+[root@desktop0 ~]# firewall-cmd  --permanent  --add-source=172.34.0.0/24 --zone=block 
+success
+
+----- 查询指定zone=block 是否跟指定source地址 172.34.0.0/24 进行了绑定(只可绑定一个唯一的区域级别,如block)------
+
+[root@desktop0 ~]# firewall-cmd --permanent --zone=block   --query-source=172.34.0.0/24
+yes
+
+------------------  列出指定zone=block 的所有绑定的source地址 -------------
+[root@desktop0 ~]# firewall-cmd  --permanent   --zone=block  --list-sources 
+172.34.0.0/24
+
+------------ 反向查询 , 根据 source 查询所对应的zone ,未重启服务,未生效 no zone -------
+
+[root@desktop0 ~]# firewall-cmd  --get-zone-of-source=172.34.0.0/24
+no zone
+
+
+[root@desktop0 ~]# firewall-cmd  --complete-reload   # 更新规则，重启firewalld 服务
+success
+
+------------------- 反向查询 , 根据 source 查询所对应的zone -------
+[root@desktop0 ~]# firewall-cmd  --get-zone-of-source=172.34.0.0/24
+block
+
+
+[root@desktop0 ~]# systemctl  restart  firewalld.service  # 重启firewalld 服务
+
+[root@desktop0 ~]# firewall-cmd  --permanent   --zone=block  --list-all
+block
+  interfaces: 
+  sources: 172.34.0.0/24
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@desktop0 ~]# 
+
+
+==================================
+/****************************
+
+--------------------  设置 public 为默认的信任级别 ---------
+
+[root@server0 ~]# firewall-cmd  --set-default-zone=public 
+Warning: ZONE_ALREADY_SET: public 
+警告：区域\已设置：公共
+
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+public
+
+[root@server0 ~]#  查看已被激活的 Zone 信息
+[root@server0 ~]# firewall-cmd   --get-active-zones 
+ROL
+  sources: 172.25.0.252/32
+public
+  interfaces: eth0
+
+                   ----------------  查看指定接口 eth0 的 Zone 信息 ---------------
+
+[root@server0 ~]# firewall-cmd  --get-zone-of-interface=eth0
+public
+
+[root@server0 ~]# 查看指定级别的接口
+[root@server0 ~]# firewall-cmd  --zone=public  --list-interfaces 
+eth0
+
+--------------------------- 反向查询 , 根据 interface 查询所对应的 zone ---------------
+[root@server0 ~]# firewall-cmd  --get-zone-of-interface=eth0
+public
+
+
+------------------  查看重启后所有 Zones 级别中被允许的服务，即永久放行的服务 -------------
+
+[root@server0 ~]# firewall-cmd  --get-services   --permanent 
+amanda-client .......... dhcp dhcpv6 dhcpv6-client 
+dns ftp high-availability http https imaps ipp ipp-client 
+ipsec kerberos kpasswd ldap ldaps libvirt libvirt-tls 
+mdns mountd ms-wbt mysql nfs ntp openvpn 
+....... proxy-dhcp radius rpc-bind samba samba-client smtp 
+ssh telnet tftp tftp-client transmission-client vnc-server wbem-https
+
+
+	
+-----------------------------------  查看 ip 地址伪装 ---------------------
+[root@server0 ~]# firewall-cmd   --zone=external  --query-masquerade 
+yes
+
+------------------------- 关闭  ip 地址 伪装  --------------------
+
+[root@server0 ~]# firewall-cmd  --zone=external   --remove-masquerade 
+success
+----------------------------  查看 ip 地址伪装 # 检查是否允许伪装IP ---------------------
+[root@server0 ~]# firewall-cmd   --zone=external  --query-masquerade 
+no
+
+---------------------------- 打开 ip 地址 伪装 ---------------
+[root@server0 ~]# firewall-cmd   --zone=external  --add-masquerade 
+success
+----------------------------  查看 ip 地址伪装 # 检查是否允许伪装IP ---------------------
+[root@server0 ~]# firewall-cmd   --zone=external  --query-masquerade 
+yes
+
+-------------------- 要打开端口转发，则需要先  打开 ip 地址 伪装 ---------
+/****--------------------------  转发 22 端口数据至另一 ip 192.168.1.100 的 2055 端口上 -----------------------
+/**# firewall-cmd --zone=external --add-forward-port=port=22:proto=tcp:toport=2055:toaddr=192.168.1.100
+********/
+/** ~]# firewall-cmd --permanent --zone=trusted --add-forward-port=port=5423:proto=tcp:toport=80
+
+firewall-cmd --add-forward-port=port=80:proto=tcp:toport=8080   # 将80端口的流量转发至8080
+firewall-cmd --add-forward-port=port=80:proto=tcp:toaddr=192.168.1.0.1 # 将80端口的流量转发至192.168.0.1
+
+------------------------ # 将80端口的流量转发至192.168.0.1的8080端口 
+firewall-cmd     --add-forward-port=port=80:proto=tcp:toaddr=192.168.0.1:toport=8080 
+
+
+--------------------------- #转发22端口数据至另一ip 192.168.1.100 的 2055 端口
+
+firewall-cmd --zone=external --add-forward-port=port=22:proto=tcp:toport=2055:toaddr=192.168.1.100 
+
+ ~]# firewall-cmd   --complete-reload  # 更新规则，重启firewalld 服务
+****/
+
+forward-port 进行端口转发的，比如我们要将在80端口接收到tcp请求转发到8080端口可以使用下面的命令
+
+ ~]# firewall-cmd --add-forward-port=port=80:proto=tcp:toport=8080
+forward-port还支持范围转发，
+比如我们还可以将80到85端口的所有请求都转发到8080端口，
+这时只需要将上面命令中的port修改为80-85
+
+在zone配置文件中节点如下
+<zone>
+    <forward-port port="portid[-portid]" protocol="tcp|udp" [to-port="portid[-portid]"] [to-addr="ipv4address"]/>
+</zone>
+
+相关操作命令如下
+firewall-cmd [--permanent] [--zone=zone] --list-forward-ports
+
+firewall-cmd [--permanent] [--zone=zone] --add-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][:toaddr=address[/mask]][--timeout=seconds]
+
+firewall-cmd [--permanent] [--zone=zone] --remove-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][:toaddr=address[/mask]]
+
+firewall-cmd [--permanent] [--zone=zone] --query-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][:toaddr=address[/mask]]
+
+
+port是直接对端口的操作，他和service非常相似，port在zone中的配置节点为
+<zone>
+    <port port="portid[-portid]" protocol="tcp|udp"/>
+</zone>
+相应命令为
+firewall-cmd [--permanent] [--zone=zone] --list-ports
+[root@server0 ~]# firewall-cmd  --zone=public  --list-ports  #查看开放的端口
+
+firewall-cmd [--permanent] [--zone=zone] --add-port=portid[-portid]/protocol [--timeout=seconds]
+## 注意 --timeout和--permanent 是 不可以一起使用的
+
+[root@server0 ~]# firewall-cmd   --get-default-zone
+public
+
+# 永久打开3690/TCP端口
+# firewall-cmd --permanent   --add-port=3690/tcp
+
+firewall-cmd [--permanent] [--zone=zone] --remove-port=portid[-portid]/protocol  #删除指定的端口
+
+ -----------  查询指定zone 是否跟指定的端口 进行了 绑定 { 支持范围 例如 --query-port=80-88/tcp  }  -----------------
+firewall-cmd [--permanent] [--zone=zone] --query-port=portid[-portid]/protocol
+
+
+/************
+Rich Rules
+通过“ rich language”语法,可以用比直接接口方式更易理解的方法建立复杂防火墙规
+则。此外,还能永久保留设置。
+protocol
+协议值可以是一个协议 ID 数字,或者一个协议名。预知可用协议,请查阅 /etc/protocols。
+命令为以下形式:
+protocol value=protocol_name_or_ID
+
+[root@server0 ~]# grep  -Pn  "^(tcp|udp|ip)\s"  /etc/protocols 
+13:ip	0	IP		# internet protocol, pseudo protocol number
+20:tcp	6	TCP		# transmission control protocol
+31:udp	17	UDP		# user datagram protocol
+
+[root@server0 ~]# ll  /etc/protocols
+-rw-r--r--. 1 root root 6545 6月   7 2013 /etc/protocols
+************/
+
+
+
+
+# firewall-cmd   # 命令行工具
+#  firewall-config #图形界面工具
+使用 firewall-config  配置工具来配置或者增加区域，以及修改配置
+[root@server0 ~]# firewall-config 
+如果配置软件都启动了,会弹出一个图形对话框
+
+[root@server0 ~]#  firewall-cmd  --permanent  --zone=block   --get-target
+%%REJECT%%
+[root@server0 ~]#  firewall-cmd  --permanent  --zone=drop   --get-target
+DROP
+[root@server0 ~]#  firewall-cmd  --permanent  --zone=public   --get-target
+{chain}_{zone}
+[root@server0 ~]#  firewall-cmd  --permanent  --zone=trusted   --get-target
+ACCEPT
+[root@server0 ~]# 
+
+target：目标，默认行为，有四个可选值：default 、 ACCEPT 、 %%REJECT%% 、 DROP，
+如果不设置默认为default 
+
+service：这个在前面学生已经给大家解释过了，他表示一个服务
+
+port：端口，使用port可以不通过service而直接对端口进行设置
+
+interface：接口，可以理解为网卡
+
+source：源地址，可以是ip地址也可以是ip地址段
+
+icmp-block：icmp报文阻塞，可以按照icmp类型进行设置
+
+masquerade：ip地址伪装，也就是按照源网卡地址进行NAT转发
+
+forward-port：端口转发
+
+rule：自定义规则
+
+对于一个接受到的请求具体使用哪个zone，firewalld是通过三种方法来判断的：
+
+1、source，也就是源地址
+
+2、interface，接收请求的网卡
+
+3、firewalld.conf中配置的默认zone
+
+[root@server0 ~]# find  / -type f  -name  "*firewalld.conf" 
+/etc/firewalld/firewalld.conf
+
+[root@server0 ~]# grep  -Pnv  "^\s*#|^$"  /etc/firewalld/firewalld.conf
+6:DefaultZone=public
+12:MinimalMark=100
+18:CleanupOnExit=yes
+25:Lockdown=no
+33:IPv6_rpfilter=yes
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+public
+
+----------------------------- 删除source地址 172.34.0.0/24 跟zone=block 的绑定 --------------
+
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --remove-source=172.34.0.0/24
+success
+
+--------------  查询指定zone=block 是否跟指定source地址 172.34.0.0/24 进行了绑定(只可绑定一次)--------
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --query-source=172.34.0.0/24
+no
+
+------------------------  由防火墙解决 拒绝  在域 my133t.org 内的客户端 访问  本机  -------------
+---------------------  将一个source地址 172.34.0.0/24 绑定到指定的zone=block (只可绑定一次 ) --------
+[root@server0 ~]# firewall-cmd   --permanent   --add-source=172.34.0.0/24  --zone=block
+success
+
+--------------  查询指定zone=block 是否跟指定source地址 172.34.0.0/24 进行了绑定(只可绑定一次)--------
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --query-source=172.34.0.0/24
+yes
+
+[root@server0 ~]# firewall-cmd   --complete-reload  # 更新规则，重启firewalld 服务
+success
+
+--------------------------- 反向查询 , 根据 interface 查询所对应的 zone ---------------
+[root@server0 ~]# firewall-cmd  --get-zone-of-interface=eth0
+public
+
+------------------------- 反向查询 , 根据 source 查询所对应的zone -------
+[root@server0 ~]# firewall-cmd   --get-zone-of-source=172.34.0.0/24
+block
+
+[root@server0 ~]# firewall-cmd   --get-zone-of-interface=
+eth0  eth1  eth2  lo    
+[root@server0 ~]# firewall-cmd   --get-zone-of-interface=lo
+no zone
+
+
+firewall-cmd [--permanent] [--zone=zone] --list-services
+
+[root@server0 ~]# firewall-cmd   --list-services  ## 查看开放的服务
+dhcpv6-client ssh
+[root@server0 ~]# firewall-cmd  --zone=public  --list-services 
+dhcpv6-client ssh
+
+# --add-service中的--timeout的含义是这样的：添加一个服务，
+                   但是不会一直生效, 而是生效一段时间，过期之后自动删除
+firewall-cmd [--permanent] [--zone=zone] --add-service=service [--timeout=seconds]
+
+## 注意 --timeout和--permanent 是 不可以一起使用的
+
+
+firewall-cmd [--permanent] [--zone=zone] --remove-service=service #删除指定的服务
+
+   -----------  查询指定zone 是否跟指定的服务 进行了 绑定 -----------------
+firewall-cmd [--permanent] [--zone=zone] --query-service=service
+
+[root@server0 ~]# firewall-cmd  --get-zones #查看所有可用区域
+ROL block dmz drop  external home internal public  trusted work
+
+role  n. 作用;角色;地位
+
+#dmz 仅仅接受 ssh服务连接
+网路区域名称    默认配置
+
+home     家庭
+internal 内部
+work    工作
+external  外部
+dmz  非军事区 仅仅接受 ssh服务连接
+
+public  公共 仅仅接受 ssh  或 dhcpv6-client 服务连接
+block 阻塞限制
+drop  丢弃
+trusted  信任
+
+#Ctrl+X 剪切快捷键
+****************/
+
+------------------------  由防火墙解决 拒绝  在域 my133t.org 内的客户端 访问  本机  -------------
+---------------------  将一个source地址 172.34.0.0/24 绑定到指定的zone=block (只可绑定一次 ) --------
+[root@server0 ~]# firewall-cmd   --permanent   --add-source=172.34.0.0/24  --zone=block
+success
+
+-----------------------  查看指定级别 block 的所有信息 ------------------
+
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --list-all
+block
+  interfaces: 
+  sources: 172.34.0.0/24
+..............
+-------------------------  列出指定zone=block 的所有绑定的source地址 ---------------------
+
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --list-sources 
+172.34.0.0/24
+
+-----------------  查询指定zone=block 是否跟指定source地址 172.34.0.0/24 进行了绑定(只可绑定一次)------------------------
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --query-source=172.34.0.0/24
+yes
+
+------------------------- 反向查询 , 根据 source 查询所对应的zone -------
+[root@server0 ~]# firewall-cmd   --get-zone-of-source=172.34.0.0/24
+block
+
+[root@server0 ~]# firewall-cmd   --reload  # 更新规则，不重启firewalld 服务
+success
+
+[root@server0 ~]# firewall-cmd   --complete-reload  # 更新规则，重启firewalld 服务
+success
+
+
+==========================
+---------------------------------------  3   自定义用户环境
+
+在系统 server0 和 desktop0 上创建自定义命令为 qstat：
+此自定义命令将执行以下命令：/bin/ps -Ao pid,tt,user,fname,rsz
+此命令对系统中所有用户有效
+
+	
+[root@server0 ~]# vim   /etc/bashrc 
+[root@server0 ~]# head  -2  /etc/bashrc
+# /etc/bashrc
+alias  qstat='/bin/ps -Ao pid,tt,user,fname,rsz'
+
+[root@server0 ~]# source   /etc/bashrc
+
+[root@server0 ~]# alias  qstat
+alias qstat='/bin/ps -Ao pid,tt,user,fname,rsz'
+
+[root@server0 ~]# type  qstat 
+qstat 是 `/bin/ps -Ao pid,tt,user,fname,rsz' 的别名
+
+[root@server0 ~]# qstat  |head  -2
+  PID TT       USER     COMMAND    RSZ
+    1 ?        root     systemd   6588
+
+[root@server0 ~]# man  alias
+  alias [-p] [name[=value] ...]  #定义别名
+  unalias [-a] [name ...] # 取消别名
+
+[root@server0 ~]# man  unalias
+ unalias [-a] [name ...]
+
+
+[root@desktop0 ~]# vim  /etc/bashrc 
+[root@desktop0 ~]# head   -2  /etc/bashrc 
+# /etc/bashrc
+alias  qstat='/bin/ps -Ao pid,tt,user,fname,rsz'
+[root@desktop0 ~]# .  /etc/bashrc
+[root@desktop0 ~]# type  qstat 
+qstat 是 `/bin/ps -Ao pid,tt,user,fname,rsz' 的别名
+[root@desktop0 ~]# qstat  |head  -2
+  PID TT       USER     COMMAND    RSZ
+    1 ?        root     systemd   6612
+
+=============================
+---------------------------------  4 配置防火墙端口转发
+
+在系统 server0 上配置端口转发，要求如下：
+在 172.25.0.0/24 网络中的系统，访问 server0 的本地端口 5423 将被转发到80
+此设置必须永久有效
+
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+public
+
+[root@server0 ~]# firewall-cmd  --get-zones |column -t
+ROL  block  dmz  drop  external  home  internal  public  trusted  work
+
+
+[root@server0 ~]# firewall-cmd  --set-default-zone=trusted 
+success
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+trusted
+[root@server0 ~]# firewall-cmd  --permanent  --zone=trusted  --list-all 
+trusted (default)
+  interfaces: 
+  sources: 
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+
+firewall-cmd [--permanent] [--zone=zone] --remove-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][:toaddr=address[/mask]]
+
+firewall-cmd [--permanent] [--zone=zone] --query-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][:toaddr=address[/mask]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
