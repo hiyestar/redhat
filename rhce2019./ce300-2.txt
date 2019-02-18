@@ -936,6 +936,34 @@ success
 [root@server0 ~]# firewall-cmd   --complete-reload  # 更新规则，重启firewalld 服务
 success
 
+[root@server0 ~]# tail  -1  /etc/ssh/sshd_config 
+DenyUsers   *@*.my133t.org  *@172.34.0.*
+[root@server0 ~]# firewall-cmd  --permanent  --zone=block  --list-all 
+block
+  interfaces: 
+  sources: 172.34.0.0/24
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@server0 ~]# 
+[root@desktop0 ~]# tail  -1  /etc/ssh/sshd_config 
+DenyUsers  *@*.my133t.org   *@172.34.0.*
+[root@desktop0 ~]# firewall-cmd  --permanent   --zone=block  --list-all 
+block
+  interfaces: 
+  sources: 172.34.0.0/24
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@desktop0 ~]# 
 
 ==========================
 ---------------------------------------  3   自定义用户环境
@@ -1008,21 +1036,319 @@ trusted (default)
   masquerade: no
   forward-ports: 
   icmp-blocks: 
-  rich rules: 
-	
+  rich rules:
+
+/*****************
+firewall-cmd [--permanent] [--zone=zone] --list-forward-ports
 
 firewall-cmd [--permanent] [--zone=zone] --remove-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][:toaddr=address[/mask]]
 
 firewall-cmd [--permanent] [--zone=zone] --query-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][:toaddr=address[/mask]]
+*******************/
+
+[root@server0 ~]# firewall-cmd   --get-default-zone 
+trusted
+
+[root@server0 ~]# firewall-cmd  --permanent  --zone=trusted   --add-forward-port=port=5423:proto=tcp:toport=80
+success
+
+[root@server0 ~]# firewall-cmd  --permanent --zone=trusted  --list-forward-ports  #查看转发端口信息
+
+port=5423:proto=tcp:toport=80:toaddr=
+
+-------------------------------------------- 删除 转发端口 绑定 -----------------------
+[root@server0 ~]# firewall-cmd  --permanent --zone=trusted  --remove-forward-port=port=5423:proto=tcp:toport=80
+
+success
+
+[root@server0 ~]# firewall-cmd  --permanent --zone=trusted  --list-forward-ports
+
+-------------------------------------------- 新增加 转发端口 绑定 --------------------------
+[root@server0 ~]# firewall-cmd  --permanent  --zone=trusted  --add-forward-port=port=5423:proto=tcp:toport=80
+
+success
+
+---------------------------------  #查看转发端口信息 ---------------------------
+       [--permanent] [--zone=zone] --list-forward-ports
+
+[root@server0 ~]# firewall-cmd  --permanent --zone=trusted  --list-forward-ports
+
+port=5423:proto=tcp:toport=80:toaddr=
 
 
+[root@server0 ~]# firewall-cmd  --permanent --zone=trusted  --list-all 
+trusted (default)
+  interfaces: 
+  sources: 
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: port=5423:proto=tcp:toport=80:toaddr=
+  icmp-blocks: 
+  rich rules: 
+	
+[root@server0 ~]# firewall-cmd  --complete-reload 
+success
+
+-----  查询指定zone=trusted 是否 跟指定转发 端口 port=5423:proto=tcp:toport=80 进行了绑定---
+ --query-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][:toaddr=address[/mask]]
+
+[root@server0 ~]# firewall-cmd  --permanent --zone=trusted  --query-forward-port=port=5423:proto=tcp:toport=80
+
+yes
+
+[root@server0 ~]# firewall-cmd  --permanent --zone=trusted  --list-all 
+trusted (default)
+  interfaces: 
+  sources: 
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: port=5423:proto=tcp:toport=80:toaddr=
+  icmp-blocks: 
+  rich rules: 
+	
+[root@server0 ~]# firewall-cmd   --reload  # 更新规则，不重启firewalld 服务
+success
+
+[root@server0 ~]# firewall-cmd   --complete-reload  # 更新规则，重启firewalld 服务
+success
+
+------------------------- 反向查询 , 根据 source 查询所对应的zone -------
+[root@server0 ~]# firewall-cmd   --get-zone-of-source=172.34.0.0/24
+block
+
+[root@server0 ~]# man  firewall-cmd  #非常重要的帮助手册
+
+       [--permanent] --get-zones
+           Print predefined zones as a space separated list.
+
+       [--permanent] --get-services
+           Print predefined services as a space separated list.
+
+       [--permanent] --get-icmptypes
+           Print predefined icmptypes as a space separated list.
+
+       [--permanent] --get-zone-of-interface=interface
+           Print the name of the zone the interface is bound to or no zone.
+
+       [--permanent] --get-zone-of-source=source[/mask]
+           Print the name of the zone the source[/mask] is bound to or no zone.
+
+       [--permanent] --list-all-zones
+
+       [--permanent] [--zone=zone] --list-all
+           List everything added for or enabled in zone. If zone is omitted, default zone
+           will be used.
+
+       [--permanent] [--zone=zone] --list-services
 
 
+[root@server0 ~]# man  firewall-cmd  #非常重要的帮助手册
+
+[root@server0 ~]# firewall-cmd  --complete-reload 
+success
+[root@server0 ~]# firewall-cmd  --permanent --zone=trusted  --list-all 
+trusted (default)
+  interfaces: 
+  sources: 
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: port=5423:proto=tcp:toport=80:toaddr=
+  icmp-blocks: 
+  rich rules: 
+	
+[root@server0 ~]# 
+
+----------------------------------------- desktop0 -----------------------
+在系统 server0 上配置端口转发，要求如下：
+在 172.25.0.0/24 网络中的系统，访问 server0 的本地端口 5423 将被转发到80
+此设置必须永久有效
+
+------------------------  注意 在这台机 desktop0 不要做 端口转发 ------------------
+
+[root@desktop0 ~]# tail  -1  /etc/ssh/sshd_config 
+DenyUsers  *@*.my133t.org   *@172.34.0.*
+[root@desktop0 ~]# firewall-cmd  --permanent   --zone=block  --list-all 
+block
+  interfaces: 
+  sources: 172.34.0.0/24
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@desktop0 ~]# alias  qstat
+alias qstat='/bin/ps -Ao pid,tt,user,fname,rsz'
+[root@desktop0 ~]# firewall-cmd  --get-default-zone 
+public
+
+------------------------  注意 在这台机 desktop0 不要做 端口转发 -------------
+
+[root@desktop0 ~]# firewall-cmd  --set-default-zone=trusted 
+success
+[root@desktop0 ~]# firewall-cmd  --get-default-zone 
+trusted
+
+---------------------------------  #查看转发端口信息 ---------------------------
+       [--permanent] [--zone=zone] --list-forward-ports
+
+[root@desktop0 ~]# firewall-cmd --permanent  --zone=trusted  --list-forward-ports 
+
+port=5423:proto=tcp:toport=80:toaddr=
 
 
+-------------------------------------------- 删除 转发端口 绑定 -----------------------
+[root@desktop0 ~]# firewall-cmd  --permanent  --zone=trusted  --remove-forward-port=port=5423:proto=tcp:toport=80
+success
+
+[root@desktop0 ~]# firewall-cmd  --complete-reload 
+success
+
+[root@desktop0 ~]# firewall-cmd  --permanent --zone=trusted  --list-all 
+trusted
+  interfaces: 
+  sources: 
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: 
+  icmp-blocks: 
+  rich rules: 
+	
+[root@desktop0 ~]# 
 
 
+/**************** --------------- 新增加 转发端口 绑定 --------------------------
 
+[root@desktop0 ~]# firewall-cmd  --permanent --zone=trusted  --add-forward-port=port=5423:proto=tcp:toport=80
+success
+
+-----  查询指定zone=trusted 是否 跟指定转发 端口 port=5423:proto=tcp:toport=80 进行了绑定---
+ --query-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][:toaddr=address[/mask]]
+
+[root@desktop0 ~]# firewall-cmd  --permanent --zone=trusted  --query-forward-port=port=5423:proto=tcp:toport=80
+yes
+
+[root@desktop0 ~]# firewall-cmd --permanent  --zone=trusted  --list-all 
+trusted (default)
+  interfaces: 
+  sources: 
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: port=5423:proto=tcp:toport=80:toaddr=
+  icmp-blocks: 
+  rich rules: 
+	
+---------------------------------  #查看转发端口信息 ---------------------------
+       [--permanent] [--zone=zone] --list-forward-ports
+
+[root@desktop0 ~]# firewall-cmd --permanent  --zone=trusted  --list-forward-ports 
+
+port=5423:proto=tcp:toport=80:toaddr=
+
+[root@desktop0 ~]# man firewall-cmd
+[root@desktop0 ~]# man firewall-cmd
+
+[root@desktop0 ~]# firewall-cmd   --complete-reload  # 更新规则，重启firewalld 服务
+success
+
+[root@desktop0 ~]# firewall-cmd --permanent  --zone=trusted  --list-all 
+trusted (default)
+  interfaces: 
+  sources: 
+  services: 
+  ports: 
+  masquerade: no
+  forward-ports: port=5423:proto=tcp:toport=80:toaddr=
+  icmp-blocks: 
+  rich rules: 
+	
+************/
+[root@desktop0 ~]# firewall-cmd  --permanent --zone=trusted  --list-forward-ports
+[root@desktop0 ~]# 
+
+
+====================5. 配置链路聚合============
+------------------- 5 配置链路聚合
+
+在 server0.example.com 和 desktop0.example.com 之间按以下要求
+配置一个链路team0：
+
+此链路使用接口 eth1 和 eth2
+此链路在一个接口失效时仍然能工作
+此链路在 server0 使用下面的地址 172.16.3.20/255.255.255.0
+此链路在 desktop0 使用下面的地址 172.16.3.25/255.255.255.0
+此链路在系统重启之后依然保持正常状态
+
+[root@desktop0 ~]# man  nmcli
+       nmcli connection add type ethernet autoconnect no ifname eth0
+
+[root@desktop0 ~]# man  nmcli-examples
+
+       Example 7. Adding a team master and two slave connection profiles
+
+           $ nmcli con add type team con-name Team1 ifname Team1 config team1-master-json.conf
+           $ nmcli con add type team-slave con-name Team1-slave1 ifname em1 master Team1
+           $ nmcli con add type team-slave con-name Team1-slave2 ifname em2 master Team1
+
+           $ nmcli con mod my-con-em1 ipv4.dns "8.8.8.8 8.8.4.4"  #多个dns地址用空格隔开
+
+           connection.autoconnect:                 yes
+
+           ipv4.method:                            manual
+
+[root@desktop0 ~]# nmcli connection add con-name team0 ifname team0 type team autoconnect yes config '{"runner":{"name":"activebackup"}}'
+
+由多块网卡(team-slave)一起组建而成的虚拟网卡,
+即“组队”
+ 作用1:轮询式(roundrobin)的流量负载均衡
+ 作用2:热备份(activebackup)连接冗余
+热备份配置 ： {"runner":{"name":"activebackup"}}
+man帮助辅助 :
+man teamd.conf   --> /examples   #全文查找examples #按n 跳转下一个匹配
+
+[root@desktop0 ~]# man  teamd.conf
+[root@desktop0 ~]# man  teamd.conf
+       runner.name (string, mandatory)
+              Name of team device. The following runners are available:
+
+              broadcast — Simple runner which directs the team device to  transmit  packets
+              via all ports.
+
+              roundrobin — Simple runner which directs the team device to transmits packets
+              in a round-robin fashion.
+
+              activebackup — Watches for link changes and selects active port  to  be  used
+              for data transfers.
+
+EXAMPLES
+       {
+         "device": "team0",
+         "runner": {"name": "roundrobin"},
+         "ports": {"eth1": {}, "eth2": {}}
+       }
+
+       Very basic configuration.
+
+       {
+         "device": "team0",
+         "runner": {"name": "activebackup"},
+         "link_watch": {"name": "ethtool"},
+         "ports": {
+           "eth1": {
+             "prio": -10,
+             "sticky": true
+           },
+           "eth2": {
+             "prio": 100
+           }
+         }
+       }
 
 
 
