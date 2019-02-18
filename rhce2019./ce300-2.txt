@@ -1302,8 +1302,6 @@ trusted (default)
 
            ipv4.method:                            manual
 
-[root@desktop0 ~]# nmcli connection add con-name team0 ifname team0 type team autoconnect yes config '{"runner":{"name":"activebackup"}}'
-
 由多块网卡(team-slave)一起组建而成的虚拟网卡,
 即“组队”
  作用1:轮询式(roundrobin)的流量负载均衡
@@ -1317,14 +1315,36 @@ man teamd.conf   --> /examples   #全文查找examples #按n 跳转下一个匹�
        runner.name (string, mandatory)
               Name of team device. The following runners are available:
 
-              broadcast — Simple runner which directs the team device to  transmit  packets
-              via all ports.
+# 目前网卡绑定mode共有七种(0~6)bond0、bond1、bond2、bond3、bond4、bond5、bond6
+七种bond模式说明：
 
-              roundrobin — Simple runner which directs the team device to transmits packets
-              in a round-robin fashion.
+第一种模式：mod=0 ，即：(balance-rr)Round-robin policy（平衡抡循环策略）
+特点：
+传输数据包顺序是依次传输（即：第1个包走eth0，下一个包就走eth1….一直循环下去，直到最后一个传输完毕），
+此模式提供负载平衡和容错能力；
+但是我们知道如果一个连接或者会话的数据包从不同的接口发出的话，
+中途再经过不同的链路，
+在客户端很 有 可能 会出现数据包无序到达的问题，
+而无序到达的数据包需要重新要求被发送，
+这样网络的吞吐量就会下降
+  roundrobin — 引导团队设备以循环方式传输数据包的简单运行程序,轮询式(roundrobin)的流量负载均衡
 
-              activebackup — Watches for link changes and selects active port  to  be  used
-              for data transfers.
+
+第二种模式：mod=1，即： (active-backup)Active-backup policy（主-备份策略）
+特点：只有一个设备处于活动状态，
+当一个宕掉另一个马上由备份转换为主设备。
+mac地址从外部可见，bond的MAC地址是唯一的，以避免switch(交换机)发生混乱。
+此模式只提供了容错能力；
+由此可见此算法的优点是可以提供高网络连接的可用性，
+但是它的资源利用率较低，只有一个接口处于工作状态，
+在有 N 个网络接口的情况下，资源利用率为1/N
+  activebackup — 监视链接更改并选择用于数据传输的活动端口,热备份(activebackup)连接冗余
+
+
+第四种模式：mod=3，即：broadcast（广播策略）
+特点：在每个slave接口上传输每个数据包，此模式提供了容错能力
+  broadcast — 引导团队设备通过所有端口传输数据包的简单运行程序
+
 
 EXAMPLES
        {
@@ -1349,6 +1369,654 @@ EXAMPLES
            }
          }
        }
+
+[root@server0 ~]# nmcli  connection  show
+名称         UUID                                  类型            设备 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0 
+
+[root@server0 ~]# nmcli connection add 
+autoconnect  con-name     help         ifname       type  
+       
+[root@server0 ~]# nmcli connection add  con-name  team0 type 
+bluetooth     bridge-slave  infiniband    team-slave    wimax
+bond          cdma          olpc-mesh     vlan          
+bond-slave    ethernet      pppoe         vpn           
+bridge        gsm           team          wifi    
+      
+[root@server0 ~]# nmcli connection add  con-name  team0 type  team  autoconnect  
+no   yes  
+
+-------------- 此链路使用接口 eth1 和 eth2
+此链路在一个接口失效时仍然能工作
+此链路在 server0 使用下面的地址 172.16.3.20/255.255.255.0
+
+-------------------------- /*****  #注意  con-name  team0  type  team 这里 忘了写 ifname  team0  ---------
+
+[root@server0 ~]# nmcli connection add  con-name  team0 type  team  autoconnect  yes  config  '{"runner": {"name": "activebackup"}}'
+
+Connection 'team0' (a57a127d-e0cb-4094-b1f9-f1f55f07e99e) successfully added.
+
+[root@server0 ~]# nmcli  connection  show
+名称             UUID                                  类型               设备    
+team0        a57a127d-e0cb-4094-b1f9-f1f55f07e99e  team            nm-team 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0  
+  
+[root@server0 ~]# nmcli  connection modify  team0  ipv4.method  manual  ipv4.addresses  172.16.3.20/24  connection.autoconnect  yes
+
+[root@server0 ~]# 
+
+[root@server0 ~]# nmcli  device  status 
+设备     类型      状态                  CONNECTION  
+eth0     ethernet  连接的                System eth0 
+nm-team  team      连接中(获得 IP 配置)  team0       
+eth1     ethernet  已断开                --          
+eth2     ethernet  已断开                --          
+lo       loopback  未管理                --          
+[root@server0 ~]# 
+[root@server0 ~]# nmcli  connection add  con-name  team0-1 ifname eth1 type team-slave  master  team0
+
+Connection 'team0-1' (5459a3cc-eba6-400c-ae99-c1e619257bdc) successfully added.
+
+[root@server0 ~]# nmcli  device  status 
+设备     类型      状态    CONNECTION  
+eth0     ethernet  连接的  System eth0 
+eth1     ethernet  连接的  team0-1     
+nm-team  team      连接的  team0       
+eth2     ethernet  已断开  --          
+lo       loopback  未管理  --          
+[root@server0 ~]# 
+[root@server0 ~]# nmcli  connection add  con-name  team0-2  ifname eth2  type team-slave  master  team0
+
+Connection 'team0-2' (c650c923-8412-472a-a14b-a3e94f63a9b6) successfully added.
+
+[root@server0 ~]# 
+[root@server0 ~]# nmcli  device  status 
+设备     类型      状态    CONNECTION  
+eth0     ethernet  连接的  System eth0 
+eth1     ethernet  连接的  team0-1     
+eth2     ethernet  连接的  team0-2     
+nm-team  team      连接的  team0       
+lo       loopback  未管理  --          
+[root@server0 ~]# nmcli  connection   show
+名称         UUID                                  类型            设备    
+team0-1      5459a3cc-eba6-400c-ae99-c1e619257bdc  802-3-ethernet  eth1    
+team0        a57a127d-e0cb-4094-b1f9-f1f55f07e99e  team            nm-team 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0    
+team0-2      c650c923-8412-472a-a14b-a3e94f63a9b6  802-3-ethernet  eth2    
+[root@server0 ~]# 
+[root@server0 ~]# nmcli   connection  up  team0
+Connection successfully ..............
+[root@server0 ~]# nmcli   connection  up  team0-1
+Connection successfully ...............
+[root@server0 ~]# nmcli   connection  up  team0-2
+Connection successfully .................
+[root@server0 ~]# 
+[root@server0 ~]# type  teamdctl 
+teamdctl 是 /usr/bin/teamdctl
+
+/*****  #注意  con-name  team0  type  team 这里 忘了写 ifname  team0  -----
+
+[root@server0 ~]# nmcli connection add  con-name  team0 type  team  autoconnect  yes  config  '{"runner": {"name": "activebackup"}}'
+******/
+[root@server0 ~]# teamdctl   team0  state  #注意前面忘了写 ifname  team0 所以找不到设备
+Device "team0" does not exist
+
+[root@server0 ~]# nmcli  device   status 
+设备     类型      状态    CONNECTION  
+eth0     ethernet  连接的  System eth0 
+eth1     ethernet  连接的  team0-1     
+eth2     ethernet  连接的  team0-2     
+nm-team  team      连接的  team0       
+lo       loopback  未管理  --          
+[root@server0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-team0
+DEVICE=nm-team
+TEAM_CONFIG="{\"runner\": {\"name\": \"activebackup\"}}"
+DEVICETYPE=Team
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+NAME=team0
+UUID=a57a127d-e0cb-4094-b1f9-f1f55f07e99e
+ONBOOT=yes
+IPADDR0=172.16.3.20
+PREFIX0=24
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+[root@server0 ~]# teamdctl   nm-team  state  #系统默认给接口ifname 取名nm-team
+setup:
+  runner: activebackup
+ports:
+  eth1
+    link watches:
+      link summary: up
+      instance[link_watch_0]:
+        name: ethtool
+        link: up
+  eth2
+    link watches:
+      link summary: up
+      instance[link_watch_0]:
+        name: ethtool
+        link: up
+runner:
+  active port: eth1
+[root@server0 ~]# 
+------------------------------------------------
+[root@server0 ~]# nmcli  connection  show
+名称         UUID                                  类型            设备    
+team0-1      5459a3cc-eba6-400c-ae99-c1e619257bdc  802-3-ethernet  eth1    
+team0        a57a127d-e0cb-4094-b1f9-f1f55f07e99e  team            nm-team 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0    
+team0-2      c650c923-8412-472a-a14b-a3e94f63a9b6  802-3-ethernet  eth2  
+  
+[root@server0 ~]# nmcli   device  status 
+设备       类型        状态     CONNECTION  
+eth0     ethernet  连接的  System eth0 
+eth1     ethernet  连接的  team0-1     
+eth2     ethernet  连接的  team0-2     
+nm-team  team      连接的  team0       
+lo       loopback  未管理  --   
+
+[root@server0 ~]# nmcli 
+connection  device      general     help        networking  radio
+
+[root@server0 ~]# nmcli  connection  
+add     down    help    modify  show    
+delete  edit    load    reload  up  
+  
+[root@server0 ~]# nmcli  connection   delete 
+help         path         team0        team0-2      
+id           System eth0  team0-1      uuid  
+
+-------------------------- 先 删除 配置错误的 team-slave  后 删除 master  team --------------
+-------------------------- 先 删除 配置错误的 team-slave  后 删除 master  team -------------
+
+[root@server0 ~]# nmcli  connection   delete  team0-2
+[root@server0 ~]# nmcli  connection   delete  team0-1
+[root@server0 ~]# nmcli  connection   delete  team0
+
+[root@server0 ~]# nmcli   connection  show
+名称         UUID                                  类型            设备 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0 
+
+[root@server0 ~]# nmcli   device  status 
+设备  类型      状态    CONNECTION  
+eth0  ethernet  连接的  System eth0 
+eth1  ethernet  已断开  --          
+eth2  ethernet  已断开  --          
+lo    loopback  未管理  --          
+
+[root@server0 ~]# nmcli 
+connection  device      general     help        networking  radio
+
+[root@server0 ~]# nmcli  connection  
+add     down    help    modify  show    
+delete  edit    load    reload  up 
+     
+[root@server0 ~]# nmcli  connection  add  
+autoconnect  con-name     help         ifname       type
+         
+[root@server0 ~]# nmcli  connection  add  con-name  team0   ifname  
+eth0  eth1  eth2  lo
+    
+[root@server0 ~]# nmcli  connection  add  con-name  team0   ifname  team0  type  
+
+bluetooth     bridge-slave  infiniband    team-slave    wimax
+bond          cdma          olpc-mesh     vlan          
+bond-slave    ethernet      pppoe         vpn           
+bridge        gsm           team          wifi    
+
+[root@server0 ~]# nmcli  connection  add  con-name  team0   ifname  team0  type   team   autoconnect  
+no   yes  
+[root@server0 ~]# nmcli  connection  add  con-name  team0   ifname  team0  type   team   autoconnect  yes 
+config  gw4     gw6     ip4     ip6     save  
+
+
+-------------- 此链路使用接口 eth1 和 eth2
+此链路在一个接口失效时仍然能工作
+此链路在 server0 使用下面的地址 172.16.3.20/255.255.255.0
+
+-------------------------- /*****  #注意  con-name  team0  type  team 这里 别 忘了写 ifname  team0  ---------
+
+[root@server0 ~]# nmcli  connection  add  con-name  team0   ifname  team0  type   team   autoconnect  yes  config  '{"runner":{"name":"activebackup"}}'
+
+Connection 'team0' (ea7c5537-6d05-418b-86ca-3daf7f613d84) successfully added.
+[root@server0 ~]# 
+
+[root@server0 ~]# nmcli  connection  show
+名称         UUID                                  类型            设备  
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0  
+team0        ea7c5537-6d05-418b-86ca-3daf7f613d84  team            team0 
+
+[root@server0 ~]# nmcli  connection add  con-name  team0-1 ifname  eth1 type  team-slave   master  team0 
+
+[root@server0 ~]# nmcli  connection add  con-name  team0-2  ifname  eth2 type  team-slave   master  team0 
+Connection 'team0-2' (f82dafaa-057b-41bf-a860-db62cd68a99a) successfully added.
+[root@server0 ~]# 
+[root@server0 ~]# nmcli  connection  show
+名称         UUID                                  类型            设备  
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0  
+team0-2      f82dafaa-057b-41bf-a860-db62cd68a99a  802-3-ethernet  eth2  
+team0-1      46319d1a-132f-4f40-94f2-54ce1a851a63  802-3-ethernet  eth1  
+team0        ea7c5537-6d05-418b-86ca-3daf7f613d84  team            team0 
+[root@server0 ~]# 
+[root@server0 ~]# nmcli  connection  modify  
+help         path         team0        team0-2      uuid         
+id           System eth0  team0-1      --temporary 
+ 
+[root@server0 ~]# nmcli  connection  modify  team0  ipv4.method  manual  ipv4.addresses  172.16.3.20/24  connection.autoconnect  yes
+
+[root@server0 ~]# nmcli  connection  modify  team0-1  connection.autoconnect  yes
+[root@server0 ~]# nmcli  connection  modify  team0-2  connection.autoconnect  yes
+
+[root@server0 ~]# nmcli   connection  up  team0
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/17)
+
+[root@server0 ~]# nmcli   connection  up  team0-1
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/20)
+
+[root@server0 ~]# nmcli   connection  up  team0-2
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/21)
+[root@server0 ~]# 
+
+
+[root@server0 ~]# nmcli  connection  up  team0
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/12)
+
+[root@server0 ~]# nmcli  connection  up  team0-1
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/15)
+
+[root@server0 ~]# nmcli  connection  up  team0-2
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/16)
+
+[root@server0 ~]# teamdctl  team0  state
+setup:
+  runner: activebackup
+ports:
+  eth1
+    link watches:
+      link summary: up
+      instance[link_watch_0]:
+        name: ethtool
+        link: up
+  eth2
+    link watches:
+      link summary: up
+      instance[link_watch_0]:
+        name: ethtool
+        link: up
+runner:
+  active port: eth1
+
+[root@server0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-team0
+ifcfg-team0    ifcfg-team0-1  ifcfg-team0-2  
+
+[root@server0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-team0
+DEVICE=team0
+TEAM_CONFIG="{\"runner\":{\"name\":\"activebackup\"}}"
+DEVICETYPE=Team
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+NAME=team0
+UUID=ea7c5537-6d05-418b-86ca-3daf7f613d84
+ONBOOT=yes
+IPADDR0=172.16.3.20
+PREFIX0=24
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+[root@server0 ~]# 
+
+[root@server0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-team0-1
+BOOTPROTO=dhcp
+DEFROUTE=yes
+PEERDNS=yes
+PEERROUTES=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+IPV6_FAILURE_FATAL=no
+NAME=team0-1
+UUID=46319d1a-132f-4f40-94f2-54ce1a851a63
+DEVICE=eth1
+ONBOOT=yes
+TEAM_MASTER=team0
+DEVICETYPE=TeamPort
+
+[root@server0 ~]# nmcli  connection  show
+名称         UUID                                  类型            设备  
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0  
+team0-2      f82dafaa-057b-41bf-a860-db62cd68a99a  802-3-ethernet  eth2  
+team0-1      46319d1a-132f-4f40-94f2-54ce1a851a63  802-3-ethernet  eth1  
+team0        ea7c5537-6d05-418b-86ca-3daf7f613d84  team            team0 
+
+[root@server0 ~]# nmcli  device  status 
+设备   类型      状态    CONNECTION  
+eth0   ethernet  连接的  System eth0 
+eth1   ethernet  连接的  team0-1     
+eth2   ethernet  连接的  team0-2     
+team0  team      连接的  team0       
+lo     loopback  未管理  --          
+[root@server0 ~]# 
+
+-------------------------- 此链路在 desktop0 使用下面的地址 172.16.3.25/255.255.255.0
+
+[root@desktop0 ~]# nmcli 
+connection  device      general     help        networking  radio
+
+[root@desktop0 ~]# nmcli  connection  show
+名称         UUID                                  类型            设备 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0 
+
+[root@desktop0 ~]# nmcli   device 
+connect     help        status      wimax       
+disconnect  show        wifi    
+
+[root@desktop0 ~]# nmcli  device   status 
+设备  类型      状态    CONNECTION  
+eth0  ethernet  连接的  System eth0 
+eth1  ethernet  已断开  --          
+eth2  ethernet  已断开  --          
+lo    loopback  未管理  --          
+
+/*** ~]# nmcli connection add con-name team0 ifname team0 type team autoconnect yes config '{"runner":{"name":"activebackup"}}'
+*******/
+------------------------ 此链路在 desktop0 使用下面的地址 172.16.3.25/255.255.255.0
+
+[root@desktop0 ~]# nmcli  connection  add con-name  team0  ifname  team0  type  team  autoconnect   yes  config  '{"runner":{"name":"roundrobin"}}'
+
+Connection 'team0' (ed88cf5e-0d19-4f8f-9ab3-f003c8465c92) successfully added.
+[root@desktop0 ~]# 
+
+[root@desktop0 ~]# nmcli connection  modify  team0  ipv4.method  manual  ipv4.addresses  172.16.3.25/24  connection.autoconnect  yes
+
+[root@desktop0 ~]# 
+[root@desktop0 ~]# nmcli  connection add con-name team0-1 ifname  eth1  type  team-slave  master  team0 
+
+Connection 'team0-1' (09c03178-5816-47bd-b697-7d2ebdce1ff9) successfully added.
+[root@desktop0 ~]# 
+[root@desktop0 ~]# nmcli  connection add con-name team0-2 ifname  eth2  type  team-slave  master  team0 
+
+Connection 'team0-2' (ceb7c171-dc51-4248-8de7-b0f32f9b4316) successfully added.
+[root@desktop0 ~]# 
+[root@desktop0 ~]# nmcli  connection  modify  team0-1  connection.autoconnect  yes
+[root@desktop0 ~]# nmcli  connection  modify  team0-2  connection.autoconnect  yes
+[root@desktop0 ~]# 
+[root@desktop0 ~]# nmcli  connection  up   team0
+
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/4)
+
+[root@desktop0 ~]# nmcli  connection  up   team0-1
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/7)
+
+[root@desktop0 ~]# nmcli  connection  up   team0-2
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/8)
+
+[root@desktop0 ~]# nmcli  connection   show
+名称         UUID                                  类型            设备  
+team0-1      09c03178-5816-47bd-b697-7d2ebdce1ff9  802-3-ethernet  eth1  
+team0        ed88cf5e-0d19-4f8f-9ab3-f003c8465c92  team            team0 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0  
+team0-2      ceb7c171-dc51-4248-8de7-b0f32f9b4316  802-3-ethernet  eth2 
+ 
+[root@desktop0 ~]# nmcli   device   status 
+设备   类型      状态    CONNECTION  
+eth0   ethernet  连接的  System eth0 
+eth1   ethernet  连接的  team0-1     
+eth2   ethernet  连接的  team0-2     
+team0  team      连接的  team0       
+lo     loopback  未管理  --  
+        
+     
+[root@desktop0 ~]# teamdctl   team0  state  #检查网卡绑定状态
+setup:
+  runner: roundrobin
+ports:
+  eth1
+    link watches:
+      link summary: up
+      instance[link_watch_0]:
+        name: ethtool
+        link: up
+  eth2
+    link watches:
+      link summary: up
+      instance[link_watch_0]:
+        name: ethtool
+        link: up
+
+[root@desktop0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-team0
+DEVICE=team0
+TEAM_CONFIG="{\"runner\":{\"name\":\"roundrobin\"}}"
+DEVICETYPE=Team
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+NAME=team0
+UUID=ed88cf5e-0d19-4f8f-9ab3-f003c8465c92
+ONBOOT=yes
+IPADDR0=172.16.3.25
+PREFIX0=24
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+
+[root@desktop0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-team0-1
+BOOTPROTO=dhcp
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+IPV6_FAILURE_FATAL=no
+NAME=team0-1
+UUID=09c03178-5816-47bd-b697-7d2ebdce1ff9
+DEVICE=eth1
+ONBOOT=yes
+TEAM_MASTER=team0
+DEVICETYPE=TeamPort
+PEERDNS=yes
+PEERROUTES=yes
+
+[root@desktop0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-team0-2
+BOOTPROTO=dhcp
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+IPV6_FAILURE_FATAL=no
+NAME=team0-2
+UUID=ceb7c171-dc51-4248-8de7-b0f32f9b4316
+DEVICE=eth2
+ONBOOT=yes
+TEAM_MASTER=team0
+DEVICETYPE=TeamPort
+PEERDNS=yes
+PEERROUTES=yes
+[root@desktop0 ~]# 
+
+[root@desktop0 ~]# ifconfig  team0  |head  -3
+team0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.16.3.25  netmask 255.255.255.0  broadcast 172.16.3.255
+        inet6 fe80::5054:ff:fe0b:a7b  prefixlen 64  scopeid 0x20<link>
+[root@desktop0 ~]# 
+
+[root@server0 ~]# ifconfig  team0  |head  -3
+team0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.16.3.20  netmask 255.255.255.0  broadcast 172.16.3.255
+        inet6 fe80::5054:ff:fe38:79d9  prefixlen 64  scopeid 0x20<link>
+
+[root@server0 ~]# ping  -c1  -i0.2  -W1  172.16.3.20
+PING 172.16.3.20 (172.16.3.20) 56(84) bytes of data.
+64 bytes from 172.16.3.20: icmp_seq=1 ttl=64 time=0.034 ms
+............
+[root@server0 ~]# ping  -c1  -i0.2  -W1  172.16.3.25
+PING 172.16.3.25 (172.16.3.25) 56(84) bytes of data.
+64 bytes from 172.16.3.25: icmp_seq=1 ttl=64 time=0.754 ms
+...........
+[root@server0 ~]# 
+
+===============================
+--------------------------  6  配置IPv6地址
+
+在您的两个考试系统上配置接口 eth0 使用下列 IPv6 地址：
+server0 上的地址应该是 2003:ac18::305/64
+desktop0 上的地址应该是 2003:ac18::306/64
+两个系统必须能与网络 2003:ac18/64 内的系统通信
+地址必须在重启系统后依旧生效
+两个系统必须保持当前的 IPv4 地址并仍然能够通信
+
+
+[root@server0 ~]# nmcli  connection  modify  'System eth0'  ipv6.
+ipv6.addresses           ipv6.ignore-auto-dns     ipv6.method
+ipv6.dhcp-hostname       ipv6.ignore-auto-routes  ipv6.never-default
+ipv6.dns                 ipv6.ip6-privacy         ipv6.routes
+ipv6.dns-search          ipv6.may-fail    
+
+[root@server0 ~]# nmcli  connection  modify  'System eth0' ipv6.method manual   ipv6.addresses  2003:ac18::305/64  connection.autoconnect   yes
+
+[root@server0 ~]# nmcli   connection  up  'System eth0' 
+
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/22)
+
+[root@server0 ~]# ifconfig  eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.25.0.11  netmask 255.255.255.0  broadcast 172.25.0.255
+        inet6 2003:ac18::305  prefixlen 64  scopeid 0x0<global>
+        inet6 fe80::5054:ff:fe00:b  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:00:00:0b  txqueuelen 1000  (Ethernet)
+        RX packets 9428  bytes 704267 (687.7 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 2578  bytes 274089 (267.6 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@server0 ~]# nmcli  connection  show
+名称         UUID                                  类型            设备  
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0  
+team0-2      f82dafaa-057b-41bf-a860-db62cd68a99a  802-3-ethernet  eth2  
+team0-1      46319d1a-132f-4f40-94f2-54ce1a851a63  802-3-ethernet  eth1  
+team0        ea7c5537-6d05-418b-86ca-3daf7f613d84  team            team0 
+
+[root@server0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 
+DEVICE=eth0
+BOOTPROTO=none
+ONBOOT=yes
+TYPE=Ethernet
+USERCTL=yes
+IPV6INIT=yes
+PERSISTENT_DHCLIENT=1
+IPADDR0=172.25.0.11
+PREFIX0=24
+GATEWAY0=172.25.0.254
+DNS1=172.25.254.254
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+NAME="System eth0"
+UUID=5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03
+IPV6_AUTOCONF=no
+IPV6ADDR=2003:ac18::305/64
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+
+[root@server0 ~]# 
+[root@desktop0 ~]# nmcli  connection  show 
+名称         UUID                                  类型            设备  
+team0-1      09c03178-5816-47bd-b697-7d2ebdce1ff9  802-3-ethernet  eth1  
+team0        ed88cf5e-0d19-4f8f-9ab3-f003c8465c92  team            team0 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0  
+team0-2      ceb7c171-dc51-4248-8de7-b0f32f9b4316  802-3-ethernet  eth2  
+[root@desktop0 ~]# 
+[root@desktop0 ~]# nmcli   connection  modify  'System eth0'  ipv6.method  manual  ipv6.addresses  2003:ac18::306/64  connection.autoconnect  yes
+
+[root@desktop0 ~]# nmcli connection  up  'System eth0' 
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/9)
+
+[root@desktop0 ~]# ifconfig  eth0 |head  -3
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.25.0.10  netmask 255.255.255.0  broadcast 172.25.0.255
+        inet6 2003:ac18::306  prefixlen 64  scopeid 0x0<global>
+
+[root@desktop0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 
+DEVICE=eth0
+BOOTPROTO=none
+ONBOOT=yes
+TYPE=Ethernet
+USERCTL=yes
+IPV6INIT=yes
+PERSISTENT_DHCLIENT=1
+IPADDR0=172.25.0.10
+PREFIX0=24
+GATEWAY0=172.25.0.254
+DNS1=172.25.254.254
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+NAME="System eth0"
+UUID=5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03
+IPV6_AUTOCONF=no
+IPV6ADDR=2003:ac18::306/64
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+[root@desktop0 ~]# 
+
+
+[root@desktop0 ~]# ping6 -c2  2003:ac18::306
+PING 2003:ac18::306(2003:ac18::306) 56 data bytes
+64 bytes from 2003:ac18::306: icmp_seq=1 ttl=64 time=0.078 ms
+64 bytes from 2003:ac18::306: icmp_seq=2 ttl=64 time=0.036 ms
+...............
+
+[root@desktop0 ~]# ping6 -c2  2003:ac18::305
+PING 2003:ac18::305(2003:ac18::305) 56 data bytes
+64 bytes from 2003:ac18::305: icmp_seq=1 ttl=64 time=2.22 ms
+64 bytes from 2003:ac18::305: icmp_seq=2 ttl=64 time=0.452 ms
+..............
+[root@desktop0 ~]# 
+[root@desktop0 ~]# ping6  -I  eth0  -c2  2003:ac18::305
+PING 2003:ac18::305(2003:ac18::305) from 2003:ac18::306 eth0: 56 data bytes
+64 bytes from 2003:ac18::305: icmp_seq=1 ttl=64 time=0.303 ms
+64 bytes from 2003:ac18::305: icmp_seq=2 ttl=64 time=0.446 ms
+.............
+[root@desktop0 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
