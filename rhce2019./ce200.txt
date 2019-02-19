@@ -3200,6 +3200,87 @@ Writing superblocks and filesystem accounting information: 完成
    iocharset ：指定访问文件系统所用字符集,例如iocharset=utf8
    remount ：重新挂载
 
+mount  -a
+    挂载 /etc/fstab 中提到的 (指定类型的) 所有文件系统
+
+mount   -o
+指定挂载选项的办法是在 -o 标志后面跟随以逗号分隔的选项列表。
+某些选项只有在出现在文件 /etc/fstab 中时才有意义。
+下列选项可以用于任何要挂载的文件系统 
+(但是并非所有文件系统都关心它们)
+ 
+async
+所有对文件系统的 I/O 操作都必须是异步完成的。
+atime
+每次存取时更新 inode 存取时间。这是默认选项。
+auto
+可以在使用 -a 选项时被挂载。
+defaults
+使用默认选项： rw, suid, dev, exec, auto, nouser, 以及 async.
+dev
+解析文件系统中的字符设备或块设备。
+exec
+允许执行二进制文件。
+_netdev
+文件系统居于需要网络连接的设备上 
+(用于防止系统不断尝试挂载这些文件系统，直到系统中网络被启动)。
+
+noatime
+不更新文件系统的 inode 存取时间 
+(例如，可以更快地存取 news spool 从而提升新闻服务器的速度)。
+
+noauto
+只能被显式地挂载 (也就是说，选项 -a 不会使这个文件系统被挂载)。
+
+nodev
+不解析文件系统中的字符设备或块设备。
+
+noexec
+不允许执行被加载的文件系统中的任何二进制文件。
+这个选项对于需要加载包含不适于自己体系结构的二进制可执行文件的文件系统的服务器有用。
+
+nosuid
+不允许 set-user-identifier 或 set-group-identifier 位起作用。
+(这样看上去很安全，但是如果你安装了 suidperl(1) 那么是非常不安全的。)
+
+nouser
+禁止普通的 (即，非 root) 用户来挂载文件系统。
+这是默认选项。
+
+remount
+试图重新挂载一个已经挂载的文件系统。
+这个选项通常用于改变文件系统的挂载标志，尤其是使一个只读文件系统变为可读写。
+它不会改变设备或者挂载点。
+
+ro
+只读地挂载文件系统。
+rw
+挂载文件系统为可读/写。
+
+suid
+允许 set-user-identifier 或 set-group-identifier 位起作用。
+
+sync
+所有对文件系统的 I/O 操作都应当是同步完成的。
+
+dirsync
+所有对文件系统内目录的更新应当是同步完成的。
+这个选项影响下列系统调用：
+creat, link, unlink, symlink, mkdir, rmdir, mknod 以及 rename。
+
+user
+允许普通的用户挂载文件系统。
+  挂载者的用户名被写入 mtab，从而使他可以再次卸载文件系统。
+这个选项暗含了选项 noexec, nosuid, 
+以及 nodev (除非在后续选项中指定user,exec,dev,suid)。
+
+users
+允许每个用户挂载和卸载文件系统。
+这个选项暗含了选项 noexec, nosuid, 
+以及 nodev(除非在后续选项中指定 users,exec,dev,suid)。
+
+
+
  # mount -o loop -t iso9660  源路径   目标路径
 
 ---------------  //以可读写方式重新挂载根系统  ----------------------
@@ -3349,7 +3430,7 @@ tar -xjvf file.tar.bz2 //解压 tar.bz2
 =============
 
 ---------------------------------------------------------------------
-
+  # zip   -r   /root/*.zip    /etc/文件   /home/目录/
 [root@V10 ~]# zip  text.txt.zip   test2.txt  test.txt  #压缩文件test2.txt 和 test.txt 
   adding: test2.txt (stored 0%)
   adding: test.txt (stored 0%)

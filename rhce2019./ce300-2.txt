@@ -1,6 +1,14 @@
 
 /**************************** 非必须  操作 *****************
 
+
+[root@room9pc01 ~]# cp -rpf /var/lib/libvirt/images/content/   /
+
+[root@room9pc27 ~]# ls  /content/
+content  courses  lost+found  rhel7.0
+[root@room9pc27 ~]# ls  /var/lib/libvirt/images/content/
+content  courses  lost+found  rhel7.0
+
 [root@room9pc27 ~]# rht-vmctl   reset  classroom  &&  sleep 5
 classroom [OK]
 域 classroom 已开始
@@ -12,12 +20,27 @@ server [OK]
 [root@room9pc27 ~]# rht-vmctl   reset  desktop 
 ......
 
-[root@room9pc01 ~]# cp -rpf /var/lib/libvirt/images/content/   /
+[root@room9pc27 ~]# virsh  domstate   server
+running
 
-[root@room9pc27 ~]# ls  /content/
-content  courses  lost+found  rhel7.0
-[root@room9pc27 ~]# ls  /var/lib/libvirt/images/content/
-content  courses  lost+found  rhel7.0
+[root@room9pc27 ~]# virsh  dominfo    server
+Id:             2
+名称：       server
+UUID:           d305c1ed-daa4-4f99-8b11-1a6add8513f5
+OS 类型：    hvm
+状态：       running
+CPU：          1
+CPU 时间：   40.6s
+最大内存： 2097152 KiB
+使用的内存： 1048576 KiB
+持久：       是
+自动启动： 禁用
+管理的保存： 否
+安全性模式： none
+安全性 DOI： 0
+
+[root@room9pc27 ~]# 
+
 
 ******************/
 
@@ -1875,6 +1898,26 @@ PING 172.16.3.25 (172.16.3.25) 56(84) bytes of data.
 ...........
 [root@server0 ~]# 
 
+
+====================
+---------------------- ipv6--------------
+
+    0   1   0   1   0  1   0   1   0   1   0  1   0   1   0   1
+   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+ (0000 0000)2 = (00)16 = 0
+ (0000 0001)2 = (01)16 = 1
+(0000 1111)2=(0F)16=15
+  2^8 = 256     2^7 =  128   2^4=16  2^3=8
+ 1 个 16 进制数 = 4  个 2 进制数
+ 4 个 16 进制数 = 16 个 2 进制数
+
+     FFFF:0000:FFFF:0000/64
+     FFFF:0000:FFFF:0000:FFFF:0000:FFFF:0000/128
+
+  0    0   0   0    0   0   0   0
+  1    1    1   1    1   1    1   1
+ 128  64  32  16   8   4    2   1
+
 ===============================
 --------------------------  6  配置IPv6地址
 
@@ -1884,6 +1927,10 @@ desktop0 上的地址应该是 2003:ac18::306/64
 两个系统必须能与网络 2003:ac18/64 内的系统通信
 地址必须在重启系统后依旧生效
 两个系统必须保持当前的 IPv4 地址并仍然能够通信
+
+//为两个系统设置固定主机名,避免误操作
+# hostnamectl  set-hostname   server0.example.com 
+# hostnamectl  set-hostname   desktop0.example.com
 
 
 [root@server0 ~]# nmcli  connection  modify  'System eth0'  ipv6.
@@ -1998,22 +2045,990 @@ PING 2003:ac18::305(2003:ac18::305) from 2003:ac18::306 eth0: 56 data bytes
 [root@desktop0 ~]# 
 
 
+===============7. 配置本地邮件服务==============
+--------------------------------- 7. 配置本地邮件服务
+在系统 server0 和 desktop0 上配置邮件服务，满足以下要求：
+这些系统不接收外部发送来的邮件
+在这些系统上本地发送的任何邮件都会自动路由到
+ smtp0.example.com
+
+从这些系统上发送的邮件显示来自于
+ desktop0.example.com
+您可以通过在 server0.example.com 发送邮件到
+本地用户 student 来测试您的配置，
+并将系统 desktop0.example.com 配置为后端邮件服务器，
+确保可接收并投递来自 server0 的邮件
+
+[root@room9pc27 ~]# grep  -ni  "^port"  /etc/ssh/sshd_config
+16:Port 7920
+
+[root@room9pc27 ~]# ifconfig rhce:0 |head   -2
+rhce:0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.25.0.250  netmask 255.255.0.0  broadcast 172.25.255.255
+
+[root@server0 ~]# scp  -P 7920 root@172.25.0.250:'/root/桌面/lab2.tar.gz'  ./
+.................
+Are you sure you want to continue connecting (yes/no)? yes
+..............
+root@172.25.0.250's password: 
+lab2.tar.gz            100%   48MB  47.9MB/s   00:00 
+   
+[root@server0 ~]# ll  lab2.tar.gz 
+-rw-r--r--. 1 root root 50265706 2月  19 12:30 lab2.tar.gz
+
+[root@server0 ~]# scp  lab2.tar.gz  root@172.25.0.10:/root/
+.................
+Are you sure you want to continue connecting (yes/no)? yes
+........
+root@172.25.0.10's password: redhat
+lab2.tar.gz                                   100%   48MB  47.9MB/s   00:00 
+
+[root@desktop0 ~]# ll  lab2.tar.gz 
+-rw-r--r--. 1 root root 50265706 2月  19 12:33 lab2.tar.gz
+
+
+[root@server0 ~]# tar  -xvzf  lab2.tar.gz
+........
+[root@server0 ~]# tar  -ztPf  lab2.tar.gz |grep  lab$
+/content/courses/rhce/rhel7.0/grading-scripts/lab-smtp-lab
+/content/courses/rhce/rhel7.0/lab
+
+[root@server0 ~]# ls  /root/content/courses/rhce/rhel7.0/
+grading-scripts  lab  materials
+
+[root@server0 ~]# type  lab
+lab 是 /usr/local/bin/lab
+
+[root@desktop0 ~]# tar  -zxvPf lab2.tar.gz |grep  lab$
+/content/courses/rhce/rhel7.0/grading-scripts/lab-smtp-lab
+/content/courses/rhce/rhel7.0/lab
+
+[root@desktop0 ~]# tar  -ztf  lab2.tar.gz  |grep  lab$
+tar: 从成员名中删除开头的“/”
+/content/courses/rhce/rhel7.0/grading-scripts/lab-smtp-lab
+/content/courses/rhce/rhel7.0/lab
+
+[root@desktop0 ~]# ls  /content/courses/rhce/rhel7.0/
+grading-scripts  lab  materials
+
+[root@desktop0 ~]# type  lab 
+lab 是 /usr/local/bin/lab
+
+[root@desktop0 ~]# hostname
+desktop0.example.com
+[root@desktop0 ~]# cat  /etc/hostname 
+desktop0.example.com
+
+[root@desktop0 ~]# lab  smtp-nullclient  setup  #搭建练习环境
+Setting up desktop machine... 
+..............
+Installing httpd to share cert... 
+
+
+[root@server0 ~]# cat  /etc/hostname 
+server0.example.com
+[root@server0 ~]# hostname
+server0.example.com
+
+[root@server0 ~]# lab  smtp-nullclient  setup  #搭建练习环境
+Setting up server machine... 
+Setting up mutt... 
+
+=============================
+
+[root@server0 ~]# rpm  -q  postfix
+postfix-2.10.1-6.el7.x86_64
+
+------- 在这些系统上本地发送的任何邮件都会自动路由到 smtp0.example.com -----
+
+[root@server0 ~]# host  smtp0.example.com #查看后端邮件服务器地址
+
+smtp0.example.com is an alias for desktop0.example.com.
+desktop0.example.com has address 172.25.0.10
+desktop0.example.com mail is handled by 10 smtp0.example.com.
+
+[root@server0 ~]# vim   /etc/postfix/main.cf
+[root@server0 ~]# grep  -Pnv  "^(\s*#|$)"  /etc/postfix/main.cf
+.............
+
+
+[root@server0 ~]# grep  -Pnv  "^#|^$"  /etc/postfix/main.cf
+31:queue_directory = /var/spool/postfix
+36:command_directory = /usr/sbin
+42:daemon_directory = /usr/libexec/postfix
+48:data_directory = /var/lib/postfix
+59:mail_owner = postfix
+
+100:myorigin = desktop0.example.com
+  ##[1]# myorigin 从这些系统上发送的邮件显示来源于desktop0.example.com
+   ## myorigin = 默认补全邮箱域名后缀
+
+116:inet_interfaces = loopback-only
+##[2]# inet_interfaces 这些系统不接收外部发送来的邮件,仅仅允许本机 loopback网络接口 监听
+ # 指定监听接口 监听
+
+119:inet_protocols = all
+
+164:mydestination = null
+  ##[3]# 此行的值设为空,不 对目标邮件域名 做判断(根据本字段值 判断为本域邮件,若为 null,不做判断)
+
+
+193:local_transport = error:local delivery disabled ZiJiXieDe
+    ##[4]# local_transport 本地 传送 = 提示错误 #若考试无要求,可以不写
+
+221:unknown_local_recipient_reject_code = 550
+267:mynetworks = 127.0.0.0/8  [::1]/128
+   ##[5]#  信任网络 mynetworks = 允许本机访问
+
+318:relayhost = [smtp0.example.com] 
+##[6]#  后端邮件服务器 = [smtp0.example.com] #在这些系统上本地发送的任何邮件都会自动路由到后端邮件服务器
+# 特别注意 真实考试的时候,要求的真实 后端邮件服务器地址
+
+386:alias_maps = hash:/etc/aliases
+397:alias_database = hash:/etc/aliases
+420: 
+532:  
+598:debug_peer_level = 2
+616:debugger_command =
+617:	 PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin
+618:	 ddd $daemon_directory/$process_name $process_id & sleep 5
+646:sendmail_path = /usr/sbin/sendmail.postfix
+651:newaliases_path = /usr/bin/newaliases.postfix
+656:mailq_path = /usr/bin/mailq.postfix
+662:setgid_group = postdrop
+666:html_directory = no
+670:manpage_directory = /usr/share/man
+675:sample_directory = /usr/share/doc/postfix-2.10.1/samples
+679:readme_directory = /usr/share/doc/postfix-2.10.1/README_FILES
+
+[root@server0 ~]# systemctl  restart   postfix.service 
+[root@server0 ~]# systemctl  enable  postfix
+
+[root@server0 ~]# host smtp0.example.com   ## 查看后端邮件服务器地址
+smtp0.example.com is an alias for desktop0.example.com.
+desktop0.example.com has address 172.25.0.10
+desktop0.example.com mail is handled by 10 smtp0.example.com.
+
+/******------- 在这些系统上本地发送的任何邮件都会自动路由到 smtp0.example.com -----
+[root@desktop0 ~]# host
+host         hostid       hostname     hostnamectl  
+[root@desktop0 ~]# host smtp0.example.com   #查看后端邮件服务器地址
+
+smtp0.example.com is an alias for desktop0.example.com.
+desktop0.example.com has address 172.25.0.10
+desktop0.example.com mail is handled by 10 smtp0.example.com.
+-------------  真实考试环境不能 这样查看的 **********/
+
+
+                                         ----  mail  -s  邮件主题  -r  发件人   收件人 
+[root@server0 ~]# echo  "2019hahaIcanMail"  |mail  -s  "MailzhuTi" -r root student
+[root@server0 ~]# 
+
+[root@desktop0 ~]# rpm  -q  postfix
+postfix-2.10.1-6.el7.x86_64
+
+[root@desktop0 ~]# systemctl  is-active  postfix.service 
+active
+[root@desktop0 ~]# systemctl  is-enabled  postfix.service 
+enabled
+
+[root@desktop0 ~]# mail  -u  student
+Heirloom Mail version 12.5 7/5/10.  Type ? for help.
+"/var/mail/student": 1 message 1 new
+>N  1 root@desktop0.exampl  Tue Feb 19 14:10  21/839   "MailzhuTi"
+& 1
+Message  1:
+From root@desktop0.example.com  Tue Feb 19 14:10:32 2019
+Return-Path: <root@desktop0.example.com>
+X-Original-To: student@desktop0.example.com
+Delivered-To: student@desktop0.example.com
+Date: Tue, 19 Feb 2019 14:10:32 +0800
+From: root@desktop0.example.com
+To: student@desktop0.example.com
+Subject: MailzhuTi
+User-Agent: Heirloom mailx 12.5 7/5/10
+Content-Type: text/plain; charset=us-ascii
+Status: R
+
+2019hahaIcanMail
+
+& quit
+Held 1 message in /var/mail/student
+
+[root@desktop0 ~]# ll  /var/mail/student 
+-rw-rw----. 1 student mail 850 2月  19 14:11 /var/mail/student
+
+[root@desktop0 ~]# cat  /var/mail/student 
+
+From root@desktop0.example.com  Tue Feb 19 14:10:32 2019
+Return-Path: <root@desktop0.example.com>
+X-Original-To: student@desktop0.example.com
+Delivered-To: student@desktop0.example.com
+Received: from server0.example.com (server0.example.com [172.25.0.11])
+	by desktop0.example.com (Postfix) with ESMTP id 3385124660F
+	for <student@desktop0.example.com>; Tue, 19 Feb 2019 14:10:32 +0800 (CST)
+Received: by server0.example.com (Postfix, from userid 0)
+	id 16A6824665A; Tue, 19 Feb 2019 14:10:33 +0800 (CST)
+Date: Tue, 19 Feb 2019 14:10:32 +0800
+From: root@desktop0.example.com
+To: student@desktop0.example.com
+Subject: MailzhuTi
+User-Agent: Heirloom mailx 12.5 7/5/10
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-Id: <20190219061033.16A6824665A@server0.example.com>
+Status: RO
+
+2019hahaIcanMail
+
+[root@desktop0 ~]# 
+
+[root@server0 ~]# echo  "server0.example.com  mail fajianren" > /root/testmail.txt
+               ---- # mail  -s  邮件主题  -r  发件人   收件人  < 导入将要发送 的邮件内容的文件
+[root@server0 ~]# mail  -s  "MainObject02"  -r root student < /root/testmail.txt
+[root@server0 ~]# 
+
+[root@desktop0 ~]# cat   /var/mail/student  |grep  fajianren
+server0.example.com  mail fajianren
+[root@desktop0 ~]# mail  -u  student |grep  MainObject02
+>N  2 root@desktop0.exampl  Tue Feb 19 14:21  21/861   "MainObject02"
+
+Subject: MainObject02
+quit
+[root@desktop0 ~]# 
+
+========================================
+[root@server0 ~]# lab smtp-nullclient grade  # 作业模拟检查
+Checking for Postfix configuration... PASS
+-------------------------------------------
+
+=====================================
+=============8.通过 Samba 发布共享目录===================
+
+8.通过 Samba 发布共享目录
+在 server0 通过 SMB 共享/common 目录：
+您的 SMB 服务器必须是 STAFF 工作组的一个成员
+共享名必须为 common
+只有 example.com 域内的客户端可以访问 common 共享
+common 必须是可以浏览的
+用户 harry 必须能够读取共享中的内容，如果需要的话，验证的密码是 migwhisk
+
+#.samba作用
+#提供cifs协议实现文件共享
+输入migwhisk密码
+
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+trusted
+
+[root@server0 ~]# yum -y install samba
+................
+已安装:
+  samba.x86_64 0:4.1.1-31.el7                                                   
+
+完毕！
+[root@server0 ~]# rpm  -q  samba
+samba-4.1.1-31.el7.x86_64
+
+[root@server0 ~]# firewall-cmd  --get-zone
+--get-zone-of-interface=  --get-zones 
+              
+[root@server0 ~]# firewall-cmd  --get-zones
+ROL block dmz drop external home internal public trusted work
+
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+trusted
+
+[root@server0 ~]# mkdir  /common
+[root@server0 ~]# ls -ld   /common/
+drwxr-xr-x. 2 root root 6 2月  19 14:38 /common/
+
+[root@server0 ~]# getsebool   -a |grep  -i  samba_export_all
+samba_export_all_ro --> off
+samba_export_all_rw --> off
+
+[root@server0 ~]# setsebool   -P   samba_export_all_r
+samba_export_all_ro  samba_export_all_rw  
+
+-------------------   //取消 SELinux 限制 ##在selinux中设定smb用户可以访问自己的家目录
+[root@server0 ~]# setsebool   -P   samba_export_all_rw  on
+
+[root@server0 ~]# getsebool   -a |grep  -i  samba_export_all
+samba_export_all_ro --> off
+samba_export_all_rw --> on
 
 
 
+[root@server0 ~]# getsebool   samba_export_all_rw
+samba_export_all_rw --> on
+
+[root@server0 ~]# useradd   harry   #添加用户
+
+[root@server0 ~]# id  harry
+uid=1001(harry) gid=1001(harry) 组=1001(harry)
+
+[root@server0 ~]# type  pdbedit
+pdbedit 已被哈希 (/usr/bin/pdbedit)
+
+[root@server0 ~]# rpm  -qf  /usr/bin/pdbedit 
+samba-common-4.1.1-31.el7.x86_64
+[root@server0 ~]# rpm  -ql  samba-common
+.........
+/etc/samba/smb.conf
+/etc/sysconfig/samba
+/usr/bin/net
+/usr/bin/pdbedit
+/usr/bin/profiles
+...............
+/var/log/samba/old
+/var/run/samba
+/var/run/winbindd
+[root@server0 ~]# 
+
+使用 pdbedit 管理工具
+添加samba系统用户:  pdbedit -a 用户名
+查询samba系统用户:  pdbedit -L 用户名
+删除samba系统用户:  pdbedit -x 用户名
+
+[root@server0 ~]# pdbedit   -a  harry  #添加samba 用户
+
+new password: migwhisk  #输入migwhisk密码
+retype new password: migwhisk
+
+Unix username:        harry
+NT username:          
+Account Flags:        [U          ]
+User SID:             S-1-5-21-4226832516-3808533235-3606386864-1000
+Primary Group SID:    S-1-5-21-4226832516-3808533235-3606386864-513
+Full Name:            
+Home Directory:       \\server0\harry
+.........
+Profile Path:         \\server0\harry\profile
+Domain:               SERVER0
+.............
+Last bad password   : 0
+Bad password count  : 0
+Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+[root@server0 ~]# pdbedit  -L  harry  #查询samba系统用户
+harry:1001:
+
+[root@server0 ~]# ls  /home/harry/
+[root@server0 ~]# find  /  -type  f  -name "*harry*" -exec  ls {} \;
+/var/spool/mail/harry
+
+[root@server0 ~]# find  /  -type  d  -name "*harry*" -exec  ls {} \;
+[root@server0 ~]# 
+
+
+/************ 使用 pdbedit 管理工具
+添加samba系统用户:  pdbedit -a 用户名
+查询samba系统用户:  pdbedit -L 用户名
+删除samba系统用户:  pdbedit -x 用户名
+
+[root@server0 ~]# pdbedit   -x  harry
+[root@server0 ~]# pdbedit  -L
+[root@server0 ~]# pdbedit   -a  harry
+new password: migwhisk
+retype new password: migwhisk
+Unix username:        harry
+.......
+*******/
+
+[root@server0 ~]# vim  /etc/samba/smb.conf 
+
+[root@server0 ~]# grep  -Pnv  "^(\s*#|;|$)"  /etc/samba/smb.conf
+65:[global]
+89:	workgroup = STAFF  ##设置工作组(此处 必须手动修改)
+
+90:	server string = Samba Server Version %v
+108:	log file = /var/log/samba/log.%m
+110:	max log size = 50
+123:	security = user
+124:	passdb backend = tdbsam
+254:	load printers = yes
+255:	cups options = raw
+282:[homes]
+283:	comment = Home Directories
+284:	browseable = no    ##在分享列表中 no为不显示
+285:	writable = yes    ##所有samba用户都可以写操作
+289:[printers]
+290:	comment = All Printers
+291:	path = /var/spool/samba
+292:	browseable = no
+293:	guest ok = no
+294:	writable = no  ##所有samba用户都 不 可以写操作
+295:	printable = yes
+321:[common]   #[自定共享名]#最后三行 是 手动添加的配置
+322:path = /common  # 文件夹绝对路径
+323:hosts  allow = 172.25.0.0/24  #只允许指定网域访问
+
+/***
+write list = 用户1 .. .. //默认无
+valid users = 用户1 .. .. //默认任何用户有效
+hosts allow = 客户机地址 .. ..//允许访问的地址
+hosts deny = 客户机地址 .. ..//拒绝访问的地址
+****/
+
+[root@server0 ~]# systemctl  restart  smb
+[root@server0 ~]# systemctl  enable  smb.service 
+
+[root@server0 ~]# ls   /common/
+[root@server0 ~]# echo  "server0--common"  > /common/server.txt
+
+------------------------    desktop0  ---------------
+
+[root@desktop0 ~]# firewall-cmd   --get-default-zone 
+public
+[root@desktop0 ~]# yum  -y  install  samba-client cifs-utils
+.........
+已安装:
+  cifs-utils.x86_64 0:6.2-6.el7       samba-client.x86_64 0:4.1.1-31.el7      
+
+完毕！
+[root@desktop0 ~]# rpm  -q  samba-client cifs-utils
+samba-client-4.1.1-31.el7.x86_64
+cifs-utils-6.2-6.el7.x86_64
+
+列出共享资源
+# smbclient -L 服务器地址
+[root@desktop0 ~]# rpm -ql  samba-client |grep  smbclient$
+/usr/bin/smbclient
+[root@desktop0 ~]# type  smbclient
+smbclient 是 /usr/bin/smbclient
+
+[root@desktop0 ~]# smbclient  -L  172.25.0.11  #列出共享资源(不需要输入密码)
+Enter root's password: 直接回车确认
+Anonymous login successful
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+
+	Sharename       Type      Comment
+	---------       ----      -------
+	common          Disk      
+...........
+[root@desktop0 ~]# ----------- 确认共享目录 /common/  已经生效 ----
+[root@desktop0 ~]# echo  |smbclient  -L  172.25.0.11 |grep  common
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+	common          Disk      
+[root@desktop0 ~]# 
+
+[root@desktop0 ~]# mkdir  /desktopmount
+
+-------------  Mount Windows文件网络共享：smbfs（需内核支持）推荐cifs -------
+--------------------- 通过 samba 挂载windows文件共享 ------------------------------
+
+[root@desktop0 ~]# mount  -t  cifs  -o  username=harry,password=migwhisk  //172.25.0.11/common   /desktopmount/
+
+[root@desktop0 ~]# df  -hT  /desktopmount/
+文件系统             类型  容量  已用  可用 已用% 挂载点
+//172.25.0.11/common cifs   10G  3.2G  6.9G   32% /desktopmount
+
+[root@desktop0 ~]# ls  /desktopmount/
+server.txt
+[root@desktop0 ~]# cat  /desktopmount/server.txt 
+server0--common
+[root@desktop0 ~]# ll /desktopmount/server.txt
+-rw-r--r--. 1 root root 16 2月  19 16:09 /desktopmount/server.txt
+
+
+==================================
+-------------------------- 9 配置多用户Samba挂载
+
+在 server0 通过 SMB 共享目录/devops，并满足以下要求：
+共享名为 devops
+共享目录 devops 只能被 example.com 域中的客户端使用
+共享目录 devops 必须可以被浏览
+用户 kenji 必须能以读的方式访问此共享，该问密码是 atenorth
+用户 chihiro 必须能以读写的方式访问此共享，访问密码是 atenorth
+此共享永久挂载在 desktop0.example.com 上的/mnt/dev 目录，
+并使用用户 kenji 作为认证。
+任何用户可以通过用户 chihiro 来临时获取写的权限
+
+/*************
+mount  -a
+    挂载 /etc/fstab 中提到的 (指定类型的) 所有文件系统
+
+mount   -o
+   defaults
+使用默认选项： rw, suid, dev, exec, auto, nouser, 以及 async.
+
+   _netdev  文件系统居于需要网络连接的设备上 
+             (用于防止系统不断尝试挂载这些文件系统，直到系统中网络被启动)。
+***********/
+
+[root@server0 ~]# firewall-cmd  --get-default-zone 
+trusted
+[root@server0 ~]# mkdir   /devops  #创建共享目录
+
+[root@server0 ~]# useradd   kenji  #添加 只读 用户kenji
+[root@server0 ~]# id   kenji
+uid=1002(kenji) gid=1002(kenji) 组=1002(kenji)
+
+/*************** 非交互式输入 两次密码 atenorth  *************
+
+[root@server0 ~]#  echo  "atenorth\natenorth"
+atenorth\natenorth
+[root@server0 ~]#  echo  -e  "atenorth\natenorth"
+atenorth
+atenorth
+[root@server0 ~]# echo  -n  "haha"
+haha[root@server0 ~]# 
+
+--------------------------  #添加 samba 系统 只读 用户kenji -------------------
+[root@server0 ~]# echo -e "atenorth\natenorth" |pdbedit  -a  kenji
+new password:
+retype new password:
+Unix username:        kenji
+NT username:          
+Account Flags:        [U          ]
+User SID:             S-1-5-21-4226832516-3808533235-3606386864-1003
+...........
+Bad password count  : 0
+Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+**************************/
+
+[root@server0 ~]# pdbedit   -a  kenji
+new password: atenorth  #输入密码
+retype new password: atenorth
+Unix username:        kenji
+........
+Bad password count  : 0
+Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+
+[root@server0 ~]# ls  /home/
+harry  kenji  student
+
+
+[root@server0 ~]# useradd  chihiro  #添加 读写用户 chihiro
+
+---------------------  #添加 samba 系统 读写用户 chihiro ---------------------
+
+[root@server0 ~]# echo  -e "atenorth\natenorth" |pdbedit  -a  chihiro
+new password:
+retype new password:
+Unix username:        chihiro
+.....................
+Bad password count  : 0
+Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+[root@server0 ~]# pdbedit  -L   #查看所有  samba 系统 用户
+chihiro:1003:
+harry:1001:
+kenji:1002:
+
+[root@server0 ~]# ls  -ld  /devops/
+drwxr-xr-x. 2 root root 6 2月  19 16:29 /devops/
+[root@server0 ~]# setfacl   -m u:chihiro:7  /devops/
+[root@server0 ~]# getfacl   /devops/
+getfacl: Removing leading '/' from absolute path names
+# file: devops/
+# owner: root
+# group: root
+user::rwx
+user:chihiro:rwx
+group::r-x
+mask::rwx
+other::r-x
+
+[root@server0 ~]# ls  -ld  /devops/
+drwxrwxr-x+ 2 root root 6 2月  19 16:29 /devops/
+
+[root@server0 ~]# ls  /devops/
+[root@server0 ~]# echo  "server ---devops" >/devops/server.txt
+
+
+[root@server0 ~]# ls  /home/
+chihiro  harry  kenji  student
+
+[root@server0 ~]# pdbedit   -L    #查看所有  samba 系统 用户
+chihiro:1003:
+harry:1001:
+kenji:1002:
+
+[root@server0 ~]# vim  /etc/samba/smb.conf 
+
+[root@server0 ~]# tail   -7  /etc/samba/smb.conf 
+[common]
+path = /common
+hosts  allow = 172.25.0.0/24
+[devops]
+path = /devops
+write  list = chihiro
+hosts  allow = 172.25.0.0/24  #只允许指定网域访问
+
+[root@server0 ~]# systemctl  restart  smb
+[root@server0 ~]# systemctl  enable  smb
+
+--------------------------------------------------------------------------
+
+[root@desktop0 ~]# rpm  -q  samba-client  cifs-utils
+samba-client-4.1.1-31.el7.x86_64
+cifs-utils-6.2-6.el7.x86_64
+
+[root@desktop0 ~]# rpm  -ql cifs-utils  |grep  cifscreds$
+/usr/bin/cifscreds
+
+[root@desktop0 ~]# type  cifscreds 
+cifscreds 是 /usr/bin/cifscreds
+
+[root@desktop0 ~]# smbclient   -L  //172.25.0.11
+Enter root's password:  直接回车
+Anonymous login successful
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+
+	Sharename       Type      Comment
+	---------       ----      -------
+	common          Disk      
+	devops          Disk     
+...................
+
+[root@desktop0 ~]# echo | smbclient   -L  //172.25.0.11 |head  -7
+
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+Enter root's password: 
+Anonymous login successful
+
+	Sharename       Type      Comment
+	---------       ----      -------
+	common          Disk      
+	devops          Disk  
+
+[root@desktop0 ~]# 
+
+名称
+  mount.cifs - 挂载通用网际文件系统(Common Internet File System)
+
+语法  mount.cifs {service} {mount-point} [-o options]
+
+描述 
+  这个工具是 samba(7) 软件包的一部分。
+  mount.cifs 用于挂载 CIFS 文件系统。
+它通常由使用"-t cifs"选项的 mount(8) 命令间接调用。
+  这个命令只能在支持 CIFS 文件系统的Linux内核上使用。
+ CIFS 协议是 SMB 协议的替代版本，
+  它被包括 Windows 在内的几乎所有操作系统以及 NAS(Network Attached Storage)
+所应用和Samba服务器所支持
+  mount.cifs -V 会显示该程序的版本信息。
+  modinfo cifs 会显示 cifs 模块的版本信息
+
+mount  -o 选项
+  user=arg
+  username=arg
+              指定连接时使用的用户名。如果没有在这里指定，那么将使用环境变量 USER 的值。
+              此选项还可以接受"user%pass"或"workgroup/user"或"workgroup/user%pass"的格式，
+              以便在指定用户名的同时一起指定口令和工作组。
+  pass=arg
+  password=arg
+              指定连接时使用的口令。如果没有在这里指定，那么将使用环境变量 PASSWD 的值。
+              如果没有在命令行参数中给出口令，mount.cifs 将会在挂载时提示用户输入口令。
+              需要注意的是，如果口令中含有逗号(,)，那么将不能在命令行参数中指定，因为会发生解析错误。
+     不过在环境变量 PASSWD 和 cred 文件(见下文)中可以安全的使用逗号，或者在提示输入口令时也可以安全的输入。
+
+  dom=arg
+  domain=arg
+              指定user所属的域(工作组)。
+
+  guest 不提示输入密码，而以来宾身份登录。
+
+ sec={none|krb5|krb5i|ntlm|ntlmi|ntlmv2|ntlmv2i}
+     选择安全模型：
+                  none 尝试以空用户连接(不提供用户名)
+                  krb5 使用 Kerberos version 5 认证
+                  krb5i 使用 Kerberos version 5 和包签名(packet signing)认证
+                  ntlm 使用 NTLM 口令散列认证(默认值)
+                  ntlmi 使用 NTLM 签名口令散列认证
+         (如果 /proc/fs/cifs/PacketSigningEnabled 被开启或者服务器端要求必须签名时，这个将成为默认值)
+                  ntlmv2 使用 NTLMv2 口令散列认证
+                  ntlmv2i 使用 NTLMv2 签名口令散列认证
+http://www.jinbuguo.com/man/mount.cifs.html
 
 
 
+[root@desktop0 ~]# type  mount.cifs 
+mount.cifs 是 /usr/sbin/mount.cifs
+
+[root@desktop0 ~]# mount.cifs  -V  #显示该程序的版本信息
+mount.cifs version: 6.2
+
+[root@desktop0 ~]# modinfo  cifs
+filename:       /lib/modules/3.10.0-123.el7.x86_64/kernel/fs/cifs/cifs.ko
+version:        2.01
+..........
+
+[root@desktop0 ~]# echo | smbclient   -L  //172.25.0.11 |head  -7
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+Enter root's password: 
+Anonymous login successful
+
+	Sharename       Type      Comment
+	---------       ----      -------
+	common          Disk      
+	devops          Disk   
+
+------------------------------  创建挂载点 ---------------
+
+[root@desktop0 ~]# mkdir   /mnt/dev
+
+------------------------ #注意挂载cifs samba文件系统之后,会出现acl属性"+",drwxrwxr-x+ ------
+[root@desktop0 ~]# ls  -ld  /mnt/dev/   
+drwxr-xr-x. 2 root root 6 2月  19 18:36 /mnt/dev/
 
 
+[root@desktop0 ~]# vim  /etc/fstab 
+
+/*****
+
+//server0/common   /mnt/multiuser   cifs   rw,relatime,vers=1.0,sec=ntlmssp,
+cache=strict,multiuser,domain=SERVER0,uid=0,
+noforceuid,gid=0,noforcegid,
+addr=172.25.0.11,unix,
+posixpaths,serverino,acl,noperm,
+rsize=1048576,wsize=65536,actimeo=1    0   0
+
+**********/
+
+------------------  把挂载条目写入/etc/fstab以使开机自动挂载 -------------
+
+[root@desktop0 ~]# tail  -1   /etc/fstab
+//172.25.0.11/devops /mnt/dev cifs  defaults,user=kenji,pass=atenorth,multiuser,sec=ntlmssp,_netdev  0  0
+
+  multiuser   关键选项,用于指定使用多用户挂载
+
+ _netdev     文件系统居于需要网络连接的设备上 
+    (用于防止系统不断尝试挂载这些文件系统，直到系统中网络被启动)
+
+  sec=ntlmssp 指定认证方式(kernel3.8之后是默认选项)
+
+[root@desktop0 ~]# uname   -r
+3.10.0-123.el7.x86_64
+
+[root@desktop0 ~]# mount  -a
+
+[root@desktop0 ~]# df   -hT  /mnt/dev/
+文件系统             类型  容量  已用  可用 已用% 挂载点
+//172.25.0.11/devops cifs   10G  3.2G  6.9G   32% /mnt/dev
+
+[root@desktop0 ~]# lsblk 
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  10G  0 disk 
+└─vda1 253:1    0  10G  0 part /
+vdb    253:16   0  10G  0 disk 
+
+[root@desktop0 ~]# ls   /mnt/dev/
+server.txt
+----------- #注意挂载cifs samba文件系统之后,会出现acl属性"+",drwxrwxr-x+ -----
+
+[root@desktop0 ~]# ls  -ld  /mnt/dev/
+drwxrwxr-x+ 2 root root 0 2月  19 19:04 /mnt/dev/
+
+[root@desktop0 ~]# ll   /mnt/dev/server.txt 
+-rw-r--r--. 1 root root 17 2月  19 19:04 /mnt/dev/server.txt
+
+---------------- 对 挂载点进行权限测试 --------------------
+[root@desktop0 ~]# cat   /mnt/dev/server.txt
+server ---devops
+[root@desktop0 ~]# echo "kenji add"  > /mnt/dev/server.txt
+-bash: /mnt/dev/server.txt: 权限不够
+[root@desktop0 ~]# echo "kenji add"  > /mnt/dev/kenji.txt
+-bash: /mnt/dev/kenji.txt: 权限不够
+
+结论是：
+- 文件的挂载用户 user=kenji 是kenji,故只有只读权限,没有写入权限
+/********[root@server0 ~]# tail   -7  /etc/samba/smb.conf 
+[common]
+path = /common
+hosts  allow = 172.25.0.0/24
+[devops]
+path = /devops
+write  list = chihiro    ##列表中的samba用户可以写操作
+hosts  allow = 172.25.0.0/24  #只允许指定网域访问
+******/
+
+------------------------  ##刷新认证 -----------------
+[root@desktop0 ~]# cifscreds  update 172.25.0.11 -u  kenji
+Password: atenorth 输入密码
 
 
+--------------------------   ##用户认证 ----------------------
+----------- 在root用户下使用cifscreds命令把指定用户的用户名和密码加入内核密钥环 ---------
+
+[root@desktop0 ~]# echo  atenorth | cifscreds   add  172.25.0.11  -u  chihiro
+Password: 直接回车
+
+----------------------------  验证密码输入成功 ---------------
+[root@desktop0 ~]# echo -e "atenorth\n" |cifscreds  add 172.25.0.11 -u chihiro
+You already have stashed credentials for 172.25.0.11 (172.25.0.11)
+If you want to update them use:
+	cifscreds update
+
+---------------------------  ##刷新认证 -----------------
+
+[root@desktop0 ~]# cifscreds  update 172.25.0.11 -u chihiro
+Password: atenorth 输入密码
+
+[root@desktop0 ~]# echo  $?
+0
+[root@desktop0 ~]# cifscreds  clearall   # ##清除全部认证
+
+------------- 在root用户下使用cifscreds命令把指定用户的用户名和密码加入内核密钥环
+
+[root@desktop0 ~]# cifscreds  add  172.25.0.11 -u chihiro
+Password: atenorth 输入密码
+[root@desktop0 ~]# echo  "root and chihiro add" > /mnt/dev/server.txt 
+-bash: /mnt/dev/server.txt: 权限不够
+
+[root@desktop0 ~]# cat  /mnt/dev/server.txt
+server ---devops
+
+结论是：
+- 由于一开始是root用户以rob用户的角色进行目录的挂载(root的环境变量已改变)
+- 再在root用户下使用cifscreds命令把指定用户的用户名和密码加入内核密钥环会不生效
+
+----------------------------------------------------------------------------------------------------------------------
+
+--------------------------------- 临时设置 selinux 
+[root@desktop0 ~]# getsebool  -a |grep  samba_enable_home_dirs
+samba_enable_home_dirs --> off
+
+[root@desktop0 ~]# setsebool  samba_enable_home_dirs  on
+
+[root@server0 ~]# pdbedit   -L
+chihiro:1003:
+harry:1001:
+kenji:1002:
 
 
+[root@desktop0 ~]# echo  "test.desktop.txtxixi" > ./test.txt
+
+---- 验证多用户访问(在 desktop0 上):普通用户kenji 切换为 chihiro 身份即可读写 ----
+---------------------------------- 注意切换用户 需要必须 使用 大 写的 字母 U --------------
+
+[root@desktop0 ~]# smbclient  //172.25.0.11/devops  -U  chihiro
+Enter chihiro's password:  atenorth 输入密码
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+smb: \> ls
+  .                                   D        0  Tue Feb 19 19:04:44 2019
+  ..                                  D        0  Tue Feb 19 16:29:58 2019
+  server.txt                          N       17  Tue Feb 19 19:04:44 2019
+
+		40913 blocks of size 262144. 28142 blocks available
+smb: \> put  test.txt  # 上传文件 (在当前路径下的文件/root/test.txt
+putting file test.txt as \test.txt (5.1 kb/s) (average 5.1 kb/s)
+smb: \> ls
+  .                                   D        0  Tue Feb 19 20:36:15 2019
+  ..                                  D        0  Tue Feb 19 16:29:58 2019
+  server.txt                          N       17  Tue Feb 19 19:04:44 2019
+  test.txt                            A       21  Tue Feb 19 20:36:15 2019
+
+		40913 blocks of size 262144. 28142 blocks available
+smb: \> exit
+[root@desktop0 ~]# ls  /mnt/dev/
+server.txt  test.txt
+[root@desktop0 ~]# ll  /mnt/dev/test.txt 
+-rwxr--r--. 1 1003 1003 21 2月  19 20:36 /mnt/dev/test.txt
+
+[root@desktop0 ~]# id chihiro
+id: chihiro: no such user
+[root@desktop0 ~]# cat   /mnt/dev/test.txt
+test.desktop.txtxixi
+
+[root@server0 ~]# ls  /devops/
+server.txt  test.txt
+[root@server0 ~]# ll  /devops/test.txt 
+-rwxr--r--. 1 chihiro chihiro 21 2月  19 20:36 /devops/test.txt
+
+[root@server0 ~]# id  chihiro
+uid=1003(chihiro) gid=1003(chihiro) 组=1003(chihiro)
+
+[root@server0 ~]# cat   /devops/test.txt 
+test.desktop.txtxixi
+
+[root@desktop0 ~]# echo  "kenji  files" > kenji.txt
+[root@desktop0 ~]# ls
+anaconda-ks.cfg  kenji.txt  lab2.tar.gz  test.txt
+
+---- 验证多用户访问(在 desktop0 上):普通用户kenji 只读权限的  身份 ----
+---------------------------------- 注意切换用户 需要必须 使用 大 写的 字母 U --------------
+
+[root@desktop0 ~]# smbclient  //172.25.0.11/devops  -U  kenji
+Enter kenji's password: atenorth 输入密码
+Domain=[STAFF] OS=[Unix] Server=[Samba 4.1.1]
+smb: \> ls
+  .                                   D        0  Tue Feb 19 20:36:15 2019
+  ..                                  D        0  Tue Feb 19 16:29:58 2019
+  server.txt                          N       17  Tue Feb 19 19:04:44 2019
+  test.txt                            A       21  Tue Feb 19 20:36:15 2019
+
+		40913 blocks of size 262144. 28141 blocks available
+
+smb: \> put  kenji.txt   
+## 上传文件 (在当前路径下的文件/root/kenji.txt)失败,kenji 用户只有可读权限
+
+NT_STATUS_ACCESS_DENIED opening remote file \kenji.txt
+NT_状态_访问_拒绝打开远程文件\kenji.txt
+
+smb: \> exit
+[root@desktop0 ~]# 
+
+[root@desktop0 ~]# ls  /mnt/dev/
+server.txt  test.txt
+[root@desktop0 ~]# ll  /mnt/dev/server.txt 
+-rw-r--r--. 1 root root 17 2月  19 19:04 /mnt/dev/server.txt
+[root@desktop0 ~]# echo kenji > /mnt/dev/kenji.txt
+-bash: /mnt/dev/kenji.txt: 权限不够
 
 
+----------------- 在其他用户下使用cifscreds命令把指定用户的用户名和密码加入内核密钥环
 
+验证多用户访问(在 desktopX 上):普通用户切换为 chihiro 身份即可读写
 
+------------------ 重新在客户端以 chihiro 身份登陆查看内容，成功
+atenorth 输入密码
+
+[root@desktop0 ~]# su  -  student
+
+[student@desktop0 ~]$ cifscreds   add   -u chihiro  172.25.0.11
+
+Password: atenorth 输入密码
+[student@desktop0 ~]$ ls
+[student@desktop0 ~]$ pwd
+/home/student
+[student@desktop0 ~]$ echo  chihiro add at studentdir > /mnt/dev/chihiro.txt
+[student@desktop0 ~]$ ls  /mnt/dev/
+chihiro.txt  server.txt  test.txt
+
+[student@desktop0 ~]$ cat  /mnt/dev/server.txt 
+server ---devops
+[student@desktop0 ~]$ ll  /mnt/dev/server.txt
+-rw-r--r--. 1 root root 17 Feb 19 19:04 /mnt/dev/server.txt
+
+[student@desktop0 ~]$ ll  /mnt/dev/chihiro.txt 
+-rw-r--r--. 1 1003 1003 26 Feb 19 21:11 /mnt/dev/chihiro.txt
+
+[student@desktop0 ~]$ cat   /mnt/dev/chihiro.txt
+chihiro add at studentdir
+
+[student@desktop0 ~]$ exit
+logout
+[root@desktop0 ~]# ls /mnt/dev/
+chihiro.txt  server.txt  test.txt
+
+[root@desktop0 ~]# 
+
+[root@server0 ~]# ls    /devops/
+chihiro.txt  server.txt  test.txt
+[root@server0 ~]# id chihiro
+uid=1003(chihiro) gid=1003(chihiro) 组=1003(chihiro)
+[root@server0 ~]# ll   /devops/chihiro.txt 
+-rw-r--r--. 1 chihiro chihiro 26 2月  19 21:11 /devops/chihiro.txt
+
+,使用cifscreds clearall 命令清除内核密钥环的数据后不会马上生效,
+大概5分钟后才回清除,
+此后可以成功把其他用户加入到内核密钥环中并生效
 
 
 

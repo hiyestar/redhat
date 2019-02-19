@@ -887,6 +887,8 @@ server0.example.com
 [root@server0 ~]# lab smtp-nullclient setup
 Setting up server machine... 
 
+==================================
+
 [root@server0 ~]# rpm -q postfix
 postfix-2.10.1-6.el7.x86_64
 
